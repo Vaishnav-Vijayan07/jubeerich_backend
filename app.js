@@ -3,7 +3,7 @@ const path = require("path");
 
 const app = express();
 
-const adminRoute = require("./routes/admin");
+const routes = require("./routes");
 const db = require("./models");
 
 const port = process.env.PORT;
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/admin", adminRoute);
+app.use("/", routes);
 
 db.sequelize
   .sync({ alter: true })
