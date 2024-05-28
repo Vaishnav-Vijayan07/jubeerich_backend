@@ -40,6 +40,7 @@ exports.addAccessPower = (req, res) => {
   })
     .then((newPower) => {
       res.status(201).json({
+        status: true,
         message: "Access power created successfully",
         data: newPower,
       });

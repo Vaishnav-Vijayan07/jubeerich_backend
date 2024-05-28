@@ -13,19 +13,34 @@ exports.getAllAccessRoles = async (req, res) => {
           as: "updatedByUser",
           attributes: ["name"],
         },
-        {
-          model: AccessPowers,
-          as: "powers",
-          attributes: ["power_name"],
-          through: { attributes: [] },
-        },
       ],
     });
 
-    const rolesWithPowerNames = roles.map(role => ({
+    // Extract and flatten all power_ids from roles
+    const powerIds = roles.map((role) => (role.power_ids ? role.power_ids.split(",").map(Number) : [])).flat();
+
+    // Remove duplicates and invalid ids
+    const uniquePowerIds = [...new Set(powerIds)].filter((id) => !isNaN(id));
+
+    const powers = await AccessPowers.findAll({
+      where: { id: uniquePowerIds },
+      attributes: ["id", "power_name"],
+    });
+
+    const powerNamesMap = powers.reduce((acc, power) => {
+      acc[power.id] = power.power_name;
+      return acc;
+    }, {});
+
+    const rolesWithPowerNames = roles.map((role) => ({
       ...role.toJSON(),
-      power_names: role.powers.map(power => power.power_name),
       updated_by: role.updatedByUser ? role.updatedByUser.name : null,
+      power_names: role.power_ids
+        ? role.power_ids
+            .split(",")
+            .map(Number)
+            .map((id) => powerNamesMap[id])
+        : [],
     }));
 
     res.json({
@@ -70,7 +85,7 @@ exports.getAccessRoleById = async (req, res) => {
 
     const roleWithPowerNames = {
       ...role.toJSON(),
-      power_names: role.powers.map(power => power.power_name),
+      power_names: role.powers.map((power) => power.power_name),
       updated_by: role.updatedByUser ? role.updatedByUser.name : null,
     };
 
@@ -112,30 +127,31 @@ exports.getAccessRoleById = async (req, res) => {
 // };
 
 exports.createAccessRole = async (req, res) => {
-    const { role_name, power_ids, updated_by } = req.body;
-  
-    try {
-      // Ensure power_ids is an array and join it into a string
-      const powerIdsString = Array.isArray(power_ids) ? power_ids.join(',') : '';
-  
-      const newRole = await AccessRoles.create({
-        role_name,
-        power_ids: powerIdsString,
-        updated_by,
-      });
-  
-      res.json({
-        status: true,
-        data: newRole,
-      });
-    } catch (error) {
-      console.error("Error creating access role:", error);
-      res.status(500).json({
-        status: false,
-        message: "Internal server error",
-      });
-    }
-  };
+  const { role_name, power_ids, updated_by } = req.body;
+
+  try {
+    // Ensure power_ids is an array and join it into a string
+    const powerIdsString = Array.isArray(power_ids) ? power_ids.join(",") : "";
+
+    const newRole = await AccessRoles.create({
+      role_name,
+      power_ids: powerIdsString,
+      updated_by,
+    });
+
+    res.json({
+      status: true,
+      data: newRole,
+      message: "User role added successfully",
+    });
+  } catch (error) {
+    console.error("Error creating access role:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 // Update an access role
 exports.updateAccessRole = async (req, res) => {
@@ -154,7 +170,7 @@ exports.updateAccessRole = async (req, res) => {
 
     const updatedRole = await role.update({
       role_name,
-      power_ids: power_ids.join(','),  // Join array to string if stored as CSV
+      power_ids: power_ids.join(","), // Join array to string if stored as CSV
       updated_by,
     });
 

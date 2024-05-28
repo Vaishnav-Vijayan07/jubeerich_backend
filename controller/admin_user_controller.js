@@ -3,55 +3,45 @@ const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const db = require("../models");
 
-exports.getAllAdminUsers = (req, res, next) => {
-  db.adminUsers
-    .findAll()
-    // .findAll({
-    //   attributes: {
-    //     include: [
-    //       [
-    //         db.sequelize.fn(
-    //           "json_agg",
-    //           db.sequelize.fn("json_build_object", [
-    //             "id",
-    //             db.sequelize.col("branches.id"),
-    //             "branch_name",
-    //             db.sequelize.col("branches.branch_name"),
-    //             "branch_address",
-    //             db.sequelize.col("branches.branch_address"),
-    //             "branch_city",
-    //             db.sequelize.col("branches.branch_city"),
-    //             "branch_country",
-    //             db.sequelize.col("branches.branch_country"),
-    //             "currency",
-    //             db.sequelize.col("branches.currency"),
-    //           ])
-    //         ),
-    //         "branches",
-    //       ],
-    //     ],
-    //   },
-    //   include: [
-    //     {
-    //       model: db.branches,
-    //       as: "branches",
-    //       attributes: [],
-    //       through: { attributes: [] },
-    //     },
-    //     {
-    //       model: db.access_roles,
-    //       attributes: ["role_name"],
-    //     },
-    //   ],
-    // })
-    .then((userDB) => {
-      if (userDB == null) throw new Error("user not found");
-      res.status(200).send(userDB);
-    })
-    .catch((error) => {
-      console.log(`error in getting user ${error.toString()}`);
-      res.status(200).send({ message: error.toString() });
+exports.getAllAdminUsers = async (req, res, next) => {
+  try {
+    const users = await db.adminUsers.findAll({
+      include: [
+        {
+          model: db.accessRoles,
+          as: "access_role",
+          attributes: ["role_name"],
+        },
+      ],
     });
+
+    if (!users) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin users not found",
+      });
+    }
+
+    const usersWithRole = users.map((user) => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        role: userJson.access_role ? userJson.access_role.role_name : null,
+        access_role: undefined, // Remove the access_role object
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: usersWithRole,
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 exports.getAdminUsersById = (req, res, next) => {
@@ -71,6 +61,7 @@ exports.getAdminUsersById = (req, res, next) => {
 exports.addAdminUsers = async (req, res) => {
   const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_ids } = req.body;
   //   const profileImage = req.file;
+  console.log("req.body==============>", req.body);
 
   try {
     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
@@ -183,7 +174,7 @@ exports.updateAdminUsers = async (req, res) => {
   }
 };
 
-exports.deletAdminUsers = async (req, res) => {
+exports.deleteAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);
 
   try {
@@ -195,6 +186,9 @@ exports.deletAdminUsers = async (req, res) => {
         message: "Admin user not found",
       });
     }
+
+    // Update the access_roles table to set updated_by to null where it references the admin user to be deleted
+    await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
 
     // Delete the admin user
     await user.destroy();
