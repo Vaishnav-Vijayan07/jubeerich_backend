@@ -50,6 +50,8 @@ const { getAllRegions, getRegionById, addRegion, updateRegion, deleteRegion } = 
 const { getAllFlags, getFlagById, addFlag, updateFlag, deleteFlag } = require("../controller/flag_controller");
 const { getAllMaritalStatuses, getMaritalStatusById, addMaritalStatus, updateMaritalStatus, deleteMaritalStatus } = require("../controller/marital_status_controller");
 const { getAllCountries, getCountryById, addCountry, updateCountry, deleteCountry } = require("../controller/country_controller");
+const { getAllUniversities, getUniversityById, addUniversity, updateUniversity, deleteUniversity } = require("../controller/university_controller");
+const { getAllPrograms, getProgramById, addProgram, updateProgram, deleteProgram } = require("../controller/program_controller");
 
 const router = express.Router();
 
@@ -120,5 +122,17 @@ router.get("/country/:id", getCountryById);
 router.post("/country", addCountry);
 router.put("/country/:id", updateCountry);
 router.delete("/country/:id", deleteCountry);
+
+router.get("/university", getAllUniversities);
+router.get("/university/:id", getUniversityById);
+router.post("/university", addUniversity);
+router.put("/university/:id", updateUniversity);
+router.delete("/university/:id", deleteUniversity);
+
+router.get("/programs", getAllPrograms);
+router.get("/programs/:id", getProgramById);
+router.post("/programs", addProgram);
+router.put("/programs/:id", updateProgram);
+router.delete("/programs/:id", deleteProgram);
 
 module.exports = router;

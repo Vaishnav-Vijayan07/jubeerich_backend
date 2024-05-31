@@ -26,6 +26,7 @@ db.flag = require("./flag")(sequelize, Sequelize);
 db.maritalStatus = require("./maritalStatus")(sequelize, Sequelize);
 db.country = require("./country")(sequelize, Sequelize);
 db.university = require("./university")(sequelize, Sequelize);
+db.programs = require("./programs")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
