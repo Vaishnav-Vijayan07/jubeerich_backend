@@ -17,6 +17,15 @@ db.Op = Op;
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.accessRoles = require("./accessRoles")(sequelize, Sequelize);
 db.accessPowers = require("./accessPowers")(sequelize, Sequelize);
+db.leadCategory = require("./leadCategory")(sequelize, Sequelize);
+db.leadChannel = require("./leadChannel")(sequelize, Sequelize);
+db.leadSource = require("./leadSource")(sequelize, Sequelize);
+db.officeType = require("./officeType")(sequelize, Sequelize);
+db.region = require("./region")(sequelize, Sequelize);
+db.flag = require("./flag")(sequelize, Sequelize);
+db.maritalStatus = require("./maritalStatus")(sequelize, Sequelize);
+db.country = require("./country")(sequelize, Sequelize);
+db.university = require("./university")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -35,4 +44,9 @@ db.accessPowers.belongsToMany(db.accessRoles, {
   as: "roles",
   foreignKey: "power_id",
 });
+
+// Define associations
+db.leadChannel.belongsTo(db.leadSource, { foreignKey: "source_id", as: "source" });
+
+
 module.exports = db;
