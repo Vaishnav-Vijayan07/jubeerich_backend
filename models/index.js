@@ -27,6 +27,11 @@ db.maritalStatus = require("./maritalStatus")(sequelize, Sequelize);
 db.country = require("./country")(sequelize, Sequelize);
 db.university = require("./university")(sequelize, Sequelize);
 db.programs = require("./programs")(sequelize, Sequelize);
+db.branches = require("./branch")(sequelize, Sequelize);
+db.userPrimaryInfo = require("./userPrimaryInfo")(sequelize, Sequelize);
+db.userBasicInfo = require("./userBasicInfo")(sequelize, Sequelize);
+db.userAcademicInfo = require("./userAcademicInfo")(sequelize, Sequelize);
+db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -46,8 +51,14 @@ db.accessPowers.belongsToMany(db.accessRoles, {
   foreignKey: "power_id",
 });
 
-// Define associations
 db.leadChannel.belongsTo(db.leadSource, { foreignKey: "source_id", as: "source" });
 
+// User associations
+db.userPrimaryInfo.hasOne(db.userStudyPreference, { foreignKey: "user_id", as: "studyPreference" });
+db.userPrimaryInfo.hasOne(db.userBasicInfo, { foreignKey: "user_id", as: "basicInfo" });
+db.userPrimaryInfo.hasOne(db.userAcademicInfo, { foreignKey: "user_id", as: "academicInfo" });
+
+db.userStudyPreference.belongsTo(db.userBasicInfo, { foreignKey: "user_id", as: "user" });
+db.userAcademicInfo.belongsTo(db.userBasicInfo, { foreignKey: "user_id", as: "user" });
 
 module.exports = db;

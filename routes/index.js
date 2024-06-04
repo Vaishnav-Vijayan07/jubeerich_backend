@@ -52,6 +52,8 @@ const { getAllMaritalStatuses, getMaritalStatusById, addMaritalStatus, updateMar
 const { getAllCountries, getCountryById, addCountry, updateCountry, deleteCountry } = require("../controller/country_controller");
 const { getAllUniversities, getUniversityById, addUniversity, updateUniversity, deleteUniversity } = require("../controller/university_controller");
 const { getAllPrograms, getProgramById, addProgram, updateProgram, deleteProgram } = require("../controller/program_controller");
+const { getAllBranches, getBranchById, addBranch, updateBranch, deleteBranch } = require("../controller/branch_controller");
+const { getAllUsersWithDetails, createUserAndPreferences, updateUserAndPreferences, deleteUserAndPreferences } = require("../controller/user_controller");
 
 const router = express.Router();
 
@@ -134,5 +136,16 @@ router.get("/programs/:id", getProgramById);
 router.post("/programs", addProgram);
 router.put("/programs/:id", updateProgram);
 router.delete("/programs/:id", deleteProgram);
+
+router.get("/branches", getAllBranches);
+router.get("/branches/:id", getBranchById);
+router.post("/branches", addBranch);
+router.put("/branches/:id", updateBranch);
+router.delete("/branches/:id", deleteBranch);
+
+router.get("/user_details", getAllUsersWithDetails);
+router.post("/user_details", createUserAndPreferences);
+router.put("/user_details/:id", updateUserAndPreferences);
+router.delete("/user_details/:id", deleteUserAndPreferences);
 
 module.exports = router;
