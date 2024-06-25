@@ -8,27 +8,15 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
-      firstname: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-      },
-      lastname: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-      },
-      email: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-        unique: true,
-        validate: {
-          isEmail: true,
-        },
-      },
-      phone: {
-        type: Sequelize.STRING(20),
-        allowNull: false,
-        unique: true,
-      },
+      // firstname: {
+      //   type: Sequelize.STRING(100),
+      //   allowNull: false,
+      // },
+      // lastname: {
+      //   type: Sequelize.STRING(100),
+      //   allowNull: false,
+      // },
+
       passport_no: {
         type: Sequelize.STRING(10),
         allowNull: true,

@@ -53,12 +53,14 @@ db.accessPowers.belongsToMany(db.accessRoles, {
 
 db.leadChannel.belongsTo(db.leadSource, { foreignKey: "source_id", as: "source" });
 
-// User associations
-db.userPrimaryInfo.hasOne(db.userStudyPreference, { foreignKey: "user_id", as: "studyPreference" });
-db.userPrimaryInfo.hasOne(db.userBasicInfo, { foreignKey: "user_id", as: "basicInfo" });
-db.userPrimaryInfo.hasOne(db.userAcademicInfo, { foreignKey: "user_id", as: "academicInfo" });
-
-db.userStudyPreference.belongsTo(db.userBasicInfo, { foreignKey: "user_id", as: "user" });
-db.userAcademicInfo.belongsTo(db.userBasicInfo, { foreignKey: "user_id", as: "user" });
+//lead associations
+db.userPrimaryInfo.belongsTo(db.leadCategory, { as: "category_name", foreignKey: "category_id" });
+db.userPrimaryInfo.belongsTo(db.leadSource, { as: "source_name", foreignKey: "source_id" });
+db.userPrimaryInfo.belongsTo(db.leadChannel, { as: "channel_name", foreignKey: "channel_id" });
+db.userPrimaryInfo.belongsTo(db.country, { as: "country_name", foreignKey: "preferred_country" });
+db.userPrimaryInfo.belongsTo(db.officeType, { as: "office_type_name", foreignKey: "office_type" });
+db.userPrimaryInfo.belongsTo(db.region, { as: "region_name", foreignKey: "region" });
+db.userPrimaryInfo.belongsTo(db.adminUsers, { as: "counsiler_name", foreignKey: "counsiler_id" });
+db.userPrimaryInfo.belongsTo(db.branches, { as: "branch_name", foreignKey: "branch_id" });
 
 module.exports = db;

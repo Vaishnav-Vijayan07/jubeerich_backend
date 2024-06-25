@@ -45,15 +45,57 @@ const {
   updateSource,
   deleteSource,
 } = require("../controller/lead_source_controller");
-const { getAllOfficeTypes, getOfficeTypeById, addOfficeType, updateOfficeType, deleteOfficeType } = require("../controller/office_type_controller");
-const { getAllRegions, getRegionById, addRegion, updateRegion, deleteRegion } = require("../controller/region_controller");
+const {
+  getAllOfficeTypes,
+  getOfficeTypeById,
+  addOfficeType,
+  updateOfficeType,
+  deleteOfficeType,
+} = require("../controller/office_type_controller");
+const {
+  getAllRegions,
+  getRegionById,
+  addRegion,
+  updateRegion,
+  deleteRegion,
+} = require("../controller/region_controller");
 const { getAllFlags, getFlagById, addFlag, updateFlag, deleteFlag } = require("../controller/flag_controller");
-const { getAllMaritalStatuses, getMaritalStatusById, addMaritalStatus, updateMaritalStatus, deleteMaritalStatus } = require("../controller/marital_status_controller");
-const { getAllCountries, getCountryById, addCountry, updateCountry, deleteCountry } = require("../controller/country_controller");
-const { getAllUniversities, getUniversityById, addUniversity, updateUniversity, deleteUniversity } = require("../controller/university_controller");
-const { getAllPrograms, getProgramById, addProgram, updateProgram, deleteProgram } = require("../controller/program_controller");
-const { getAllBranches, getBranchById, addBranch, updateBranch, deleteBranch } = require("../controller/branch_controller");
-const { getAllUsersWithDetails, createUserAndPreferences, updateUserAndPreferences, deleteUserAndPreferences } = require("../controller/user_controller");
+const {
+  getAllMaritalStatuses,
+  getMaritalStatusById,
+  addMaritalStatus,
+  updateMaritalStatus,
+  deleteMaritalStatus,
+} = require("../controller/marital_status_controller");
+const {
+  getAllCountries,
+  getCountryById,
+  addCountry,
+  updateCountry,
+  deleteCountry,
+} = require("../controller/country_controller");
+const {
+  getAllUniversities,
+  getUniversityById,
+  addUniversity,
+  updateUniversity,
+  deleteUniversity,
+} = require("../controller/university_controller");
+const {
+  getAllPrograms,
+  getProgramById,
+  addProgram,
+  updateProgram,
+  deleteProgram,
+} = require("../controller/program_controller");
+const {
+  getAllBranches,
+  getBranchById,
+  addBranch,
+  updateBranch,
+  deleteBranch,
+} = require("../controller/branch_controller");
+const { createLead, getAllLeads, updateLead, deleteLead } = require("../controller/user_controller");
 
 const router = express.Router();
 
@@ -143,9 +185,9 @@ router.post("/branches", addBranch);
 router.put("/branches/:id", updateBranch);
 router.delete("/branches/:id", deleteBranch);
 
-router.get("/user_details", getAllUsersWithDetails);
-router.post("/user_details", createUserAndPreferences);
-router.put("/user_details/:id", updateUserAndPreferences);
-router.delete("/user_details/:id", deleteUserAndPreferences);
+router.post("/leads", createLead);
+router.get("/leads", getAllLeads);
+router.put("/leads/:id", updateLead);
+router.delete("/leads/:id", deleteLead);
 
 module.exports = router;

@@ -8,6 +8,23 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
+      full_name: {
+        type: Sequelize.STRING(100),
+        allowNull: false,
+      },
+      email: {
+        type: Sequelize.STRING(100),
+        allowNull: false,
+        unique: true,
+        validate: {
+          isEmail: true,
+        },
+      },
+      phone: {
+        type: Sequelize.STRING(20),
+        allowNull: false,
+        unique: true,
+      },
       category_id: {
         type: Sequelize.INTEGER,
         references: {
@@ -32,29 +49,25 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: false,
       },
-      region_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "regions",
-          key: "id",
-        },
-        allowNull: false,
+      city: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
       },
-      counsiler_id: {
+      preferred_country: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
-          model: "admin_users",
+          model: "countries",
           key: "id",
         },
-        allowNull: false,
       },
-      branch_id: {
+      office_type: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
-          model: "branches",
+          model: "office_types",
           key: "id",
         },
-        allowNull: false,
       },
       updated_by: {
         type: Sequelize.INTEGER,
@@ -64,15 +77,91 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      region_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "regions",
+          key: "id",
+        },
+        allowNull: true,
+      },
+      counsiler_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+        allowNull: true,
+      },
+      branch_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "branches",
+          key: "id",
+        },
+        allowNull: true,
+      },
       is_deleted: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: false,
       },
+      remarks: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
     },
     {
       underscored: true,
       tableName: "user_primary_info",
+      indexes: [
+        {
+          name: "email_unique",
+          unique: true,
+          fields: ["email"],
+        },
+        {
+          name: "phone_unique",
+          unique: true,
+          fields: ["phone"],
+        },
+        {
+          name: "category_id_index",
+          fields: ["category_id"],
+        },
+        {
+          name: "source_id_index",
+          fields: ["source_id"],
+        },
+        {
+          name: "channel_id_index",
+          fields: ["channel_id"],
+        },
+        {
+          name: "preferred_country_index",
+          fields: ["preferred_country"],
+        },
+        {
+          name: "office_type_index",
+          fields: ["office_type"],
+        },
+        {
+          name: "region_id_index",
+          fields: ["region_id"],
+        },
+        {
+          name: "counsiler_id_index",
+          fields: ["counsiler_id"],
+        },
+        {
+          name: "branch_id_index",
+          fields: ["branch_id"],
+        },
+        {
+          name: "updated_by_index",
+          fields: ["updated_by"],
+        },
+      ],
     }
   );
 
