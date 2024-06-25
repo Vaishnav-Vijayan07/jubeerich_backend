@@ -110,6 +110,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      lead_received_date: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
     },
     {
       underscored: true,

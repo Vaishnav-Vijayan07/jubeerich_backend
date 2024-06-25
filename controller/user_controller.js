@@ -48,6 +48,7 @@ exports.createLead = async (req, res) => {
     branch_id,
     updated_by,
     remarks,
+    lead_received_date,
   } = req.body;
 
   // Start a transaction
@@ -192,6 +193,7 @@ exports.createLead = async (req, res) => {
         branch_id,
         updated_by,
         remarks,
+        lead_received_date,
       },
       { transaction }
     );
@@ -287,6 +289,7 @@ exports.updateLead = async (req, res) => {
     branch_id,
     updated_by,
     remarks,
+    lead_received_date,
   } = req.body;
 
   // Start a transaction
@@ -368,6 +371,7 @@ exports.updateLead = async (req, res) => {
         branch_id,
         updated_by,
         remarks,
+        lead_received_date,
       },
       { transaction }
     );
