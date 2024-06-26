@@ -177,7 +177,7 @@ exports.updateBranch = [
     }
 
     try {
-      if (!(await checkRegionExists(region_id))) {
+      if (!(await checkRegionExists(req.body.region_id))) {
         return res.status(400).json({
           status: false,
           message: "Invalid region_id",
