@@ -3,23 +3,7 @@ const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
-
-// Validation rules
-const validationRules = [
-  check("full_name").not().isEmpty().withMessage("Full name is required"),
-  check("email").isEmail().withMessage("Valid email is required"),
-  check("phone").not().isEmpty().withMessage("Phone is required"),
-  check("category_id").isInt().withMessage("Category ID must be an integer"),
-  check("source_id").isInt().withMessage("Source ID must be an integer"),
-  check("channel_id").isInt().withMessage("Channel ID must be an integer"),
-  check("city").optional().isString().withMessage("City must be a string"),
-  check("preferred_country").optional().isInt().withMessage("Preferred country must be an integer"),
-  check("office_type").optional().isString().withMessage("Office type must be a string"),
-  check("region_id").optional().isInt().withMessage("Region ID must be an integer"),
-  check("counsiler_id").optional().isInt().withMessage("Counsiler ID must be an integer"),
-  check("branch_id").optional().isInt().withMessage("Branch ID must be an integer"),
-  check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
-];
+const { Op, Sequelize } = require("sequelize");
 
 exports.createLead = async (req, res) => {
   // Validate the request
@@ -55,6 +39,8 @@ exports.createLead = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
+    const userId = req.userDecodeId;
+    console.log("userId===>", userId);
     // Check if referenced IDs exist in their respective tables
     const categoryExists = await checkIfEntityExists("lead_category", category_id);
     if (!categoryExists) {
@@ -176,6 +162,8 @@ exports.createLead = async (req, res) => {
       });
     }
 
+    const recieved_date = new Date();
+
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
       {
@@ -193,10 +181,32 @@ exports.createLead = async (req, res) => {
         branch_id,
         updated_by,
         remarks,
-        lead_received_date,
+        lead_received_date: lead_received_date || recieved_date,
       },
       { transaction }
     );
+
+    console.log("userPrimaryInfo==>", userPrimaryInfo);
+
+    const leastAssignedStaff = await getLeastAssignedUser();
+    console.log("leastAssignedStaff===>", leastAssignedStaff);
+    if (leastAssignedStaff) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
+      // Create a task for the new lead
+      const task = await db.tasks.create(
+        {
+          studentId: userPrimaryInfo.id,
+          userId: leastAssignedStaff,
+          title: `Follow up with ${full_name}`,
+          dueDate: dueDate,
+          updatedBy: userId,
+        },
+        { transaction }
+      );
+
+      console.log("task==>", task);
+    }
 
     // Commit the transaction
     await transaction.commit();
@@ -420,6 +430,48 @@ exports.deleteLead = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error(`Error deleting lead: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// round robin method
+const getLeastAssignedUser = async (req, res) => {
+  try {
+    const result = await db.adminUsers.findOne({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "tasks"
+          WHERE "tasks"."userId" = "admin_user"."id"
+        )`),
+          "assignment_count",
+        ],
+      ],
+      where: {
+        role_id: 3,
+        // status: true,
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+    });
+
+    console.log("result===>", result);
+
+    if (result.dataValues) {
+      const leastAssignedUser = result.dataValues.user_id;
+
+      console.log("User with the least assignments:", leastAssignedUser);
+      return leastAssignedUser;
+    } else {
+      console.log('No matching users found or no assignments exist for user type "2".');
+    }
+  } catch (error) {
+    console.error(`Error finding least assigned user: ${error}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",

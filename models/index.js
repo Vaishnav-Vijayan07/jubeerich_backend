@@ -32,6 +32,8 @@ db.userPrimaryInfo = require("./userPrimaryInfo")(sequelize, Sequelize);
 db.userBasicInfo = require("./userBasicInfo")(sequelize, Sequelize);
 db.userAcademicInfo = require("./userAcademicInfo")(sequelize, Sequelize);
 db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
+db.tasks = require("./task")(sequelize, Sequelize);
+db.userBranches = require("./userBranches")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -62,5 +64,15 @@ db.userPrimaryInfo.belongsTo(db.officeType, { as: "office_type_name", foreignKey
 db.userPrimaryInfo.belongsTo(db.region, { as: "region_name", foreignKey: "region" });
 db.userPrimaryInfo.belongsTo(db.adminUsers, { as: "counsiler_name", foreignKey: "counsiler_id" });
 db.userPrimaryInfo.belongsTo(db.branches, { as: "branch_name", foreignKey: "branch_id" });
+
+db.tasks.belongsTo(db.userPrimaryInfo, { as: "student_name", foreignKey: "studentId" });
+db.tasks.belongsTo(db.adminUsers, { as: "user_name", foreignKey: "userId" });
+
+// In adminUsers model
+db.adminUsers.hasMany(db.tasks, { foreignKey: 'userId' });
+
+// In tasks model
+db.tasks.belongsTo(db.adminUsers, { foreignKey: 'userId' });
+
 
 module.exports = db;
