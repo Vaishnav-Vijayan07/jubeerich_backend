@@ -1,9 +1,10 @@
 const db = require("../models");
+const { getUserDetails } = require("../utils/helper");
 const Category = db.leadCategory;
 
 // Get all categories
-exports.getAllCategories = (req, res) => {
-  Category.findAll()
+exports.getAllCategories = async (req, res) => {
+  Category.findAll({ order: [["createdAt", "DESC"]] })
     .then((categories) => {
       res.status(200).json(categories);
     })
@@ -63,12 +64,13 @@ exports.updateCategory = (req, res) => {
         return res.status(404).json({ message: "Category not found" });
       }
 
-      category.update({
-        category_name,
-        category_description,
-        status,
-        updated_by,
-      })
+      category
+        .update({
+          category_name,
+          category_description,
+          status,
+          updated_by,
+        })
         .then((updatedCategory) => {
           res.status(200).json({
             message: "Category updated successfully",
@@ -96,7 +98,8 @@ exports.deleteCategory = (req, res) => {
         return res.status(404).json({ message: "Category not found" });
       }
 
-      category.destroy()
+      category
+        .destroy()
         .then(() => {
           res.status(200).json({ message: "Category deleted successfully" });
         })

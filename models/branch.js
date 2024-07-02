@@ -68,12 +68,17 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(255),
     },
     office_type: {
-      type: Sequelize.STRING(100),
+      type: Sequelize.INTEGER,
+      references: {
+        model: "office_types",
+        key: "id",
+      },
+      allowNull: true,
     },
     region_id: {
       type: Sequelize.INTEGER,
       references: {
-        model: "regions", 
+        model: "regions",
         key: "id",
       },
       allowNull: true,

@@ -3,11 +3,16 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, process.env.DB_pss, {
-  dialect: "postgres",
-  host: process.env.DB_host,
-  port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
-});
+const sequelize = new Sequelize(
+  process.env.DB_dbname,
+  process.env.DB_user,
+  process.env.DB_pss,
+  {
+    dialect: "postgres",
+    host: process.env.DB_host,
+    port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
+  }
+);
 
 const db = {};
 db.Sequelize = Sequelize;
@@ -53,17 +58,54 @@ db.accessPowers.belongsToMany(db.accessRoles, {
   foreignKey: "power_id",
 });
 
-db.leadChannel.belongsTo(db.leadSource, { foreignKey: "source_id", as: "source" });
+db.leadChannel.belongsTo(db.leadSource, {
+  foreignKey: "source_id",
+  as: "source",
+});
 
 //lead associations
-db.userPrimaryInfo.belongsTo(db.leadCategory, { as: "category_name", foreignKey: "category_id" });
-db.userPrimaryInfo.belongsTo(db.leadSource, { as: "source_name", foreignKey: "source_id" });
-db.userPrimaryInfo.belongsTo(db.leadChannel, { as: "channel_name", foreignKey: "channel_id" });
-db.userPrimaryInfo.belongsTo(db.country, { as: "country_name", foreignKey: "preferred_country" });
-db.userPrimaryInfo.belongsTo(db.officeType, { as: "office_type_name", foreignKey: "office_type" });
-db.userPrimaryInfo.belongsTo(db.region, { as: "region_name", foreignKey: "region" });
-db.userPrimaryInfo.belongsTo(db.adminUsers, { as: "counsiler_name", foreignKey: "counsiler_id" });
-db.userPrimaryInfo.belongsTo(db.branches, { as: "branch_name", foreignKey: "branch_id" });
+db.userPrimaryInfo.belongsTo(db.leadCategory, {
+  as: "category_name",
+  foreignKey: "category_id",
+});
+db.userPrimaryInfo.belongsTo(db.leadSource, {
+  as: "source_name",
+  foreignKey: "source_id",
+});
+db.userPrimaryInfo.belongsTo(db.leadChannel, {
+  as: "channel_name",
+  foreignKey: "channel_id",
+});
+db.userPrimaryInfo.belongsTo(db.country, {
+  as: "country_name",
+  foreignKey: "preferred_country",
+});
+db.userPrimaryInfo.belongsTo(db.officeType, {
+  as: "office_type_name",
+  foreignKey: "office_type",
+});
+db.userPrimaryInfo.belongsTo(db.region, {
+  as: "region_name",
+  foreignKey: "region",
+});
+db.userPrimaryInfo.belongsTo(db.adminUsers, {
+  as: "counsiler_name",
+  foreignKey: "counsiler_id",
+});
+db.userPrimaryInfo.belongsTo(db.branches, {
+  as: "branch_name",
+  foreignKey: "branch_id",
+});
+
+db.branches.belongsTo(db.officeType, {
+  as: "office_name",
+  foreignKey: "office_type",
+});
+
+db.branches.belongsTo(db.region, {
+  as: "region_name",
+  foreignKey: "region_id",
+});
 
 db.tasks.belongsTo(db.userPrimaryInfo, { as: "student_name", foreignKey: "studentId" });
 db.tasks.belongsTo(db.adminUsers, { as: "user_name", foreignKey: "userId" });
