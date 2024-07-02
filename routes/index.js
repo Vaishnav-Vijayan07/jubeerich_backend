@@ -96,7 +96,7 @@ const {
   deleteBranch,
 } = require("../controller/branch_controller");
 const { createLead, getAllLeads, updateLead, deleteLead } = require("../controller/user_controller");
-const { getTasks } = require("../controller/task_controller");
+const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
   saveStudentAcademicInfo,
@@ -200,5 +200,9 @@ router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
 router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], saveStudentBasicInfo);
 router.post("/saveStudentAcademicInfo", [authMiddleware.checkUserAuth], saveStudentAcademicInfo);
 router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], saveStudentStudyPreferenceInfo);
+
+router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], getStudentBasicInfoById);
+router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], getStudentAcademicInfoById);
+router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], getStudentStudyPreferenceInfoById);
 
 module.exports = router;
