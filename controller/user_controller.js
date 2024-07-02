@@ -214,13 +214,13 @@ exports.createLead = async (req, res) => {
     // Respond with success
     return res.status(201).json({
       status: true,
-      message: "User and preferences created successfully",
+      message: "Lead created successfully",
       data: { userPrimaryInfo },
     });
   } catch (error) {
     // Rollback the transaction in case of error
     await transaction.rollback();
-    console.error(`Error creating user and preferences: ${error}`);
+    console.error(`Error Lead: ${error}`);
 
     // Respond with an error
     return res.status(500).json({

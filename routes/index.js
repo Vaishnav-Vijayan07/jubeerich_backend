@@ -97,6 +97,11 @@ const {
 } = require("../controller/branch_controller");
 const { createLead, getAllLeads, updateLead, deleteLead } = require("../controller/user_controller");
 const { getTasks } = require("../controller/task_controller");
+const {
+  saveStudentBasicInfo,
+  saveStudentAcademicInfo,
+  saveStudentStudyPreferenceInfo,
+} = require("../controller/save_student_details");
 
 const router = express.Router();
 
@@ -110,7 +115,7 @@ router.delete("/admin_users/:id", [authMiddleware.checkUserAuth], deleteAdminUse
 
 router.get("/access_powers", [authMiddleware.checkUserAuth], getAllAccessPowers);
 router.get("/access_powers/:id", [authMiddleware.checkUserAuth], getAccessPowerById);
-router.post("/access_powers",  addAccessPower);
+router.post("/access_powers", addAccessPower);
 router.put("/access_powers/:id", [authMiddleware.checkUserAuth], updateAccessPower);
 router.delete("/access_powers/:id", [authMiddleware.checkUserAuth], deleteAccessPower);
 
@@ -192,6 +197,8 @@ router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
-
+router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], saveStudentBasicInfo);
+router.post("/saveStudentAcademicInfo", [authMiddleware.checkUserAuth], saveStudentAcademicInfo);
+router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], saveStudentStudyPreferenceInfo);
 
 module.exports = router;

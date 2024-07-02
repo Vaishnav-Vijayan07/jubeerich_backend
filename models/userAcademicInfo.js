@@ -1,5 +1,7 @@
 module.exports = (sequelize, Sequelize) => {
-    const UserAccadamicInfo = sequelize.define("user_accadamic_info", {
+  const UserAccadamicInfo = sequelize.define(
+    "user_accadamic_info",
+    {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -42,11 +44,12 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: false,
       },
-    }, {
+    },
+    {
       underscored: true,
-      tableName: 'user_accadamic_info', 
-    });
-  
-    return UserAccadamicInfo;
-  };
-  
+      tableName: "user_accadamic_info",
+    }
+  );
+
+  return UserAccadamicInfo;
+};

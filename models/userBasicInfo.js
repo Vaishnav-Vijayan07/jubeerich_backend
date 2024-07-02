@@ -16,7 +16,6 @@ module.exports = (sequelize, Sequelize) => {
       //   type: Sequelize.STRING(100),
       //   allowNull: false,
       // },
-
       passport_no: {
         type: Sequelize.STRING(10),
         allowNull: true,
