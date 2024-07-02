@@ -8,14 +8,6 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
-      // firstname: {
-      //   type: Sequelize.STRING(100),
-      //   allowNull: false,
-      // },
-      // lastname: {
-      //   type: Sequelize.STRING(100),
-      //   allowNull: false,
-      // },
       passport_no: {
         type: Sequelize.STRING(10),
         allowNull: true,
