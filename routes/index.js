@@ -96,98 +96,109 @@ const {
   deleteBranch,
 } = require("../controller/branch_controller");
 const { createLead, getAllLeads, updateLead, deleteLead } = require("../controller/user_controller");
+const { getTasks } = require("../controller/task_controller");
+const {
+  saveStudentBasicInfo,
+  saveStudentAcademicInfo,
+  saveStudentStudyPreferenceInfo,
+} = require("../controller/save_student_details");
 
 const router = express.Router();
 
 router.post("/login", login);
 
-router.get("/admin_users", getAllAdminUsers);
-router.get("/admin_users/:id", getAdminUsersById);
+router.get("/admin_users", [authMiddleware.checkUserAuth], getAllAdminUsers);
+router.get("/admin_users/:id", [authMiddleware.checkUserAuth], getAdminUsersById);
 router.post("/admin_users", addAdminUsers);
-router.put("/admin_users/:id", updateAdminUsers);
-router.delete("/admin_users/:id", deleteAdminUsers);
+router.put("/admin_users/:id", [authMiddleware.checkUserAuth], updateAdminUsers);
+router.delete("/admin_users/:id", [authMiddleware.checkUserAuth], deleteAdminUsers);
 
-router.get("/access_powers", getAllAccessPowers);
-router.get("/access_powers/:id", getAccessPowerById);
+router.get("/access_powers", [authMiddleware.checkUserAuth], getAllAccessPowers);
+router.get("/access_powers/:id", [authMiddleware.checkUserAuth], getAccessPowerById);
 router.post("/access_powers", addAccessPower);
-router.put("/access_powers/:id", updateAccessPower);
-router.delete("/access_powers/:id", deleteAccessPower);
+router.put("/access_powers/:id", [authMiddleware.checkUserAuth], updateAccessPower);
+router.delete("/access_powers/:id", [authMiddleware.checkUserAuth], deleteAccessPower);
 
-router.get("/access_roles", getAllAccessRoles);
-router.get("/access_roles/:id", getAccessRoleById);
+router.get("/access_roles", [authMiddleware.checkUserAuth], getAllAccessRoles);
+router.get("/access_roles/:id", [authMiddleware.checkUserAuth], getAccessRoleById);
 router.post("/access_roles", createAccessRole);
-router.put("/access_roles/:id", updateAccessRole);
-router.delete("/access_roles/:id", deleteAccessRole);
+router.put("/access_roles/:id", [authMiddleware.checkUserAuth], updateAccessRole);
+router.delete("/access_roles/:id", [authMiddleware.checkUserAuth], deleteAccessRole);
 
-router.get("/lead_category", getAllCategories);
-router.get("/lead_category/:id", getCategoryById);
-router.post("/lead_category", addCategory);
-router.put("/lead_category/:id", updateCategory);
-router.delete("/lead_category/:id", deleteCategory);
+router.get("/lead_category", [authMiddleware.checkUserAuth], getAllCategories);
+router.get("/lead_category/:id", [authMiddleware.checkUserAuth], getCategoryById);
+router.post("/lead_category", [authMiddleware.checkUserAuth], addCategory);
+router.put("/lead_category/:id", [authMiddleware.checkUserAuth], updateCategory);
+router.delete("/lead_category/:id", [authMiddleware.checkUserAuth], deleteCategory);
 
-router.get("/lead_source", getAllSources);
-router.get("/lead_source/:id", getSourceById);
-router.post("/lead_source", addSource);
-router.put("/lead_source/:id", updateSource);
-router.delete("/lead_source/:id", deleteSource);
+router.get("/lead_source", [authMiddleware.checkUserAuth], getAllSources);
+router.get("/lead_source/:id", [authMiddleware.checkUserAuth], getSourceById);
+router.post("/lead_source", [authMiddleware.checkUserAuth], addSource);
+router.put("/lead_source/:id", [authMiddleware.checkUserAuth], updateSource);
+router.delete("/lead_source/:id", [authMiddleware.checkUserAuth], deleteSource);
 
-router.get("/lead_channel", getAllChannels);
-router.get("/lead_channel/:id", getChannelById);
-router.post("/lead_channel", addChannel);
-router.put("/lead_channel/:id", updateChannel);
-router.delete("/lead_channel/:id", deleteChannel);
+router.get("/lead_channel", [authMiddleware.checkUserAuth], getAllChannels);
+router.get("/lead_channel/:id", [authMiddleware.checkUserAuth], getChannelById);
+router.post("/lead_channel", [authMiddleware.checkUserAuth], addChannel);
+router.put("/lead_channel/:id", [authMiddleware.checkUserAuth], updateChannel);
+router.delete("/lead_channel/:id", [authMiddleware.checkUserAuth], deleteChannel);
 
-router.get("/office_type", getAllOfficeTypes);
-router.get("/office_type/:id", getOfficeTypeById);
-router.post("/office_type", addOfficeType);
-router.put("/office_type/:id", updateOfficeType);
-router.delete("/office_type/:id", deleteOfficeType);
+router.get("/office_type", [authMiddleware.checkUserAuth], getAllOfficeTypes);
+router.get("/office_type/:id", [authMiddleware.checkUserAuth], getOfficeTypeById);
+router.post("/office_type", [authMiddleware.checkUserAuth], addOfficeType);
+router.put("/office_type/:id", [authMiddleware.checkUserAuth], updateOfficeType);
+router.delete("/office_type/:id", [authMiddleware.checkUserAuth], deleteOfficeType);
 
-router.get("/region", getAllRegions);
-router.get("/region/:id", getRegionById);
-router.post("/region", addRegion);
-router.put("/region/:id", updateRegion);
-router.delete("/region/:id", deleteRegion);
+router.get("/region", [authMiddleware.checkUserAuth], getAllRegions);
+router.get("/region/:id", [authMiddleware.checkUserAuth], getRegionById);
+router.post("/region", [authMiddleware.checkUserAuth], addRegion);
+router.put("/region/:id", [authMiddleware.checkUserAuth], updateRegion);
+router.delete("/region/:id", [authMiddleware.checkUserAuth], deleteRegion);
 
-router.get("/flags", getAllFlags);
-router.get("/flags/:id", getFlagById);
-router.post("/flags", addFlag);
-router.put("/flags/:id", updateFlag);
-router.delete("/flags/:id", deleteFlag);
+router.get("/flags", [authMiddleware.checkUserAuth], getAllFlags);
+router.get("/flags/:id", [authMiddleware.checkUserAuth], getFlagById);
+router.post("/flags", [authMiddleware.checkUserAuth], addFlag);
+router.put("/flags/:id", [authMiddleware.checkUserAuth], updateFlag);
+router.delete("/flags/:id", [authMiddleware.checkUserAuth], deleteFlag);
 
-router.get("/marital_status", getAllMaritalStatuses);
-router.get("/marital_status/:id", getMaritalStatusById);
-router.post("/marital_status", addMaritalStatus);
-router.put("/marital_status/:id", updateMaritalStatus);
-router.delete("/marital_status/:id", deleteMaritalStatus);
+router.get("/marital_status", [authMiddleware.checkUserAuth], getAllMaritalStatuses);
+router.get("/marital_status/:id", [authMiddleware.checkUserAuth], getMaritalStatusById);
+router.post("/marital_status", [authMiddleware.checkUserAuth], addMaritalStatus);
+router.put("/marital_status/:id", [authMiddleware.checkUserAuth], updateMaritalStatus);
+router.delete("/marital_status/:id", [authMiddleware.checkUserAuth], deleteMaritalStatus);
 
-router.get("/country", getAllCountries);
-router.get("/country/:id", getCountryById);
-router.post("/country", addCountry);
-router.put("/country/:id", updateCountry);
-router.delete("/country/:id", deleteCountry);
+router.get("/country", [authMiddleware.checkUserAuth], getAllCountries);
+router.get("/country/:id", [authMiddleware.checkUserAuth], getCountryById);
+router.post("/country", [authMiddleware.checkUserAuth], addCountry);
+router.put("/country/:id", [authMiddleware.checkUserAuth], updateCountry);
+router.delete("/country/:id", [authMiddleware.checkUserAuth], deleteCountry);
 
-router.get("/university", getAllUniversities);
-router.get("/university/:id", getUniversityById);
-router.post("/university", addUniversity);
-router.put("/university/:id", updateUniversity);
-router.delete("/university/:id", deleteUniversity);
+router.get("/university", [authMiddleware.checkUserAuth], getAllUniversities);
+router.get("/university/:id", [authMiddleware.checkUserAuth], getUniversityById);
+router.post("/university", [authMiddleware.checkUserAuth], addUniversity);
+router.put("/university/:id", [authMiddleware.checkUserAuth], updateUniversity);
+router.delete("/university/:id", [authMiddleware.checkUserAuth], deleteUniversity);
 
-router.get("/programs", getAllPrograms);
-router.get("/programs/:id", getProgramById);
-router.post("/programs", addProgram);
-router.put("/programs/:id", updateProgram);
-router.delete("/programs/:id", deleteProgram);
+router.get("/programs", [authMiddleware.checkUserAuth], getAllPrograms);
+router.get("/programs/:id", [authMiddleware.checkUserAuth], getProgramById);
+router.post("/programs", [authMiddleware.checkUserAuth], addProgram);
+router.put("/programs/:id", [authMiddleware.checkUserAuth], updateProgram);
+router.delete("/programs/:id", [authMiddleware.checkUserAuth], deleteProgram);
 
-router.get("/branches", getAllBranches);
-router.get("/branches/:id", getBranchById);
-router.post("/branches", addBranch);
-router.put("/branches/:id", updateBranch);
-router.delete("/branches/:id", deleteBranch);
+router.get("/branches", [authMiddleware.checkUserAuth], getAllBranches);
+router.get("/branches/:id", [authMiddleware.checkUserAuth], getBranchById);
+router.post("/branches", [authMiddleware.checkUserAuth], addBranch);
+router.put("/branches/:id", [authMiddleware.checkUserAuth], updateBranch);
+router.delete("/branches/:id", [authMiddleware.checkUserAuth], deleteBranch);
 
-router.post("/leads", createLead);
-router.get("/leads", getAllLeads);
-router.put("/leads/:id", updateLead);
-router.delete("/leads/:id", deleteLead);
+router.post("/leads", [authMiddleware.checkUserAuth], createLead);
+router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
+router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
+router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
+
+router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
+router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], saveStudentBasicInfo);
+router.post("/saveStudentAcademicInfo", [authMiddleware.checkUserAuth], saveStudentAcademicInfo);
+router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], saveStudentStudyPreferenceInfo);
 
 module.exports = router;
