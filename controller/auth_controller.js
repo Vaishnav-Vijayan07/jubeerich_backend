@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
 
     const powerNames = powers?.map((power) => power?.power_name);
 
-    const token = jwt.sign({ userId: user.id }, process.env.secret || "mysecretkey", { expiresIn: "24h" });
+    const token = jwt.sign({ userId: user.id }, secret || "mysecretkey", { expiresIn: "24h" });
     console.log("token", token);
 
     res.status(200).json({
