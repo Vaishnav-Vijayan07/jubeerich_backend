@@ -35,15 +35,35 @@ exports.getStudentBasicInfoById = async (req, res) => {
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
       attributes: [
-        'full_name',
-        'email',
-        'phone',
-        'city',
-        'preferred_country',
-        'office_type',
-        'remarks',
-        'lead_received_date'
-      ],  // List the required fields
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "preferred_country",
+        "office_type",
+        "remarks",
+        "source_id",
+        "channel_id",
+        "lead_received_date",
+      ], // List the required fields
+      include: [
+        {
+          model: db.country,
+          as: "country_name",
+          attributes: ["country_name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
+      ],
+      nest: true,
     });
 
     // Extract data values, or use default empty object if no data
@@ -53,6 +73,9 @@ exports.getStudentBasicInfoById = async (req, res) => {
     // Combine basicInfoData with filtered primaryInfoData
     const combinedInfo = {
       ...primaryInfoData,
+      country_name: primaryInfo?.country_name?.country_name,
+      source_name: primaryInfo?.source_name?.source_name,
+      channel_name: primaryInfo?.channel_name.channel_name,
       ...basicInfoData,
     };
 

@@ -9,8 +9,12 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
       intersted_country: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.INTEGER,
         allowNull: true,
+        references: {
+          model: "countries",
+          key: "id",
+        },
       },
       intrested_institution: {
         type: Sequelize.STRING(255),

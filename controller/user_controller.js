@@ -186,19 +186,19 @@ exports.createLead = async (req, res) => {
       { transaction }
     );
 
-    console.log("userPrimaryInfo==>", userPrimaryInfo);
-
     const leastAssignedStaff = await getLeastAssignedUser();
-    console.log("leastAssignedStaff===>", leastAssignedStaff);
+
     if (leastAssignedStaff) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
+
+      const country = await db.country.findByPk(preferred_country);
       // Create a task for the new lead
       const task = await db.tasks.create(
         {
           studentId: userPrimaryInfo.id,
           userId: leastAssignedStaff,
-          title: `Follow up with ${full_name}`,
+          title: `${full_name} - ${country.country_name} - ${phone}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
