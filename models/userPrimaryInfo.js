@@ -77,6 +77,14 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      created_by: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+      },
       region_id: {
         type: Sequelize.INTEGER,
         references: {

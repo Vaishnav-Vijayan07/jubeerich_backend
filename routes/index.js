@@ -95,7 +95,7 @@ const {
   updateBranch,
   deleteBranch,
 } = require("../controller/branch_controller");
-const { createLead, getAllLeads, updateLead, deleteLead } = require("../controller/user_controller");
+const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser } = require("../controller/user_controller");
 const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -193,6 +193,7 @@ router.delete("/branches/:id", [authMiddleware.checkUserAuth], deleteBranch);
 
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
+router.get("/leads_by_user", [authMiddleware.checkUserAuth], getLeadsByCreatedUser);
 router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
