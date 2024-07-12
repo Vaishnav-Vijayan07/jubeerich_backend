@@ -116,5 +116,10 @@ db.adminUsers.hasMany(db.tasks, { foreignKey: 'userId' });
 // In tasks model
 db.tasks.belongsTo(db.adminUsers, { foreignKey: 'userId' });
 
+db.programs.belongsTo(db.university, {
+  as: "university_name",
+  foreignKey: "university_id",
+});
+
 
 module.exports = db;

@@ -27,10 +27,20 @@ const checkUniversityExists = async (university_id) => {
 // Get all programs
 exports.getAllPrograms = async (req, res) => {
   try {
-    const programs = await Program.findAll();
+    const programs = await Program.findAll({
+      include: {
+        model: University,
+        as: 'university_name',
+        attributes: ['university_name'], // Include only the name attribute
+      },
+    });
+    const formattedResponse = programs.map((program) => ({
+      ...program.toJSON(),
+      university_name: program.university_name.university_name
+    }));
     res.status(200).json({
       status: true,
-      data: programs,
+      data: formattedResponse,
     });
   } catch (error) {
     console.error(`Error retrieving programs: ${error}`);

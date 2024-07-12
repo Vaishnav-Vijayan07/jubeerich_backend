@@ -20,9 +20,27 @@ module.exports = (sequelize, Sequelize) => {
         password: {
             type: Sequelize.STRING
         },
-        bio:{
+
+        bio: {
             type: Sequelize.STRING
         },
+        branch_id: {
+            type: Sequelize.INTEGER,
+            references: {
+                model: "branches",
+                key: "id",
+            },
+            allowNull: true,
+        },
+        region_id: {
+            type: Sequelize.INTEGER,
+            references: {
+                model: "regions",
+                key: "id",
+            },
+            allowNull: true,
+        },
+
     });
 
     return User;
