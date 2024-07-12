@@ -215,8 +215,7 @@ exports.createLead = async (req, res) => {
         console.log("task==>", task);
       }
     }
-
-
+    
     // Commit the transaction
     await transaction.commit();
 
