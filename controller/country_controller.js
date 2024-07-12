@@ -62,11 +62,13 @@ exports.addCountry = [
       });
     }
 
-    const { country_name } = req.body;
+    const { country_name, isd, country_code } = req.body;
 
     try {
       const newCountry = await Country.create({
         country_name,
+        isd,
+        country_code,
       });
       res.status(201).json({
         status: true,
@@ -110,6 +112,8 @@ exports.updateCountry = [
       // Update only the fields that are provided in the request body
       const updatedCountry = await country.update({
         country_name: req.body.country_name ?? country.country_name,
+        isd: req.body.isd ?? country.isd,
+        country_code: req.body.country_code ?? country.country_code,
       });
 
       res.status(200).json({
