@@ -187,27 +187,35 @@ exports.createLead = async (req, res) => {
       { transaction }
     );
 
-    const leastAssignedStaff = await getLeastAssignedUser();
+    const userRole = await db.adminUsers.findOne({ where: { id: userId } });
 
-    if (leastAssignedStaff) {
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 1);
+    console.log("userRole====>", userRole.role_id);
 
-      const country = await db.country.findByPk(preferred_country);
-      // Create a task for the new lead
-      const task = await db.tasks.create(
-        {
-          studentId: userPrimaryInfo.id,
-          userId: leastAssignedStaff,
-          title: `${full_name} - ${country.country_name} - ${phone}`,
-          dueDate: dueDate,
-          updatedBy: userId,
-        },
-        { transaction }
-      );
+    if (userRole?.role_id == 2) {
 
-      console.log("task==>", task);
+      const leastAssignedStaff = await getLeastAssignedUser();
+
+      if (leastAssignedStaff) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        const country = await db.country.findByPk(preferred_country);
+        // Create a task for the new lead
+        const task = await db.tasks.create(
+          {
+            studentId: userPrimaryInfo.id,
+            userId: leastAssignedStaff,
+            title: `${full_name} - ${country.country_name} - ${phone}`,
+            dueDate: dueDate,
+            updatedBy: userId,
+          },
+          { transaction }
+        );
+
+        console.log("task==>", task);
+      }
     }
+
 
     // Commit the transaction
     await transaction.commit();
@@ -277,7 +285,7 @@ exports.getLeadsByCreatedUser = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
-      where: { is_deleted: false,  created_by: userId},
+      where: { is_deleted: false, created_by: userId },
       include: [
         { model: db.leadCategory, as: "category_name", attributes: ["category_name"] },
         { model: db.leadSource, as: "source_name", attributes: ["source_name"] },
