@@ -44,6 +44,30 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: false,
       },
+      universities: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      campus: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      stream: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      course: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      duration: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      course_fee: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+      },
     },
     {
       underscored: true,

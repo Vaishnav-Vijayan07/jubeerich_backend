@@ -171,6 +171,72 @@ exports.saveStudentAcademicInfo = async (req, res) => {
   }
 };
 
+// exports.saveStudentStudyPreferenceInfo = async (req, res) => {
+//   const {
+//     intersted_country,
+//     intrested_institution,
+//     intake_year,
+//     intake_month,
+//     estimated_budget,
+//     course_field_of_intrest,
+//     user_id,
+//   } = req.body;
+
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     let UserStudyPreferenceInfo = await db.userStudyPreference.findOne({
+//       where: { user_id: user_id },
+//     });
+
+//     let UserStudyPreferenceDetails;
+
+//     if (UserStudyPreferenceInfo) {
+//       UserStudyPreferenceDetails = await UserStudyPreferenceInfo.update(
+//         {
+//           intersted_country,
+//           intrested_institution,
+//           intake_year,
+//           intake_month,
+//           estimated_budget,
+//           course_field_of_intrest,
+//           user_id,
+//         },
+//         { transaction }
+//       );
+//     } else {
+//       UserStudyPreferenceDetails = await db.userStudyPreference.create(
+//         {
+//           intersted_country,
+//           intrested_institution,
+//           intake_year,
+//           intake_month,
+//           estimated_budget,
+//           course_field_of_intrest,
+//           user_id,
+//         },
+//         { transaction }
+//       );
+//     }
+
+//     await transaction.commit();
+
+//     return res.status(201).json({
+//       status: true,
+//       message: "Student study preference info updated successfully",
+//       data: { UserStudyPreferenceDetails },
+//     });
+//   } catch (error) {
+//     await transaction.rollback();
+//     console.error(`Error: ${error.message}`);
+
+//     return res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 exports.saveStudentStudyPreferenceInfo = async (req, res) => {
   const {
     intersted_country,
@@ -180,6 +246,12 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
     estimated_budget,
     course_field_of_intrest,
     user_id,
+    university,
+    campus,
+    stream,
+    course,
+    duration,
+    course_fee
   } = req.body;
 
   const transaction = await sequelize.transaction();
@@ -200,6 +272,12 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
           intake_month,
           estimated_budget,
           course_field_of_intrest,
+          university,
+          campus,
+          stream,
+          course,
+          duration,
+          course_fee,
           user_id,
         },
         { transaction }
@@ -213,6 +291,12 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
           intake_month,
           estimated_budget,
           course_field_of_intrest,
+          university,
+          campus,
+          stream,
+          course,
+          duration,
+          course_fee,
           user_id,
         },
         { transaction }
