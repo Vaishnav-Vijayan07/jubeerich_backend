@@ -37,6 +37,26 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      nationality: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      secondary_number: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      state: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      country: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      address: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
     },
     {
       underscored: true,

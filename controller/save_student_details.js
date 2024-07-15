@@ -20,6 +20,11 @@ exports.saveStudentBasicInfo = async (req, res) => {
     region_id,
     counsiler_id,
     branch_id,
+    nationality,
+    secondary_number,
+    state,
+    country,
+    address
   } = req.body;
 
   const transaction = await sequelize.transaction();
@@ -61,7 +66,12 @@ exports.saveStudentBasicInfo = async (req, res) => {
           dob,
           gender,
           marital_status,
-          user_id,
+          nationality,
+          secondary_number,
+          state,
+          country,
+          address,
+          user_id
         },
         { transaction }
       );
@@ -73,6 +83,11 @@ exports.saveStudentBasicInfo = async (req, res) => {
           dob,
           gender,
           marital_status,
+          nationality,
+          secondary_number,
+          state,
+          country,
+          address
         },
         { transaction }
       );
