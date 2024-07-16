@@ -112,7 +112,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
 };
 
 exports.saveStudentAcademicInfo = async (req, res) => {
-  const { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, user_id } =
+  const { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, company, years, user_id } =
     req.body;
 
   const transaction = await sequelize.transaction();
@@ -134,6 +134,8 @@ exports.saveStudentAcademicInfo = async (req, res) => {
           backlogs,
           work_experience,
           designation,
+          company,
+          years
         },
         { transaction }
       );
@@ -147,6 +149,8 @@ exports.saveStudentAcademicInfo = async (req, res) => {
           backlogs,
           work_experience,
           designation,
+          company,
+          years,
           user_id,
         },
         { transaction }

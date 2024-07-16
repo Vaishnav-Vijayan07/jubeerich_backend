@@ -36,6 +36,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
+      company: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      years: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
       user_id: {
         type: Sequelize.INTEGER,
         references: {
