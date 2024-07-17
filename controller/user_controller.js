@@ -33,6 +33,7 @@ exports.createLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
+    ielts
   } = req.body;
 
   // Start a transaction
@@ -182,7 +183,8 @@ exports.createLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date: lead_received_date || recieved_date,
-        created_by: userId
+        created_by: userId,
+        ielts
       },
       { transaction }
     );
@@ -351,6 +353,7 @@ exports.updateLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
+    ielts
   } = req.body;
 
   // Start a transaction
@@ -433,6 +436,7 @@ exports.updateLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date,
+        ielts
       },
       { transaction }
     );

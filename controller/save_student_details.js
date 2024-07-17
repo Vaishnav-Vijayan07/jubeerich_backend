@@ -50,6 +50,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
         region_id,
         counsiler_id,
         branch_id,
+        ielts
       },
       { transaction }
     );
@@ -72,8 +73,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
           state,
           country,
           address,
-          user_id,
-          ielts
+          user_id
         },
         { transaction }
       );
@@ -89,8 +89,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
           secondary_number,
           state,
           country,
-          address,
-          ielts
+          address
         },
         { transaction }
       );
