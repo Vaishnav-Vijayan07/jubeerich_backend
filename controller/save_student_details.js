@@ -24,7 +24,8 @@ exports.saveStudentBasicInfo = async (req, res) => {
     secondary_number,
     state,
     country,
-    address
+    address,
+    ielts
   } = req.body;
 
   const transaction = await sequelize.transaction();
@@ -71,7 +72,8 @@ exports.saveStudentBasicInfo = async (req, res) => {
           state,
           country,
           address,
-          user_id
+          user_id,
+          ielts
         },
         { transaction }
       );
@@ -87,7 +89,8 @@ exports.saveStudentBasicInfo = async (req, res) => {
           secondary_number,
           state,
           country,
-          address
+          address,
+          ielts
         },
         { transaction }
       );

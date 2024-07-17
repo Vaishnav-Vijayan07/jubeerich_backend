@@ -114,6 +114,11 @@ module.exports = (sequelize, Sequelize) => {
         defaultValue: false,
         allowNull: false,
       },
+      ielts: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
       remarks: {
         type: Sequelize.TEXT,
         allowNull: true,
