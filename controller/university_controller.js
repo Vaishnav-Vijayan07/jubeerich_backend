@@ -26,10 +26,23 @@ const checkCountryExists = async (country_id) => {
 // Get all universities
 exports.getAllUniversities = async (req, res) => {
   try {
-    const universities = await University.findAll();
+    const universities = await University.findAll({
+      include: [
+        {
+          model: db.country,
+          as: "country_name",
+          attributes: ["country_name"],
+        },
+      ],
+    });
+
+    const formattedResponse = universities.map((university) => ({
+      ...university.toJSON(),
+      country_name: university.country_name.country_name
+    }));
     res.status(200).json({
       status: true,
-      data: universities,
+      data: formattedResponse,
     });
   } catch (error) {
     console.error(`Error retrieving universities: ${error}`);

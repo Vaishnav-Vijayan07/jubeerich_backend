@@ -121,5 +121,6 @@ db.programs.belongsTo(db.university, {
   foreignKey: "university_id",
 });
 
+db.university.belongsTo(db.country, { as: "country_name", foreignKey: "country_id" });
 
 module.exports = db;
