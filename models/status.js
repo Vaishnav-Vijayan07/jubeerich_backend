@@ -17,7 +17,7 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
             },
             color: {
-                type: Sequelize.STRING(7),
+                type: Sequelize.STRING(10),
                 allowNull: true,
             },
             updated_by: {

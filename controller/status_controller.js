@@ -6,7 +6,7 @@ const { validationResult, check } = require("express-validator");
 const statusValidationRules = [
   check("status_name").not().isEmpty().withMessage("Status name is required"),
   check("status_description").optional().isString().withMessage("Status description must be a string"),
-  check("color").optional().isString().isLength({ min: 7, max: 7 }).withMessage("Color must be a valid hex code"),
+  check("color").optional().isString().isLength({ min: 7, max: 10 }).withMessage("Color must be a valid hex code"),
   check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
 
