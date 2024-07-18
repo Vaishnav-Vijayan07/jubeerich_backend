@@ -39,6 +39,7 @@ db.userAcademicInfo = require("./userAcademicInfo")(sequelize, Sequelize);
 db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
 db.tasks = require("./task")(sequelize, Sequelize);
 db.userBranches = require("./userBranches")(sequelize, Sequelize);
+db.status = require("./status")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {

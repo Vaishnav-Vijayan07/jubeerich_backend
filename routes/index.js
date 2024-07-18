@@ -102,6 +102,7 @@ const {
   saveStudentAcademicInfo,
   saveStudentStudyPreferenceInfo,
 } = require("../controller/save_student_details");
+const { getAllStatuses, getStatusById, addStatus, updateStatus, deleteStatus } = require("../controller/status_controller");
 
 const router = express.Router();
 
@@ -190,6 +191,12 @@ router.get("/branches/:id", [authMiddleware.checkUserAuth], getBranchById);
 router.post("/branches", [authMiddleware.checkUserAuth], addBranch);
 router.put("/branches/:id", [authMiddleware.checkUserAuth], updateBranch);
 router.delete("/branches/:id", [authMiddleware.checkUserAuth], deleteBranch);
+
+router.get("/status", [authMiddleware.checkUserAuth], getAllStatuses);
+router.get("/status/:id", [authMiddleware.checkUserAuth], getStatusById);
+router.post("/status", [authMiddleware.checkUserAuth], addStatus);
+router.put("/status/:id", [authMiddleware.checkUserAuth], updateStatus);
+router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
