@@ -5,44 +5,44 @@ const AccessRoles = db.accessRoles;
 
 // Create or Update StatusAccessRoles entries
 exports.statusConfig = async (req, res) => {
-    const { status_id, access_role_ids } = req.body;
+    const { access_role_id, status_ids } = req.body;
 
     // Validate request
-    if (!status_id || !access_role_ids || !Array.isArray(access_role_ids)) {
+    if (!access_role_id || !status_ids || !Array.isArray(status_ids)) {
         return res.status(400).send({
-            message: "Invalid input data. 'status_id' and 'access_role_ids' are required and 'access_role_ids' should be an array."
+            message: "Invalid input data. 'access_role_id' and 'status_ids' are required and 'status_ids' should be an array."
         });
     }
 
     try {
-        // Ensure the status exists
-        const status = await Status.findByPk(status_id);
-        if (!status) {
+        // Ensure the access role exists
+        const accessRole = await AccessRoles.findByPk(access_role_id);
+        if (!accessRole) {
             return res.status(404).send({
-                message: `Status with id ${status_id} not found.`
+                message: `AccessRole with id ${access_role_id} not found.`
             });
         }
 
-        // Ensure the access roles exist
-        const accessRoles = await AccessRoles.findAll({
+        // Ensure the statuses exist
+        const statuses = await Status.findAll({
             where: {
-                id: access_role_ids
+                id: status_ids
             }
         });
 
-        if (accessRoles.length !== access_role_ids.length) {
+        if (statuses.length !== status_ids.length) {
             return res.status(404).send({
-                message: "Some access roles were not found."
+                message: "Some statuses were not found."
             });
         }
 
-        // Delete existing entries for this status_id
+        // Delete existing entries for this access_role_id
         await StatusAccessRoles.destroy({
-            where: { status_id }
+            where: { access_role_id }
         });
 
         // Create new entries in the join table
-        const statusAccessRolesEntries = access_role_ids.map(access_role_id => ({
+        const statusAccessRolesEntries = status_ids.map(status_id => ({
             status_id,
             access_role_id
         }));
@@ -59,28 +59,28 @@ exports.statusConfig = async (req, res) => {
     }
 };
 
-exports.listAllStatusesWithAccessRoles = async (req, res) => {
+exports.listAllAccessRolesWithStatuses = async (req, res) => {
     try {
-        // Retrieve all statuses with their associated access roles
-        const statuses = await Status.findAll({
+        // Retrieve all access roles with their associated statuses
+        const accessRoles = await AccessRoles.findAll({
             include: [
                 {
-                    model: AccessRoles,
+                    model: Status,
                     through: {
                         attributes: [] // Exclude join table attributes
                     },
-                    attributes: ['id', 'role_name'] // Adjust attributes as needed
+                    attributes: ['id', 'status_name'] // Adjust attributes as needed
                 }
             ]
         });
 
         res.send({
-            message: "Statuses with associated AccessRoles retrieved successfully.",
-            data: statuses
+            message: "AccessRoles with associated Statuses retrieved successfully.",
+            data: accessRoles
         });
     } catch (error) {
         res.status(500).send({
-            message: error.message || "Some error occurred while retrieving the Statuses with AccessRoles."
+            message: error.message || "Some error occurred while retrieving the AccessRoles with Statuses."
         });
     }
 };
