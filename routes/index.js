@@ -216,6 +216,5 @@ router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], 
 
 router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses );
 router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig );
-// router.get("/status_config", [authMiddleware.checkUserAuth], listAllStatusesWithAccessRoles );
 
 module.exports = router;

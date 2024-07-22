@@ -69,7 +69,7 @@ exports.listAllAccessRolesWithStatuses = async (req, res) => {
                     through: {
                         attributes: [] // Exclude join table attributes
                     },
-                    attributes: ['id', 'status_name'] // Adjust attributes as needed
+                    attributes: ['id', 'status_name', 'color'] // Adjust attributes as needed
                 }
             ]
         });
