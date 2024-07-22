@@ -23,7 +23,7 @@ module.exports = (sequelize, Sequelize) => {
             updated_by: {
                 type: Sequelize.INTEGER,
                 allowNull: true,
-            },
+            }
         },
         {
             underscored: true,

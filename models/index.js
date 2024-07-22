@@ -40,6 +40,7 @@ db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
 db.tasks = require("./task")(sequelize, Sequelize);
 db.userBranches = require("./userBranches")(sequelize, Sequelize);
 db.status = require("./status")(sequelize, Sequelize);
+db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize)
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -123,5 +124,8 @@ db.programs.belongsTo(db.university, {
 });
 
 db.university.belongsTo(db.country, { as: "country_name", foreignKey: "country_id" });
+
+db.status.belongsToMany(db.accessRoles, { through: 'status_access_roles', foreignKey: 'status_id' });
+db.accessRoles.belongsToMany(db.status, { through: 'status_access_roles', foreignKey: 'access_role_id' });
 
 module.exports = db;

@@ -103,6 +103,7 @@ const {
   saveStudentStudyPreferenceInfo,
 } = require("../controller/save_student_details");
 const { getAllStatuses, getStatusById, addStatus, updateStatus, deleteStatus } = require("../controller/status_controller");
+const { listAllStatusesWithAccessRoles, statusConfig } = require("../controller/status_config");
 
 const router = express.Router();
 
@@ -212,5 +213,9 @@ router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], s
 router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], getStudentBasicInfoById);
 router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], getStudentAcademicInfoById);
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], getStudentStudyPreferenceInfoById);
+
+router.get("/status_config", [authMiddleware.checkUserAuth], listAllStatusesWithAccessRoles );
+router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig );
+// router.get("/status_config", [authMiddleware.checkUserAuth], listAllStatusesWithAccessRoles );
 
 module.exports = router;
