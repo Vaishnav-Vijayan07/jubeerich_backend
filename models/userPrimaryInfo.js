@@ -31,7 +31,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_categories",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
       },
       source_id: {
         type: Sequelize.INTEGER,
@@ -94,6 +94,14 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
       },
       counsiler_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+        allowNull: true,
+      },
+      assigned_cre_tl: {
         type: Sequelize.INTEGER,
         references: {
           model: "admin_users",

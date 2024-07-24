@@ -2,6 +2,7 @@ const Excel = require('exceljs');
 const db = require("../models");
 const Source = db.leadSource;
 const Channel = db.leadChannel;
+const AdminUsers = db.adminUsers;
 const OfficeType = db.officeType;
 const UserPrimaryInfo = db.userPrimaryInfo;
 const fs = require('fs');
@@ -25,6 +26,7 @@ exports.bulkUpload = async (req, res) => {
         const sources = await Source.findAll();
         const channels = await Channel.findAll();
         const officeTypes = await OfficeType.findAll();
+        const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  //find the user_d of cre_tl
 
         const sourceSlugToId = sources.reduce((acc, source) => {
             acc[source.slug] = source.id;
@@ -99,7 +101,8 @@ exports.bulkUpload = async (req, res) => {
                         remarks: row.getCell(12).value,
                         source_slug: sourceSlug,
                         channel_slug: channelSlug,
-                        office_type_slug: officeTypeSlug
+                        office_type_slug: officeTypeSlug,
+                        assigned_cre_tl: creTl ? creTl.id : null
                     };
 
                     // Validate row data
