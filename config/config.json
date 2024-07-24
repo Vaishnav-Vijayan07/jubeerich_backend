@@ -1,0 +1,23 @@
+{
+    "development": {
+        "username": "postgres",
+        "password": "root",
+        "database": "jubeerichDB",
+        "host": "localhost",
+        "dialect": "postgres"
+    },
+    "test": {
+        "username": "postgres",
+        "password": "root",
+        "database": "jubeerichDB",
+        "host": "localhost",
+        "dialect": "postgres"
+    },
+    "production": {
+        "username": "postgres",
+        "password": "root",
+        "database": "jubeerichDB",
+        "host": "localhost",
+        "dialect": "postgres"
+    }
+}

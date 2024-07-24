@@ -128,6 +128,9 @@ exports.bulkUpload = async (req, res) => {
             });
         });
 
+        // Save valid data to UserPrimaryInfo
+        await UserPrimaryInfo.bulkCreate(jsonData);
+
         if (invalidRows.length > 0) {
             const errorWorkbook = new Excel.Workbook();
             const errorSheet = errorWorkbook.addWorksheet('Invalid Rows');
@@ -169,9 +172,6 @@ exports.bulkUpload = async (req, res) => {
                 invalidFileLink: `${errorFilePath}` // Adjust this if necessary to serve static files
             });
         } else {
-            // Save valid data to UserPrimaryInfo
-            await UserPrimaryInfo.bulkCreate(jsonData);
-
             res.status(200).json({
                 status: true,
                 message: 'Data processed and saved successfully',
