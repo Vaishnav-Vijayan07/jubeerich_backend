@@ -2,6 +2,7 @@ const Excel = require("exceljs");
 const db = require("../models");
 const Source = db.leadSource;
 const Channel = db.leadChannel;
+const AdminUsers = db.adminUsers;
 const OfficeType = db.officeType;
 const UserPrimaryInfo = db.userPrimaryInfo;
 const fs = require("fs");
@@ -22,9 +23,10 @@ exports.bulkUpload = async (req, res) => {
     const invalidRows = [];
     const seenEntries = new Set(); // Track seen entries to detect duplicates
 
-    const sources = await Source.findAll();
-    const channels = await Channel.findAll();
-    const officeTypes = await OfficeType.findAll();
+        const sources = await Source.findAll();
+        const channels = await Channel.findAll();
+        const officeTypes = await OfficeType.findAll();
+        const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  //find the user_d of cre_tl
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -91,22 +93,23 @@ exports.bulkUpload = async (req, res) => {
 
           seenEntries.add(entryKey);
 
-          const rowData = {
-            lead_received_date: row.getCell(2).value,
-            source_id: sourceSlugToId[sourceSlug] || null,
-            channel_id: channelSlugToId[channelSlug] || null,
-            full_name: row.getCell(5).value,
-            email,
-            phone,
-            city: row.getCell(8).value,
-            office_type: officeTypeSlugToId[officeTypeSlug] || null,
-            preferred_country: row.getCell(10).value,
-            ielts: row.getCell(11).value,
-            remarks: row.getCell(12).value,
-            source_slug: sourceSlug,
-            channel_slug: channelSlug,
-            office_type_slug: officeTypeSlug,
-          };
+                    const rowData = {
+                        lead_received_date: row.getCell(2).value,
+                        source_id: sourceSlugToId[sourceSlug] || null,
+                        channel_id: channelSlugToId[channelSlug] || null,
+                        full_name: row.getCell(5).value,
+                        email,
+                        phone,
+                        city: row.getCell(8).value,
+                        office_type: officeTypeSlugToId[officeTypeSlug] || null,
+                        preferred_country: row.getCell(10).value,
+                        ielts: row.getCell(11).value,
+                        remarks: row.getCell(12).value,
+                        source_slug: sourceSlug,
+                        channel_slug: channelSlug,
+                        office_type_slug: officeTypeSlug,
+                        assigned_cre_tl: creTl ? creTl.id : null
+                    };
 
           // Validate row data
           const errors = validateRowData(rowData);
