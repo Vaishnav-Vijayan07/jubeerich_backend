@@ -13,7 +13,7 @@ exports.bulkUpload = async (req, res) => {
         const workbook = new Excel.Workbook();
         const fileName = `${uuidv4()}.xlsx`; // Generate a unique file name
         const filePath = path.join('uploads', fileName);
-        
+
         // Save the uploaded file to local storage
         fs.writeFileSync(filePath, req.file.buffer);
 
