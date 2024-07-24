@@ -95,7 +95,7 @@ const {
   updateBranch,
   deleteBranch,
 } = require("../controller/branch_controller");
-const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser } = require("../controller/user_controller");
+const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser, updateUserStatus, getStatusWithAccessPowers } = require("../controller/user_controller");
 const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -215,6 +215,9 @@ router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], getStu
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], getStudentStudyPreferenceInfoById);
 
 router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses );
-router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig );
+router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig);
+
+router.get('/lead_status',[authMiddleware.checkUserAuth],getStatusWithAccessPowers)
+router.put('/lead_status',[authMiddleware.checkUserAuth],updateUserStatus)
 
 module.exports = router;

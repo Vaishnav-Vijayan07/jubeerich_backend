@@ -109,6 +109,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      status_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "status",
+          key: "id",
+        },
+        allowNull: true,
+      },
       is_deleted: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
@@ -125,7 +133,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       lead_received_date: {
         type: Sequelize.DATE,
-        allowNull: true
+        allowNull: true,
       },
     },
     {

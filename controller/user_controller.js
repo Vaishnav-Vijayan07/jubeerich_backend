@@ -2,8 +2,12 @@ const { validationResult, check } = require("express-validator");
 const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
+const Status = db.status;
+const StatusAccessRole = db.statusAccessRoles;
+const AccessRole = db.accessRoles;
+const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, where } = require("sequelize");
 
 exports.createLead = async (req, res) => {
   // Validate the request
@@ -33,7 +37,7 @@ exports.createLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
-    ielts
+    ielts,
   } = req.body;
 
   // Start a transaction
@@ -43,7 +47,10 @@ exports.createLead = async (req, res) => {
     const userId = req.userDecodeId;
     console.log("userId===>", userId);
     // Check if referenced IDs exist in their respective tables
-    const categoryExists = await checkIfEntityExists("lead_category", category_id);
+    const categoryExists = await checkIfEntityExists(
+      "lead_category",
+      category_id
+    );
     if (!categoryExists) {
       await transaction.rollback(); // Rollback the transaction if category ID is invalid
       return res.status(400).json({
@@ -73,7 +80,10 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    const countryExists = await checkIfEntityExists("country", preferred_country);
+    const countryExists = await checkIfEntityExists(
+      "country",
+      preferred_country
+    );
     if (!countryExists) {
       await transaction.rollback(); // Rollback the transaction if country ID is invalid
       return res.status(400).json({
@@ -107,7 +117,10 @@ exports.createLead = async (req, res) => {
     }
 
     if (counsiler_id !== null) {
-      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
+      const counsilerExists = await checkIfEntityExists(
+        "admin_user",
+        counsiler_id
+      );
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -131,7 +144,10 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
+      const updatedByExists = await checkIfEntityExists(
+        "admin_user",
+        updated_by
+      );
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -143,7 +159,9 @@ exports.createLead = async (req, res) => {
     }
 
     // Check if email already exists
-    const existingEmailUser = await UserPrimaryInfo.findOne({ where: { email } });
+    const existingEmailUser = await UserPrimaryInfo.findOne({
+      where: { email },
+    });
     if (existingEmailUser) {
       await transaction.rollback(); // Rollback transaction if email is not unique
       return res.status(400).json({
@@ -184,7 +202,7 @@ exports.createLead = async (req, res) => {
         remarks,
         lead_received_date: lead_received_date || recieved_date,
         created_by: userId,
-        ielts
+        ielts,
       },
       { transaction }
     );
@@ -194,7 +212,6 @@ exports.createLead = async (req, res) => {
     console.log("userRole====>", userRole.role_id);
 
     if (userRole?.role_id == 2) {
-
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
@@ -217,7 +234,7 @@ exports.createLead = async (req, res) => {
         console.log("task==>", task);
       }
     }
-    
+
     // Commit the transaction
     await transaction.commit();
 
@@ -245,24 +262,59 @@ exports.getAllLeads = async (req, res) => {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: { is_deleted: false },
       include: [
-        { model: db.leadCategory, as: "category_name", attributes: ["category_name"] },
-        { model: db.leadSource, as: "source_name", attributes: ["source_name"] },
-        { model: db.leadChannel, as: "channel_name", attributes: ["channel_name"] },
+        {
+          model: db.leadCategory,
+          as: "category_name",
+          attributes: ["category_name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
         { model: db.country, as: "country_name", attributes: ["country_name"] },
-        { model: db.officeType, as: "office_type_name", attributes: ["office_type_name"] },
-        { model: db.region, as: "region_name", attributes: ["region_name"], required: false },
-        { model: db.adminUsers, as: "counsiler_name", attributes: ["name"], required: false },
-        { model: db.branches, as: "branch_name", attributes: ["branch_name"], required: false },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.region,
+          as: "region_name",
+          attributes: ["region_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "counsiler_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
       ],
     });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
       ...info.toJSON(),
-      category_name: info.category_name ? info.category_name.category_name : null,
+      category_name: info.category_name
+        ? info.category_name.category_name
+        : null,
       source_name: info.source_name ? info.source_name.source_name : null,
       channel_name: info.channel_name ? info.channel_name.channel_name : null,
       country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+      office_type_name: info.office_type_name
+        ? info.office_type_name.office_type_name
+        : null,
       region_name: info.region_name ? info.region_name.region_name : null,
       counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
       branch_name: info.branch_name ? info.branch_name.branch_name : null,
@@ -288,24 +340,59 @@ exports.getLeadsByCreatedUser = async (req, res) => {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: { is_deleted: false, created_by: userId },
       include: [
-        { model: db.leadCategory, as: "category_name", attributes: ["category_name"] },
-        { model: db.leadSource, as: "source_name", attributes: ["source_name"] },
-        { model: db.leadChannel, as: "channel_name", attributes: ["channel_name"] },
+        {
+          model: db.leadCategory,
+          as: "category_name",
+          attributes: ["category_name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
         { model: db.country, as: "country_name", attributes: ["country_name"] },
-        { model: db.officeType, as: "office_type_name", attributes: ["office_type_name"] },
-        { model: db.region, as: "region_name", attributes: ["region_name"], required: false },
-        { model: db.adminUsers, as: "counsiler_name", attributes: ["name"], required: false },
-        { model: db.branches, as: "branch_name", attributes: ["branch_name"], required: false },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.region,
+          as: "region_name",
+          attributes: ["region_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "counsiler_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
       ],
     });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
       ...info.toJSON(),
-      category_name: info.category_name ? info.category_name.category_name : null,
+      category_name: info.category_name
+        ? info.category_name.category_name
+        : null,
       source_name: info.source_name ? info.source_name.source_name : null,
       channel_name: info.channel_name ? info.channel_name.channel_name : null,
       country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+      office_type_name: info.office_type_name
+        ? info.office_type_name.office_type_name
+        : null,
       region_name: info.region_name ? info.region_name.region_name : null,
       counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
       branch_name: info.branch_name ? info.branch_name.branch_name : null,
@@ -353,7 +440,7 @@ exports.updateLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
-    ielts
+    ielts,
   } = req.body;
 
   // Start a transaction
@@ -383,19 +470,31 @@ exports.updateLead = async (req, res) => {
     ];
 
     for (const entity of entities) {
-      if (entity.id !== null && !(await checkIfEntityExists(entity.model, entity.id))) {
+      if (
+        entity.id !== null &&
+        !(await checkIfEntityExists(entity.model, entity.id))
+      ) {
         await transaction.rollback();
         return res.status(400).json({
           status: false,
           message: `Invalid ${entity.model.replace("_", " ")} ID provided`,
-          errors: [{ msg: `Please provide a valid ${entity.model.replace("_", " ")} ID` }],
+          errors: [
+            {
+              msg: `Please provide a valid ${entity.model.replace(
+                "_",
+                " "
+              )} ID`,
+            },
+          ],
         });
       }
     }
 
     // Check if email or phone already exists
     if (email !== lead.email) {
-      const existingEmailUser = await UserPrimaryInfo.findOne({ where: { email } });
+      const existingEmailUser = await UserPrimaryInfo.findOne({
+        where: { email },
+      });
       if (existingEmailUser) {
         await transaction.rollback();
         return res.status(400).json({
@@ -436,7 +535,7 @@ exports.updateLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date,
-        ielts
+        ielts,
       },
       { transaction }
     );
@@ -523,10 +622,121 @@ const getLeastAssignedUser = async (req, res) => {
       console.log("User with the least assignments:", leastAssignedUser);
       return leastAssignedUser;
     } else {
-      console.log('No matching users found or no assignments exist for user type "2".');
+      console.log(
+        'No matching users found or no assignments exist for user type "2".'
+      );
     }
   } catch (error) {
     console.error(`Error finding least assigned user: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.updateUserStatus = async (req, res) => {
+  const { status_id, lead_id } = req.body;
+  const userId = req.userDecodeId;
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+  try {
+    // Check if the status_id exists
+    const statusExists = await Status.findOne({
+      where: { id: status_id },
+    });
+
+    if (!statusExists) {
+      await transaction.rollback();
+      return res.status(400).json({
+        status: false,
+        message: "Invalid status ID",
+      });
+    }
+
+    // Check if the user exists
+    const leadExists = await UserPrimaryInfo.findOne({
+      where: { id: lead_id },
+    });
+
+    if (!leadExists) {
+      await transaction.rollback();
+      return res.status(404).json({
+        status: false,
+        message: "Lead not found",
+      });
+    }
+
+    const userExists = await AdminUsers.findOne({
+      where: { id: userId },
+    });
+
+    if (!userExists) {
+      await transaction.rollback();
+      return res.status(404).json({
+        status: false,
+        message: "Admin not found",
+      });
+    }
+
+    const userRoleId = userExists.role_id;
+
+    // Check if the status_id and userRoleId have a valid match in status_access_roles
+    const accessRoleExists = await StatusAccessRole.findOne({
+      where: { status_id: status_id, access_role_id: userRoleId },
+    });
+
+    if (!accessRoleExists) {
+      await transaction.rollback();
+      return res.status(403).json({
+        status: false,
+        message: "User does not have access to this status",
+      });
+    }
+    // Update user status
+    await leadExists.update({ status_id }, { transaction });
+    await transaction.commit();
+    return res.status(200).json({
+      status: true,
+      message: "User status updated successfully",
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(`Error updating user status: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getStatusWithAccessPowers = async (req, res) => {
+  const { user_role } = req.query;
+  const transaction = await sequelize.transaction();
+  try {
+    const statuses = await Status.findAll({
+      include: {
+        model: AccessRole,
+        through: {
+          attributes: [], // Exclude the join table attributes
+        },
+        where: {
+          id: user_role,
+        },
+        attributes: [],
+      },
+      attributes: ["id", "status_name", "status_description"],
+    });
+    await transaction.commit();
+    return res.status(200).json({
+      status: true,
+      message: "Statuses fetched successfully",
+      data: statuses,
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(`Error updating user status: ${error}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",

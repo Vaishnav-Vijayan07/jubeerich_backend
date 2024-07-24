@@ -45,6 +45,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "source_id",
         "channel_id",
         "lead_received_date",
+        "status_id"
       ], // List the required fields
       include: [
         {
@@ -61,6 +62,11 @@ exports.getStudentBasicInfoById = async (req, res) => {
           model: db.leadChannel,
           as: "channel_name",
           attributes: ["channel_name"],
+        },
+        {
+          model: db.status,
+          as:"status",
+          attributes: ["status_name"],
         },
       ],
       nest: true,
