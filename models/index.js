@@ -40,7 +40,7 @@ db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
 db.tasks = require("./task")(sequelize, Sequelize);
 db.userBranches = require("./userBranches")(sequelize, Sequelize);
 db.status = require("./status")(sequelize, Sequelize);
-db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize)
+db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -109,23 +109,39 @@ db.branches.belongsTo(db.region, {
   foreignKey: "region_id",
 });
 
-db.tasks.belongsTo(db.userPrimaryInfo, { as: "student_name", foreignKey: "studentId" });
+db.tasks.belongsTo(db.userPrimaryInfo, {
+  as: "student_name",
+  foreignKey: "studentId",
+});
 db.tasks.belongsTo(db.adminUsers, { as: "user_name", foreignKey: "userId" });
 
+db.userPrimaryInfo.belongsTo(db.status, {
+  as: "status",
+  foreignKey: "status_id",
+});
 // In adminUsers model
-db.adminUsers.hasMany(db.tasks, { foreignKey: 'userId' });
+db.adminUsers.hasMany(db.tasks, { foreignKey: "userId" });
 
 // In tasks model
-db.tasks.belongsTo(db.adminUsers, { foreignKey: 'userId' });
+db.tasks.belongsTo(db.adminUsers, { foreignKey: "userId" });
 
 db.programs.belongsTo(db.university, {
   as: "university_name",
   foreignKey: "university_id",
 });
 
-db.university.belongsTo(db.country, { as: "country_name", foreignKey: "country_id" });
+db.university.belongsTo(db.country, {
+  as: "country_name",
+  foreignKey: "country_id",
+});
 
-db.status.belongsToMany(db.accessRoles, { through: 'status_access_roles', foreignKey: 'status_id' });
-db.accessRoles.belongsToMany(db.status, { through: 'status_access_roles', foreignKey: 'access_role_id' });
+db.status.belongsToMany(db.accessRoles, {
+  through: "status_access_roles",
+  foreignKey: "status_id",
+});
+db.accessRoles.belongsToMany(db.status, {
+  through: "status_access_roles",
+  foreignKey: "access_role_id",
+});
 
 module.exports = db;

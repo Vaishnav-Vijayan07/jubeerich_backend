@@ -144,6 +144,7 @@ exports.deleteCountry = async (req, res) => {
       });
     }
 
+  
     await country.destroy();
     res.status(200).json({
       status: true,

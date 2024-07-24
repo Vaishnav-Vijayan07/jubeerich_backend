@@ -100,7 +100,7 @@ const {
   updateBranch,
   deleteBranch,
 } = require("../controller/branch_controller");
-const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser } = require("../controller/user_controller");
+const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser, updateUserStatus, getStatusWithAccessPowers } = require("../controller/user_controller");
 const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -222,6 +222,9 @@ router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], 
 
 router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses);
 router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig);
+
+router.get('/lead_status',[authMiddleware.checkUserAuth],getStatusWithAccessPowers)
+router.put('/lead_status',[authMiddleware.checkUserAuth],updateUserStatus)
 
 //excel import
 router.post('/excel_import', upload.single('file'), [authMiddleware.checkUserAuth], bulkUpload);
