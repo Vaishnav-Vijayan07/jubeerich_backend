@@ -31,7 +31,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_categories",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
       },
       source_id: {
         type: Sequelize.INTEGER,
