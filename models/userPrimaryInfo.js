@@ -39,7 +39,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_sources",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
       },
       channel_id: {
         type: Sequelize.INTEGER,

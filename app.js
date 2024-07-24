@@ -18,7 +18,11 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "uploads")));
+
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join('uploads')));
+
 
 // CORS headers are already handled by the cors() middleware
 

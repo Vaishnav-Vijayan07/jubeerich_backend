@@ -1,4 +1,9 @@
 const express = require("express");
+const multer = require('multer');
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const admnController = require("../controller/admin");
 const authMiddleware = require("../middleware/auth");
@@ -104,6 +109,7 @@ const {
 } = require("../controller/save_student_details");
 const { getAllStatuses, getStatusById, addStatus, updateStatus, deleteStatus } = require("../controller/status_controller");
 const { statusConfig, listAllAccessRolesWithStatuses } = require("../controller/status_config");
+const { bulkUpload } = require("../controller/lead_import_controller");
 
 const router = express.Router();
 
@@ -214,10 +220,10 @@ router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], getStuden
 router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], getStudentAcademicInfoById);
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], getStudentStudyPreferenceInfoById);
 
-router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses );
+router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses);
 router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig);
 
-router.get('/lead_status',[authMiddleware.checkUserAuth],getStatusWithAccessPowers)
-router.put('/lead_status',[authMiddleware.checkUserAuth],updateUserStatus)
+//excel import
+router.post('/excel_import', upload.single('file'), [authMiddleware.checkUserAuth], bulkUpload);
 
 module.exports = router;

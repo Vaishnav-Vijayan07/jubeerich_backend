@@ -1,3 +1,5 @@
+const { v4: uuidv4 } = require('uuid');
+
 module.exports = (sequelize, Sequelize) => {
   const LeadSource = sequelize.define("lead_source", {
     id: {
@@ -14,11 +16,15 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: true,
     },
+    slug: {
+      type: Sequelize.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
     updated_by: {
       type: Sequelize.STRING(255),
       allowNull: true,
     },
   });
-
   return LeadSource;
 };
