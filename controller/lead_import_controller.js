@@ -11,6 +11,7 @@ const { v4: uuidv4 } = require('uuid');
 
 exports.bulkUpload = async (req, res) => {
     try {
+        const userId = req.userDecodeId;
         const workbook = new Excel.Workbook();
         const fileName = `${uuidv4()}.xlsx`; // Generate a unique file name
         const filePath = path.join('uploads', fileName);
@@ -102,7 +103,8 @@ exports.bulkUpload = async (req, res) => {
                         source_slug: sourceSlug,
                         channel_slug: channelSlug,
                         office_type_slug: officeTypeSlug,
-                        assigned_cre_tl: creTl ? creTl.id : null
+                        assigned_cre_tl: creTl ? creTl.id : null,
+                        created_by: userId
                     };
 
                     // Validate row data

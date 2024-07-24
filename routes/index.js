@@ -100,7 +100,7 @@ const {
   updateBranch,
   deleteBranch,
 } = require("../controller/branch_controller");
-const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser, updateUserStatus, getStatusWithAccessPowers } = require("../controller/user_controller");
+const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser, updateUserStatus, getStatusWithAccessPowers, geLeadsForCreTl } = require("../controller/user_controller");
 const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -208,6 +208,7 @@ router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
 router.get("/leads_by_user", [authMiddleware.checkUserAuth], getLeadsByCreatedUser);
+router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], geLeadsForCreTl);
 router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
