@@ -26,7 +26,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     slug: {
       type: Sequelize.STRING(255),
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
     updated_by: {
