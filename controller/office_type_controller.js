@@ -9,6 +9,20 @@ const officeTypeValidationRules = [
   check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
 
+// Utility function to generate a unique slug
+async function generateUniqueSlug(name, model) {
+  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '').toUpperCase();
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  while (await model.findOne({ where: { slug: uniqueSlug } })) {
+    uniqueSlug = `${baseSlug}_${counter}`;
+    counter++;
+  }
+
+  return uniqueSlug;
+}
+
 // Get all office types
 exports.getAllOfficeTypes = async (req, res) => {
   try {
@@ -67,9 +81,11 @@ exports.addOfficeType = [
     const { office_type_name, office_type_description, updated_by } = req.body;
 
     try {
+      const slug = await generateUniqueSlug(office_type_name, OfficeType);
       const newOfficeType = await OfficeType.create({
         office_type_name,
         office_type_description,
+        slug, // Add the slug here
         updated_by,
       });
       res.status(201).json({
@@ -111,16 +127,18 @@ exports.updateOfficeType = [
         });
       }
 
-      // Update only the fields that are provided in the request body
-      const updatedOfficeType = await officeType.update({
-        office_type_name:
-          req.body.office_type_name !== undefined ? req.body.office_type_name : officeType.office_type_name,
-        office_type_description:
-          req.body.office_type_description !== undefined
-            ? req.body.office_type_description
-            : officeType.office_type_description,
+      const updatedData = {
+        office_type_name: req.body.office_type_name !== undefined ? req.body.office_type_name : officeType.office_type_name,
+        office_type_description: req.body.office_type_description !== undefined ? req.body.office_type_description : officeType.office_type_description,
         updated_by: req.body.updated_by !== undefined ? req.body.updated_by : officeType.updated_by,
-      });
+      };
+
+      // Update slug if office_type_name is changed
+      if (req.body.office_type_name && req.body.office_type_name !== officeType.office_type_name) {
+        updatedData.slug = await generateUniqueSlug(req.body.office_type_name, OfficeType);
+      }
+
+      const updatedOfficeType = await officeType.update(updatedData);
 
       res.status(200).json({
         status: true,
@@ -136,6 +154,7 @@ exports.updateOfficeType = [
     }
   },
 ];
+
 // Delete an office type
 exports.deleteOfficeType = async (req, res) => {
   const id = parseInt(req.params.id);

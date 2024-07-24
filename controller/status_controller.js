@@ -2,6 +2,7 @@ const db = require("../models");
 const Status = db.status;
 const { validationResult, check } = require("express-validator");
 
+
 // Validation rules for Status
 const statusValidationRules = [
   check("status_name").not().isEmpty().withMessage("Status name is required"),

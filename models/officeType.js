@@ -16,6 +16,11 @@ module.exports = (sequelize, Sequelize) => {
     updated_by: {
       type: Sequelize.INTEGER,
     },
+    slug: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      unique: true, // Ensure uniqueness of slugs
+    },
   });
 
   return OfficeType;

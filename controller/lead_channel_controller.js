@@ -1,6 +1,26 @@
 const db = require("../models");
 const Channel = db.leadChannel;
 
+// Function to generate a unique slug
+async function generateUniqueSlug(name) {
+  // Create a base slug with underscores and capitalize it
+  const baseSlug = name.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric characters with underscores
+    .replace(/(^_+|_+$)/g, '')   // Remove leading and trailing underscores
+    .toUpperCase();              // Capitalize the slug
+
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  while (await Channel.findOne({ where: { slug: uniqueSlug } })) {
+    uniqueSlug = `${baseSlug}_${counter}`; // Use underscore instead of hyphen for uniqueness
+    counter++;
+  }
+
+  return uniqueSlug;
+}
+
+
 // Get all channels
 exports.getAllChannels = (req, res) => {
   Channel.findAll({
@@ -60,26 +80,31 @@ exports.getChannelById = (req, res) => {
 };
 
 // Add a new channel
-exports.addChannel = (req, res) => {
+exports.addChannel = async (req, res) => {
   const { source_id, channel_name, channel_description, updated_by } = req.body;
 
-  Channel.create({
-    source_id,
-    channel_name,
-    channel_description,
-    updated_by,
-  })
-    .then((newChannel) => {
-      res.status(201).json({
-        status: true,
-        message: "Channel created successfully",
-        data: newChannel,
-      });
-    })
-    .catch((error) => {
-      console.error(`Error creating channel: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+  try {
+    // Generate the slug
+    const slug = await generateUniqueSlug(channel_name);
+
+    // Create the channel
+    const newChannel = await Channel.create({
+      source_id,
+      channel_name,
+      channel_description,
+      updated_by,
+      slug, // Add slug here
     });
+
+    res.status(201).json({
+      status: true,
+      message: "Channel created successfully",
+      data: newChannel,
+    });
+  } catch (error) {
+    console.error(`Error creating channel: ${error}`);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 // Update a channel
@@ -88,18 +113,28 @@ exports.updateChannel = (req, res) => {
   const { source_id, channel_name, channel_description, updated_by } = req.body;
 
   Channel.findByPk(id)
-    .then((channel) => {
+    .then(async (channel) => {
       if (!channel) {
         return res.status(404).json({ message: "Channel not found" });
       }
 
+      // Update fields
+      const updatedData = {
+        source_id,
+        channel_description,
+        updated_by,
+      };
+
+      // Only update the slug if the channel name has changed
+      if (channel_name && channel_name !== channel.channel_name) {
+        updatedData.channel_name = channel_name;
+        updatedData.slug = await generateUniqueSlug(channel_name);
+      } else {
+        updatedData.channel_name = channel_name || channel.channel_name;
+      }
+
       channel
-        .update({
-          source_id,
-          channel_name,
-          channel_description,
-          updated_by,
-        })
+        .update(updatedData)
         .then((updatedChannel) => {
           res.status(200).json({
             message: "Channel updated successfully",
