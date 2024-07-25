@@ -258,9 +258,17 @@ exports.createLead = async (req, res) => {
 };
 
 exports.getAllLeads = async (req, res) => {
+  const cre_id = req.userDecodeId;
+
   try {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
-      where: { is_deleted: false },
+      where: {
+        [db.Sequelize.Op.or]: [
+          { assigned_cre: cre_id },
+          { created_by: cre_id },
+        ],
+        is_deleted: false,
+      },
       include: [
         {
           model: db.leadCategory,
@@ -323,7 +331,8 @@ exports.getAllLeads = async (req, res) => {
     res.status(200).json({
       status: true,
       message: "User primary info retrieved successfully",
-      data: formattedUserPrimaryInfos,
+      formattedUserPrimaryInfos,
+      allCres:null
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
@@ -414,13 +423,18 @@ exports.getLeadsByCreatedUser = async (req, res) => {
 
 exports.geLeadsForCreTl = async (req, res) => {
   try {
+    const allCres = await AdminUsers.findAll({
+      where: { role_id: 3 },
+      attributes: ["id", "name"],
+    });
+
     const userId = req.userDecodeId;
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
         [db.Sequelize.Op.or]: [
           { assigned_cre_tl: userId },
-          { created_by: userId }
-        ]
+          { created_by: userId },
+        ],
       },
       include: [
         {
@@ -457,6 +471,11 @@ exports.geLeadsForCreTl = async (req, res) => {
           required: false,
         },
         {
+          model: db.adminUsers,
+          as: "cre_name",
+          attributes: ["id", "name"],
+        },
+        {
           model: db.branches,
           as: "branch_name",
           attributes: ["branch_name"],
@@ -479,16 +498,77 @@ exports.geLeadsForCreTl = async (req, res) => {
       region_name: info.region_name ? info.region_name.region_name : null,
       counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
       branch_name: info.branch_name ? info.branch_name.branch_name : null,
+      cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
     }));
 
     res.status(200).json({
       status: true,
       message: "User primary info retrieved successfully",
-      data: formattedUserPrimaryInfos,
+      formattedUserPrimaryInfos,
+      allCres,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.assignCres = async (req, res) => {
+  const { cre_id, user_ids } = req.body;
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Validate cre_id
+    if (!cre_id) {
+      return res.status(400).json({
+        status: false,
+        message: "cre_id is required",
+      });
+    }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Update assigned_cre for each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        await UserPrimaryInfo.update(
+          { assigned_cre: cre_id },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "CRE assigned successfully",
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(`Error assigning CRE: ${error}`);
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });

@@ -109,6 +109,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      assigned_cre: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+        allowNull: true,
+      },
       branch_id: {
         type: Sequelize.INTEGER,
         references: {

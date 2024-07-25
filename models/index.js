@@ -94,6 +94,11 @@ db.userPrimaryInfo.belongsTo(db.adminUsers, {
   as: "counsiler_name",
   foreignKey: "counsiler_id",
 });
+
+db.userPrimaryInfo.belongsTo(db.adminUsers, {
+  as: "cre_name",
+  foreignKey: "assigned_cre",
+});
 db.userPrimaryInfo.belongsTo(db.branches, {
   as: "branch_name",
   foreignKey: "branch_id",

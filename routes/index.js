@@ -1,5 +1,5 @@
 const express = require("express");
-const multer = require('multer');
+const multer = require("multer");
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -64,7 +64,13 @@ const {
   updateRegion,
   deleteRegion,
 } = require("../controller/region_controller");
-const { getAllFlags, getFlagById, addFlag, updateFlag, deleteFlag } = require("../controller/flag_controller");
+const {
+  getAllFlags,
+  getFlagById,
+  addFlag,
+  updateFlag,
+  deleteFlag,
+} = require("../controller/flag_controller");
 const {
   getAllMaritalStatuses,
   getMaritalStatusById,
@@ -100,15 +106,39 @@ const {
   updateBranch,
   deleteBranch,
 } = require("../controller/branch_controller");
-const { createLead, getAllLeads, updateLead, deleteLead, getLeadsByCreatedUser, updateUserStatus, getStatusWithAccessPowers, geLeadsForCreTl } = require("../controller/user_controller");
-const { getTasks, getStudentBasicInfoById, getStudentAcademicInfoById, getStudentStudyPreferenceInfoById } = require("../controller/task_controller");
+const {
+  createLead,
+  getAllLeads,
+  updateLead,
+  deleteLead,
+  getLeadsByCreatedUser,
+  updateUserStatus,
+  getStatusWithAccessPowers,
+  geLeadsForCreTl,
+  assignCres,
+} = require("../controller/user_controller");
+const {
+  getTasks,
+  getStudentBasicInfoById,
+  getStudentAcademicInfoById,
+  getStudentStudyPreferenceInfoById,
+} = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
   saveStudentAcademicInfo,
   saveStudentStudyPreferenceInfo,
 } = require("../controller/save_student_details");
-const { getAllStatuses, getStatusById, addStatus, updateStatus, deleteStatus } = require("../controller/status_controller");
-const { statusConfig, listAllAccessRolesWithStatuses } = require("../controller/status_config");
+const {
+  getAllStatuses,
+  getStatusById,
+  addStatus,
+  updateStatus,
+  deleteStatus,
+} = require("../controller/status_controller");
+const {
+  statusConfig,
+  listAllAccessRolesWithStatuses,
+} = require("../controller/status_config");
 const { bulkUpload } = require("../controller/lead_import_controller");
 
 const router = express.Router();
@@ -116,28 +146,80 @@ const router = express.Router();
 router.post("/login", login);
 
 router.get("/admin_users", [authMiddleware.checkUserAuth], getAllAdminUsers);
-router.get("/admin_users/:id", [authMiddleware.checkUserAuth], getAdminUsersById);
+router.get(
+  "/admin_users/:id",
+  [authMiddleware.checkUserAuth],
+  getAdminUsersById
+);
 router.post("/admin_users", addAdminUsers);
-router.put("/admin_users/:id", [authMiddleware.checkUserAuth], updateAdminUsers);
-router.delete("/admin_users/:id", [authMiddleware.checkUserAuth], deleteAdminUsers);
+router.put(
+  "/admin_users/:id",
+  [authMiddleware.checkUserAuth],
+  updateAdminUsers
+);
+router.delete(
+  "/admin_users/:id",
+  [authMiddleware.checkUserAuth],
+  deleteAdminUsers
+);
 
-router.get("/access_powers", [authMiddleware.checkUserAuth], getAllAccessPowers);
-router.get("/access_powers/:id", [authMiddleware.checkUserAuth], getAccessPowerById);
+router.get(
+  "/access_powers",
+  [authMiddleware.checkUserAuth],
+  getAllAccessPowers
+);
+router.get(
+  "/access_powers/:id",
+  [authMiddleware.checkUserAuth],
+  getAccessPowerById
+);
 router.post("/access_powers", addAccessPower);
-router.put("/access_powers/:id", [authMiddleware.checkUserAuth], updateAccessPower);
-router.delete("/access_powers/:id", [authMiddleware.checkUserAuth], deleteAccessPower);
+router.put(
+  "/access_powers/:id",
+  [authMiddleware.checkUserAuth],
+  updateAccessPower
+);
+router.delete(
+  "/access_powers/:id",
+  [authMiddleware.checkUserAuth],
+  deleteAccessPower
+);
 
 router.get("/access_roles", [authMiddleware.checkUserAuth], getAllAccessRoles);
-router.get("/access_roles/:id", [authMiddleware.checkUserAuth], getAccessRoleById);
+router.get(
+  "/access_roles/:id",
+  [authMiddleware.checkUserAuth],
+  getAccessRoleById
+);
 router.post("/access_roles", createAccessRole);
-router.put("/access_roles/:id", [authMiddleware.checkUserAuth], updateAccessRole);
-router.delete("/access_roles/:id", [authMiddleware.checkUserAuth], deleteAccessRole);
+router.put(
+  "/access_roles/:id",
+  [authMiddleware.checkUserAuth],
+  updateAccessRole
+);
+router.delete(
+  "/access_roles/:id",
+  [authMiddleware.checkUserAuth],
+  deleteAccessRole
+);
 
 router.get("/lead_category", [authMiddleware.checkUserAuth], getAllCategories);
-router.get("/lead_category/:id", [authMiddleware.checkUserAuth], getCategoryById);
+router.get(
+  "/lead_category/:id",
+  [authMiddleware.checkUserAuth],
+  getCategoryById
+);
 router.post("/lead_category", [authMiddleware.checkUserAuth], addCategory);
-router.put("/lead_category/:id", [authMiddleware.checkUserAuth], updateCategory);
-router.delete("/lead_category/:id", [authMiddleware.checkUserAuth], deleteCategory);
+router.put(
+  "/lead_category/:id",
+  [authMiddleware.checkUserAuth],
+  updateCategory
+);
+router.delete(
+  "/lead_category/:id",
+  [authMiddleware.checkUserAuth],
+  deleteCategory
+);
 
 router.get("/lead_source", [authMiddleware.checkUserAuth], getAllSources);
 router.get("/lead_source/:id", [authMiddleware.checkUserAuth], getSourceById);
@@ -149,13 +231,29 @@ router.get("/lead_channel", [authMiddleware.checkUserAuth], getAllChannels);
 router.get("/lead_channel/:id", [authMiddleware.checkUserAuth], getChannelById);
 router.post("/lead_channel", [authMiddleware.checkUserAuth], addChannel);
 router.put("/lead_channel/:id", [authMiddleware.checkUserAuth], updateChannel);
-router.delete("/lead_channel/:id", [authMiddleware.checkUserAuth], deleteChannel);
+router.delete(
+  "/lead_channel/:id",
+  [authMiddleware.checkUserAuth],
+  deleteChannel
+);
 
 router.get("/office_type", [authMiddleware.checkUserAuth], getAllOfficeTypes);
-router.get("/office_type/:id", [authMiddleware.checkUserAuth], getOfficeTypeById);
+router.get(
+  "/office_type/:id",
+  [authMiddleware.checkUserAuth],
+  getOfficeTypeById
+);
 router.post("/office_type", [authMiddleware.checkUserAuth], addOfficeType);
-router.put("/office_type/:id", [authMiddleware.checkUserAuth], updateOfficeType);
-router.delete("/office_type/:id", [authMiddleware.checkUserAuth], deleteOfficeType);
+router.put(
+  "/office_type/:id",
+  [authMiddleware.checkUserAuth],
+  updateOfficeType
+);
+router.delete(
+  "/office_type/:id",
+  [authMiddleware.checkUserAuth],
+  deleteOfficeType
+);
 
 router.get("/region", [authMiddleware.checkUserAuth], getAllRegions);
 router.get("/region/:id", [authMiddleware.checkUserAuth], getRegionById);
@@ -169,11 +267,31 @@ router.post("/flags", [authMiddleware.checkUserAuth], addFlag);
 router.put("/flags/:id", [authMiddleware.checkUserAuth], updateFlag);
 router.delete("/flags/:id", [authMiddleware.checkUserAuth], deleteFlag);
 
-router.get("/marital_status", [authMiddleware.checkUserAuth], getAllMaritalStatuses);
-router.get("/marital_status/:id", [authMiddleware.checkUserAuth], getMaritalStatusById);
-router.post("/marital_status", [authMiddleware.checkUserAuth], addMaritalStatus);
-router.put("/marital_status/:id", [authMiddleware.checkUserAuth], updateMaritalStatus);
-router.delete("/marital_status/:id", [authMiddleware.checkUserAuth], deleteMaritalStatus);
+router.get(
+  "/marital_status",
+  [authMiddleware.checkUserAuth],
+  getAllMaritalStatuses
+);
+router.get(
+  "/marital_status/:id",
+  [authMiddleware.checkUserAuth],
+  getMaritalStatusById
+);
+router.post(
+  "/marital_status",
+  [authMiddleware.checkUserAuth],
+  addMaritalStatus
+);
+router.put(
+  "/marital_status/:id",
+  [authMiddleware.checkUserAuth],
+  updateMaritalStatus
+);
+router.delete(
+  "/marital_status/:id",
+  [authMiddleware.checkUserAuth],
+  deleteMaritalStatus
+);
 
 router.get("/country", [authMiddleware.checkUserAuth], getAllCountries);
 router.get("/country/:id", [authMiddleware.checkUserAuth], getCountryById);
@@ -182,10 +300,18 @@ router.put("/country/:id", [authMiddleware.checkUserAuth], updateCountry);
 router.delete("/country/:id", [authMiddleware.checkUserAuth], deleteCountry);
 
 router.get("/university", [authMiddleware.checkUserAuth], getAllUniversities);
-router.get("/university/:id", [authMiddleware.checkUserAuth], getUniversityById);
+router.get(
+  "/university/:id",
+  [authMiddleware.checkUserAuth],
+  getUniversityById
+);
 router.post("/university", [authMiddleware.checkUserAuth], addUniversity);
 router.put("/university/:id", [authMiddleware.checkUserAuth], updateUniversity);
-router.delete("/university/:id", [authMiddleware.checkUserAuth], deleteUniversity);
+router.delete(
+  "/university/:id",
+  [authMiddleware.checkUserAuth],
+  deleteUniversity
+);
 
 router.get("/programs", [authMiddleware.checkUserAuth], getAllPrograms);
 router.get("/programs/:id", [authMiddleware.checkUserAuth], getProgramById);
@@ -207,27 +333,69 @@ router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
-router.get("/leads_by_user", [authMiddleware.checkUserAuth], getLeadsByCreatedUser);
+router.get(
+  "/leads_by_user",
+  [authMiddleware.checkUserAuth],
+  getLeadsByCreatedUser
+);
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], geLeadsForCreTl);
+router.post("/assign_cres", [authMiddleware.checkUserAuth], assignCres);
 router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
-router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], saveStudentBasicInfo);
-router.post("/saveStudentAcademicInfo", [authMiddleware.checkUserAuth], saveStudentAcademicInfo);
-router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], saveStudentStudyPreferenceInfo);
+router.post(
+  "/saveStudentBasicInfo",
+  [authMiddleware.checkUserAuth],
+  saveStudentBasicInfo
+);
+router.post(
+  "/saveStudentAcademicInfo",
+  [authMiddleware.checkUserAuth],
+  saveStudentAcademicInfo
+);
+router.post(
+  "/saveStudentStudyPreferenceInfo",
+  [authMiddleware.checkUserAuth],
+  saveStudentStudyPreferenceInfo
+);
 
-router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], getStudentBasicInfoById);
-router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], getStudentAcademicInfoById);
-router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], getStudentStudyPreferenceInfoById);
+router.get(
+  "/getStudentBasicInfo/:id",
+  [authMiddleware.checkUserAuth],
+  getStudentBasicInfoById
+);
+router.get(
+  "/getStudentAcademicInfo/:id",
+  [authMiddleware.checkUserAuth],
+  getStudentAcademicInfoById
+);
+router.get(
+  "/getStudentStudyPrferenceInfo/:id",
+  [authMiddleware.checkUserAuth],
+  getStudentStudyPreferenceInfoById
+);
 
-router.get("/status_config", [authMiddleware.checkUserAuth], listAllAccessRolesWithStatuses);
+router.get(
+  "/status_config",
+  [authMiddleware.checkUserAuth],
+  listAllAccessRolesWithStatuses
+);
 router.put("/status_config", [authMiddleware.checkUserAuth], statusConfig);
 
-router.get('/lead_status',[authMiddleware.checkUserAuth],getStatusWithAccessPowers)
-router.put('/lead_status',[authMiddleware.checkUserAuth],updateUserStatus)
+router.get(
+  "/lead_status",
+  [authMiddleware.checkUserAuth],
+  getStatusWithAccessPowers
+);
+router.put("/lead_status", [authMiddleware.checkUserAuth], updateUserStatus);
 
 //excel import
-router.post('/excel_import', upload.single('file'), [authMiddleware.checkUserAuth], bulkUpload);
+router.post(
+  "/excel_import",
+  upload.single("file"),
+  [authMiddleware.checkUserAuth],
+  bulkUpload
+);
 
 module.exports = router;
