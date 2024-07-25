@@ -27,7 +27,7 @@ exports.bulkUpload = async (req, res) => {
     const sources = await Source.findAll();
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
-    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  //find the user_d of cre_tl
+    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -56,120 +56,125 @@ exports.bulkUpload = async (req, res) => {
       existingRecords.map((record) => record.phone)
     );
 
-    workbook.eachSheet(async (worksheet) => {
-      worksheet.eachRow(async (row, rowNumber) => {
+    const rowPromises = []; // Collect row processing promises
+
+    workbook.eachSheet((worksheet) => {
+      worksheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
-          const sourceSlug = row.getCell(3).value;
-          const channelSlug = row.getCell(4).value;
-          const officeTypeSlug = row.getCell(9).value;
+          rowPromises.push((async () => {
+            const sourceSlug = row.getCell(3).value;
+            const channelSlug = row.getCell(4).value;
+            const officeTypeSlug = row.getCell(9).value;
 
-          const email = row.getCell(6).value;
-          const phone = row.getCell(7).value;
+            const email = row.getCell(6).value;
+            const phone = row.getCell(7).value;
 
-          const emailKey = email || "";
-          const phoneKey = phone || "";
+            const emailKey = email || "";
+            const phoneKey = phone || "";
 
-          // Check for duplicate email within the file
-          if (seenEmails.has(emailKey)) {
-            invalidRows.push({
-              rowNumber,
-              errors: [`Duplicate email detected: '${email}' in the file`],
-              rowData: {
-                lead_received_date: row.getCell(2).value,
-                source_slug: sourceSlug,
-                channel_slug: channelSlug,
-                full_name: row.getCell(5).value,
-                email,
-                phone,
-                city: row.getCell(8).value,
-                office_type_slug: officeTypeSlug,
-                preferred_country: row.getCell(10).value,
-                ielts: row.getCell(11).value,
-                remarks: row.getCell(12).value,
-              },
-            });
-            return; // Skip processing this row
-          }
-
-          // Check for duplicate phone within the file
-          if (seenPhones.has(phoneKey)) {
-            invalidRows.push({
-              rowNumber,
-              errors: [`Duplicate phone number detected: '${phone}' in the file`],
-              rowData: {
-                lead_received_date: row.getCell(2).value,
-                source_slug: sourceSlug,
-                channel_slug: channelSlug,
-                full_name: row.getCell(5).value,
-                email,
-                phone,
-                city: row.getCell(8).value,
-                office_type_slug: officeTypeSlug,
-                preferred_country: row.getCell(10).value,
-                ielts: row.getCell(11).value,
-                remarks: row.getCell(12).value,
-              },
-            });
-            return; // Skip processing this row
-          }
-
-          seenEmails.add(emailKey);
-          seenPhones.add(phoneKey);
-
-          const rowData = {
-            lead_received_date: row.getCell(2).value,
-            source_id: sourceSlugToId[sourceSlug] || null,
-            channel_id: channelSlugToId[channelSlug] || null,
-            full_name: row.getCell(5).value,
-            email,
-            phone,
-            city: row.getCell(8).value,
-            office_type: officeTypeSlugToId[officeTypeSlug] || null,
-            preferred_country: row.getCell(10).value,
-            ielts: row.getCell(11).value,
-            remarks: row.getCell(12).value,
-            source_slug: sourceSlug,
-            channel_slug: channelSlug,
-            office_type_slug: officeTypeSlug,
-            assigned_cre_tl: creTl ? creTl.id : null,
-            created_by: userId
-          };
-
-          // Validate row data
-          const errors = validateRowData(rowData);
-          if (errors.length > 0) {
-            invalidRows.push({ rowNumber, errors, rowData });
-          } else {
-            // Check for existing email or phone in the database
-            const emailExists = existingEmails.has(email);
-            const phoneExists = existingPhones.has(phone);
-
-            if (emailExists || phoneExists) {
+            // Check for duplicate email within the file
+            if (seenEntries.has(emailKey)) {
               invalidRows.push({
                 rowNumber,
-                errors: [
-                  emailExists
-                    ? `Email '${email}' already exists in the database`
-                    : null,
-                  phoneExists
-                    ? `Phone number '${phone}' already exists in the database`
-                    : null,
-                ].filter(Boolean),
-                rowData,
+                errors: [`Duplicate email detected: '${email}' in the file`],
+                rowData: {
+                  lead_received_date: row.getCell(2).value,
+                  source_slug: sourceSlug,
+                  channel_slug: channelSlug,
+                  full_name: row.getCell(5).value,
+                  email,
+                  phone,
+                  city: row.getCell(8).value,
+                  office_type_slug: officeTypeSlug,
+                  preferred_country: row.getCell(10).value,
+                  ielts: row.getCell(11).value,
+                  remarks: row.getCell(12).value,
+                },
               });
-            } else {
-              jsonData.push(rowData);
+              return; // Skip processing this row
             }
-          }
+
+            // Check for duplicate phone within the file
+            if (seenEntries.has(phoneKey)) {
+              invalidRows.push({
+                rowNumber,
+                errors: [`Duplicate phone number detected: '${phone}' in the file`],
+                rowData: {
+                  lead_received_date: row.getCell(2).value,
+                  source_slug: sourceSlug,
+                  channel_slug: channelSlug,
+                  full_name: row.getCell(5).value,
+                  email,
+                  phone,
+                  city: row.getCell(8).value,
+                  office_type_slug: officeTypeSlug,
+                  preferred_country: row.getCell(10).value,
+                  ielts: row.getCell(11).value,
+                  remarks: row.getCell(12).value,
+                },
+              });
+              return; // Skip processing this row
+            }
+
+            seenEntries.add(emailKey);
+            seenEntries.add(phoneKey);
+
+            const rowData = {
+              lead_received_date: row.getCell(2).value,
+              source_id: sourceSlugToId[sourceSlug] || null,
+              channel_id: channelSlugToId[channelSlug] || null,
+              full_name: row.getCell(5).value,
+              email,
+              phone,
+              city: row.getCell(8).value,
+              office_type: officeTypeSlugToId[officeTypeSlug] || null,
+              preferred_country: row.getCell(10).value,
+              ielts: row.getCell(11).value,
+              remarks: row.getCell(12).value,
+              source_slug: sourceSlug,
+              channel_slug: channelSlug,
+              office_type_slug: officeTypeSlug,
+              assigned_cre_tl: creTl ? creTl.id : null,
+              created_by: userId
+            };
+
+            // Validate row data
+            const errors = validateRowData(rowData);
+            if (errors.length > 0) {
+              invalidRows.push({ rowNumber, errors, rowData });
+            } else {
+              // Check for existing email or phone in the database
+              const emailExists = existingEmails.has(email);
+              const phoneExists = existingPhones.has(phone);
+
+              if (emailExists || phoneExists) {
+                invalidRows.push({
+                  rowNumber,
+                  errors: [
+                    emailExists
+                      ? `Email '${email}' already exists in the database`
+                      : null,
+                    phoneExists
+                      ? `Phone number '${phone}' already exists in the database`
+                      : null,
+                  ].filter(Boolean),
+                  rowData,
+                });
+              } else {
+                jsonData.push(rowData);
+              }
+            }
+          })());
         }
       });
     });
 
-    console.log("HERE REACHED");
+    await Promise.all(rowPromises); // Await all row processing promises
 
     // Save valid data to UserPrimaryInfo
-    await UserPrimaryInfo.bulkCreate(jsonData);
-    console.log("HERE REACHED 2");
+    if (jsonData.length > 0) {
+      await UserPrimaryInfo.bulkCreate(jsonData);
+    }
 
     if (invalidRows.length > 0) {
       const errorWorkbook = new Excel.Workbook();
