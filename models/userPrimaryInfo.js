@@ -47,7 +47,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_channels",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
       },
       city: {
         type: Sequelize.STRING(100),

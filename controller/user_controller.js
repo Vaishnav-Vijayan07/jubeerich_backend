@@ -332,7 +332,7 @@ exports.getAllLeads = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
-      allCres:null
+      allCres: null,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
@@ -435,6 +435,107 @@ exports.geLeadsForCreTl = async (req, res) => {
           { assigned_cre_tl: userId },
           { created_by: userId },
         ],
+        assigned_cre: {
+          [db.Sequelize.Op.is]: null,
+        },
+      },
+      include: [
+        {
+          model: db.leadCategory,
+          as: "category_name",
+          attributes: ["category_name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
+        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.region,
+          as: "region_name",
+          attributes: ["region_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "counsiler_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "cre_name",
+          attributes: ["id", "name"],
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
+      ],
+    });
+
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
+      ...info.toJSON(),
+      category_name: info.category_name
+        ? info.category_name.category_name
+        : null,
+      source_name: info.source_name ? info.source_name.source_name : null,
+      channel_name: info.channel_name ? info.channel_name.channel_name : null,
+      country_name: info.country_name ? info.country_name.country_name : null,
+      office_type_name: info.office_type_name
+        ? info.office_type_name.office_type_name
+        : null,
+      region_name: info.region_name ? info.region_name.region_name : null,
+      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+      branch_name: info.branch_name ? info.branch_name.branch_name : null,
+      cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    }));
+
+    res.status(200).json({
+      status: true,
+      message: "User primary info retrieved successfully",
+      formattedUserPrimaryInfos,
+      allCres,
+    });
+  } catch (error) {
+    console.error(`Error fetching user primary info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAssignedLeadsForCreTl = async (req, res) => {
+  try {
+    const allCres = await AdminUsers.findAll({
+      where: { role_id: 3 },
+      attributes: ["id", "name"],
+    });
+
+    const userId = req.userDecodeId;
+    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { assigned_cre_tl: userId },
+          { created_by: userId },
+        ],
+        assigned_cre: {
+          [db.Sequelize.Op.ne]: null,
+        },
       },
       include: [
         {
@@ -569,6 +670,68 @@ exports.assignCres = async (req, res) => {
     await transaction.rollback();
     console.error(`Error assigning CRE: ${error}`);
     return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.autoAssign = async (req, res) => {
+  const { user_ids } = req.body;
+
+  // Start a new transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Fetch least assigned CRE
+    const leastCre = await getLeastAssignedCre();
+
+    if (!leastCre) {
+      return res.status(400).json({
+        status: false,
+        message: "No CREs available to auto-assign leads",
+      });
+    }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Update assigned_cre for each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        await UserPrimaryInfo.update(
+          { assigned_cre: leastCre },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+    // Commit the transaction
+    await transaction.commit();
+
+    res.status(200).json({
+      status: true,
+      message: "Leads assigned successfully",
+    });
+  } catch (error) {
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
+    console.error("Error in autoAssign:", error);
+    res.status(500).json({
       status: false,
       message: "Internal server error",
     });
@@ -900,6 +1063,49 @@ exports.getStatusWithAccessPowers = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error(`Error updating user status: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const getLeastAssignedCre = async (req, res) => {
+  try {
+    const result = await db.adminUsers.findOne({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "user_primary_info"
+            WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
+          )`),
+          "assignment_count",
+        ],
+      ],
+      where: {
+        role_id: 3,
+        // status: true, // Uncomment to include only active users
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+    });
+
+    console.log("result===>", result);
+
+    if (result && result.dataValues) {
+      const leastAssignedStaff = result.dataValues.user_id;
+
+      console.log("Staff with the least assignments:", leastAssignedStaff);
+      return leastAssignedStaff;
+    } else {
+      console.log(
+        'No matching users found or no assignments exist for staff with role_id "3".'
+      );
+    }
+  } catch (error) {
+    console.error(`Error finding least assigned staff: ${error}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",
