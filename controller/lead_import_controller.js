@@ -183,7 +183,7 @@ exports.bulkUpload = async (req, res) => {
       const errorFilePath = path.join("uploads/rejected_files", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
 
-      return res.status(200).json({
+      return res.status(409).json({
         status: false,
         message: "Some rows contain invalid data",
         errors: invalidRows,
