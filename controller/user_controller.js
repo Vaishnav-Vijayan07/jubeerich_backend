@@ -676,50 +676,110 @@ exports.assignCres = async (req, res) => {
   }
 };
 
+// exports.autoAssign = async (req, res) => {
+//   const { leads_ids } = req.body;
+
+//   // Start a new transaction
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     // Validate leads_ids
+//     if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "leads_ids must be a non-empty array",
+//       });
+//     }
+
+//     // Validate each user_id
+//     for (const user_id of leads_ids) {
+//       if (typeof user_id !== "number") {
+//         return res.status(400).json({
+//           status: false,
+//           message: "Each user_id must be a number",
+//         });
+//       }
+//     }
+
+//     const leastCre = await getLeastAssignedCre(); // Get all CREs with their assignment counts
+//     let creIndex = 0; // Initialize an index to track the current CRE
+
+//     for (const id of leads_ids) {
+//       if (leastCre.length === 0) {
+//         throw new Error("No available CREs to assign leads");
+//       }
+
+//       // Get the current CRE based on the index
+//       const currentCre = leastCre[creIndex].user_id;
+
+//       // Update the user with the selected CRE
+//       await UserPrimaryInfo.update(
+//         { assigned_cre: currentCre },
+//         { where: { id: id }, transaction }
+//       );
+
+//       // Update the index to the next CRE
+//       creIndex = (creIndex + 1) % leastCre.length; // Loop back to the start if needed
+//     }
+
+//     await transaction.commit();
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Leads assigned successfully",
+//     });
+//   } catch (error) {
+//     // Rollback the transaction in case of an error
+//     await transaction.rollback();
+//     console.error("Error in autoAssign:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 exports.autoAssign = async (req, res) => {
-  const { user_ids } = req.body;
+  const { leads_ids } = req.body;
+
+  // Validate leads_ids
+  if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "leads_ids must be a non-empty array",
+    });
+  }
+
+  if (!leads_ids.every((id) => typeof id === "number")) {
+    return res.status(400).json({
+      status: false,
+      message: "Each user_id must be a number",
+    });
+  }
 
   // Start a new transaction
   const transaction = await sequelize.transaction();
 
   try {
-    // Fetch least assigned CRE
+    // Fetch all CREs with their assignment counts
     const leastCre = await getLeastAssignedCre();
 
-    if (!leastCre) {
-      return res.status(400).json({
-        status: false,
-        message: "No CREs available to auto-assign leads",
-      });
+    if (leastCre.length === 0) {
+      throw new Error("No available CREs to assign leads");
     }
 
-    // Validate user_ids
-    if (!Array.isArray(user_ids) || user_ids.length === 0) {
-      return res.status(400).json({
-        status: false,
-        message: "user_ids must be a non-empty array",
-      });
-    }
+    // Prepare the bulk update data
+    const updatePromises = leads_ids.map((id, index) => {
+      const currentCre = leastCre[index % leastCre.length].user_id;
+      return UserPrimaryInfo.update(
+        { assigned_cre: currentCre },
+        { where: { id }, transaction }
+      );
+    });
 
-    // Validate each user_id
-    for (const user_id of user_ids) {
-      if (typeof user_id !== "number") {
-        return res.status(400).json({
-          status: false,
-          message: "Each user_id must be a number",
-        });
-      }
-    }
+    // Perform bulk update
+    await Promise.all(updatePromises);
 
-    // Update assigned_cre for each user_id
-    await Promise.all(
-      user_ids.map(async (user_id) => {
-        await UserPrimaryInfo.update(
-          { assigned_cre: leastCre },
-          { where: { id: user_id }, transaction }
-        );
-      })
-    );
     // Commit the transaction
     await transaction.commit();
 
@@ -1070,9 +1130,10 @@ exports.getStatusWithAccessPowers = async (req, res) => {
   }
 };
 
-const getLeastAssignedCre = async (req, res) => {
+const getLeastAssignedCre = async () => {
   try {
-    const result = await db.adminUsers.findOne({
+    // Fetch all CREs with their current assignment counts
+    const creList = await db.adminUsers.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
@@ -1086,29 +1147,18 @@ const getLeastAssignedCre = async (req, res) => {
         ],
       ],
       where: {
-        role_id: 3,
+        role_id: 3, // Assuming role_id 3 is for CREs
         // status: true, // Uncomment to include only active users
       },
-      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+      order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
     });
 
-    console.log("result===>", result);
-
-    if (result && result.dataValues) {
-      const leastAssignedStaff = result.dataValues.user_id;
-
-      console.log("Staff with the least assignments:", leastAssignedStaff);
-      return leastAssignedStaff;
-    } else {
-      console.log(
-        'No matching users found or no assignments exist for staff with role_id "3".'
-      );
-    }
+    return creList.map((cre) => ({
+      user_id: cre.dataValues.user_id,
+      assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+    }));
   } catch (error) {
-    console.error(`Error finding least assigned staff: ${error}`);
-    return res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
+    console.error("Error fetching CREs with assignment counts:", error);
+    throw error;
   }
 };
