@@ -177,7 +177,7 @@ exports.bulkUpload = async (req, res) => {
         try {
           await UserPrimaryInfo.upsert(data);
         } catch (err) {
-          // Handle unique constraint errors specifically
+          // Handle specific validation errors and unique constraint errors
           if (err.name === 'SequelizeUniqueConstraintError') {
             console.error(`Unique constraint error while upserting data: ${JSON.stringify(data)} - ${err.message}`);
             invalidRows.push({
@@ -186,7 +186,6 @@ exports.bulkUpload = async (req, res) => {
               rowData: data
             });
           } else {
-            // Log other errors
             console.error(`Error upserting data: ${JSON.stringify(data)} - ${err}`);
             invalidRows.push({
               rowNumber: null,
@@ -245,11 +244,7 @@ exports.bulkUpload = async (req, res) => {
       });
     }
   } catch (error) {
-    if (error instanceof Sequelize.UniqueConstraintError) {
-      console.error('Unique constraint error:', error.errors);
-    } else {
-      console.error(`Error processing bulk upload: ${error}`);
-    }
+    console.error(`Error processing bulk upload: ${error}`);
     res.status(500).json({
       status: false,
       message: "Internal server error",
