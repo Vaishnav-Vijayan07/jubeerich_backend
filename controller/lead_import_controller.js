@@ -177,12 +177,23 @@ exports.bulkUpload = async (req, res) => {
         try {
           await UserPrimaryInfo.upsert(data);
         } catch (err) {
-          console.error(`Error upserting data: ${JSON.stringify(data)} - ${err}`);
-          invalidRows.push({
-            rowNumber: null,
-            errors: [`Error upserting data: ${err.message}`],
-            rowData: data
-          });
+          // Handle unique constraint errors specifically
+          if (err.name === 'SequelizeUniqueConstraintError') {
+            console.error(`Unique constraint error while upserting data: ${JSON.stringify(data)} - ${err.message}`);
+            invalidRows.push({
+              rowNumber: null,
+              errors: [`Unique constraint error: ${err.message}`],
+              rowData: data
+            });
+          } else {
+            // Log other errors
+            console.error(`Error upserting data: ${JSON.stringify(data)} - ${err}`);
+            invalidRows.push({
+              rowNumber: null,
+              errors: [`Error upserting data: ${err.message}`],
+              rowData: data
+            });
+          }
         }
       }
     }
@@ -259,6 +270,7 @@ const validateRowData = (data) => {
 
   return errors;
 };
+
 
 // const Excel = require("exceljs");
 // const db = require("../models");
