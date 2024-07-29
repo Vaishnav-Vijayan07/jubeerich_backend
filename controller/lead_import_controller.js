@@ -173,9 +173,18 @@ exports.bulkUpload = async (req, res) => {
 
     // Save valid data to UserPrimaryInfo using upsert
     if (jsonData.length > 0) {
-      await Promise.all(jsonData.map(data => UserPrimaryInfo.upsert(data)
-        .catch(err => console.error(`Error upserting data: ${JSON.stringify(data)} - ${err}`))
-      ));
+      for (const data of jsonData) {
+        try {
+          await UserPrimaryInfo.upsert(data);
+        } catch (err) {
+          console.error(`Error upserting data: ${JSON.stringify(data)} - ${err}`);
+          invalidRows.push({
+            rowNumber: null,
+            errors: [`Error upserting data: ${err.message}`],
+            rowData: data
+          });
+        }
+      }
     }
 
     if (invalidRows.length > 0) {
@@ -250,6 +259,7 @@ const validateRowData = (data) => {
 
   return errors;
 };
+
 
 
 // const Excel = require("exceljs");
