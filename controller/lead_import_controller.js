@@ -138,6 +138,8 @@ exports.bulkUpload = async (req, res) => {
               created_by: userId
             };
 
+            console.log("row data ==>", rowData);
+
             // Validate row data
             const errors = validateRowData(rowData);
             if (errors.length > 0) {
@@ -161,6 +163,7 @@ exports.bulkUpload = async (req, res) => {
                   rowData,
                 });
               } else {
+                console.log("else row data", rowData);
                 jsonData.push(rowData);
               }
             }
@@ -173,7 +176,8 @@ exports.bulkUpload = async (req, res) => {
 
     // Save valid data to UserPrimaryInfo
     if (jsonData.length > 0) {
-      await UserPrimaryInfo.bulkCreate(jsonData);
+      const data = await UserPrimaryInfo.bulkCreate(jsonData);
+      console.log("data", data);
     }
 
     if (invalidRows.length > 0) {
