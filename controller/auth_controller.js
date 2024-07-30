@@ -42,6 +42,8 @@ exports.login = async (req, res) => {
       });
     }
 
+    console.log('user?.access_role =====>', user?.access_role);
+
     // Ensure power_ids is always an array of numbers
     const powerIds = user?.access_role?.power_ids ? user?.access_role?.power_ids?.split(",").map(Number) : [];
 
