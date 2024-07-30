@@ -18,7 +18,6 @@ exports.login = async (req, res) => {
         {
           model: AccessRoles,
           as: "access_role",
-          attributes: ["id", "role_name"],  // Include role_name here
           include: [
             {
               model: AccessPowers,
@@ -42,8 +41,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    console.log('user?.access_role =====>', user?.access_role);
-
     // Ensure power_ids is always an array of numbers
     const powerIds = user?.access_role?.power_ids ? user?.access_role?.power_ids?.split(",").map(Number) : [];
 
@@ -57,6 +54,8 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ userId: user.id }, secret || "mysecretkey", { expiresIn: "24h" });
     console.log("token", token);
 
+    console.log("user ===>", user);
+
     res.status(200).json({
       status: true,
       token: token,
@@ -65,7 +64,6 @@ exports.login = async (req, res) => {
       name: user?.name,
       avatar: user?.profile_image_path,
       role: user?.role_id,
-      role_name: user.access_role?.role_name,  
       power_names: powerNames,
       //   branches: user.branches.map((branch) => ({
       //     id: branch.id,
