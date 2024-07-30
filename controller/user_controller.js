@@ -46,6 +46,10 @@ exports.createLead = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     console.log("userId===>", userId);
+    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
+    const user = await AdminUsers.findOne({ where: { id: userId } });
+
+
     // Check if referenced IDs exist in their respective tables
     const categoryExists = await checkIfEntityExists(
       "lead_category",
@@ -201,6 +205,7 @@ exports.createLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date: lead_received_date || recieved_date,
+        assigned_cre_tl: user.id == 2 && creTl ? creTl.id : null,
         created_by: userId,
         ielts,
       },
