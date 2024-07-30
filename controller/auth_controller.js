@@ -18,6 +18,7 @@ exports.login = async (req, res) => {
         {
           model: AccessRoles,
           as: "access_role",
+          attributes: ["id", "role_name"],  // Include role_name here
           include: [
             {
               model: AccessPowers,
@@ -62,6 +63,7 @@ exports.login = async (req, res) => {
       name: user?.name,
       avatar: user?.profile_image_path,
       role: user?.role_id,
+      role_name: user.access_role?.role_name,  
       power_names: powerNames,
       //   branches: user.branches.map((branch) => ({
       //     id: branch.id,
