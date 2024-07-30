@@ -54,8 +54,6 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ userId: user.id }, secret || "mysecretkey", { expiresIn: "24h" });
     console.log("token", token);
 
-    console.log("user ===>", user.access_role);
-
     res.status(200).json({
       status: true,
       token: token,
@@ -64,6 +62,7 @@ exports.login = async (req, res) => {
       name: user?.name,
       avatar: user?.profile_image_path,
       role: user?.role_id,
+      role_name: user?.access_role?.role_name,
       power_names: powerNames,
       //   branches: user.branches.map((branch) => ({
       //     id: branch.id,
