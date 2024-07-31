@@ -829,6 +829,7 @@ exports.assignCres = async (req, res) => {
 
 exports.autoAssign = async (req, res) => {
   const { leads_ids } = req.body;
+  const userId = req.userDecodeId;
 
   // Validate leads_ids
   if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
@@ -857,8 +858,29 @@ exports.autoAssign = async (req, res) => {
     }
 
     // Prepare the bulk update data
-    const updatePromises = leads_ids.map((id, index) => {
+    const updatePromises = leads_ids.map(async (id, index) => {
       const currentCre = leastCre[index % leastCre.length].user_id;
+      const userInfo = UserPrimaryInfo.findOne({ where: id });
+
+      const leastAssignedStaff = await getLeastAssignedUser();
+
+      if (leastAssignedStaff) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        // Create a task for the new lead
+        const task = await db.tasks.create(
+          {
+            studentId: id,
+            userId: leastAssignedStaff,
+            title: `${userInfo.full_name} - ${userInfo.preferred_country} - ${userInfo.phone}`,
+            dueDate: dueDate,
+            updatedBy: userId,
+          },
+          { transaction }
+        );
+      }
+
       return UserPrimaryInfo.update(
         { assigned_cre: currentCre },
         { where: { id }, transaction }
