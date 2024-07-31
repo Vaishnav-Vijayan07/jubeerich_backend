@@ -512,20 +512,29 @@ exports.getLeadsByCreatedUser = async (req, res) => {
 exports.geLeadsForCreTl = async (req, res) => {
   try {
     const allCres = await AdminUsers.findAll({
-      where: { role_id: 3, is_deleted: false, },
+      where: { role_id: 3 },
       attributes: ["id", "name"],
     });
 
     const userId = req.userDecodeId;
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
-        [db.Sequelize.Op.or]: [
-          { assigned_cre_tl: userId },
-          { created_by: userId },
+        [db.Sequelize.Op.and]: [
+          {
+            [db.Sequelize.Op.or]: [
+              { assigned_cre_tl: userId },
+              { created_by: userId },
+            ],
+          },
+          {
+            assigned_cre: {
+              [db.Sequelize.Op.is]: null,
+            },
+          },
+          {
+            is_deleted: false,
+          },
         ],
-        assigned_cre: {
-          [db.Sequelize.Op.is]: null,
-        },
       },
       include: [
         {
@@ -574,6 +583,64 @@ exports.geLeadsForCreTl = async (req, res) => {
         },
       ],
     });
+
+    // const userPrimaryInfos = await UserPrimaryInfo.findAll({
+    //   where: {
+    //     [db.Sequelize.Op.or]: [
+    //       { assigned_cre_tl: userId },
+    //       { created_by: userId },
+    //     ],
+    //     assigned_cre: {
+    //       [db.Sequelize.Op.is]: null,
+    //     },
+    //   },
+    //   include: [
+    //     {
+    //       model: db.leadCategory,
+    //       as: "category_name",
+    //       attributes: ["category_name"],
+    //     },
+    //     {
+    //       model: db.leadSource,
+    //       as: "source_name",
+    //       attributes: ["source_name"],
+    //     },
+    //     {
+    //       model: db.leadChannel,
+    //       as: "channel_name",
+    //       attributes: ["channel_name"],
+    //     },
+    //     { model: db.country, as: "country_name", attributes: ["country_name"] },
+    //     {
+    //       model: db.officeType,
+    //       as: "office_type_name",
+    //       attributes: ["office_type_name"],
+    //     },
+    //     {
+    //       model: db.region,
+    //       as: "region_name",
+    //       attributes: ["region_name"],
+    //       required: false,
+    //     },
+    //     {
+    //       model: db.adminUsers,
+    //       as: "counsiler_name",
+    //       attributes: ["name"],
+    //       required: false,
+    //     },
+    //     {
+    //       model: db.adminUsers,
+    //       as: "cre_name",
+    //       attributes: ["id", "name"],
+    //     },
+    //     {
+    //       model: db.branches,
+    //       as: "branch_name",
+    //       attributes: ["branch_name"],
+    //       required: false,
+    //     },
+    //   ],
+    // });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
       ...info.toJSON(),
@@ -611,22 +678,31 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
   try {
     const allCres = await AdminUsers.findAll({
       where: {
-        role_id: 3,
-        is_deleted: false
+        role_id: 3
       },
       attributes: ["id", "name"],
     });
 
     const userId = req.userDecodeId;
+
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
-        [db.Sequelize.Op.or]: [
-          { assigned_cre_tl: userId },
-          { created_by: userId },
+        [db.Sequelize.Op.and]: [
+          {
+            [db.Sequelize.Op.or]: [
+              { assigned_cre_tl: userId },
+              { created_by: userId },
+            ],
+          },
+          {
+            assigned_cre: {
+              [db.Sequelize.Op.ne]: null,
+            },
+          },
+          {
+            is_deleted: false,
+          },
         ],
-        assigned_cre: {
-          [db.Sequelize.Op.ne]: null,
-        },
       },
       include: [
         {
@@ -675,6 +751,63 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         },
       ],
     });
+    // const userPrimaryInfos = await UserPrimaryInfo.findAll({
+    //   where: {
+    //     [db.Sequelize.Op.or]: [
+    //       { assigned_cre_tl: userId },
+    //       { created_by: userId },
+    //     ],
+    //     assigned_cre: {
+    //       [db.Sequelize.Op.ne]: null,
+    //     },
+    //   },
+    //   include: [
+    //     {
+    //       model: db.leadCategory,
+    //       as: "category_name",
+    //       attributes: ["category_name"],
+    //     },
+    //     {
+    //       model: db.leadSource,
+    //       as: "source_name",
+    //       attributes: ["source_name"],
+    //     },
+    //     {
+    //       model: db.leadChannel,
+    //       as: "channel_name",
+    //       attributes: ["channel_name"],
+    //     },
+    //     { model: db.country, as: "country_name", attributes: ["country_name"] },
+    //     {
+    //       model: db.officeType,
+    //       as: "office_type_name",
+    //       attributes: ["office_type_name"],
+    //     },
+    //     {
+    //       model: db.region,
+    //       as: "region_name",
+    //       attributes: ["region_name"],
+    //       required: false,
+    //     },
+    //     {
+    //       model: db.adminUsers,
+    //       as: "counsiler_name",
+    //       attributes: ["name"],
+    //       required: false,
+    //     },
+    //     {
+    //       model: db.adminUsers,
+    //       as: "cre_name",
+    //       attributes: ["id", "name"],
+    //     },
+    //     {
+    //       model: db.branches,
+    //       as: "branch_name",
+    //       attributes: ["branch_name"],
+    //       required: false,
+    //     },
+    //   ],
+    // });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
       ...info.toJSON(),
