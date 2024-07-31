@@ -1049,7 +1049,7 @@ exports.autoAssign = async (req, res) => {
         const country = await db.country.findByPk(userInfo.preferred_country);
 
         // Create a task for the new lead
-        const task = await db.tasks.create(
+        const task = await db.tasks.upsert(
           {
             studentId: id,
             userId: leastAssignedStaff,
