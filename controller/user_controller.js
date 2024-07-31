@@ -860,7 +860,7 @@ exports.autoAssign = async (req, res) => {
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
       const currentCre = leastCre[index % leastCre.length].user_id;
-      const userInfo = UserPrimaryInfo.findOne({ where: id });
+      const userInfo = await UserPrimaryInfo.findOne({ where: id });
 
       console.log("userInfo ===>", userInfo);
 
