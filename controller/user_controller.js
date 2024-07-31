@@ -707,6 +707,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
+  const userId = req.userDecodeId;
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -741,6 +742,27 @@ exports.assignCres = async (req, res) => {
     // Update assigned_cre for each user_id
     await Promise.all(
       user_ids.map(async (user_id) => {
+        const userInfo = await UserPrimaryInfo.findOne({ where: user_id });
+        const leastAssignedStaff = await getLeastAssignedUser();
+
+        if (leastAssignedStaff) {
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 1);
+          const country = await db.country.findByPk(userInfo.preferred_country);
+
+          // Create a task for the new lead
+          const task = await db.tasks.create(
+            {
+              studentId: user_id,
+              userId: leastAssignedStaff,
+              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+              dueDate: dueDate,
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        }
+
         await UserPrimaryInfo.update(
           { assigned_cre: cre_id },
           { where: { id: user_id }, transaction }
@@ -861,8 +883,6 @@ exports.autoAssign = async (req, res) => {
     const updatePromises = leads_ids.map(async (id, index) => {
       const currentCre = leastCre[index % leastCre.length].user_id;
       const userInfo = await UserPrimaryInfo.findOne({ where: id });
-
-      console.log("userInfo ===>", userInfo);
 
       const leastAssignedStaff = await getLeastAssignedUser();
 
