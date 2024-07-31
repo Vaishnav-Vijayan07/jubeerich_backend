@@ -753,7 +753,18 @@ exports.assignCres = async (req, res) => {
           const country = await db.country.findByPk(userInfo.preferred_country);
 
           // Create a task for the new lead
-          const task = await db.tasks.upsert(
+          // const task = await db.tasks.upsert(
+          //   {
+          //     studentId: user_id,
+          //     userId: leastAssignedStaff,
+          //     title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+          //     dueDate: dueDate,
+          //     updatedBy: userId,
+          //   },
+          //   { transaction }
+          // );
+
+          const [task, created] = await db.tasks.upsert(
             {
               studentId: user_id,
               userId: leastAssignedStaff,
@@ -761,8 +772,13 @@ exports.assignCres = async (req, res) => {
               dueDate: dueDate,
               updatedBy: userId,
             },
-            { transaction }
+            {
+              transaction,
+              returning: true, // Returns the updated/created task
+            }
           );
+
+          console.log("task ==>", task);
 
           console.log("user_id =======>", user_id);
           console.log("task =======>", task);
