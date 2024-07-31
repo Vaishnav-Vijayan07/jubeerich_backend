@@ -862,6 +862,8 @@ exports.autoAssign = async (req, res) => {
       const currentCre = leastCre[index % leastCre.length].user_id;
       const userInfo = UserPrimaryInfo.findOne({ where: id });
 
+      console.log("userInfo ===>", userInfo);
+
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
