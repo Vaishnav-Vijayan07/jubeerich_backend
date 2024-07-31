@@ -763,6 +763,9 @@ exports.assignCres = async (req, res) => {
             },
             { transaction }
           );
+
+          console.log("user_id =======>", user_id);
+          console.log("task =======>", task);
         }
 
         await UserPrimaryInfo.update(
