@@ -262,6 +262,89 @@ exports.createLead = async (req, res) => {
   }
 };
 
+exports.getLeads = async (req, res) => {
+  const cre_id = req.userDecodeId;
+
+  try {
+    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+      where: {
+        is_deleted: false,
+      },
+      include: [
+        {
+          model: db.leadCategory,
+          as: "category_name",
+          attributes: ["category_name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
+        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.region,
+          as: "region_name",
+          attributes: ["region_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "counsiler_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
+      ],
+    });
+
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
+      ...info.toJSON(),
+      category_name: info.category_name
+        ? info.category_name.category_name
+        : null,
+      source_name: info.source_name ? info.source_name.source_name : null,
+      channel_name: info.channel_name ? info.channel_name.channel_name : null,
+      country_name: info.country_name ? info.country_name.country_name : null,
+      office_type_name: info.office_type_name
+        ? info.office_type_name.office_type_name
+        : null,
+      region_name: info.region_name ? info.region_name.region_name : null,
+      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+      branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    }));
+
+    res.status(200).json({
+      status: true,
+      message: "User primary info retrieved successfully",
+      formattedUserPrimaryInfos,
+      allCres: null,
+    });
+  } catch (error) {
+    console.error(`Error fetching user primary info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
 exports.getAllLeads = async (req, res) => {
   const cre_id = req.userDecodeId;
 

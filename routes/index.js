@@ -118,6 +118,7 @@ const {
   assignCres,
   getAssignedLeadsForCreTl,
   autoAssign,
+  getLeads,
 } = require("../controller/user_controller");
 const {
   getTasks,
@@ -334,6 +335,7 @@ router.put("/status/:id", [authMiddleware.checkUserAuth], updateStatus);
 router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
+router.post("/getAllleads", [authMiddleware.checkUserAuth], getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
 router.get(
   "/leads_by_user",
