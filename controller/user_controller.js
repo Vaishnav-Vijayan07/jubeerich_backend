@@ -900,19 +900,54 @@ exports.assignCres = async (req, res) => {
           //   { transaction }
           // );
 
-          const [task, created] = await db.tasks.upsert(
-            {
-              studentId: user_id,
-              userId: leastAssignedStaff,
-              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
-              dueDate: dueDate,
-              updatedBy: userId,
-            },
-            {
+          // Transaction handling (if needed)
+          await sequelize.transaction(async (transaction) => {
+            // Step 1: Check if the task with studentId exists
+            const existingTask = await db.tasks.findOne({
+              where: { studentId: user_id },
               transaction,
-              returning: true, // Returns the updated/created task
+            });
+
+            if (existingTask) {
+              // Step 2a: If it exists, update the task
+              await existingTask.update(
+                {
+                  userId: leastAssignedStaff,
+                  title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+                  dueDate: dueDate,
+                  updatedBy: userId,
+                },
+                { transaction }
+              );
+            } else {
+              // Step 2b: If it does not exist, create a new task
+              await db.tasks.create(
+                {
+                  studentId: user_id,
+                  userId: leastAssignedStaff,
+                  title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+                  dueDate: dueDate,
+                  updatedBy: userId,
+                },
+                { transaction }
+              );
             }
-          );
+          });
+
+
+          // const [task, created] = await db.tasks.upsert(
+          //   {
+          //     studentId: user_id,
+          //     userId: leastAssignedStaff,
+          //     title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+          //     dueDate: dueDate,
+          //     updatedBy: userId,
+          //   },
+          //   {
+          //     transaction,
+          //     returning: true, // Returns the updated/created task
+          //   }
+          // );
 
           console.log("task ==>", task);
 
