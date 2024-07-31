@@ -216,7 +216,7 @@ exports.createLead = async (req, res) => {
 
     console.log("userRole====>", userRole.role_id);
 
-    if (userRole?.role_id == 2) {
+    if (userRole?.role_id == 2 || userRole?.role_id == 3) {
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
