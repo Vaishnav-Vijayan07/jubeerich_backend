@@ -335,7 +335,7 @@ router.put("/status/:id", [authMiddleware.checkUserAuth], updateStatus);
 router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
 router.post("/leads", [authMiddleware.checkUserAuth], createLead);
-router.post("/getAllleads", [authMiddleware.checkUserAuth], getLeads);
+router.get("/getAllleads", [authMiddleware.checkUserAuth], getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
 router.get(
   "/leads_by_user",
