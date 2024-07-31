@@ -869,13 +869,14 @@ exports.autoAssign = async (req, res) => {
       if (leastAssignedStaff) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
+        const country = await db.country.findByPk(userInfo.preferred_country);
 
         // Create a task for the new lead
         const task = await db.tasks.create(
           {
             studentId: id,
             userId: leastAssignedStaff,
-            title: `${userInfo.full_name} - ${userInfo.preferred_country} - ${userInfo.phone}`,
+            title: `${userInfo.full_name} - ${country} - ${userInfo.phone}`,
             dueDate: dueDate,
             updatedBy: userId,
           },
