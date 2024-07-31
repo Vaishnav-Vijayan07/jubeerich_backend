@@ -876,7 +876,7 @@ exports.autoAssign = async (req, res) => {
           {
             studentId: id,
             userId: leastAssignedStaff,
-            title: `${userInfo.full_name} - ${country} - ${userInfo.phone}`,
+            title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
             dueDate: dueDate,
             updatedBy: userId,
           },
