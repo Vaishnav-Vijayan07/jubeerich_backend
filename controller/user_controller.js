@@ -610,7 +610,10 @@ exports.geLeadsForCreTl = async (req, res) => {
 exports.getAssignedLeadsForCreTl = async (req, res) => {
   try {
     const allCres = await AdminUsers.findAll({
-      where: { role_id: 3 },
+      where: {
+        role_id: 3,
+        is_deleted: false
+      },
       attributes: ["id", "name"],
     });
 
