@@ -745,6 +745,8 @@ exports.assignCres = async (req, res) => {
         const userInfo = await UserPrimaryInfo.findOne({ where: user_id });
         const leastAssignedStaff = await getLeastAssignedUser();
 
+        console.log("This api is called");
+
         if (leastAssignedStaff) {
           const dueDate = new Date();
           dueDate.setDate(dueDate.getDate() + 1);
