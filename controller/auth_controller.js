@@ -13,7 +13,12 @@ exports.login = async (req, res) => {
     const secret = process.env.SECRET;
 
     const user = await AdminUsers.findOne({
-      where: { username },
+      where: { 
+        [Op.or]: [
+          { username: username },
+          { email: username }
+        ]
+       },
       include: [
         {
           model: AccessRoles,
