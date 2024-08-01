@@ -9,242 +9,242 @@ const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
 const { Op, Sequelize, where } = require("sequelize");
 
-exports.createLead = async (req, res) => {
-  // Validate the request
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: false,
-      message: "Validation failed",
-      errors: errors.array(),
-    });
-  }
-
-  // Destructure the validated request body
-  const {
-    full_name,
-    email,
-    phone,
-    category_id,
-    source_id,
-    channel_id,
-    city,
-    preferred_country,  // This should be an array of country IDs
-    office_type,
-    region_id,
-    counsiler_id,
-    branch_id,
-    updated_by,
-    remarks,
-    lead_received_date,
-    ielts,
-  } = req.body;
-
-  // Start a transaction
-  const transaction = await sequelize.transaction();
-
-  try {
-    const userId = req.userDecodeId;
-    console.log("userId===>", userId);
-    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
-    const user = await AdminUsers.findOne({ where: { id: userId } });
-
-    // Check if referenced IDs exist in their respective tables
-    const categoryExists = await checkIfEntityExists("lead_category", category_id);
-    if (!categoryExists) {
-      await transaction.rollback(); // Rollback the transaction if category ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid category ID provided",
-        errors: [{ msg: "Please provide a valid category ID" }],
-      });
-    }
-
-    const sourceExists = await checkIfEntityExists("lead_source", source_id);
-    if (!sourceExists) {
-      await transaction.rollback(); // Rollback the transaction if source ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid source ID provided",
-        errors: [{ msg: "Please provide a valid source ID" }],
-      });
-    }
-
-    const channelExists = await checkIfEntityExists("lead_channel", channel_id);
-    if (!channelExists) {
-      await transaction.rollback(); // Rollback the transaction if channel ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid channel ID provided",
-        errors: [{ msg: "Please provide a valid channel ID" }],
-      });
-    }
-
-    const officeExists = await checkIfEntityExists("office_type", office_type);
-    if (!officeExists) {
-      await transaction.rollback(); // Rollback the transaction if office type ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid office type ID provided",
-        errors: [{ msg: "Please provide a valid office type ID" }],
-      });
-    }
-
-    // Only check existence for non-null fields
-    if (region_id !== null) {
-      const regionExists = await checkIfEntityExists("region", region_id);
-      if (!regionExists) {
-        await transaction.rollback(); // Rollback the transaction if region ID is invalid
-        return res.status(400).json({
-          status: false,
-          message: "Invalid region ID provided",
-          errors: [{ msg: "Please provide a valid region ID" }],
-        });
-      }
-    }
-
-    if (counsiler_id !== null) {
-      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
-      if (!counsilerExists) {
-        await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
-        return res.status(400).json({
-          status: false,
-          message: "Invalid counsiler ID provided",
-          errors: [{ msg: "Please provide a valid counsiler ID" }],
-        });
-      }
-    }
-
-    if (branch_id !== null) {
-      const branchExists = await checkIfEntityExists("branch", branch_id);
-      if (!branchExists) {
-        await transaction.rollback(); // Rollback the transaction if branch ID is invalid
-        return res.status(400).json({
-          status: false,
-          message: "Invalid branch ID provided",
-          errors: [{ msg: "Please provide a valid branch ID" }],
-        });
-      }
-    }
-
-    if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
-      if (!updatedByExists) {
-        await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
-        return res.status(400).json({
-          status: false,
-          message: "Invalid updated by ID provided",
-          errors: [{ msg: "Please provide a valid updated by ID" }],
-        });
-      }
-    }
-
-    // Check if email already exists
-    const existingEmailUser = await UserPrimaryInfo.findOne({
-      where: { email },
-    });
-    if (existingEmailUser) {
-      await transaction.rollback(); // Rollback transaction if email is not unique
-      return res.status(400).json({
-        status: false,
-        message: "User with the same email already exists",
-        errors: [{ msg: "Email must be unique" }],
-      });
-    }
-
-    const existingPhone = await UserPrimaryInfo.findOne({ where: { phone } });
-    if (existingPhone) {
-      await transaction.rollback();
-      return res.status(400).json({
-        status: false,
-        message: "User with the same phone number already exists",
-        errors: [{ msg: "Phone number must be unique" }],
-      });
-    }
-
-    const receivedDate = new Date();
-
-    // Create user and related information
-    const userPrimaryInfo = await UserPrimaryInfo.create(
-      {
-        full_name,
-        email,
-        phone,
-        city,
-        office_type,
-        category_id,
-        source_id,
-        channel_id,
-        region_id,
-        counsiler_id,
-        branch_id,
-        updated_by,
-        remarks,
-        lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
-        created_by: userId,
-        ielts,
-      },
-      { transaction }
-    );
-
-    // Associate the preferred countries with the user
-    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
-    }
-
-    const userRole = await db.adminUsers.findOne({ where: { id: userId } });
-
-    console.log("userRole====>", userRole.role_id);
-
-    if (userRole?.role_id === 2 || userRole?.role_id === 3) {
-      const leastAssignedStaff = await getLeastAssignedUser();
-
-      if (leastAssignedStaff) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
-
-        const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
-        // Create a task for the new lead
-        const task = await db.tasks.create(
-          {
-            studentId: userPrimaryInfo.id,
-            userId: leastAssignedStaff,
-            title: `${full_name} - ${country.country_name} - ${phone}`,
-            dueDate: dueDate,
-            updatedBy: userId,
-          },
-          { transaction }
-        );
-
-        console.log("task==>", task);
-      }
-    }
-
-    // Commit the transaction
-    await transaction.commit();
-
-    // Respond with success
-    return res.status(201).json({
-      status: true,
-      message: "Lead created successfully",
-      data: { userPrimaryInfo },
-    });
-  } catch (error) {
-    // Rollback the transaction in case of error
-    await transaction.rollback();
-    console.error(`Error Lead: ${error}`);
-
-    // Respond with an error
-    return res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-
 // exports.createLead = async (req, res) => {
+//   // Validate the request
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     return res.status(400).json({
+//       status: false,
+//       message: "Validation failed",
+//       errors: errors.array(),
+//     });
+//   }
+
+//   // Destructure the validated request body
+//   const {
+//     full_name,
+//     email,
+//     phone,
+//     category_id,
+//     source_id,
+//     channel_id,
+//     city,
+//     preferred_country,  // This should be an array of country IDs
+//     office_type,
+//     region_id,
+//     counsiler_id,
+//     branch_id,
+//     updated_by,
+//     remarks,
+//     lead_received_date,
+//     ielts,
+//   } = req.body;
+
+//   // Start a transaction
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     const userId = req.userDecodeId;
+//     console.log("userId===>", userId);
+//     const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
+//     const user = await AdminUsers.findOne({ where: { id: userId } });
+
+//     // Check if referenced IDs exist in their respective tables
+//     const categoryExists = await checkIfEntityExists("lead_category", category_id);
+//     if (!categoryExists) {
+//       await transaction.rollback(); // Rollback the transaction if category ID is invalid
+//       return res.status(400).json({
+//         status: false,
+//         message: "Invalid category ID provided",
+//         errors: [{ msg: "Please provide a valid category ID" }],
+//       });
+//     }
+
+//     const sourceExists = await checkIfEntityExists("lead_source", source_id);
+//     if (!sourceExists) {
+//       await transaction.rollback(); // Rollback the transaction if source ID is invalid
+//       return res.status(400).json({
+//         status: false,
+//         message: "Invalid source ID provided",
+//         errors: [{ msg: "Please provide a valid source ID" }],
+//       });
+//     }
+
+//     const channelExists = await checkIfEntityExists("lead_channel", channel_id);
+//     if (!channelExists) {
+//       await transaction.rollback(); // Rollback the transaction if channel ID is invalid
+//       return res.status(400).json({
+//         status: false,
+//         message: "Invalid channel ID provided",
+//         errors: [{ msg: "Please provide a valid channel ID" }],
+//       });
+//     }
+
+//     const officeExists = await checkIfEntityExists("office_type", office_type);
+//     if (!officeExists) {
+//       await transaction.rollback(); // Rollback the transaction if office type ID is invalid
+//       return res.status(400).json({
+//         status: false,
+//         message: "Invalid office type ID provided",
+//         errors: [{ msg: "Please provide a valid office type ID" }],
+//       });
+//     }
+
+//     // Only check existence for non-null fields
+//     if (region_id !== null) {
+//       const regionExists = await checkIfEntityExists("region", region_id);
+//       if (!regionExists) {
+//         await transaction.rollback(); // Rollback the transaction if region ID is invalid
+//         return res.status(400).json({
+//           status: false,
+//           message: "Invalid region ID provided",
+//           errors: [{ msg: "Please provide a valid region ID" }],
+//         });
+//       }
+//     }
+
+//     if (counsiler_id !== null) {
+//       const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
+//       if (!counsilerExists) {
+//         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
+//         return res.status(400).json({
+//           status: false,
+//           message: "Invalid counsiler ID provided",
+//           errors: [{ msg: "Please provide a valid counsiler ID" }],
+//         });
+//       }
+//     }
+
+//     if (branch_id !== null) {
+//       const branchExists = await checkIfEntityExists("branch", branch_id);
+//       if (!branchExists) {
+//         await transaction.rollback(); // Rollback the transaction if branch ID is invalid
+//         return res.status(400).json({
+//           status: false,
+//           message: "Invalid branch ID provided",
+//           errors: [{ msg: "Please provide a valid branch ID" }],
+//         });
+//       }
+//     }
+
+//     if (updated_by !== null) {
+//       const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
+//       if (!updatedByExists) {
+//         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
+//         return res.status(400).json({
+//           status: false,
+//           message: "Invalid updated by ID provided",
+//           errors: [{ msg: "Please provide a valid updated by ID" }],
+//         });
+//       }
+//     }
+
+//     // Check if email already exists
+//     const existingEmailUser = await UserPrimaryInfo.findOne({
+//       where: { email },
+//     });
+//     if (existingEmailUser) {
+//       await transaction.rollback(); // Rollback transaction if email is not unique
+//       return res.status(400).json({
+//         status: false,
+//         message: "User with the same email already exists",
+//         errors: [{ msg: "Email must be unique" }],
+//       });
+//     }
+
+//     const existingPhone = await UserPrimaryInfo.findOne({ where: { phone } });
+//     if (existingPhone) {
+//       await transaction.rollback();
+//       return res.status(400).json({
+//         status: false,
+//         message: "User with the same phone number already exists",
+//         errors: [{ msg: "Phone number must be unique" }],
+//       });
+//     }
+
+//     const receivedDate = new Date();
+
+//     // Create user and related information
+//     const userPrimaryInfo = await UserPrimaryInfo.create(
+//       {
+//         full_name,
+//         email,
+//         phone,
+//         city,
+//         office_type,
+//         category_id,
+//         source_id,
+//         channel_id,
+//         region_id,
+//         counsiler_id,
+//         branch_id,
+//         updated_by,
+//         remarks,
+//         lead_received_date: lead_received_date || receivedDate,
+//         assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
+//         created_by: userId,
+//         ielts,
+//       },
+//       { transaction }
+//     );
+
+//     // Associate the preferred countries with the user
+//     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+//       await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
+//     }
+
+//     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
+
+//     console.log("userRole====>", userRole.role_id);
+
+//     if (userRole?.role_id === 2 || userRole?.role_id === 3) {
+//       const leastAssignedStaff = await getLeastAssignedUser();
+
+//       if (leastAssignedStaff) {
+//         const dueDate = new Date();
+//         dueDate.setDate(dueDate.getDate() + 1);
+
+//         const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
+//         // Create a task for the new lead
+//         const task = await db.tasks.create(
+//           {
+//             studentId: userPrimaryInfo.id,
+//             userId: leastAssignedStaff,
+//             title: `${full_name} - ${country.country_name} - ${phone}`,
+//             dueDate: dueDate,
+//             updatedBy: userId,
+//           },
+//           { transaction }
+//         );
+
+//         console.log("task==>", task);
+//       }
+//     }
+
+//     // Commit the transaction
+//     await transaction.commit();
+
+//     // Respond with success
+//     return res.status(201).json({
+//       status: true,
+//       message: "Lead created successfully",
+//       data: { userPrimaryInfo },
+//     });
+//   } catch (error) {
+//     // Rollback the transaction in case of error
+//     await transaction.rollback();
+//     console.error(`Error Lead: ${error}`);
+
+//     // Respond with an error
+//     return res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
+
+exports.createLead = async (req, res) => {
 //   // Validate the request
 //   const errors = validationResult(req);
 //   if (!errors.isEmpty()) {
