@@ -41,6 +41,7 @@ db.tasks = require("./task")(sequelize, Sequelize);
 db.userBranches = require("./userBranches")(sequelize, Sequelize);
 db.status = require("./status")(sequelize, Sequelize);
 db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize);
+db.userContries = require("./userContries")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -147,6 +148,18 @@ db.status.belongsToMany(db.accessRoles, {
 db.accessRoles.belongsToMany(db.status, {
   through: "status_access_roles",
   foreignKey: "access_role_id",
+});
+
+// UserPrimaryInfo and Country associations (many-to-many)
+db.userPrimaryInfo.belongsToMany(db.country, {
+  through: "user_countries",
+  foreignKey: "user_primary_info_id",
+  as: "preferredCountries",
+});
+db.country.belongsToMany(db.userPrimaryInfo, {
+  through: "user_countries",
+  foreignKey: "country_id",
+  as: "users",
 });
 
 module.exports = db;

@@ -70,10 +70,6 @@ exports.finishTask = async (req, res) => {
     const student = await db.userPrimaryInfo.findByPk(studentId);
     const preferred_country = student.preferred_country;
 
-    console.log("student =>", student);
-    console.log("task ==>", task);
-    console.log("preferred_country ==>", preferred_country);
-
     let leastAssignedUser;
 
     try {
@@ -110,8 +106,6 @@ exports.finishTask = async (req, res) => {
             updatedBy: req.userDecodeId,
           }
         );
-
-        console.log("task==>", task);
       }
 
     }
@@ -123,7 +117,7 @@ exports.finishTask = async (req, res) => {
     // Send success response
     res.status(200).json({
       status: true,
-      message: "Task updated successfully.",
+      message: "Task Assigned to Counsellor.",
       task,
       leastAssignedUser,
     });
