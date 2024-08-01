@@ -22,6 +22,38 @@ exports.getTasks = async (req, res) => {
   }
 };
 
+exports.getTaskById = async (req, res) => {
+  try {
+    const { id } = req.params; // Get task ID from URL parameters
+    const userId = req.userDecodeId; // Get user ID from decoded JWT or session
+
+    // Fetch the task by ID and ensure it belongs to the authenticated user
+    const task = await db.tasks.findOne({
+      where: { id: id, userId: userId },
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found or does not belong to the user.",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Task retrieved successfully",
+      data: task,
+    });
+  } catch (error) {
+    console.error(`Error fetching task by ID: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
 exports.finishTask = async (req, res) => {
   try {
     const { isCompleted, id } = req.body;
