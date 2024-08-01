@@ -108,8 +108,7 @@ exports.finishTask = async (req, res) => {
             title: `${student.full_name} - ${country.country_name} - ${student.phone}`,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
-          },
-          { transaction }
+          }
         );
 
         console.log("task==>", task);
