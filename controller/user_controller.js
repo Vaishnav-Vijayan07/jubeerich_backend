@@ -354,6 +354,7 @@ exports.getAllLeads = async (req, res) => {
         [db.Sequelize.Op.or]: [
           { assigned_cre: cre_id },
           { created_by: cre_id },
+          { counsiler_id: cre_id },
         ],
         is_deleted: false,
       },
