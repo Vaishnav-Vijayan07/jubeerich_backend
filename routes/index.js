@@ -125,6 +125,7 @@ const {
   getStudentBasicInfoById,
   getStudentAcademicInfoById,
   getStudentStudyPreferenceInfoById,
+  finishTask,
 } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -350,6 +351,7 @@ router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
+router.put("/finish_task", [authMiddleware.checkUserAuth], finishTask);
 router.post(
   "/saveStudentBasicInfo",
   [authMiddleware.checkUserAuth],

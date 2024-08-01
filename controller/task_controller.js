@@ -1,3 +1,4 @@
+const { Sequelize } = require("sequelize");
 const db = require("../models");
 
 exports.getTasks = async (req, res) => {
@@ -20,6 +21,70 @@ exports.getTasks = async (req, res) => {
     });
   }
 };
+
+exports.finishTask = async (req, res) => {
+  try {
+    const { isCompleted, id } = req.body;
+    const task = await db.tasks.findByPk(id);
+
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found.",
+      });
+    }
+
+    const studentId = task.studentId;
+    const student = await db.userPrimaryInfo.findByPk(studentId);
+    const preferred_country = student.preferred_country;
+
+    console.log("student =>", student);
+    console.log("task ==>", task);
+    console.log("preferred_country ==>", preferred_country);
+
+    let leastAssignedUser;
+
+    try {
+      leastAssignedUser = await getLeastAssignedUser(preferred_country);
+    } catch (error) {
+      console.error(`Error calling getLeastAssignedUser: ${error}`);
+      return res.status(500).json({
+        status: false,
+        message: "Internal server error",
+      });
+    }
+
+    console.log("Least assigned user:", leastAssignedUser);
+
+    // Update the userPrimaryInfo with the least assigned user
+    if (leastAssignedUser) {
+      await db.userPrimaryInfo.update(
+        { counsiler_id: leastAssignedUser },
+        { where: { id: studentId } }
+      );
+    }
+
+    // Update the task
+    task.isCompleted = isCompleted;
+    await task.save();
+
+    // Send success response
+    res.status(200).json({
+      status: true,
+      message: "Task updated successfully.",
+      task,
+      leastAssignedUser,
+    });
+
+  } catch (error) {
+    console.error(`Error finishing task: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 exports.getStudentBasicInfoById = async (req, res) => {
   try {
@@ -65,7 +130,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         },
         {
           model: db.status,
-          as:"status",
+          as: "status",
           attributes: ["status_name"],
         },
       ],
@@ -155,5 +220,45 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  }
+};
+
+const getLeastAssignedUser = async (country_id) => {
+  try {
+    const result = await db.adminUsers.findOne({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "user_primary_info"
+            WHERE "user_primary_info"."counsiler_id" = "admin_user"."id"
+          )`),
+          "assignment_count",
+        ],
+      ],
+      where: {
+        role_id: 6,
+        country_id: country_id
+        // status: true,
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+    });
+
+    console.log("result===>", result);
+
+    if (result?.dataValues) {
+      const leastAssignedUser = result.dataValues.user_id;
+
+      console.log("User with the least assignments:", leastAssignedUser);
+      return leastAssignedUser;
+    } else {
+      console.log('No matching users found or no assignments exist for the specified country.');
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error finding least assigned user: ${error}`);
+    throw new Error("Internal server error");
   }
 };
