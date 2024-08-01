@@ -239,7 +239,7 @@ const getLeastAssignedUser = async (country_id) => {
         ],
       ],
       where: {
-        role_id: 6,
+        role_id: process.env.COUNSELLOR_ROLE_ID,
         country_id: country_id
         // status: true,
       },
