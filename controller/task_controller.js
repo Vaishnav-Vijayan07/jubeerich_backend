@@ -94,6 +94,27 @@ exports.finishTask = async (req, res) => {
         { counsiler_id: leastAssignedUser },
         { where: { id: studentId } }
       );
+
+      if (leastAssignedUser && isCompleted) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        const country = await db.country.findByPk(preferred_country);
+        // Create a task for the new lead
+        const task = await db.tasks.create(
+          {
+            studentId: student.id,
+            userId: leastAssignedUser,
+            title: `${student.full_name} - ${country.country_name} - ${student.phone}`,
+            dueDate: dueDate,
+            updatedBy: req.userDecodeId,
+          },
+          { transaction }
+        );
+
+        console.log("task==>", task);
+      }
+
     }
 
     // Update the task
