@@ -165,7 +165,7 @@ exports.finishTask = async (req, res) => {
     let leastAssignedUsers = [];
     for (const countryId of countryIds) {
       console.log("countryId ======>", countryId);
-      const users = await getLeastAssignedUsers([countryId]);
+      const users = await getLeastAssignedUsers(countryId);
       leastAssignedUsers = leastAssignedUsers.concat(users);
     }
 
