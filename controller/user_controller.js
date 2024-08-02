@@ -876,11 +876,6 @@ exports.assignCres = async (req, res) => {
           //     returning: true, // Returns the updated/created task
           //   }
           // );
-
-          console.log("task ==>", task);
-
-          console.log("user_id =======>", user_id);
-          console.log("task =======>", task);
         }
 
         await UserPrimaryInfo.update(
