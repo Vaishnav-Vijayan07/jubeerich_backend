@@ -480,7 +480,9 @@ const getLeastAssignedUsers = async (countryId) => {
       type: db.Sequelize.QueryTypes.SELECT
     });
 
-    if (results.length === 0) {
+    console.log("results ===>", results);
+
+    if (results?.length === 0) {
       return {
         status: false,
         message: "No users found",
