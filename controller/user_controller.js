@@ -9,241 +9,6 @@ const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
 const { Op, Sequelize, where } = require("sequelize");
 
-// exports.createLead = async (req, res) => {
-//   // Validate the request
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({
-//       status: false,
-//       message: "Validation failed",
-//       errors: errors.array(),
-//     });
-//   }
-
-//   // Destructure the validated request body
-//   const {
-//     full_name,
-//     email,
-//     phone,
-//     category_id,
-//     source_id,
-//     channel_id,
-//     city,
-//     preferred_country,  // This should be an array of country IDs
-//     office_type,
-//     region_id,
-//     counsiler_id,
-//     branch_id,
-//     updated_by,
-//     remarks,
-//     lead_received_date,
-//     ielts,
-//   } = req.body;
-
-//   // Start a transaction
-//   const transaction = await sequelize.transaction();
-
-//   try {
-//     const userId = req.userDecodeId;
-//     console.log("userId===>", userId);
-//     const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
-//     const user = await AdminUsers.findOne({ where: { id: userId } });
-
-//     // Check if referenced IDs exist in their respective tables
-//     const categoryExists = await checkIfEntityExists("lead_category", category_id);
-//     if (!categoryExists) {
-//       await transaction.rollback(); // Rollback the transaction if category ID is invalid
-//       return res.status(400).json({
-//         status: false,
-//         message: "Invalid category ID provided",
-//         errors: [{ msg: "Please provide a valid category ID" }],
-//       });
-//     }
-
-//     const sourceExists = await checkIfEntityExists("lead_source", source_id);
-//     if (!sourceExists) {
-//       await transaction.rollback(); // Rollback the transaction if source ID is invalid
-//       return res.status(400).json({
-//         status: false,
-//         message: "Invalid source ID provided",
-//         errors: [{ msg: "Please provide a valid source ID" }],
-//       });
-//     }
-
-//     const channelExists = await checkIfEntityExists("lead_channel", channel_id);
-//     if (!channelExists) {
-//       await transaction.rollback(); // Rollback the transaction if channel ID is invalid
-//       return res.status(400).json({
-//         status: false,
-//         message: "Invalid channel ID provided",
-//         errors: [{ msg: "Please provide a valid channel ID" }],
-//       });
-//     }
-
-//     const officeExists = await checkIfEntityExists("office_type", office_type);
-//     if (!officeExists) {
-//       await transaction.rollback(); // Rollback the transaction if office type ID is invalid
-//       return res.status(400).json({
-//         status: false,
-//         message: "Invalid office type ID provided",
-//         errors: [{ msg: "Please provide a valid office type ID" }],
-//       });
-//     }
-
-//     // Only check existence for non-null fields
-//     if (region_id !== null) {
-//       const regionExists = await checkIfEntityExists("region", region_id);
-//       if (!regionExists) {
-//         await transaction.rollback(); // Rollback the transaction if region ID is invalid
-//         return res.status(400).json({
-//           status: false,
-//           message: "Invalid region ID provided",
-//           errors: [{ msg: "Please provide a valid region ID" }],
-//         });
-//       }
-//     }
-
-//     if (counsiler_id !== null) {
-//       const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
-//       if (!counsilerExists) {
-//         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
-//         return res.status(400).json({
-//           status: false,
-//           message: "Invalid counsiler ID provided",
-//           errors: [{ msg: "Please provide a valid counsiler ID" }],
-//         });
-//       }
-//     }
-
-//     if (branch_id !== null) {
-//       const branchExists = await checkIfEntityExists("branch", branch_id);
-//       if (!branchExists) {
-//         await transaction.rollback(); // Rollback the transaction if branch ID is invalid
-//         return res.status(400).json({
-//           status: false,
-//           message: "Invalid branch ID provided",
-//           errors: [{ msg: "Please provide a valid branch ID" }],
-//         });
-//       }
-//     }
-
-//     if (updated_by !== null) {
-//       const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
-//       if (!updatedByExists) {
-//         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
-//         return res.status(400).json({
-//           status: false,
-//           message: "Invalid updated by ID provided",
-//           errors: [{ msg: "Please provide a valid updated by ID" }],
-//         });
-//       }
-//     }
-
-//     // Check if email already exists
-//     const existingEmailUser = await UserPrimaryInfo.findOne({
-//       where: { email },
-//     });
-//     if (existingEmailUser) {
-//       await transaction.rollback(); // Rollback transaction if email is not unique
-//       return res.status(400).json({
-//         status: false,
-//         message: "User with the same email already exists",
-//         errors: [{ msg: "Email must be unique" }],
-//       });
-//     }
-
-//     const existingPhone = await UserPrimaryInfo.findOne({ where: { phone } });
-//     if (existingPhone) {
-//       await transaction.rollback();
-//       return res.status(400).json({
-//         status: false,
-//         message: "User with the same phone number already exists",
-//         errors: [{ msg: "Phone number must be unique" }],
-//       });
-//     }
-
-//     const receivedDate = new Date();
-
-//     // Create user and related information
-//     const userPrimaryInfo = await UserPrimaryInfo.create(
-//       {
-//         full_name,
-//         email,
-//         phone,
-//         city,
-//         office_type,
-//         category_id,
-//         source_id,
-//         channel_id,
-//         region_id,
-//         counsiler_id,
-//         branch_id,
-//         updated_by,
-//         remarks,
-//         lead_received_date: lead_received_date || receivedDate,
-//         assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
-//         created_by: userId,
-//         ielts,
-//       },
-//       { transaction }
-//     );
-
-//     // Associate the preferred countries with the user
-//     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-//       await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
-//     }
-
-//     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
-
-//     console.log("userRole====>", userRole.role_id);
-
-//     if (userRole?.role_id === 2 || userRole?.role_id === 3) {
-//       const leastAssignedStaff = await getLeastAssignedUser();
-
-//       if (leastAssignedStaff) {
-//         const dueDate = new Date();
-//         dueDate.setDate(dueDate.getDate() + 1);
-
-//         const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
-//         // Create a task for the new lead
-//         const task = await db.tasks.create(
-//           {
-//             studentId: userPrimaryInfo.id,
-//             userId: leastAssignedStaff,
-//             title: `${full_name} - ${country.country_name} - ${phone}`,
-//             dueDate: dueDate,
-//             updatedBy: userId,
-//           },
-//           { transaction }
-//         );
-
-//         console.log("task==>", task);
-//       }
-//     }
-
-//     // Commit the transaction
-//     await transaction.commit();
-
-//     // Respond with success
-//     return res.status(201).json({
-//       status: true,
-//       message: "Lead created successfully",
-//       data: { userPrimaryInfo },
-//     });
-//   } catch (error) {
-//     // Rollback the transaction in case of error
-//     await transaction.rollback();
-//     console.error(`Error Lead: ${error}`);
-
-//     // Respond with an error
-//     return res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
-
 exports.createLead = async (req, res) => {
   // Validate the request
   const errors = validationResult(req);
@@ -264,7 +29,7 @@ exports.createLead = async (req, res) => {
     source_id,
     channel_id,
     city,
-    preferred_country,
+    preferred_country,  // This should be an array of country IDs
     office_type,
     region_id,
     counsiler_id,
@@ -284,12 +49,8 @@ exports.createLead = async (req, res) => {
     const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
     const user = await AdminUsers.findOne({ where: { id: userId } });
 
-
     // Check if referenced IDs exist in their respective tables
-    const categoryExists = await checkIfEntityExists(
-      "lead_category",
-      category_id
-    );
+    const categoryExists = await checkIfEntityExists("lead_category", category_id);
     if (!categoryExists) {
       await transaction.rollback(); // Rollback the transaction if category ID is invalid
       return res.status(400).json({
@@ -319,19 +80,6 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    const countryExists = await checkIfEntityExists(
-      "country",
-      preferred_country
-    );
-    if (!countryExists) {
-      await transaction.rollback(); // Rollback the transaction if country ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid preferred country ID provided",
-        errors: [{ msg: "Please provide a valid preferred country ID" }],
-      });
-    }
-
     const officeExists = await checkIfEntityExists("office_type", office_type);
     if (!officeExists) {
       await transaction.rollback(); // Rollback the transaction if office type ID is invalid
@@ -356,10 +104,7 @@ exports.createLead = async (req, res) => {
     }
 
     if (counsiler_id !== null) {
-      const counsilerExists = await checkIfEntityExists(
-        "admin_user",
-        counsiler_id
-      );
+      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -383,10 +128,7 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists(
-        "admin_user",
-        updated_by
-      );
+      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -420,7 +162,7 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    const recieved_date = new Date();
+    const receivedDate = new Date();
 
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
@@ -429,7 +171,6 @@ exports.createLead = async (req, res) => {
         email,
         phone,
         city,
-        preferred_country,
         office_type,
         category_id,
         source_id,
@@ -439,26 +180,32 @@ exports.createLead = async (req, res) => {
         branch_id,
         updated_by,
         remarks,
-        lead_received_date: lead_received_date || recieved_date,
-        assigned_cre_tl: user.id == 2 && creTl ? creTl.id : null,
+        lead_received_date: lead_received_date || receivedDate,
+        assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
         created_by: userId,
         ielts,
+        // preferred_country: preferred_country[0]
       },
       { transaction }
     );
+
+    // Associate the preferred countries with the user
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
+    }
 
     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
 
     console.log("userRole====>", userRole.role_id);
 
-    if (userRole?.role_id == 2 || userRole?.role_id == 3) {
+    if (userRole?.role_id === 2 || userRole?.role_id === 3) {
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
-        const country = await db.country.findByPk(preferred_country);
+        const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
         // Create a task for the new lead
         const task = await db.tasks.create(
           {
@@ -498,8 +245,6 @@ exports.createLead = async (req, res) => {
 };
 
 exports.getLeads = async (req, res) => {
-  const cre_id = req.userDecodeId;
-
   try {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
@@ -521,7 +266,12 @@ exports.getLeads = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
-        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.country,
+          as: "preferredCountries", // Use the alias defined in associations
+          attributes: ["country_name", "id"], // Include the ID attribute
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
         {
           model: db.officeType,
           as: "office_type_name",
@@ -548,21 +298,28 @@ exports.getLeads = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
-      ...info.toJSON(),
-      category_name: info.category_name
-        ? info.category_name.category_name
-        : null,
-      source_name: info.source_name ? info.source_name.source_name : null,
-      channel_name: info.channel_name ? info.channel_name.channel_name : null,
-      country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name
-        ? info.office_type_name.office_type_name
-        : null,
-      region_name: info.region_name ? info.region_name.region_name : null,
-      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-      branch_name: info.branch_name ? info.branch_name.branch_name : null,
-    }));
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
+
+      return {
+        ...info.toJSON(),
+        category_name: info.category_name
+          ? info.category_name.category_name
+          : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        region_name: info.region_name ? info.region_name.region_name : null,
+        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -587,7 +344,7 @@ exports.getAllLeads = async (req, res) => {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
         [db.Sequelize.Op.or]: [
-          { assigned_cre: cre_id },
+          { assigned_cre_tl: cre_id },
           { created_by: cre_id },
           { counsiler_id: cre_id },
         ],
@@ -609,7 +366,12 @@ exports.getAllLeads = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
-        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.country,
+          as: "preferredCountries", // Use the alias defined in associations
+          attributes: ["country_name", "id"], // Include the ID attribute
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
         {
           model: db.officeType,
           as: "office_type_name",
@@ -636,21 +398,28 @@ exports.getAllLeads = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
-      ...info.toJSON(),
-      category_name: info.category_name
-        ? info.category_name.category_name
-        : null,
-      source_name: info.source_name ? info.source_name.source_name : null,
-      channel_name: info.channel_name ? info.channel_name.channel_name : null,
-      country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name
-        ? info.office_type_name.office_type_name
-        : null,
-      region_name: info.region_name ? info.region_name.region_name : null,
-      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-      branch_name: info.branch_name ? info.branch_name.branch_name : null,
-    }));
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
+
+      return {
+        ...info.toJSON(),
+        category_name: info.category_name
+          ? info.category_name.category_name
+          : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        region_name: info.region_name ? info.region_name.region_name : null,
+        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -688,7 +457,12 @@ exports.getLeadsByCreatedUser = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
-        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.country,
+          as: "preferredCountries", // Use the alias defined in associations
+          attributes: ["country_name", "id"], // Include the ID attribute
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
         {
           model: db.officeType,
           as: "office_type_name",
@@ -715,21 +489,28 @@ exports.getLeadsByCreatedUser = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
-      ...info.toJSON(),
-      category_name: info.category_name
-        ? info.category_name.category_name
-        : null,
-      source_name: info.source_name ? info.source_name.source_name : null,
-      channel_name: info.channel_name ? info.channel_name.channel_name : null,
-      country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name
-        ? info.office_type_name.office_type_name
-        : null,
-      region_name: info.region_name ? info.region_name.region_name : null,
-      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-      branch_name: info.branch_name ? info.branch_name.branch_name : null,
-    }));
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
+
+      return {
+        ...info.toJSON(),
+        category_name: info.category_name
+          ? info.category_name.category_name
+          : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        region_name: info.region_name ? info.region_name.region_name : null,
+        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -745,8 +526,10 @@ exports.getLeadsByCreatedUser = async (req, res) => {
   }
 };
 
+
 exports.geLeadsForCreTl = async (req, res) => {
   try {
+    // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
       where: { role_id: 3 },
       attributes: ["id", "name"],
@@ -788,7 +571,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
-        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.country,
+          as: "preferredCountries", // Use the alias defined in associations
+          attributes: ["country_name", "id"], // Include both name and ID
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
         {
           model: db.officeType,
           as: "office_type_name",
@@ -820,80 +608,29 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    // const userPrimaryInfos = await UserPrimaryInfo.findAll({
-    //   where: {
-    //     [db.Sequelize.Op.or]: [
-    //       { assigned_cre_tl: userId },
-    //       { created_by: userId },
-    //     ],
-    //     assigned_cre: {
-    //       [db.Sequelize.Op.is]: null,
-    //     },
-    //   },
-    //   include: [
-    //     {
-    //       model: db.leadCategory,
-    //       as: "category_name",
-    //       attributes: ["category_name"],
-    //     },
-    //     {
-    //       model: db.leadSource,
-    //       as: "source_name",
-    //       attributes: ["source_name"],
-    //     },
-    //     {
-    //       model: db.leadChannel,
-    //       as: "channel_name",
-    //       attributes: ["channel_name"],
-    //     },
-    //     { model: db.country, as: "country_name", attributes: ["country_name"] },
-    //     {
-    //       model: db.officeType,
-    //       as: "office_type_name",
-    //       attributes: ["office_type_name"],
-    //     },
-    //     {
-    //       model: db.region,
-    //       as: "region_name",
-    //       attributes: ["region_name"],
-    //       required: false,
-    //     },
-    //     {
-    //       model: db.adminUsers,
-    //       as: "counsiler_name",
-    //       attributes: ["name"],
-    //       required: false,
-    //     },
-    //     {
-    //       model: db.adminUsers,
-    //       as: "cre_name",
-    //       attributes: ["id", "name"],
-    //     },
-    //     {
-    //       model: db.branches,
-    //       as: "branch_name",
-    //       attributes: ["branch_name"],
-    //       required: false,
-    //     },
-    //   ],
-    // });
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
-      ...info.toJSON(),
-      category_name: info.category_name
-        ? info.category_name.category_name
-        : null,
-      source_name: info.source_name ? info.source_name.source_name : null,
-      channel_name: info.channel_name ? info.channel_name.channel_name : null,
-      country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name
-        ? info.office_type_name.office_type_name
-        : null,
-      region_name: info.region_name ? info.region_name.region_name : null,
-      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-      branch_name: info.branch_name ? info.branch_name.branch_name : null,
-      cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-    }));
+      return {
+        ...info.toJSON(),
+        category_name: info.category_name
+          ? info.category_name.category_name
+          : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        region_name: info.region_name ? info.region_name.region_name : null,
+        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -910,17 +647,16 @@ exports.geLeadsForCreTl = async (req, res) => {
   }
 };
 
+
 exports.getAssignedLeadsForCreTl = async (req, res) => {
   try {
+    // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
-      where: {
-        role_id: 3
-      },
+      where: { role_id: 3 },
       attributes: ["id", "name"],
     });
 
     const userId = req.userDecodeId;
-
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: {
         [db.Sequelize.Op.and]: [
@@ -956,7 +692,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
-        { model: db.country, as: "country_name", attributes: ["country_name"] },
+        {
+          model: db.country,
+          as: "preferredCountries", // Use the alias defined in associations
+          attributes: ["country_name", "id"], // Include both name and ID
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
         {
           model: db.officeType,
           as: "office_type_name",
@@ -987,80 +728,30 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         },
       ],
     });
-    // const userPrimaryInfos = await UserPrimaryInfo.findAll({
-    //   where: {
-    //     [db.Sequelize.Op.or]: [
-    //       { assigned_cre_tl: userId },
-    //       { created_by: userId },
-    //     ],
-    //     assigned_cre: {
-    //       [db.Sequelize.Op.ne]: null,
-    //     },
-    //   },
-    //   include: [
-    //     {
-    //       model: db.leadCategory,
-    //       as: "category_name",
-    //       attributes: ["category_name"],
-    //     },
-    //     {
-    //       model: db.leadSource,
-    //       as: "source_name",
-    //       attributes: ["source_name"],
-    //     },
-    //     {
-    //       model: db.leadChannel,
-    //       as: "channel_name",
-    //       attributes: ["channel_name"],
-    //     },
-    //     { model: db.country, as: "country_name", attributes: ["country_name"] },
-    //     {
-    //       model: db.officeType,
-    //       as: "office_type_name",
-    //       attributes: ["office_type_name"],
-    //     },
-    //     {
-    //       model: db.region,
-    //       as: "region_name",
-    //       attributes: ["region_name"],
-    //       required: false,
-    //     },
-    //     {
-    //       model: db.adminUsers,
-    //       as: "counsiler_name",
-    //       attributes: ["name"],
-    //       required: false,
-    //     },
-    //     {
-    //       model: db.adminUsers,
-    //       as: "cre_name",
-    //       attributes: ["id", "name"],
-    //     },
-    //     {
-    //       model: db.branches,
-    //       as: "branch_name",
-    //       attributes: ["branch_name"],
-    //       required: false,
-    //     },
-    //   ],
-    // });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => ({
-      ...info.toJSON(),
-      category_name: info.category_name
-        ? info.category_name.category_name
-        : null,
-      source_name: info.source_name ? info.source_name.source_name : null,
-      channel_name: info.channel_name ? info.channel_name.channel_name : null,
-      country_name: info.country_name ? info.country_name.country_name : null,
-      office_type_name: info.office_type_name
-        ? info.office_type_name.office_type_name
-        : null,
-      region_name: info.region_name ? info.region_name.region_name : null,
-      counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-      branch_name: info.branch_name ? info.branch_name.branch_name : null,
-      cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-    }));
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
+
+      return {
+        ...info.toJSON(),
+        category_name: info.category_name
+          ? info.category_name.category_name
+          : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        region_name: info.region_name ? info.region_name.region_name : null,
+        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -1076,6 +767,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
     });
   }
 };
+
 
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
@@ -1213,69 +905,6 @@ exports.assignCres = async (req, res) => {
     });
   }
 };
-
-// exports.autoAssign = async (req, res) => {
-//   const { leads_ids } = req.body;
-
-//   // Start a new transaction
-//   const transaction = await sequelize.transaction();
-
-//   try {
-//     // Validate leads_ids
-//     if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "leads_ids must be a non-empty array",
-//       });
-//     }
-
-//     // Validate each user_id
-//     for (const user_id of leads_ids) {
-//       if (typeof user_id !== "number") {
-//         return res.status(400).json({
-//           status: false,
-//           message: "Each user_id must be a number",
-//         });
-//       }
-//     }
-
-//     const leastCre = await getLeastAssignedCre(); // Get all CREs with their assignment counts
-//     let creIndex = 0; // Initialize an index to track the current CRE
-
-//     for (const id of leads_ids) {
-//       if (leastCre.length === 0) {
-//         throw new Error("No available CREs to assign leads");
-//       }
-
-//       // Get the current CRE based on the index
-//       const currentCre = leastCre[creIndex].user_id;
-
-//       // Update the user with the selected CRE
-//       await UserPrimaryInfo.update(
-//         { assigned_cre: currentCre },
-//         { where: { id: id }, transaction }
-//       );
-
-//       // Update the index to the next CRE
-//       creIndex = (creIndex + 1) % leastCre.length; // Loop back to the start if needed
-//     }
-
-//     await transaction.commit();
-
-//     res.status(200).json({
-//       status: true,
-//       message: "Leads assigned successfully",
-//     });
-//   } catch (error) {
-//     // Rollback the transaction in case of an error
-//     await transaction.rollback();
-//     console.error("Error in autoAssign:", error);
-//     res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
 
 exports.autoAssign = async (req, res) => {
   const { leads_ids } = req.body;

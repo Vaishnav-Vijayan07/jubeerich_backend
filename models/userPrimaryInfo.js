@@ -53,14 +53,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(100),
         allowNull: true,
       },
-      preferred_country: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "countries",
-          key: "id",
-        },
-      },
       office_type: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -177,10 +169,6 @@ module.exports = (sequelize, Sequelize) => {
         {
           name: "channel_id_index",
           fields: ["channel_id"],
-        },
-        {
-          name: "preferred_country_index",
-          fields: ["preferred_country"],
         },
         {
           name: "office_type_index",

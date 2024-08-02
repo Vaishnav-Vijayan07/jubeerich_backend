@@ -49,6 +49,13 @@ db.accessRoles.belongsTo(db.adminUsers, {
   as: "updatedByUser",
 });
 
+// AdminUser model
+db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
+
+// Country model
+db.country.hasMany(db.adminUsers, { foreignKey: 'country_id' });
+
+
 db.accessRoles.belongsToMany(db.accessPowers, {
   through: "accessRolePowers",
   as: "powers",
