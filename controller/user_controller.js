@@ -768,7 +768,6 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
   }
 };
 
-
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
   const userId = req.userDecodeId;
@@ -803,56 +802,66 @@ exports.assignCres = async (req, res) => {
       }
     }
 
-    // Update assigned_cre for each user_id
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 1);
+    // Process each user_id
     await Promise.all(
       user_ids.map(async (user_id) => {
-        const userInfo = await UserPrimaryInfo.findOne({ where: user_id });
-        const country = await db.country.findByPk(userInfo.preferred_country);
-
-
-        // Transaction handling (if needed)
-        await sequelize.transaction(async (transaction) => {
-          // Step 1: Check if the task with studentId exists
-          const existingTask = await db.tasks.findOne({
-            where: { studentId: user_id },
-            transaction,
-          });
-
-          if (existingTask) {
-            // Step 2a: If it exists, update the task
-            await existingTask.update(
-              {
-                userId: cre_id,
-                title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
-                dueDate: dueDate,
-                updatedBy: userId,
-              },
-              { transaction }
-            );
-          } else {
-            // Step 2b: If it does not exist, create a new task
-            await db.tasks.create(
-              {
-                studentId: user_id,
-                userId: cre_id,
-                title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
-                dueDate: dueDate,
-                updatedBy: userId,
-              },
-              { transaction }
-            );
-          }
+        // Step 1: Fetch user info with associated country
+        const userInfo = await db.userPrimaryInfo.findOne({
+          where: { id: user_id },
+          include: {
+            model: db.country,
+            as: 'country_name',
+          },
+          transaction
         });
 
-        await UserPrimaryInfo.update(
+        if (!userInfo) {
+          throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+        }
+
+        const country = userInfo.country_name;
+
+        // Step 2: Check if the task with studentId exists
+        const existingTask = await db.tasks.findOne({
+          where: { studentId: user_id },
+          transaction,
+        });
+
+        // Step 3: Create or update task
+        if (existingTask) {
+          // Update existing task
+          await existingTask.update(
+            {
+              userId: cre_id,
+              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        } else {
+          // Create new task
+          await db.tasks.create(
+            {
+              studentId: user_id,
+              userId: cre_id,
+              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        }
+
+        // Update assigned_cre for the user
+        await db.userPrimaryInfo.update(
           { assigned_cre: cre_id },
           { where: { id: user_id }, transaction }
         );
       })
     );
 
+    // Commit transaction
     await transaction.commit();
 
     return res.status(200).json({
@@ -860,6 +869,7 @@ exports.assignCres = async (req, res) => {
       message: "CRE assigned successfully",
     });
   } catch (error) {
+    // Rollback transaction
     await transaction.rollback();
     console.error(`Error assigning CRE: ${error}`);
     return res.status(500).json({
@@ -868,6 +878,107 @@ exports.assignCres = async (req, res) => {
     });
   }
 };
+
+
+// exports.assignCres = async (req, res) => {
+//   const { cre_id, user_ids } = req.body;
+//   const userId = req.userDecodeId;
+
+//   // Start a transaction
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     // Validate cre_id
+//     if (!cre_id) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "cre_id is required",
+//       });
+//     }
+
+//     // Validate user_ids
+//     if (!Array.isArray(user_ids) || user_ids.length === 0) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "user_ids must be a non-empty array",
+//       });
+//     }
+
+//     // Validate each user_id
+//     for (const user_id of user_ids) {
+//       if (typeof user_id !== "number") {
+//         return res.status(400).json({
+//           status: false,
+//           message: "Each user_id must be a number",
+//         });
+//       }
+//     }
+
+//     // Update assigned_cre for each user_id
+//     const dueDate = new Date();
+//     dueDate.setDate(dueDate.getDate() + 1);
+//     await Promise.all(
+//       user_ids.map(async (user_id) => {
+//         const userInfo = await UserPrimaryInfo.findOne({ where: user_id });
+//         const country = await db.country.findByPk(userInfo.preferred_country);
+
+
+//         // Transaction handling (if needed)
+//         await sequelize.transaction(async (transaction) => {
+//           // Step 1: Check if the task with studentId exists
+//           const existingTask = await db.tasks.findOne({
+//             where: { studentId: user_id },
+//             transaction,
+//           });
+
+//           if (existingTask) {
+//             // Step 2a: If it exists, update the task
+//             await existingTask.update(
+//               {
+//                 userId: cre_id,
+//                 title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+//                 dueDate: dueDate,
+//                 updatedBy: userId,
+//               },
+//               { transaction }
+//             );
+//           } else {
+//             // Step 2b: If it does not exist, create a new task
+//             await db.tasks.create(
+//               {
+//                 studentId: user_id,
+//                 userId: cre_id,
+//                 title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+//                 dueDate: dueDate,
+//                 updatedBy: userId,
+//               },
+//               { transaction }
+//             );
+//           }
+//         });
+
+//         await UserPrimaryInfo.update(
+//           { assigned_cre: cre_id },
+//           { where: { id: user_id }, transaction }
+//         );
+//       })
+//     );
+
+//     await transaction.commit();
+
+//     return res.status(200).json({
+//       status: true,
+//       message: "CRE assigned successfully",
+//     });
+//   } catch (error) {
+//     await transaction.rollback();
+//     console.error(`Error assigning CRE: ${error}`);
+//     return res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.autoAssign = async (req, res) => {
   const { leads_ids } = req.body;
