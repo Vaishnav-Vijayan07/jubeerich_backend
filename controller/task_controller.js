@@ -493,6 +493,7 @@ const getLeastAssignedUsers = async (countryId) => {
     // Extract user_id if results has user_id
     const leastAssignedUserId = results.user_id;
 
+    
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
