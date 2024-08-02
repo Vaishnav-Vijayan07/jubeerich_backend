@@ -455,11 +455,9 @@ const getLeastAssignedUser = async (country_id) => {
 // };
 
 const getLeastAssignedUsers = async (countryId) => {
-
-  console.log("countryId ===>", countryId);
   try {
-    // Validate that countryId is a valid number
-    if (typeof countryId !== 'number' || isNaN(countryId)) {
+    // Ensure that countryId is a valid number
+    if (!Number.isInteger(countryId)) {
       throw new Error("countryId must be a valid number");
     }
 
@@ -478,16 +476,14 @@ const getLeastAssignedUsers = async (countryId) => {
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
-        country_id: countryId, // Use single value instead of array
+        country_id: countryId, // Use a single country ID here
       },
       order: [[Sequelize.literal("assignment_count"), "ASC"]],
     });
 
-    // Log the result to see the full structure
-    console.log("result===>", JSON.stringify(result, null, 2));
+    console.log("result===>", result);
 
-    // Extract the user IDs from the result
-    const leastAssignedUsers = result.map(user => user.get("user_id")); // Use .get to access the alias
+    const leastAssignedUsers = result.map(user => user.user_id);
 
     if (leastAssignedUsers.length > 0) {
       console.log("Users with the least assignments:", leastAssignedUsers);
@@ -501,4 +497,5 @@ const getLeastAssignedUsers = async (countryId) => {
     throw new Error("Internal server error");
   }
 };
+
 
