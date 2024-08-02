@@ -42,12 +42,14 @@ db.userBranches = require("./userBranches")(sequelize, Sequelize);
 db.status = require("./status")(sequelize, Sequelize);
 db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize);
 db.userContries = require("./userContries")(sequelize, Sequelize);
+db.userCounselors = require("./userCounselors")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
   foreignKey: "updated_by",
   as: "updatedByUser",
 });
+
 
 // AdminUser model
 db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
@@ -167,6 +169,20 @@ db.country.belongsToMany(db.userPrimaryInfo, {
   through: "user_countries",
   foreignKey: "country_id",
   as: "users",
+});
+
+// UserPrimaryInfo and AdminUser (Counselors) associations (many-to-many)
+db.userPrimaryInfo.belongsToMany(db.adminUsers, {
+  through: "user_counselors",
+  foreignKey: "user_id",
+  otherKey: "counselor_id",
+  as: "counselors",
+});
+db.adminUsers.belongsToMany(db.userPrimaryInfo, {
+  through: "user_counselors",
+  foreignKey: "counselor_id",
+  otherKey: "user_id",
+  as: "counseledUsers",
 });
 
 module.exports = db;

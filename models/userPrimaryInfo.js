@@ -85,14 +85,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
-      counsiler_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "admin_users",
-          key: "id",
-        },
-        allowNull: true,
-      },
+      // counsiler_id: {
+      //   type: Sequelize.INTEGER,
+      //   references: {
+      //     model: "admin_users",
+      //     key: "id",
+      //   },
+      //   allowNull: true,
+      // },
       assigned_cre_tl: {
         type: Sequelize.INTEGER,
         references: {
@@ -178,10 +178,10 @@ module.exports = (sequelize, Sequelize) => {
           name: "region_id_index",
           fields: ["region_id"],
         },
-        {
-          name: "counsiler_id_index",
-          fields: ["counsiler_id"],
-        },
+        // {
+        //   name: "counsiler_id_index",
+        //   fields: ["counsiler_id"],
+        // },
         {
           name: "branch_id_index",
           fields: ["branch_id"],

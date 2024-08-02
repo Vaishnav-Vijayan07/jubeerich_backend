@@ -54,6 +54,83 @@ exports.getTaskById = async (req, res) => {
 };
 
 
+// exports.finishTask = async (req, res) => {
+//   try {
+//     const { isCompleted, id } = req.body;
+//     const task = await db.tasks.findByPk(id);
+
+//     if (!task) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Task not found.",
+//       });
+//     }
+
+//     const studentId = task.studentId;
+//     const student = await db.userPrimaryInfo.findByPk(studentId);
+//     const preferred_country = student.preferred_country;
+
+//     let leastAssignedUser;
+
+//     try {
+//       leastAssignedUser = await getLeastAssignedUser(preferred_country);
+//     } catch (error) {
+//       console.error(`Error calling getLeastAssignedUser: ${error}`);
+//       return res.status(500).json({
+//         status: false,
+//         message: "Internal server error",
+//       });
+//     }
+
+//     console.log("Least assigned user:", leastAssignedUser);
+
+//     // Update the userPrimaryInfo with the least assigned user
+//     if (leastAssignedUser) {
+//       await db.userPrimaryInfo.update(
+//         { counsiler_id: leastAssignedUser },
+//         { where: { id: studentId } }
+//       );
+
+//       if (leastAssignedUser && isCompleted) {
+//         const dueDate = new Date();
+//         dueDate.setDate(dueDate.getDate() + 1);
+
+//         const country = await db.country.findByPk(preferred_country);
+//         // Create a task for the new lead
+//         const task = await db.tasks.create(
+//           {
+//             studentId: student.id,
+//             userId: leastAssignedUser,
+//             title: `${student.full_name} - ${country.country_name} - ${student.phone}`,
+//             dueDate: dueDate,
+//             updatedBy: req.userDecodeId,
+//           }
+//         );
+//       }
+
+//     }
+
+//     // Update the task
+//     task.isCompleted = isCompleted;
+//     await task.save();
+
+//     // Send success response
+//     res.status(200).json({
+//       status: true,
+//       message: "Task Assigned to Counsellor.",
+//       task,
+//       leastAssignedUser,
+//     });
+
+//   } catch (error) {
+//     console.error(`Error finishing task: ${error}`);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 exports.finishTask = async (req, res) => {
   try {
     const { isCompleted, id } = req.body;
@@ -68,68 +145,92 @@ exports.finishTask = async (req, res) => {
 
     const studentId = task.studentId;
     const student = await db.userPrimaryInfo.findByPk(studentId);
-    const preferred_country = student.preferred_country;
 
-    let leastAssignedUser;
-
-    try {
-      leastAssignedUser = await getLeastAssignedUser(preferred_country);
-    } catch (error) {
-      console.error(`Error calling getLeastAssignedUser: ${error}`);
-      return res.status(500).json({
+    if (!student) {
+      return res.status(404).json({
         status: false,
-        message: "Internal server error",
+        message: "Student not found.",
       });
     }
 
-    console.log("Least assigned user:", leastAssignedUser);
+    // Fetch preferred countries from the join table
+    const preferredCountries = await db.user_countries.findAll({
+      where: { user_id: studentId },
+      attributes: ['country_id'],
+    });
 
-    // Update the userPrimaryInfo with the least assigned user
-    if (leastAssignedUser) {
-      await db.userPrimaryInfo.update(
-        { counsiler_id: leastAssignedUser },
-        { where: { id: studentId } }
-      );
+    const countryIds = preferredCountries.map(entry => entry.country_id);
 
-      if (leastAssignedUser && isCompleted) {
+    // Fetch least assigned users for each country
+    let leastAssignedUsers = [];
+    for (const countryId of countryIds) {
+      const users = await getLeastAssignedUsers([countryId]);
+      leastAssignedUsers = leastAssignedUsers.concat(users);
+    }
+
+    console.log("Least assigned users:", leastAssignedUsers);
+
+    if (leastAssignedUsers.length > 0) {
+      // Remove existing counselors for the student
+      await db.userCounselors.destroy({
+        where: { user_id: studentId },
+      });
+
+      // Add new counselors
+      const userCounselorsData = leastAssignedUsers.map(userId => ({
+        user_id: studentId,
+        counselor_id: userId,
+      }));
+
+      await db.userCounselors.bulkCreate(userCounselorsData);
+
+      if (isCompleted) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
-        const country = await db.country.findByPk(preferred_country);
-        // Create a task for the new lead
-        const task = await db.tasks.create(
-          {
+        let countryName = "Unknown";
+        if (countryIds.length > 0) {
+          const country = await db.country.findByPk(countryIds[0]);
+          if (country) {
+            countryName = country.country_name;
+          }
+        }
+
+        // Create tasks for each least assigned user
+        for (const userId of leastAssignedUsers) {
+          await db.tasks.create({
             studentId: student.id,
-            userId: leastAssignedUser,
-            title: `${student.full_name} - ${country.country_name} - ${student.phone}`,
+            userId: userId,
+            title: `${student.full_name} - ${countryName} - ${student.phone}`,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
-          }
-        );
+          });
+        }
       }
-
     }
 
-    // Update the task
+    // Update the original task as completed
     task.isCompleted = isCompleted;
     await task.save();
 
     // Send success response
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
-      message: "Task Assigned to Counsellor.",
+      message: "Task successfully updated and assigned.",
       task,
-      leastAssignedUser,
+      leastAssignedUsers,
     });
 
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
-    res.status(500).json({
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
   }
 };
+
+
 
 
 exports.getStudentBasicInfoById = async (req, res) => {
@@ -150,19 +251,21 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "email",
         "phone",
         "city",
-        "preferred_country",
         "office_type",
         "remarks",
         "source_id",
         "channel_id",
         "lead_received_date",
         "status_id"
-      ], // List the required fields
+      ],
       include: [
         {
           model: db.country,
-          as: "country_name",
-          attributes: ["country_name"],
+          as: "preferredCountries",  // Adjusted alias to match Sequelize associations
+          attributes: ["id", "country_name"],  // Only include ID and name
+          through: {
+            attributes: [], // Exclude attributes from the join table
+          },
         },
         {
           model: db.leadSource,
@@ -183,16 +286,17 @@ exports.getStudentBasicInfoById = async (req, res) => {
       nest: true,
     });
 
-    // Extract data values, or use default empty object if no data
+    // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
     const primaryInfoData = primaryInfo ? primaryInfo.dataValues : {};
 
-    // Combine basicInfoData with filtered primaryInfoData
+    // Combine primaryInfoData with filtered preferredCountries
     const combinedInfo = {
       ...primaryInfoData,
-      country_name: primaryInfo?.country_name?.country_name,
+      country_ids: primaryInfo?.preferredCountries?.map(country => country.id) || [],
+      country_names: primaryInfo?.preferredCountries?.map(country => country.country_name) || [],
       source_name: primaryInfo?.source_name?.source_name,
-      channel_name: primaryInfo?.channel_name.channel_name,
+      channel_name: primaryInfo?.channel_name?.channel_name,
       ...basicInfoData,
     };
 
@@ -212,6 +316,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
     });
   }
 };
+
 
 exports.getStudentAcademicInfoById = async (req, res) => {
   try {
@@ -305,6 +410,45 @@ const getLeastAssignedUser = async (country_id) => {
     }
   } catch (error) {
     console.error(`Error finding least assigned user: ${error}`);
+    throw new Error("Internal server error");
+  }
+};
+
+const getLeastAssignedUsers = async (countryIds) => {
+  try {
+    const result = await db.adminUsers.findAll({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "user_primary_info"
+            WHERE "user_primary_info"."counsiler_id" = "admin_users"."id"
+          )`),
+          "assignment_count",
+        ],
+      ],
+      where: {
+        role_id: process.env.COUNSELLOR_ROLE_ID,
+        country_id: countryIds,
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+    });
+
+    console.log("result===>", result);
+
+    const leastAssignedUsers = result.map(user => user.user_id);
+
+    if (leastAssignedUsers.length > 0) {
+      console.log("Users with the least assignments:", leastAssignedUsers);
+      return leastAssignedUsers;
+    } else {
+      console.log('No matching users found or no assignments exist for the specified countries.');
+      return [];
+    }
+  } catch (error) {
+    console.error(`Error finding least assigned users: ${error}`);
     throw new Error("Internal server error");
   }
 };

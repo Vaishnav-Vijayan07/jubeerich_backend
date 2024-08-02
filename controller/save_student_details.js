@@ -5,6 +5,7 @@ const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Op, Sequelize } = require("sequelize");
 
+
 exports.saveStudentBasicInfo = async (req, res) => {
   const {
     passport_no,
@@ -15,7 +16,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
     full_name,
     email,
     phone,
-    preferred_country,
+    preferred_country,  // This should be an array of country IDs
     office_type,
     region_id,
     counsiler_id,
@@ -31,21 +32,19 @@ exports.saveStudentBasicInfo = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // const userId = req.userDecodeId;
-    // console.log("userId===>", userId);
-
+    // Fetch the existing userPrimaryInfo record
     const userPrimaryInfo = await UserPrimaryInfo.findByPk(user_id);
 
     if (!userPrimaryInfo) {
       throw new Error("User not found");
     }
 
+    // Update the UserPrimaryInfo record
     const updatedUserPrimaryInfo = await userPrimaryInfo.update(
       {
         full_name,
         email,
         phone,
-        preferred_country,
         office_type,
         region_id,
         counsiler_id,
@@ -55,11 +54,14 @@ exports.saveStudentBasicInfo = async (req, res) => {
       { transaction }
     );
 
-    let userBasicInfo = await db.userBasicInfo.findOne({
-      where: { user_id },
-    });
+    // Update preferred countries if provided
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      await updatedUserPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
+    }
 
+    // Check if userBasicInfo exists and update or create accordingly
     let userBasicDetails;
+    const userBasicInfo = await db.userBasicInfo.findOne({ where: { user_id } });
 
     if (userBasicInfo) {
       userBasicDetails = await userBasicInfo.update(
@@ -72,8 +74,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
           secondary_number,
           state,
           country,
-          address,
-          user_id
+          address
         },
         { transaction }
       );
@@ -95,23 +96,139 @@ exports.saveStudentBasicInfo = async (req, res) => {
       );
     }
 
+    // Commit the transaction
     await transaction.commit();
 
-    return res.status(201).json({
+    // Respond with success
+    return res.status(200).json({
       status: true,
       message: "Basic details updated successfully",
-      data: { updatedUserPrimaryInfo, userBasicDetails },
+      data: {
+        updatedUserPrimaryInfo,
+        userBasicDetails
+      }
     });
   } catch (error) {
+    // Rollback the transaction in case of error
     await transaction.rollback();
     console.error(`Error: ${error.message}`);
 
+    // Respond with an error
     return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
   }
 };
+
+
+// exports.saveStudentBasicInfo = async (req, res) => {
+//   const {
+//     passport_no,
+//     dob,
+//     gender,
+//     marital_status,
+//     user_id,
+//     full_name,
+//     email,
+//     phone,
+//     preferred_country,
+//     office_type,
+//     region_id,
+//     counsiler_id,
+//     branch_id,
+//     nationality,
+//     secondary_number,
+//     state,
+//     country,
+//     address,
+//     ielts
+//   } = req.body;
+
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     // const userId = req.userDecodeId;
+//     // console.log("userId===>", userId);
+
+//     const userPrimaryInfo = await UserPrimaryInfo.findByPk(user_id);
+
+//     if (!userPrimaryInfo) {
+//       throw new Error("User not found");
+//     }
+
+//     const updatedUserPrimaryInfo = await userPrimaryInfo.update(
+//       {
+//         full_name,
+//         email,
+//         phone,
+//         preferred_country,
+//         office_type,
+//         region_id,
+//         counsiler_id,
+//         branch_id,
+//         ielts
+//       },
+//       { transaction }
+//     );
+
+//     let userBasicInfo = await db.userBasicInfo.findOne({
+//       where: { user_id },
+//     });
+
+//     let userBasicDetails;
+
+//     if (userBasicInfo) {
+//       userBasicDetails = await userBasicInfo.update(
+//         {
+//           passport_no,
+//           dob,
+//           gender,
+//           marital_status,
+//           nationality,
+//           secondary_number,
+//           state,
+//           country,
+//           address,
+//           user_id
+//         },
+//         { transaction }
+//       );
+//     } else {
+//       userBasicDetails = await db.userBasicInfo.create(
+//         {
+//           user_id,
+//           passport_no,
+//           dob,
+//           gender,
+//           marital_status,
+//           nationality,
+//           secondary_number,
+//           state,
+//           country,
+//           address
+//         },
+//         { transaction }
+//       );
+//     }
+
+//     await transaction.commit();
+
+//     return res.status(201).json({
+//       status: true,
+//       message: "Basic details updated successfully",
+//       data: { updatedUserPrimaryInfo, userBasicDetails },
+//     });
+//   } catch (error) {
+//     await transaction.rollback();
+//     console.error(`Error: ${error.message}`);
+
+//     return res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.saveStudentAcademicInfo = async (req, res) => {
   const { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, company, years, user_id } =
