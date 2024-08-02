@@ -455,7 +455,7 @@ const getLeastAssignedUser = async (country_id) => {
 
 const getLeastAssignedUsers = async (countryIds) => {
   try {
-    const result = await db.adminUser.findAll({
+    const result = await db.adminUsers.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
