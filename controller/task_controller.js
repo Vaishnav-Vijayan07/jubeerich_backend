@@ -456,10 +456,10 @@ const getLeastAssignedUser = async (country_id) => {
 
 
 const getLeastAssignedUsers = async (countryId) => {
-  const roleId = 7
+  const roleId = 7;
   try {
     // Use raw SQL to execute the query
-    const [results] = await db.sequelize.query(`
+    const results = await db.sequelize.query(`
       WITH user_assignments AS (
         SELECT 
           "admin_users"."id" AS "user_id", 
@@ -482,7 +482,8 @@ const getLeastAssignedUsers = async (countryId) => {
 
     console.log("results ===>", results);
 
-    if (results?.length === 0) {
+    // Check if results is defined and not null
+    if (!results || Object.keys(results).length === 0) {
       return {
         status: false,
         message: "No users found",
@@ -490,7 +491,17 @@ const getLeastAssignedUsers = async (countryId) => {
       };
     }
 
-    const { user_id: leastAssignedUserId } = results[0];
+    // Extract user_id if results has user_id
+    const leastAssignedUserId = results.user_id;
+
+    // If user_id is undefined, return an error response
+    if (leastAssignedUserId === undefined) {
+      return {
+        status: false,
+        message: "No users found",
+        user_id: null
+      };
+    }
 
     return {
       status: true,
@@ -505,6 +516,7 @@ const getLeastAssignedUsers = async (countryId) => {
     };
   }
 };
+
 
 
 
