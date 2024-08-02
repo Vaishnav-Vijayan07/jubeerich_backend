@@ -1008,7 +1008,7 @@ exports.updateLead = async (req, res) => {
     source_id,
     channel_id,
     city,
-    preferred_country,
+    preferred_country, // This should be an array of country IDs
     office_type,
     region_id,
     counsiler_id,
@@ -1037,7 +1037,6 @@ exports.updateLead = async (req, res) => {
       { model: "lead_category", id: category_id },
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
-      { model: "country", id: preferred_country },
       { model: "office_type", id: office_type },
       { model: "region", id: region_id },
       { model: "admin_user", id: counsiler_id },
@@ -1067,7 +1066,7 @@ exports.updateLead = async (req, res) => {
     }
 
     // Check if email or phone already exists
-    if (email !== lead.email) {
+    if (email && email !== lead.email) {
       const existingEmailUser = await UserPrimaryInfo.findOne({
         where: { email },
       });
@@ -1081,7 +1080,7 @@ exports.updateLead = async (req, res) => {
       }
     }
 
-    if (phone !== lead.phone) {
+    if (phone && phone !== lead.phone) {
       const existingPhone = await UserPrimaryInfo.findOne({ where: { phone } });
       if (existingPhone) {
         await transaction.rollback();
@@ -1100,7 +1099,6 @@ exports.updateLead = async (req, res) => {
         email,
         phone,
         city,
-        preferred_country,
         office_type,
         category_id,
         source_id,
@@ -1115,6 +1113,11 @@ exports.updateLead = async (req, res) => {
       },
       { transaction }
     );
+
+    // Update associated preferred countries
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      await lead.setPreferredCountries(preferred_country, { transaction });
+    }
 
     await transaction.commit();
 
