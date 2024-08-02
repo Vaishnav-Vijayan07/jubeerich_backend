@@ -805,12 +805,12 @@ exports.assignCres = async (req, res) => {
     // Process each user_id
     await Promise.all(
       user_ids.map(async (user_id) => {
-        // Step 1: Fetch user info with associated country
+        // Step 1: Fetch user info with associated countries
         const userInfo = await db.userPrimaryInfo.findOne({
           where: { id: user_id },
           include: {
             model: db.country,
-            as: 'country_name',
+            as: 'preferredCountries',
           },
           transaction
         });
@@ -819,7 +819,8 @@ exports.assignCres = async (req, res) => {
           throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
         }
 
-        const country = userInfo.country_name;
+        // Handle multiple preferred countries
+        const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
 
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
@@ -833,7 +834,7 @@ exports.assignCres = async (req, res) => {
           await existingTask.update(
             {
               userId: cre_id,
-              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
@@ -845,7 +846,7 @@ exports.assignCres = async (req, res) => {
             {
               studentId: user_id,
               userId: cre_id,
-              title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
