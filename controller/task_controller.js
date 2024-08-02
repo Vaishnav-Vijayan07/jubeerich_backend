@@ -166,7 +166,6 @@ exports.finishTask = async (req, res) => {
     for (const countryId of countryIds) {
       console.log("countryId ======>", countryId);
       const users = await getLeastAssignedUsers(countryId);
-      console.log("users", users);
       leastAssignedUsers = leastAssignedUsers.concat(users);
     }
 
@@ -485,7 +484,11 @@ const getLeastAssignedUsers = async (countryId) => {
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
-      return null
+      return {
+        status: false,
+        message: "No users found",
+        user_id: null
+      };
     }
 
     // Extract user_id if results has user_id
@@ -493,10 +496,16 @@ const getLeastAssignedUsers = async (countryId) => {
 
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
-      return null
+      return {
+        status: false,
+        message: "No users found",
+        user_id: null
+      };
     }
 
-    return leastAssignedUserId.user_id
+    return {
+      leastAssignedUserId
+    };
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
