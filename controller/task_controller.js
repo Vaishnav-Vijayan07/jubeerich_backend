@@ -466,7 +466,7 @@ const getLeastAssignedUsers = async (countryId) => {
       attributes: [
         ["id", "user_id"],
         "username",
-        [db.sequelize.fn('COUNT', db.sequelize.col('user_counselors.id')), "assignment_count"]
+        [db.sequelize.fn('COUNT', db.sequelize.col('user_counselors.user_id')), "assignment_count"]
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
