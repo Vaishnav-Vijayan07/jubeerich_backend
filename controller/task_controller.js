@@ -456,29 +456,30 @@ const getLeastAssignedUser = async (country_id) => {
 
 const getLeastAssignedUsers = async (countryId) => {
   try {
-    // Ensure that countryId is a valid number
     if (!Number.isInteger(countryId)) {
       throw new Error("countryId must be a valid number");
     }
 
+    // Fetch users with their count of assignments
     const result = await db.adminUsers.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "user_counselors"
-            WHERE "user_counselors"."counselor_id" = "admin_users"."id"
-          )`),
-          "assignment_count",
-        ],
+        [db.sequelize.literal(`COUNT("user_counselors"."id")`), "assignment_count"]
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
-        country_id: countryId, // Use a single country ID here
+        country_id: countryId,
       },
-      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+      include: [
+        {
+          model: db.userCounselors,
+          attributes: [], // We don't need any attributes from the userCounselors table
+          duplicating: false // Avoid duplicate rows from join
+        }
+      ],
+      group: ["admin_users.id"],
+      order: [[db.sequelize.literal("assignment_count"), "ASC"]],
     });
 
     console.log("result===>", result);
@@ -497,5 +498,6 @@ const getLeastAssignedUsers = async (countryId) => {
     throw new Error("Internal server error");
   }
 };
+
 
 
