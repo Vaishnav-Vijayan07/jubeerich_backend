@@ -198,7 +198,7 @@ exports.createLead = async (req, res) => {
 
     console.log("userRole====>", userRole.role_id);
 
-    if (userRole?.role_id === 2 || userRole?.role_id === 3) {
+    if (userRole?.role_id === 2) {
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
@@ -220,6 +220,24 @@ exports.createLead = async (req, res) => {
 
         console.log("task==>", task);
       }
+    }
+
+    if (userRole?.role_id === 3 || userRole?.role_id === 3) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
+
+      const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
+      // Create a task for the new lead
+      const task = await db.tasks.create(
+        {
+          studentId: userPrimaryInfo.id,
+          userId: userId,
+          title: `${full_name} - ${country.country_name} - ${phone}`,
+          dueDate: dueDate,
+          updatedBy: userId,
+        },
+        { transaction }
+      );
     }
 
     // Commit the transaction
