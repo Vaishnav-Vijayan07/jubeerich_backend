@@ -414,17 +414,56 @@ const getLeastAssignedUser = async (country_id) => {
   }
 };
 
+// const getLeastAssignedUsers = async (countryIds) => {
+//   try {
+//     const result = await db.adminUsers.findAll({
+//       attributes: [
+//         ["id", "user_id"],
+//         "username",
+//         [
+//           Sequelize.literal(`(
+//             SELECT COUNT(*)
+//             FROM "user_primary_info"
+//             WHERE "user_primary_info"."counsiler_id" = "admin_users"."id"
+//           )`),
+//           "assignment_count",
+//         ],
+//       ],
+//       where: {
+//         role_id: process.env.COUNSELLOR_ROLE_ID,
+//         country_id: countryIds,
+//       },
+//       order: [[Sequelize.literal("assignment_count"), "ASC"]],
+//     });
+
+//     console.log("result===>", result);
+
+//     const leastAssignedUsers = result.map(user => user.user_id);
+
+//     if (leastAssignedUsers.length > 0) {
+//       console.log("Users with the least assignments:", leastAssignedUsers);
+//       return leastAssignedUsers;
+//     } else {
+//       console.log('No matching users found or no assignments exist for the specified countries.');
+//       return [];
+//     }
+//   } catch (error) {
+//     console.error(`Error finding least assigned users: ${error}`);
+//     throw new Error("Internal server error");
+//   }
+// };
+
 const getLeastAssignedUsers = async (countryIds) => {
   try {
-    const result = await db.adminUsers.findAll({
+    const result = await db.adminUser.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
         [
           Sequelize.literal(`(
             SELECT COUNT(*)
-            FROM "user_primary_info"
-            WHERE "user_primary_info"."counsiler_id" = "admin_users"."id"
+            FROM "user_counselors"
+            WHERE "user_counselors"."counselor_id" = "admin_user"."id"
           )`),
           "assignment_count",
         ],
