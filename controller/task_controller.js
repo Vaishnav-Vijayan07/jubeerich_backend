@@ -155,7 +155,7 @@ exports.finishTask = async (req, res) => {
 
     // Fetch preferred countries from the join table
     const preferredCountries = await db.userContries.findAll({
-      where: { user_id: studentId },
+      where: { user_primary_info_id: studentId },
       attributes: ['country_id'],
     });
 
