@@ -461,30 +461,21 @@ const getLeastAssignedUsers = async (countryId) => {
       throw new Error("countryId must be a valid number");
     }
 
-    // Fetch users with their count of assignments
-    const result = await db.adminUsers.findAll({
-      attributes: [
-        ["id", "user_id"],
-        "username",
-        [db.sequelize.literal(`(
-          SELECT COUNT(*)
-          FROM "user_counselors"
-          WHERE "user_counselors"."counselor_id" = "admin_users"."id"
-        )`), "assignment_count"]
-      ],
-      where: {
-        role_id: process.env.COUNSELLOR_ROLE_ID,
-        country_id: countryId,
-      },
-      group: ["admin_users.id"],
-      order: [[db.sequelize.literal("assignment_count"), "ASC"]],
+    // Create a raw query to count assignments
+    const [results] = await db.sequelize.query(`
+      SELECT "admin_users"."id" AS "user_id", "admin_users"."username", COUNT("user_counselors"."counselor_id") AS "assignment_count"
+      FROM "admin_users"
+      LEFT JOIN "user_counselors" ON "admin_users"."id" = "user_counselors"."counselor_id"
+      WHERE "admin_users"."role_id" = :roleId AND "admin_users"."country_id" = :countryId
+      GROUP BY "admin_users"."id"
+      ORDER BY "assignment_count" ASC
+    `, {
+      replacements: { roleId: process.env.COUNSELLOR_ROLE_ID, countryId },
+      type: db.Sequelize.QueryTypes.SELECT,
     });
 
-    console.log("result===>", result);
-
-    const leastAssignedUsers = result.map(user => user.user_id);
-
-    if (leastAssignedUsers.length > 0) {
+    if (results.length > 0) {
+      const leastAssignedUsers = results.map(user => user.user_id);
       console.log("Users with the least assignments:", leastAssignedUsers);
       return leastAssignedUsers;
     } else {
@@ -496,6 +487,7 @@ const getLeastAssignedUsers = async (countryId) => {
     throw new Error("Internal server error");
   }
 };
+
 
 
 
