@@ -486,14 +486,14 @@ const getLeastAssignedUsers = async (countryId) => {
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
-        user_id: null
+        leastAssignedUserId: null
       };
     }
 
     // Extract user_id if results has user_id
     const leastAssignedUserId = results.user_id;
 
-    
+
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
