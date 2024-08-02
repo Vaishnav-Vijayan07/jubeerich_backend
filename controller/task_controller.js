@@ -167,7 +167,7 @@ exports.finishTask = async (req, res) => {
 
       const users = await getLeastAssignedUsers(countryId);
       leastAssignedUsers = leastAssignedUsers.concat(users);
-      console.log("users");
+      console.log("users ==========>", users);
     }
 
     console.log("Least assigned users:", leastAssignedUsers);
