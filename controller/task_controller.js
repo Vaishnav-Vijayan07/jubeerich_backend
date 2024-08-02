@@ -484,11 +484,7 @@ const getLeastAssignedUsers = async (countryId) => {
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
-      return {
-        status: false,
-        message: "No users found",
-        user_id: null
-      };
+      return null
     }
 
     // Extract user_id if results has user_id
@@ -496,17 +492,10 @@ const getLeastAssignedUsers = async (countryId) => {
 
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
-      return {
-        status: false,
-        message: "No users found",
-        user_id: null
-      };
+      return null
     }
 
-    return {
-      status: true,
-      user_id: leastAssignedUserId
-    };
+    return leastAssignedUserId.user_id
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
