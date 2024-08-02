@@ -346,13 +346,12 @@ exports.getAllLeads = async (req, res) => {
           { assigned_cre_tl: cre_id },
           { created_by: cre_id },
           { assigned_cre: cre_id },
-          // Add filtering based on the join table
-          { 
+          {
             [db.Sequelize.Op.and]: [
               db.Sequelize.literal(`EXISTS (
-                SELECT 1 FROM user_counselors 
-                WHERE user_counselors.user_id = "UserPrimaryInfo".id
-                AND user_counselors.counselor_id = ${cre_id}
+                SELECT 1 FROM "user_counselors" 
+                WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                AND "user_counselors"."counselor_id" = ${cre_id}
               )`)
             ]
           }
@@ -379,7 +378,7 @@ exports.getAllLeads = async (req, res) => {
           model: db.country,
           as: "preferredCountries",
           attributes: ["country_name", "id"],
-          through: { attributes: [] },
+          through: { attributes: [] }, // Exclude join table attributes
         },
         {
           model: db.officeType,
@@ -395,10 +394,10 @@ exports.getAllLeads = async (req, res) => {
         {
           model: db.adminUsers,
           as: "counselors",
-          attributes: ["name"],
+          attributes: ["name"], // Only include counselor names if needed
           required: false,
           through: {
-            attributes: [] // Exclude attributes from the join table
+            attributes: [] // Exclude join table attributes
           }
         },
         {
