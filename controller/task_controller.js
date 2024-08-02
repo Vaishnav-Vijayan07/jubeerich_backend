@@ -454,6 +454,7 @@ const getLeastAssignedUser = async (country_id) => {
 //   }
 // };
 
+
 const getLeastAssignedUsers = async (countryId) => {
   try {
     if (!Number.isInteger(countryId)) {
@@ -465,7 +466,7 @@ const getLeastAssignedUsers = async (countryId) => {
       attributes: [
         ["id", "user_id"],
         "username",
-        [db.sequelize.literal(`COUNT("user_counselors"."id")`), "assignment_count"]
+        [db.sequelize.fn('COUNT', db.sequelize.col('user_counselors.id')), "assignment_count"]
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
@@ -475,6 +476,7 @@ const getLeastAssignedUsers = async (countryId) => {
         {
           model: db.userCounselors,
           attributes: [], // We don't need any attributes from the userCounselors table
+          as: 'counseledUsers', // Make sure this matches the alias defined in associations
           duplicating: false // Avoid duplicate rows from join
         }
       ],
@@ -498,6 +500,7 @@ const getLeastAssignedUsers = async (countryId) => {
     throw new Error("Internal server error");
   }
 };
+
 
 
 
