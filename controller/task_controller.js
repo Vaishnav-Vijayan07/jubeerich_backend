@@ -474,8 +474,8 @@ const getLeastAssignedUsers = async (countryId) => {
       type: db.Sequelize.QueryTypes.SELECT,
     });
 
-    if (results.length > 0) {
-      const leastAssignedUsers = results.map(user => user.user_id);
+    if (results?.length > 0) {
+      const leastAssignedUsers = results.map(user => user?.user_id);
       console.log("Users with the least assignments:", leastAssignedUsers);
       return leastAssignedUsers;
     } else {
