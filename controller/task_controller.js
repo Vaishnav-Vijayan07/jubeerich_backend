@@ -461,7 +461,7 @@ const getLeastAssignedUsers = async (countryIds) => {
       throw new Error("countryIds must be a non-empty array");
     }
 
-    const result = await db.adminUser.findAll({
+    const result = await db.adminUsers.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
