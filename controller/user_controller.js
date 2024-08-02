@@ -845,7 +845,6 @@ exports.assignCres = async (req, res) => {
             );
           }
         });
-        z
 
         await UserPrimaryInfo.update(
           { assigned_cre: cre_id },
