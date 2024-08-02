@@ -455,6 +455,8 @@ const getLeastAssignedUser = async (country_id) => {
 // };
 
 const getLeastAssignedUsers = async (countryId) => {
+
+  console.log("countryId ===>", countryId);
   try {
     // Validate that countryId is a valid number
     if (typeof countryId !== 'number' || isNaN(countryId)) {
