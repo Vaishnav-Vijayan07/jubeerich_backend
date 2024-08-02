@@ -454,6 +454,7 @@ const getLeastAssignedUser = async (country_id) => {
 //   }
 // };
 
+
 const getLeastAssignedUsers = async (countryId) => {
   const roleId = 7
   try {
@@ -502,9 +503,6 @@ const getLeastAssignedUsers = async (countryId) => {
     };
   }
 };
-
-module.exports = getLeastAssignedUser;
-
 
 
 
