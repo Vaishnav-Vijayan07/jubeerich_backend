@@ -496,7 +496,7 @@ const getLeastAssignedUsers = async (countryId) => {
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
-        user_id: null
+        leastAssignedUserId: null
       };
     }
 
@@ -506,7 +506,7 @@ const getLeastAssignedUsers = async (countryId) => {
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
-      user_id: null
+      leastAssignedUserId: null
     };
   }
 };
