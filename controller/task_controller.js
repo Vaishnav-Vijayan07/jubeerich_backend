@@ -164,6 +164,7 @@ exports.finishTask = async (req, res) => {
     // Fetch least assigned users for each country
     let leastAssignedUsers = [];
     for (const countryId of countryIds) {
+      console.log("countryId ======>", countryId);
       const users = await getLeastAssignedUsers([countryId]);
       leastAssignedUsers = leastAssignedUsers.concat(users);
     }
@@ -455,7 +456,12 @@ const getLeastAssignedUser = async (country_id) => {
 
 const getLeastAssignedUsers = async (countryIds) => {
   try {
-    const result = await db.adminUsers.findAll({
+    // Ensure that countryIds is a valid array
+    if (!Array.isArray(countryIds) || countryIds.length === 0) {
+      throw new Error("countryIds must be a non-empty array");
+    }
+
+    const result = await db.adminUser.findAll({
       attributes: [
         ["id", "user_id"],
         "username",
@@ -491,3 +497,4 @@ const getLeastAssignedUsers = async (countryIds) => {
     throw new Error("Internal server error");
   }
 };
+
