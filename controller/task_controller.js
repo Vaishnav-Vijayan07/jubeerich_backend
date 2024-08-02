@@ -454,11 +454,11 @@ const getLeastAssignedUser = async (country_id) => {
 //   }
 // };
 
-const getLeastAssignedUsers = async (countryIds) => {
+const getLeastAssignedUsers = async (countryId) => {
   try {
-    // Ensure that countryIds is a valid array
-    if (!Array.isArray(countryIds) || countryIds.length === 0) {
-      throw new Error("countryIds must be a non-empty array");
+    // Validate that countryId is a valid number
+    if (typeof countryId !== 'number' || isNaN(countryId)) {
+      throw new Error("countryId must be a valid number");
     }
 
     const result = await db.adminUsers.findAll({
@@ -469,27 +469,29 @@ const getLeastAssignedUsers = async (countryIds) => {
           Sequelize.literal(`(
             SELECT COUNT(*)
             FROM "user_counselors"
-            WHERE "user_counselors"."counselor_id" = "admin_user"."id"
+            WHERE "user_counselors"."counselor_id" = "admin_users"."id"
           )`),
           "assignment_count",
         ],
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
-        country_id: countryIds,
+        country_id: countryId, // Use single value instead of array
       },
       order: [[Sequelize.literal("assignment_count"), "ASC"]],
     });
 
-    console.log("result===>", result);
+    // Log the result to see the full structure
+    console.log("result===>", JSON.stringify(result, null, 2));
 
-    const leastAssignedUsers = result.map(user => user.user_id);
+    // Extract the user IDs from the result
+    const leastAssignedUsers = result.map(user => user.get("user_id")); // Use .get to access the alias
 
     if (leastAssignedUsers.length > 0) {
       console.log("Users with the least assignments:", leastAssignedUsers);
       return leastAssignedUsers;
     } else {
-      console.log('No matching users found or no assignments exist for the specified countries.');
+      console.log('No matching users found or no assignments exist for the specified country.');
       return [];
     }
   } catch (error) {
