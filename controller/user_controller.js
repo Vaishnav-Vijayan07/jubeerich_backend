@@ -346,13 +346,15 @@ exports.getAllLeads = async (req, res) => {
           { assigned_cre_tl: cre_id },
           { created_by: cre_id },
           { assigned_cre: cre_id },
-        ],
-        [db.Sequelize.Op.and]: [
-          {
-            [db.Sequelize.Op.or]: [
-              { '$user_counselors.counselor_id$': cre_id },
-              { counsiler_id: cre_id }
-            ],
+          // Add filtering based on the join table
+          { 
+            [db.Sequelize.Op.and]: [
+              db.Sequelize.literal(`EXISTS (
+                SELECT 1 FROM user_counselors 
+                WHERE user_counselors.user_id = "UserPrimaryInfo".id
+                AND user_counselors.counselor_id = ${cre_id}
+              )`)
+            ]
           }
         ],
         is_deleted: false,
@@ -388,12 +390,6 @@ exports.getAllLeads = async (req, res) => {
           model: db.region,
           as: "region_name",
           attributes: ["region_name"],
-          required: false,
-        },
-        {
-          model: db.user_counselors, // Include the join table for filtering
-          as: "user_counselors",
-          attributes: [], // Exclude all attributes from the join table
           required: false,
         },
         {
