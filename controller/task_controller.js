@@ -459,7 +459,7 @@ const getLeastAssignedUsers = async (countryId) => {
   const roleId = 7;
   try {
     // Use raw SQL to execute the query
-    const results = await db.sequelize.query(`
+    const [results] = await db.sequelize.query(`
       WITH user_assignments AS (
         SELECT 
           "admin_users"."id" AS "user_id", 
