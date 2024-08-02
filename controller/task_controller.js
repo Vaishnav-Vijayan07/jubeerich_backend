@@ -454,41 +454,56 @@ const getLeastAssignedUser = async (country_id) => {
 //   }
 // };
 
-
 const getLeastAssignedUsers = async (countryId) => {
+  const roleId = 7
   try {
-    if (!Number.isInteger(countryId)) {
-      throw new Error("countryId must be a valid number");
-    }
-
-    // Create a raw query to count assignments
+    // Use raw SQL to execute the query
     const [results] = await db.sequelize.query(`
-      SELECT "admin_users"."id" AS "user_id", "admin_users"."username", COUNT("user_counselors"."counselor_id") AS "assignment_count"
-      FROM "admin_users"
-      LEFT JOIN "user_counselors" ON "admin_users"."id" = "user_counselors"."counselor_id"
-      WHERE "admin_users"."role_id" = :roleId AND "admin_users"."country_id" = :countryId
-      GROUP BY "admin_users"."id"
-      ORDER BY "assignment_count" ASC
+      WITH user_assignments AS (
+        SELECT 
+          "admin_users"."id" AS "user_id", 
+          COUNT("user_counselors"."counselor_id") AS "assignment_count"
+        FROM "admin_users"
+        LEFT JOIN "user_counselors" 
+          ON "admin_users"."id" = "user_counselors"."counselor_id"
+        WHERE "admin_users"."role_id" = :roleId 
+          AND "admin_users"."country_id" = :countryId
+        GROUP BY "admin_users"."id"
+      )
+      SELECT "user_id"
+      FROM user_assignments
+      ORDER BY "assignment_count" ASC, "user_id" ASC
+      LIMIT 1;
     `, {
-      replacements: { roleId: process.env.COUNSELLOR_ROLE_ID, countryId },
-      type: db.Sequelize.QueryTypes.SELECT,
+      replacements: { roleId, countryId },
+      type: db.Sequelize.QueryTypes.SELECT
     });
 
-    if (results?.length > 0) {
-      const leastAssignedUsers = results.map(user => user?.user_id);
-      console.log("Users with the least assignments:", leastAssignedUsers);
-      return leastAssignedUsers;
-    } else {
-      console.log('No matching users found or no assignments exist for the specified country.');
-      return [];
+    if (results.length === 0) {
+      return {
+        status: false,
+        message: "No users found",
+        user_id: null
+      };
     }
+
+    const { user_id: leastAssignedUserId } = results[0];
+
+    return {
+      status: true,
+      user_id: leastAssignedUserId
+    };
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
-    throw new Error("Internal server error");
+    return {
+      status: false,
+      message: "Internal server error",
+      user_id: null
+    };
   }
 };
 
-
+module.exports = getLeastAssignedUser;
 
 
 
