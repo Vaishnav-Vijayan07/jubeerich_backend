@@ -104,6 +104,10 @@ db.userPrimaryInfo.belongsTo(db.adminUsers, {
   as: "counsiler_name",
   foreignKey: "counsiler_id",
 });
+db.userPrimaryInfo.belongsTo(db.officeType, {
+  as: "updated_by_user",
+  foreignKey: "updated_by",
+});
 
 db.userPrimaryInfo.belongsTo(db.adminUsers, {
   as: "cre_name",

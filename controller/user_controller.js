@@ -424,6 +424,13 @@ exports.getAllLeads = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -446,6 +453,7 @@ exports.getAllLeads = async (req, res) => {
           : null,
         region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
       };
     });
 
