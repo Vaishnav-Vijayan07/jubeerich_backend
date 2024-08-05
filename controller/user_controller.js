@@ -313,6 +313,13 @@ exports.getLeads = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user_name",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -336,6 +343,7 @@ exports.getLeads = async (req, res) => {
         region_name: info.region_name ? info.region_name.region_name : null,
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        updated_by_user: info.updated_by_user_name ? info.updated_by_user_name.name : null,
       };
     });
 
@@ -424,6 +432,13 @@ exports.getAllLeads = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user_name",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -446,6 +461,7 @@ exports.getAllLeads = async (req, res) => {
           : null,
         region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        updated_by_user: info.updated_by_user_name ? info.updated_by_user_name.name : null,
       };
     });
 
@@ -514,6 +530,13 @@ exports.getLeadsByCreatedUser = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user_name",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -537,6 +560,7 @@ exports.getLeadsByCreatedUser = async (req, res) => {
         region_name: info.region_name ? info.region_name.region_name : null,
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        updated_by_user: info.updated_by_user_name ? info.updated_by_user_name.name : null,
       };
     });
 
@@ -633,6 +657,13 @@ exports.geLeadsForCreTl = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user_name",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -657,6 +688,8 @@ exports.geLeadsForCreTl = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+        updated_by_user: info.updated_by_user_name ? info.updated_by_user_name.name : null,
+
       };
     });
 
@@ -754,6 +787,13 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           attributes: ["branch_name"],
           required: false,
         },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user_name",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by"
+        }
       ],
     });
 
@@ -778,6 +818,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+        updated_by_user: info.updated_by_user_name ? info.updated_by_user_name.name : null,
       };
     });
 

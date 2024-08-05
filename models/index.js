@@ -80,6 +80,12 @@ db.userPrimaryInfo.belongsTo(db.leadCategory, {
   as: "category_name",
   foreignKey: "category_id",
 });
+
+db.userPrimaryInfo.belongsTo(db.adminUsers, {
+  as: "updated_by_user",
+  foreignKey: "updated_by",
+});
+
 db.userPrimaryInfo.belongsTo(db.leadSource, {
   as: "source_name",
   foreignKey: "source_id",
