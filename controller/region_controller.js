@@ -178,22 +178,30 @@ exports.deleteRegion = async (req, res) => {
 
 exports.getAllRegionalManagers = async (req, res) => {
   try {
+    const regionalManagerId = parseInt(process.env.REGIONAL_MANAGER_ID, 10);
 
-    const regionalManager = await db.adminUsers.findAll({
+    if (isNaN(regionalManagerId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid regional manager ID in environment variables",
+      });
+    }
+
+    const regionalManagers = await db.adminUsers.findAll({
       where: {
-        role_id: process.env.REGIONAL_MANAGER_ID
-      }
-    })
+        role_id: regionalManagerId,
+      },
+    });
 
     res.status(200).json({
       status: true,
-      data: regionalManager,
+      data: regionalManagers,
     });
   } catch (err) {
-    console.error(`Error deleting region: ${error}`);
+    console.error(`Error retrieving regional managers: ${err.message}`);
     res.status(500).json({
       status: false,
       message: "Internal server error",
     });
   }
-}
+};
