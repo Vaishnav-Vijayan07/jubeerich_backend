@@ -73,8 +73,8 @@ exports.getAllBranches = async (req, res) => {
 
     const formattedResponse = branches.map((branch) => ({
       ...branch.toJSON(),
-      office_name: branch.office_name.office_type_name,
-      region_name: branch.region_name.region_name,
+      office_name: branch.office_name?.office_type_name,
+      region_name: branch.region_name?.region_name,
     }));
 
     res.status(200).json({
