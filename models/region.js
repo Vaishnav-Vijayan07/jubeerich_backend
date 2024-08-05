@@ -13,6 +13,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      regional_manager_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+        allowNull: true,
+      },
       updated_by: {
         type: Sequelize.INTEGER,
       },

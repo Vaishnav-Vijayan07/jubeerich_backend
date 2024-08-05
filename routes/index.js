@@ -63,6 +63,7 @@ const {
   addRegion,
   updateRegion,
   deleteRegion,
+  getAllRegionalManagers,
 } = require("../controller/region_controller");
 const {
   getAllFlags,
@@ -407,5 +408,7 @@ router.post(
   [authMiddleware.checkUserAuth],
   bulkUpload
 );
+
+router.get("/regional_managers", [authMiddleware.checkUserAuth], getAllRegionalManagers)
 
 module.exports = router;

@@ -578,7 +578,6 @@ exports.getLeadsByCreatedUser = async (req, res) => {
   }
 };
 
-
 exports.geLeadsForCreTl = async (req, res) => {
   try {
     // Fetch all CREs (Role ID 3)
@@ -707,7 +706,6 @@ exports.geLeadsForCreTl = async (req, res) => {
     });
   }
 };
-
 
 exports.getAssignedLeadsForCreTl = async (req, res) => {
   try {

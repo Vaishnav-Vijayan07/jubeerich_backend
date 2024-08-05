@@ -61,6 +61,14 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      region_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "regions",
+          key: "id",
+        },
+      },
       updated_by: {
         type: Sequelize.INTEGER,
         allowNull: true,
@@ -76,14 +84,6 @@ module.exports = (sequelize, Sequelize) => {
           model: "admin_users",
           key: "id",
         },
-      },
-      region_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "regions",
-          key: "id",
-        },
-        allowNull: true,
       },
       assigned_cre_tl: {
         type: Sequelize.INTEGER,

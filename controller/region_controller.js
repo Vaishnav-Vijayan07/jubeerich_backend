@@ -6,16 +6,30 @@ const { validationResult, check } = require("express-validator");
 const regionValidationRules = [
   check("region_name").not().isEmpty().withMessage("Region name is required"),
   check("region_description").optional().isString().withMessage("Region description must be a string"),
+  check("regional_manager_id").optional().isString().withMessage("Regional manager id is required"),
   check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
 
 // Get all regions
 exports.getAllRegions = async (req, res) => {
   try {
-    const regions = await Region.findAll();
+    const regions = await Region.findAll({
+      include: [
+        {
+          model: db.region,
+          as: "regional_manager",
+          attributes: ["name"],
+        },
+      ]
+    });
+
+    const modifiedResponse = {
+      ...regions.toJSON(),
+      regional_manager: regions?.regional_manager ? regions?.regional_manager?.name : null
+    }
     res.status(200).json({
       status: true,
-      data: regions,
+      data: modifiedResponse,
     });
   } catch (error) {
     console.error(`Error retrieving regions: ${error}`);
@@ -64,12 +78,13 @@ exports.addRegion = [
       });
     }
 
-    const { region_name, region_description, updated_by } = req.body;
+    const { region_name, region_description, updated_by, regional_manager_id } = req.body;
 
     try {
       const newRegion = await Region.create({
         region_name,
         region_description,
+        regional_manager_id,
         updated_by,
       });
       res.status(201).json({
@@ -116,6 +131,7 @@ exports.updateRegion = [
         region_name: req.body.region_name ?? region.region_name,
         region_description: req.body.region_description ?? region.region_description,
         updated_by: req.body.updated_by ?? region.updated_by,
+        regional_manager_id: req.body.regional_manager_id ?? region.regional_manager_id,
       });
 
       res.status(200).json({
@@ -159,3 +175,25 @@ exports.deleteRegion = async (req, res) => {
     });
   }
 };
+
+exports.getAllRegionalManagers = async (req, res) => {
+  try {
+
+    const regionalManager = await db.adminUsers.findAll({
+      where: {
+        role_id: process.env.REGIONAL_MANAGER_ID
+      }
+    })
+
+    res.status(200).json({
+      status: true,
+      data: regionalManager,
+    });
+  } catch (err) {
+    console.error(`Error deleting region: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+}

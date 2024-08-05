@@ -191,4 +191,10 @@ db.adminUsers.belongsToMany(db.userPrimaryInfo, {
   as: "counseledUsers",
 });
 
+// region
+db.region.belongsTo(db.adminUsers, {
+  as: "regional_manager",
+  foreignKey: "regional_manager_id",
+});
+
 module.exports = db;
