@@ -205,13 +205,15 @@ exports.createLead = async (req, res) => {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
-        const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
+        // const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
+        const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
+        const countryNames = country.map(c => c.country_name).join(", ");
         // Create a task for the new lead
         const task = await db.tasks.create(
           {
             studentId: userPrimaryInfo.id,
             userId: leastAssignedStaff,
-            title: `${full_name} - ${country.country_name} - ${phone}`,
+            title: `${full_name} - ${countryNames} - ${phone}`,
             dueDate: dueDate,
             updatedBy: userId,
           },
@@ -226,13 +228,16 @@ exports.createLead = async (req, res) => {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
-      const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
+      // const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
+      const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
+      const countryNames = country.map(c => c.country_name).join(", ");
+
       // Create a task for the new lead
       const task = await db.tasks.create(
         {
           studentId: userPrimaryInfo.id,
           userId: userId,
-          title: `${full_name} - ${country.country_name} - ${phone}`,
+          title: `${full_name} - ${countryNames} - ${phone}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
@@ -979,13 +984,15 @@ exports.autoAssign = async (req, res) => {
 
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
-      const userInfo = await UserPrimaryInfo.findOne({ where: id,  include: {
-        model: db.country,
-        as: 'preferredCountries',
-      }, });
+      const userInfo = await UserPrimaryInfo.findOne({
+        where: id, include: {
+          model: db.country,
+          as: 'preferredCountries',
+        },
+      });
 
-       // Handle multiple preferred countries
-       const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
+      // Handle multiple preferred countries
+      const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
 
       const leastAssignedStaff = await getLeastAssignedUser();
 
