@@ -16,7 +16,7 @@ exports.getAllRegions = async (req, res) => {
     const regions = await Region.findAll({
       include: [
         {
-          model: db.region,
+          model: db.adminUsers,
           as: "regional_manager",
           attributes: ["name"],
         },
