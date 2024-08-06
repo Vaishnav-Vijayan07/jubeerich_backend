@@ -153,21 +153,10 @@ exports.bulkUpload = async (req, res) => {
     if (jsonData.length > 0) {
       const createdUsers = await UserPrimaryInfo.bulkCreate(jsonData, { returning: true });
 
-      // Associate the preferred countries
-      await Promise.all(createdUsers.map(async (user) => {
-        const rowData = jsonData.find(data => data.email === user.email);
-        if (rowData) {
-          const preferredCountries = rowData.preferred_country;
-          if (Array.isArray(preferredCountries) && preferredCountries.length > 0) {
-            await UserCountries.bulkCreate(
-              preferredCountries.map(countryId => ({
-                user_primary_info_id: user.id,
-                country_id: countryId
-              }))
-            );
-          }
-        }
-      }));
+      // Associate the preferred countries with the user
+      if (Array.isArray(preferredCountryIds) && preferredCountryIds.length > 0) {
+        await createdUsers.setPreferredCountries(preferredCountryIds);
+      }
     }
 
     // Generate error report
