@@ -23,10 +23,15 @@ exports.getAllRegions = async (req, res) => {
       ]
     });
 
-    const modifiedResponse = {
-      ...regions.toJSON(),
-      regional_manager: regions?.regional_manager ? regions?.regional_manager?.name : null
-    }
+    // Map through the regions to format the response properly
+    const modifiedResponse = regions.map(region => {
+      const regionData = region.toJSON();
+      return {
+        ...regionData,
+        regional_manager: regionData.regional_manager ? regionData.regional_manager.name : null
+      };
+    });
+
     res.status(200).json({
       status: true,
       data: modifiedResponse,
