@@ -979,21 +979,27 @@ exports.autoAssign = async (req, res) => {
 
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
-      const userInfo = await UserPrimaryInfo.findOne({ where: id });
+      const userInfo = await UserPrimaryInfo.findOne({ where: id,  include: {
+        model: db.country,
+        as: 'preferredCountries',
+      }, });
+
+       // Handle multiple preferred countries
+       const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
 
       const leastAssignedStaff = await getLeastAssignedUser();
 
       if (leastAssignedStaff) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
-        const country = await db.country.findByPk(userInfo.preferred_country);
+        // const country = await db.country.findByPk(userInfo.preferred_country);
 
         // Create a task for the new lead
         const task = await db.tasks.upsert(
           {
             studentId: id,
             userId: leastAssignedStaff,
-            title: `${userInfo.full_name} - ${country?.country_name} - ${userInfo.phone}`,
+            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
             dueDate: dueDate,
             updatedBy: userId,
           },
