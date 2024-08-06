@@ -75,8 +75,8 @@ exports.bulkUpload = async (req, res) => {
 
             // Parse preferred countries from comma-separated string
             const preferredCountries = row.getCell(10).value
-              ? row.getCell(10).value.split(',').map(id => id.trim())
-              : [];
+              ? row.getCell(10)?.value?.split(',')?.map(id => id.trim())
+              : [row.getCell(10)?.value];
 
             const rowData = {
               lead_received_date: row.getCell(2).value,
