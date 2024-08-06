@@ -1060,6 +1060,7 @@ exports.updateLead = async (req, res) => {
     ielts,
   } = req.body;
 
+  console.log("category_id =====>", category_id);
   // Start a transaction
   const transaction = await sequelize.transaction();
 
