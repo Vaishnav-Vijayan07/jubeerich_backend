@@ -154,7 +154,6 @@ exports.bulkUpload = async (req, res) => {
         if (userData.preferred_country.length > 0) {
           await UserPreferredCountries.bulkCreate(
             userData.preferred_country.map(countryId => ({ userId: user.id, countryId })),
-            { transaction: t }
           );
         }
       }
