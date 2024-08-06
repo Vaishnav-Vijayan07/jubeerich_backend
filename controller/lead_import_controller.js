@@ -5,7 +5,7 @@ const Channel = db.leadChannel;
 const AdminUsers = db.adminUsers;
 const OfficeType = db.officeType;
 const UserPrimaryInfo = db.userPrimaryInfo;
-const UserPreferredCountries = db.userPreferredCountries; // Join table for preferred countries
+const UserPreferredCountries = db.userContries; // Join table for preferred countries
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
@@ -172,7 +172,7 @@ exports.bulkUpload = async (req, res) => {
 
       invalidRows.forEach(({ rowData, errors }, index) => {
         const errorDetails = errors.join("; ");
-        const rowWithErrors = [
+        const rowWithErrors = [ 
           index + 1, // Serial Number
           rowData.lead_received_date,
           rowData.source_slug,
