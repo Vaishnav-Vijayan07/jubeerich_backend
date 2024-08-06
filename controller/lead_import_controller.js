@@ -73,10 +73,17 @@ exports.bulkUpload = async (req, res) => {
             const emailKey = email || "";
             const phoneKey = phone || "";
 
-            // Parse preferred countries from comma-separated string
-            const preferredCountries = row.getCell(10).value
-              ? row.getCell(10)?.value?.split(',')?.map(id => id.trim())
-              : [row.getCell(10)?.value];
+            // Handle preferred countries (single, multiple, or integer IDs)
+            let preferredCountriesValue = row.getCell(10).value;
+            let preferredCountries = [];
+
+            if (Array.isArray(preferredCountriesValue)) {
+              preferredCountries = preferredCountriesValue;
+            } else if (typeof preferredCountriesValue === 'string') {
+              preferredCountries = preferredCountriesValue.split(',').map(id => id.trim());
+            } else if (typeof preferredCountriesValue === 'number') {
+              preferredCountries = [preferredCountriesValue];
+            }
 
             const rowData = {
               lead_received_date: row.getCell(2).value,
@@ -222,6 +229,7 @@ const validateRowData = (data) => {
 
   return errors;
 };
+
 
 
 // const Excel = require("exceljs");
