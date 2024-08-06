@@ -979,7 +979,6 @@ exports.autoAssign = async (req, res) => {
 
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
-      const currentCre = leastCre[index % leastCre.length].user_id;
       const userInfo = await UserPrimaryInfo.findOne({ where: id });
 
       const leastAssignedStaff = await getLeastAssignedUser();
@@ -1003,7 +1002,7 @@ exports.autoAssign = async (req, res) => {
       }
 
       return UserPrimaryInfo.update(
-        { assigned_cre: currentCre, updated_by: userId },
+        { assigned_cre: leastAssignedStaff, updated_by: userId },
         { where: { id }, transaction }
       );
     });
