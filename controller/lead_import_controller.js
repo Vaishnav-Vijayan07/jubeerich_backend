@@ -155,6 +155,7 @@ exports.bulkUpload = async (req, res) => {
 
       // Associate the preferred countries with the user
       if (Array.isArray(preferredCountryIds) && preferredCountryIds.length > 0) {
+        console.log("preferredCountryIds =======>", preferredCountryIds);
         await createdUsers.setPreferredCountries(preferredCountryIds);
       }
     }
