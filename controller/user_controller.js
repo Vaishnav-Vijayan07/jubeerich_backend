@@ -1141,7 +1141,7 @@ exports.updateLead = async (req, res) => {
         phone,
         city,
         office_type,
-        category_id: category_id == "" ? null : category_id,
+        category_id: category_id ? category_id : null,
         source_id,
         channel_id,
         region_id,
