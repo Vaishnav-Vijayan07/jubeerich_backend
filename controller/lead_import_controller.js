@@ -5,7 +5,7 @@ const Channel = db.leadChannel;
 const AdminUsers = db.adminUsers;
 const OfficeType = db.officeType;
 const UserPrimaryInfo = db.userPrimaryInfo;
-const UserPreferredCountries = db.userContries; // Join table for preferred countries
+const UserCountries = db.userCountries; // Assuming UserCountries is the model for the join table
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
@@ -73,16 +73,21 @@ exports.bulkUpload = async (req, res) => {
             const emailKey = email || "";
             const phoneKey = phone || "";
 
-            // Handle preferred countries (single, multiple, or integer IDs)
-            let preferredCountriesValue = row.getCell(10).value;
-            let preferredCountries = [];
+            const preferredCountryCell = row.getCell(10).value;
 
-            if (Array.isArray(preferredCountriesValue)) {
-              preferredCountries = preferredCountriesValue;
-            } else if (typeof preferredCountriesValue === 'string') {
-              preferredCountries = preferredCountriesValue.split(',').map(id => id.trim());
-            } else if (typeof preferredCountriesValue === 'number') {
-              preferredCountries = [preferredCountriesValue];
+            // Convert preferred_country to an array of integers
+            let preferredCountryIds = [];
+            if (typeof preferredCountryCell === 'string') {
+              if (preferredCountryCell.includes(',')) {
+                preferredCountryIds = preferredCountryCell.split(',')
+                  .map(id => parseInt(id.trim(), 10))
+                  .filter(id => !isNaN(id));
+              } else {
+                const singleId = parseInt(preferredCountryCell.trim(), 10);
+                if (!isNaN(singleId)) {
+                  preferredCountryIds = [singleId];
+                }
+              }
             }
 
             const rowData = {
@@ -94,7 +99,7 @@ exports.bulkUpload = async (req, res) => {
               phone,
               city: row.getCell(8).value,
               office_type: officeTypeSlugToId[officeTypeSlug] || null,
-              preferred_country: preferredCountries,
+              preferred_country: preferredCountryIds,
               ielts: row.getCell(11).value,
               remarks: row.getCell(12).value,
               source_slug: sourceSlug,
@@ -148,15 +153,21 @@ exports.bulkUpload = async (req, res) => {
     if (jsonData.length > 0) {
       const createdUsers = await UserPrimaryInfo.bulkCreate(jsonData, { returning: true });
 
-      // Handle preferred countries
-      for (const user of createdUsers) {
-        const userData = jsonData.find(data => data.email === user.email);
-        if (userData.preferred_country.length > 0) {
-          await UserPreferredCountries.bulkCreate(
-            userData.preferred_country.map(countryId => ({ userId: user.id, countryId })),
-          );
+      // Associate the preferred countries
+      await Promise.all(createdUsers.map(async (user) => {
+        const rowData = jsonData.find(data => data.email === user.email);
+        if (rowData) {
+          const preferredCountries = rowData.preferred_country;
+          if (Array.isArray(preferredCountries) && preferredCountries.length > 0) {
+            await UserCountries.bulkCreate(
+              preferredCountries.map(countryId => ({
+                user_primary_info_id: user.id,
+                country_id: countryId
+              }))
+            );
+          }
         }
-      }
+      }));
     }
 
     // Generate error report
@@ -171,7 +182,7 @@ exports.bulkUpload = async (req, res) => {
 
       invalidRows.forEach(({ rowData, errors }, index) => {
         const errorDetails = errors.join("; ");
-        const rowWithErrors = [ 
+        const rowWithErrors = [
           index + 1, // Serial Number
           rowData.lead_received_date,
           rowData.source_slug,
@@ -181,7 +192,7 @@ exports.bulkUpload = async (req, res) => {
           rowData.phone,
           rowData.city,
           rowData.office_type_slug,
-          rowData.preferred_country.join(", "), // Join array as a string
+          rowData.preferred_country.join(", "), // Join array if there are multiple countries
           rowData.ielts,
           rowData.remarks,
           errorDetails,
@@ -224,10 +235,13 @@ const validateRowData = (data) => {
   if (!data.source_id) errors.push("Invalid source");
   if (!data.channel_id) errors.push("Invalid channel");
   if (!data.office_type) errors.push("Invalid office type");
-  if (!data.preferred_country || data.preferred_country.length === 0) errors.push("Preferred countries are required");
+  if (!data.preferred_country || (Array.isArray(data.preferred_country) && data.preferred_country.length === 0)) {
+    errors.push("Preferred country is required");
+  }
 
   return errors;
 };
+
 
 
 
