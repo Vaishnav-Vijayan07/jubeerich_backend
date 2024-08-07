@@ -986,6 +986,7 @@ exports.autoAssign = async (req, res) => {
 
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
+      console.log("id =========>", id);
       const userInfo = await UserPrimaryInfo.findOne({
         where: id, include: {
           model: db.country,
@@ -1262,7 +1263,7 @@ const getLeastAssignedUser = async (req, res) => {
       return leastAssignedUser;
     } else {
       console.log(
-        'No matching users found or no assignments exist for user type "2".'
+        'No matching users found or no assignments exist for user type "3".'
       );
     }
   } catch (error) {
