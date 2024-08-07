@@ -1017,7 +1017,7 @@ exports.autoAssign = async (req, res) => {
 
       }
 
-      return UserPrimaryInfo.update(
+      UserPrimaryInfo.update(
         { assigned_cre: leastAssignedStaff, updated_by: userId },
         { where: { id }, transaction }
       );
