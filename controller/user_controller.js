@@ -975,15 +975,15 @@ exports.autoAssign = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Fetch all CREs with their assignment counts
-    const leastCre = await getLeastAssignedCre();
+    // // Fetch all CREs with their assignment counts
+    // const leastCre = await getLeastAssignedCre();
 
-    if (leastCre.length === 0) {
-      throw new Error("No available CREs to assign leads");
-    }
+    // if (leastCre.length === 0) {
+    //   throw new Error("No available CREs to assign leads");
+    // }
 
     // Prepare the bulk update data
-    const updatePromises = leads_ids.map(async (id, index) => {
+    const updatePromises = leads_ids?.map(async (id, index) => {
       const userInfo = await UserPrimaryInfo.findOne({
         where: id, include: {
           model: db.country,
@@ -992,9 +992,11 @@ exports.autoAssign = async (req, res) => {
       });
 
       // Handle multiple preferred countries
-      const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
+      const countries = userInfo.preferredCountries?.map(c => c.country_name).join(', ') || 'Unknown Country';
 
       const leastAssignedStaff = await getLeastAssignedUser();
+
+      console.log("leastAssignedStaff =======>", leastAssignedStaff);
 
       if (leastAssignedStaff) {
         const dueDate = new Date();
@@ -1012,6 +1014,7 @@ exports.autoAssign = async (req, res) => {
           },
           { transaction }
         );
+
       }
 
       return UserPrimaryInfo.update(
