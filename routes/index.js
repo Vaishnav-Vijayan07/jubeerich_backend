@@ -109,17 +109,10 @@ const {
 } = require("../controller/branch_controller");
 const {
   createLead,
-  getAllLeads,
   updateLead,
   deleteLead,
-  getLeadsByCreatedUser,
   updateUserStatus,
   getStatusWithAccessPowers,
-  geLeadsForCreTl,
-  assignCres,
-  getAssignedLeadsForCreTl,
-  autoAssign,
-  getLeads,
 } = require("../controller/user_controller");
 const {
   getTasks,
@@ -146,6 +139,8 @@ const {
   listAllAccessRolesWithStatuses,
 } = require("../controller/status_config");
 const { bulkUpload } = require("../controller/lead_import_controller");
+const { assignCres, autoAssign } = require("../controller/assign_leads_controller");
+const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCreTl, getAllLeads } = require("../controller/lead_listing_controller");
 
 const router = express.Router();
 
