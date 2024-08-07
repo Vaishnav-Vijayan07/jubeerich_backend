@@ -952,6 +952,100 @@ exports.assignCres = async (req, res) => {
   }
 };
 
+// exports.autoAssignCopy = async (req, res) => {
+//   const { leads_ids } = req.body;
+//   const userId = req.userDecodeId;
+
+//   // Validate leads_ids
+//   if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+//     return res.status(400).json({
+//       status: false,
+//       message: "leads_ids must be a non-empty array",
+//     });
+//   }
+
+//   if (!leads_ids.every((id) => typeof id === "number")) {
+//     return res.status(400).json({
+//       status: false,
+//       message: "Each user_id must be a number",
+//     });
+//   }
+
+//   // Start a new transaction
+//   const transaction = await sequelize.transaction();
+
+//   try {
+//     // Fetch all CREs with their assignment counts
+//     const leastCre = await getLeastAssignedCre();
+
+//     console.log("leastCre =====>", leastCre);
+
+//     if (leastCre.length === 0) {
+//       throw new Error("No available CREs to assign leads");
+//     }
+
+//     // Prepare the bulk update data
+//     const updatePromises = leads_ids.map(async (id, index) => {
+//       console.log("id =========>", id);
+//       const userInfo = await UserPrimaryInfo.findOne({
+//         where: id, include: {
+//           model: db.country,
+//           as: 'preferredCountries',
+//         },
+//       });
+
+//       // Handle multiple preferred countries
+//       const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
+
+//       const leastAssignedStaff = await getLeastAssignedUser();
+
+//       console.log("leastAssignedStaff ========>", leastAssignedStaff);
+
+//       if (leastAssignedStaff) {
+//         const dueDate = new Date();
+//         dueDate.setDate(dueDate.getDate() + 1);
+//         // const country = await db.country.findByPk(userInfo.preferred_country);
+
+//         // Create a task for the new lead
+//         const task = await db.tasks.upsert(
+//           {
+//             studentId: id,
+//             userId: leastAssignedStaff,
+//             title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+//             dueDate: dueDate,
+//             updatedBy: userId,
+//           },
+//           { transaction }
+//         );
+//       }
+
+//       return UserPrimaryInfo.update(
+//         { assigned_cre: leastAssignedStaff, updated_by: userId },
+//         { where: { id }, transaction }
+//       );
+//     });
+
+//     // Perform bulk update
+//     await Promise.all(updatePromises);
+
+//     // Commit the transaction
+//     await transaction.commit();
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Leads assigned successfully",
+//     });
+//   } catch (error) {
+//     // Rollback the transaction in case of an error
+//     await transaction.rollback();
+//     console.error("Error in autoAssign:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 exports.autoAssign = async (req, res) => {
   const { leads_ids } = req.body;
   const userId = req.userDecodeId;
@@ -978,49 +1072,36 @@ exports.autoAssign = async (req, res) => {
     // Fetch all CREs with their assignment counts
     const leastCre = await getLeastAssignedCre();
 
-    console.log("leastCre =====>", leastCre);
-
     if (leastCre.length === 0) {
       throw new Error("No available CREs to assign leads");
     }
 
     // Prepare the bulk update data
     const updatePromises = leads_ids.map(async (id, index) => {
-      console.log("id =========>", id);
       const userInfo = await UserPrimaryInfo.findOne({
         where: id, include: {
           model: db.country,
           as: 'preferredCountries',
         },
       });
-
-      // Handle multiple preferred countries
       const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
+      const currentCre = leastCre[index % leastCre.length].user_id;
 
-      const leastAssignedStaff = await getLeastAssignedUser();
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
 
-      console.log("leastAssignedStaff ========>", leastAssignedStaff);
-
-      if (leastAssignedStaff) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
-        // const country = await db.country.findByPk(userInfo.preferred_country);
-
-        // Create a task for the new lead
-        const task = await db.tasks.upsert(
-          {
-            studentId: id,
-            userId: leastAssignedStaff,
-            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-            dueDate: dueDate,
-            updatedBy: userId,
-          },
-          { transaction }
-        );
-      }
-
+      const task = await db.tasks.upsert(
+        {
+          studentId: id,
+          userId: currentCre,
+          title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+          dueDate: dueDate,
+          updatedBy: userId,
+        },
+        { transaction }
+      );
       return UserPrimaryInfo.update(
-        { assigned_cre: leastAssignedStaff, updated_by: userId },
+        { assigned_cre: currentCre },
         { where: { id }, transaction }
       );
     });
@@ -1045,6 +1126,7 @@ exports.autoAssign = async (req, res) => {
     });
   }
 };
+
 
 exports.updateLead = async (req, res) => {
   // Validate the request
@@ -1384,6 +1466,39 @@ exports.getStatusWithAccessPowers = async (req, res) => {
   }
 };
 
+// const getLeastAssignedCre = async () => {
+//   try {
+//     // Fetch all CREs with their current assignment counts
+//     const creList = await db.adminUsers.findAll({
+//       attributes: [
+//         ["id", "user_id"],
+//         "username",
+//         [
+//           Sequelize.literal(`(
+//             SELECT COUNT(*)
+//             FROM "user_primary_info"
+//             WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
+//           )`),
+//           "assignment_count",
+//         ],
+//       ],
+//       where: {
+//         role_id: 3, // Assuming role_id 3 is for CREs
+//         // status: true, // Uncomment to include only active users
+//       },
+//       order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
+//     });
+
+//     return creList.map((cre) => ({
+//       user_id: cre.dataValues.user_id,
+//       assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+//     }));
+//   } catch (error) {
+//     console.error("Error fetching CREs with assignment counts:", error);
+//     throw error;
+//   }
+// }
+
 const getLeastAssignedCre = async () => {
   try {
     // Fetch all CREs with their current assignment counts
@@ -1415,4 +1530,4 @@ const getLeastAssignedCre = async () => {
     console.error("Error fetching CREs with assignment counts:", error);
     throw error;
   }
-}
+};
