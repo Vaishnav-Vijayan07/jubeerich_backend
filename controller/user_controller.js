@@ -46,7 +46,7 @@ exports.createLead = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     console.log("userId===>", userId);
-    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
+    const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } });  // Find the user_id of cre_tl
     const user = await AdminUsers.findOne({ where: { id: userId } });
 
     // Check if referenced IDs exist in their respective tables
@@ -198,33 +198,8 @@ exports.createLead = async (req, res) => {
 
     console.log("userRole====>", userRole.role_id);
 
-    if (userRole?.role_id === 2) {
-      const leastAssignedStaff = await getLeastAssignedUser();
 
-      if (leastAssignedStaff) {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
-
-        // const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
-        const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
-        const countryNames = country.map(c => c.country_name).join(", ");
-        // Create a task for the new lead
-        const task = await db.tasks.create(
-          {
-            studentId: userPrimaryInfo.id,
-            userId: leastAssignedStaff,
-            title: `${full_name} - ${countryNames} - ${phone}`,
-            dueDate: dueDate,
-            updatedBy: userId,
-          },
-          { transaction }
-        );
-
-        console.log("task==>", task);
-      }
-    }
-
-    if (userRole?.role_id === 3 || userRole?.role_id === 3) {
+    if (userRole?.role_id === process.env.CRE_ID) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -243,6 +218,62 @@ exports.createLead = async (req, res) => {
         },
         { transaction }
       );
+    }
+
+    if (userRole?.role_id === process.env.CRE_RECEPTION_ID) {
+      let leastAssignedUsers = [];
+
+      for (const countryId of preferred_country) {
+
+        const users = await getLeastAssignedUsers(countryId);
+        if (users?.leastAssignedUserId) {
+          leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+        }
+        console.log("users ==========>", users.leastAssignedUserId);
+      }
+
+      if (leastAssignedUsers.length > 0) {
+        // Remove existing counselors for the student
+        await db.userCounselors.destroy({
+          where: { user_id: userPrimaryInfo.id },
+        });
+
+        // Add new counselors
+        const userCounselorsData = leastAssignedUsers.map(userId => ({
+          user_id: userPrimaryInfo.id,
+          counselor_id: userId,
+        }));
+
+        await db.userCounselors.bulkCreate(userCounselorsData);
+
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        let countryName = "Unknown";
+        if (preferred_country.length > 0) {
+          // const country = await db.country.findByPk(countryIds[0]);
+          const countries = await db.country.findAll({
+            where: { id: preferred_country },
+            attributes: ['country_name'],
+          });
+
+          if (countries) {
+            countryName = countries.map(country => country.country_name).join(', ');
+          }
+        }
+
+        // Create tasks for each least assigned user
+        for (const userId of leastAssignedUsers) {
+          await db.tasks.create({
+            studentId: userPrimaryInfo.id,
+            userId: userId,
+            title: `${student.full_name} - ${countryName} - ${student.phone}`,
+            dueDate: dueDate,
+            updatedBy: req.userDecodeId,
+          });
+        }
+
+      }
     }
 
     // Commit the transaction
@@ -452,50 +483,6 @@ exports.deleteLead = async (req, res) => {
   }
 };
 
-// round robin method
-const getLeastAssignedUser = async (req, res) => {
-  try {
-    const result = await db.adminUsers.findOne({
-      attributes: [
-        ["id", "user_id"],
-        "username",
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)
-          FROM "tasks"
-          WHERE "tasks"."userId" = "admin_user"."id"
-        )`),
-          "assignment_count",
-        ],
-      ],
-      where: {
-        role_id: 3,
-        // status: true,
-      },
-      order: [[Sequelize.literal("assignment_count"), "ASC"]],
-    });
-
-    console.log("result===>", result);
-
-    if (result.dataValues) {
-      const leastAssignedUser = result.dataValues.user_id;
-
-      console.log("User with the least assignments:", leastAssignedUser);
-      return leastAssignedUser;
-    } else {
-      console.log(
-        'No matching users found or no assignments exist for user type "3".'
-      );
-    }
-  } catch (error) {
-    console.error(`Error finding least assigned user: ${error}`);
-    return res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
-  }
-};
-
 exports.updateUserStatus = async (req, res) => {
   const { status_id, lead_id } = req.body;
   const userId = req.userDecodeId;
@@ -602,5 +589,62 @@ exports.getStatusWithAccessPowers = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  }
+};
+
+
+const getLeastAssignedUsers = async (countryId) => {
+  const roleId = process.env.COUNSELLOR_ROLE_ID;
+  try {
+    // Use raw SQL to execute the query
+    const [results] = await db.sequelize.query(`
+      WITH user_assignments AS (
+        SELECT 
+          "admin_users"."id" AS "user_id", 
+          COUNT("user_counselors"."counselor_id") AS "assignment_count"
+        FROM "admin_users"
+        LEFT JOIN "user_counselors" 
+          ON "admin_users"."id" = "user_counselors"."counselor_id"
+        WHERE "admin_users"."role_id" = :roleId 
+          AND "admin_users"."country_id" = :countryId
+        GROUP BY "admin_users"."id"
+      )
+      SELECT "user_id"
+      FROM user_assignments
+      ORDER BY "assignment_count" ASC, "user_id" ASC
+      LIMIT 1;
+    `, {
+      replacements: { roleId, countryId },
+      type: db.Sequelize.QueryTypes.SELECT
+    });
+
+    console.log("results ===>", results);
+
+    // Check if results is defined and not null
+    if (!results || Object.keys(results).length === 0) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    // Extract user_id if results has user_id
+    const leastAssignedUserId = results.user_id;
+
+
+    // If user_id is undefined, return an error response
+    if (leastAssignedUserId === undefined) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    return {
+      leastAssignedUserId
+    };
+  } catch (error) {
+    console.error(`Error finding least assigned users: ${error}`);
+    return {
+      leastAssignedUserId: null
+    };
   }
 };
