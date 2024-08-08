@@ -269,6 +269,9 @@ exports.createLead = async (req, res) => {
 
         // Create tasks for each least assigned user
         for (const userId of leastAssignedUsers) {
+          console.log("userId ============>", userId);
+          console.log("userPrimaryInfo.id ============>", userPrimaryInfo.id);
+          
           await db.tasks.create({
             studentId: userPrimaryInfo.id,
             userId: userId,
