@@ -221,6 +221,8 @@ exports.createLead = async (req, res) => {
     }
 
     if (userRole?.role_id === process.env.CRE_RECEPTION_ID) {
+      console.log("CRE RECEPTION =============>");
+      
       let leastAssignedUsers = [];
 
       for (const countryId of preferred_country) {
@@ -229,8 +231,11 @@ exports.createLead = async (req, res) => {
         if (users?.leastAssignedUserId) {
           leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
         }
-        console.log("users ==========>", users.leastAssignedUserId);
+        console.log("leastAssignedUserId ==========>", users.leastAssignedUserId);
       }
+
+      console.log("leastAssignedUsers ==>", leastAssignedUsers);
+      
 
       if (leastAssignedUsers.length > 0) {
         // Remove existing counselors for the student
