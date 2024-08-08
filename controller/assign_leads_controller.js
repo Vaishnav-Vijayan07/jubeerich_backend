@@ -1,13 +1,7 @@
-const { validationResult, check } = require("express-validator");
 const db = require("../models");
-const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
-const Status = db.status;
-const StatusAccessRole = db.statusAccessRoles;
-const AccessRole = db.accessRoles;
-const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
-const { Op, Sequelize, where } = require("sequelize");
+const { Sequelize } = require("sequelize");
 
 exports.assignCres = async (req, res) => {
     const { cre_id, user_ids } = req.body;
@@ -202,7 +196,6 @@ exports.autoAssign = async (req, res) => {
     }
 };
 
-
 // round robin method
 const getLeastAssignedCre = async () => {
     try {
@@ -221,8 +214,10 @@ const getLeastAssignedCre = async () => {
                 ],
             ],
             where: {
-                role_id: 3, // Assuming role_id 3 is for CREs
-                // status: true, // Uncomment to include only active users
+                [Sequelize.Op.or]: [
+                    { role_id: 3 }, // Assuming role_id 3 is for CREs
+                    { role_id: 4 }  // Adding role_id 4
+                ],
             },
             order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
         });
