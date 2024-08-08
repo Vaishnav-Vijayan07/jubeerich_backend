@@ -220,7 +220,7 @@ exports.createLead = async (req, res) => {
       );
     }
 
-    if (userRole?.role_id === process.env.CRE_RECEPTION_ID) {
+    if (userRole?.role_id == process.env.CRE_RECEPTION_ID || 5) {
       console.log("CRE RECEPTION =============>");
       
       let leastAssignedUsers = [];
