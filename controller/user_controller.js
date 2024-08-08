@@ -272,7 +272,7 @@ exports.createLead = async (req, res) => {
           await db.tasks.create({
             studentId: userPrimaryInfo.id,
             userId: userId,
-            title: `${student.full_name} - ${countryName} - ${student.phone}`,
+            title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           });
