@@ -196,10 +196,10 @@ exports.createLead = async (req, res) => {
 
     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
 
-    console.log("userRole====>", userRole.role_id);
+    console.log("userRole====>", userRole.role_id, process.env.CRE_RECEPTION_ID);
 
 
-    if (userRole?.role_id === process.env.CRE_ID) {
+    if (userRole?.role_id == process.env.CRE_ID) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -218,11 +218,10 @@ exports.createLead = async (req, res) => {
         },
         { transaction }
       );
-    }
+    } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
 
-    if (userRole?.role_id == process.env.CRE_RECEPTION_ID || 5) {
-      console.log("CRE RECEPTION =============>");
-      
+      console.log("CRE RECEPTION =============>", process.env.CRE_RECEPTION_ID, userRole?.role_id);
+
       let leastAssignedUsers = [];
 
       for (const countryId of preferred_country) {
@@ -235,7 +234,7 @@ exports.createLead = async (req, res) => {
       }
 
       console.log("leastAssignedUsers ==>", leastAssignedUsers);
-      
+
 
       if (leastAssignedUsers.length > 0) {
         // Remove existing counselors for the student
