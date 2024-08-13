@@ -91,7 +91,7 @@ exports.assignCres = async (req, res) => {
 
                 // Update assigned_cre for the user
                 await db.userPrimaryInfo.update(
-                    { assigned_cre: cre_id, updated_by: userId },
+                    { assigned_cre: cre_id, updated_by: userId, assign_type: "direct_assign" },
                     { where: { id: user_id }, transaction }
                 );
             })
@@ -170,7 +170,7 @@ exports.autoAssign = async (req, res) => {
                 { transaction }
             );
             return UserPrimaryInfo.update(
-                { assigned_cre: currentCre },
+                { assigned_cre: currentCre, assign_type: "auto_assign" },
                 { where: { id }, transaction }
             );
         });

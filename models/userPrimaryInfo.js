@@ -135,6 +135,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      assign_type: {
+        type: Sequelize.ENUM('direct_assign', 'auto_assign'),
+        allowNull: true,
+      },
     },
     {
       underscored: true,
