@@ -183,6 +183,7 @@ exports.createLead = async (req, res) => {
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
         created_by: userId,
+        assign_type: userId === process.env.CRE_ID ? "direct_assign" : null,
         ielts,
         // preferred_country: preferred_country[0]
       },
