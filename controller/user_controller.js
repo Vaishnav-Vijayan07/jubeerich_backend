@@ -164,6 +164,12 @@ exports.createLead = async (req, res) => {
 
     const receivedDate = new Date();
 
+    const userRole = await db.adminUsers.findOne({ where: { id: userId } });
+
+    console.log("userId ===>", userId);
+    console.log("process.env.CRE_ID", process.env.CRE_ID);
+    
+
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
       {
@@ -181,9 +187,9 @@ exports.createLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl: user.id === 2 && creTl ? creTl.id : null,
+        assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
         created_by: userId,
-        assign_type: userId == process.env.CRE_ID ? "direct_assign" : null,
+        assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
         ielts,
         // preferred_country: preferred_country[0]
       },
@@ -195,7 +201,7 @@ exports.createLead = async (req, res) => {
       await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
     }
 
-    const userRole = await db.adminUsers.findOne({ where: { id: userId } });
+    
 
     console.log("userRole====>", userRole.role_id, process.env.CRE_RECEPTION_ID);
 
