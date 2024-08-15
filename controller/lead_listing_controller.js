@@ -100,7 +100,7 @@ exports.getLeads = async (req, res) => {
           : null,
         region_name: info.region_name ? info.region_name.region_name : null,
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        status_name: info.status ? info.status.status_name : null,
+        status: info.status ? info.status.status_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
       };
@@ -230,7 +230,7 @@ exports.getAllLeads = async (req, res) => {
         region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status_name: info.status ? info.status.status_name : null,
+        status: info.status ? info.status.status_name : null,
       };
     });
 
@@ -348,7 +348,7 @@ exports.getLeadsByCreatedUser = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status_name: info.status ? info.status.status_name : null,
+        status: info.status ? info.status.status_name : null,
       };
     });
 
@@ -482,7 +482,7 @@ exports.geLeadsForCreTl = async (req, res) => {
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status_name: info.status ? info.status.status_name : null,
+        status: info.status ? info.status.status_name : null,
       };
     });
 
@@ -617,7 +617,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status_name: info.status ? info.status.status_name : null,
+        status: info.status ? info.status.status_name : null,
       };
     });
 
