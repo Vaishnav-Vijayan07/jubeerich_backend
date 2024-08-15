@@ -42,7 +42,7 @@ exports.createLead = async (req, res) => {
   } = req.body;
 
   console.log("req. files ========+>", req.files);
-  
+
   const examDocuments = req.files && req.files['exam_documents'];
 
   // Start a transaction
@@ -173,7 +173,7 @@ exports.createLead = async (req, res) => {
 
     console.log("userId ===>", userId);
     console.log("process.env.CRE_ID", process.env.CRE_ID);
-    
+
 
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
@@ -520,7 +520,7 @@ exports.deleteLead = async (req, res) => {
 };
 
 exports.updateUserStatus = async (req, res) => {
-  const { status_id, lead_id } = req.body;
+  const { status_id, lead_id, followup_date } = req.body;
   const userId = req.userDecodeId;
 
   // Start a transaction
@@ -579,7 +579,11 @@ exports.updateUserStatus = async (req, res) => {
       });
     }
     // Update user status
-    await leadExists.update({ status_id }, { transaction });
+    if (status_id == process.env.FOLLOWUP_ID) {
+      await leadExists.update({ status_id, followup_date }, { transaction });
+    } else{
+      await leadExists.update({ status_id }, { transaction });
+    }
     await transaction.commit();
     return res.status(200).json({
       status: true,
