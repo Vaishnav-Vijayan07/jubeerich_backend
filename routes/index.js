@@ -1,5 +1,7 @@
 const express = require("express");
 const multer = require("multer");
+const path = require('path');
+const uploadMultiple = require('../middleware/multerConfig');
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -332,7 +334,7 @@ router.post("/status", [authMiddleware.checkUserAuth], addStatus);
 router.put("/status/:id", [authMiddleware.checkUserAuth], updateStatus);
 router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
-router.post("/leads", [authMiddleware.checkUserAuth], createLead);
+router.post("/leads", uploadMultiple, [authMiddleware.checkUserAuth], createLead);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
 router.get(

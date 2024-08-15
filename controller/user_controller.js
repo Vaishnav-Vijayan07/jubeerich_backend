@@ -38,7 +38,12 @@ exports.createLead = async (req, res) => {
     remarks,
     lead_received_date,
     ielts,
+    exam_details
   } = req.body;
+
+  console.log("req. files ========+>", req.files);
+  
+  const examDocuments = req.files && req.files['exam_documents'];
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -201,10 +206,24 @@ exports.createLead = async (req, res) => {
       await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
     }
 
-    
+    // Handle exam details
+    if (Array.isArray(exam_details) && exam_details.length > 0) {
+      const examDetailsPromises = exam_details.map(async (exam, index) => {
+        const examDocument = examDocuments ? examDocuments[index] : null;
 
-    console.log("userRole====>", userRole.role_id, process.env.CRE_RECEPTION_ID);
+        // Create the exam record
+        const createdExam = await db.userExams.create({
+          student_id: userPrimaryInfo.id,
+          exam_name: exam.exam_name,
+          marks: exam.marks,
+          document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+        }, { transaction });
 
+        return createdExam;
+      });
+
+      await Promise.all(examDetailsPromises);
+    }
 
     if (userRole?.role_id == process.env.CRE_ID) {
       const dueDate = new Date();

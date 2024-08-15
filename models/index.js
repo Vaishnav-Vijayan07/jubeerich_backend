@@ -43,6 +43,7 @@ db.status = require("./status")(sequelize, Sequelize);
 db.statusAccessRoles = require("./statusAccessRoles")(sequelize, Sequelize);
 db.userContries = require("./userContries")(sequelize, Sequelize);
 db.userCounselors = require("./userCounselors")(sequelize, Sequelize);
+db.userExams = require("./userExams")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -56,6 +57,16 @@ db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
 
 // Country model
 db.country.hasMany(db.adminUsers, { foreignKey: 'country_id' });
+
+db.userPrimaryInfo.hasMany(db.userExams, {
+  foreignKey: 'student_id',
+  as: 'exams'
+});
+
+db.userExams.belongsTo(db.userPrimaryInfo, {
+  foreignKey: 'student_id',
+  as: 'user'
+});
 
 
 db.accessRoles.belongsToMany(db.accessPowers, {
