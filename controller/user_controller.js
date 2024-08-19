@@ -579,11 +579,8 @@ exports.updateUserStatus = async (req, res) => {
       });
     }
     // Update user status
-    if (status_id == process.env.FOLLOWUP_ID) {
-      await leadExists.update({ status_id, followup_date }, { transaction });
-    } else{
-      await leadExists.update({ status_id }, { transaction });
-    }
+    await leadExists.update({ status_id, followup_date }, { transaction });
+
     await transaction.commit();
     return res.status(200).json({
       status: true,

@@ -185,7 +185,9 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "source_id",
         "channel_id",
         "lead_received_date",
-        "status_id"
+        "status_id",
+        "followup_date",
+        "lead_received_date"
       ],
       include: [
         {
