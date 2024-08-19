@@ -21,7 +21,7 @@ exports.createLead = async (req, res) => {
   }
 
   // Destructure the validated request body
-  const {
+  let {
     full_name,
     email,
     phone,
@@ -41,6 +41,7 @@ exports.createLead = async (req, res) => {
     exam_details
   } = req.body;
 
+  exam_details = exam_details ? JSON.parse(exam_details) : null 
   console.log("req. files ========+>", req.files);
 
   const examDocuments = req.files && req.files['exam_documents'];
@@ -96,7 +97,7 @@ exports.createLead = async (req, res) => {
     }
 
     // Only check existence for non-null fields
-    if (region_id !== null) {
+    if (region_id !== 'null') {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
         await transaction.rollback(); // Rollback the transaction if region ID is invalid
@@ -108,7 +109,7 @@ exports.createLead = async (req, res) => {
       }
     }
 
-    if (counsiler_id !== null) {
+    if (counsiler_id !== 'null') {
       const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
@@ -120,7 +121,7 @@ exports.createLead = async (req, res) => {
       }
     }
 
-    if (branch_id !== null) {
+    if (branch_id !== 'null') {
       const branchExists = await checkIfEntityExists("branch", branch_id);
       if (!branchExists) {
         await transaction.rollback(); // Rollback the transaction if branch ID is invalid
@@ -187,8 +188,11 @@ exports.createLead = async (req, res) => {
         source_id,
         channel_id,
         region_id,
-        counsiler_id,
-        branch_id,
+        region_id:  region_id == 'null' ? null : region_id,
+        // counsiler_id,
+        counsiler_id:  counsiler_id == 'null' ? null : counsiler_id,
+        // branch_id,
+        branch_id:  branch_id == 'null' ? null : branch_id,
         updated_by,
         remarks,
         lead_received_date: lead_received_date || receivedDate,
