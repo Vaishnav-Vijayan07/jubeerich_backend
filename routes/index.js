@@ -346,7 +346,7 @@ router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], geLeadsForCreTl);
 router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], getAssignedLeadsForCreTl);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], autoAssign);
-router.put("/leads/:id", [authMiddleware.checkUserAuth], updateLead);
+router.put("/leads/:id", uploadMultiple, [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
