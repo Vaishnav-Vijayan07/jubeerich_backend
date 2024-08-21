@@ -42,6 +42,9 @@ exports.createLead = async (req, res) => {
   } = req.body;
 
   exam_details = exam_details ? JSON.parse(exam_details) : null 
+  preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
+  console.log('preferred_country',preferred_country);
+  
   console.log("req. files ========+>", req.files);
 
   const examDocuments = req.files && req.files['exam_documents'];
@@ -188,11 +191,11 @@ exports.createLead = async (req, res) => {
         source_id,
         channel_id,
         region_id,
-        region_id:  region_id == 'null' ? null : region_id,
+        region_id:  region_id != 'null' ? region_id : null,
         // counsiler_id,
-        counsiler_id:  counsiler_id == 'null' ? null : counsiler_id,
+        counsiler_id:  counsiler_id != 'null' ? counsiler_id : null,
         // branch_id,
-        branch_id:  branch_id == 'null' ? null : branch_id,
+        branch_id:  branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
         lead_received_date: lead_received_date || receivedDate,
@@ -367,10 +370,19 @@ exports.updateLead = async (req, res) => {
     remarks,
     lead_received_date,
     ielts,
+    // exam_details,
+    // changedFiles
   } = req.body;
 
 
+  // exam_details = exam_details ? JSON.parse(exam_details) : null 
+  // preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
+  // changedFiles = changedFiles ? JSON.parse(changedFiles) : null
+  // console.log('changedFiles',changedFiles);
+   
   console.log("body =========>", req.body);
+
+  const examDocuments = req.files && req.files['exam_documents'];
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -385,6 +397,8 @@ exports.updateLead = async (req, res) => {
       });
     }
 
+    
+
     // Check if referenced IDs exist in their respective tables
     const entities = [
       { model: "lead_category", id: category_id },
@@ -392,8 +406,11 @@ exports.updateLead = async (req, res) => {
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
       { model: "region", id: region_id },
+      // { model: "region", id: region_id != 'null' ? region_id : null },
       { model: "admin_user", id: counsiler_id },
+      // { model: "admin_user", id: counsiler_id != 'null' ? counsiler_id : null },
       { model: "branch", id: branch_id },
+      // { model: "branch", id: branch_id != 'null' ? branch_id : null },
       { model: "admin_user", id: updated_by },
     ];
 
@@ -456,9 +473,12 @@ exports.updateLead = async (req, res) => {
         category_id: category_id ? category_id : null,
         source_id,
         channel_id,
-        region_id,
-        counsiler_id,
-        branch_id,
+        // region_id,
+        region_id: region_id != 'null' ? region_id : null,
+        // counsiler_id,
+        counsiler_id: counsiler_id != 'null' ? counsiler_id : null,
+        // branch_id,
+        branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
         lead_received_date,
@@ -471,6 +491,58 @@ exports.updateLead = async (req, res) => {
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
       await lead.setPreferredCountries(preferred_country, { transaction });
     }
+
+    // if (Array.isArray(exam_details) && exam_details.length > 0) {
+    //   const examDetailsPromises = exam_details.map(async (exam, index) => {
+    //     console.log('Documents',examDocuments);
+        
+    //     const examDocument = examDocuments ? examDocuments[index] : null;
+    //     // const changedFile = changedFiles ? changedFiles[index] : null
+
+    //     let updateData = {
+    //       exam_name: exam.exam_name,
+    //       marks: exam.marks,
+    //     };
+    //     console.log('Exam Name', exam.exam_name);
+    //     console.log('Changed Files', changedFiles);
+                
+    //       if (examDocument && examDocument.filename) {
+    //         // if (examDocument && examDocument.filename && changedFiles.includes(exam.exam_name)) {
+    //         console.log('Entered 1');
+    //         console.log('Filename',examDocument.filename);
+            
+    //         updateData.document = examDocument.filename;
+    //       } else {
+    //         console.log('Not Updated');
+            
+    //       }
+    //     // }
+
+    //     console.log('updateData',updateData);
+        
+    
+    //     const updatedExam = await db.userExams.update(
+    //       // {
+    //       //   exam_name: exam.exam_name,
+    //       //   marks: exam.marks,
+    //       //   document: examDocument ? examDocument.filename : null,
+    //       // },
+    //       updateData,
+    //       {
+    //         where: {
+    //           student_id: id,
+    //           exam_name: exam.exam_name,
+    //         },
+    //         transaction,
+    //       }
+    //     );
+    
+    //     return updatedExam;
+    //   });
+    
+    //   await Promise.all(examDetailsPromises);
+    // }
+    
 
     await transaction.commit();
 

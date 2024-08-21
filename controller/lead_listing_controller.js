@@ -201,14 +201,29 @@ exports.getAllLeads = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
+        {
+          model: db.userExams,
+          as: "exams",
+          attributes: ["exam_name","marks", "document"],
+          required: false,
+        },
       ],
-    });
+    });    
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
       }));
+
+      const examDetails = info.exams.map((exam)=> ({
+        exam_name: exam.exam_name,
+        marks: exam.marks,
+      }))
+      
+      const examDocuments = info.exams.map((exam)=> ({
+        exam_documents: exam.document,
+      }))
 
       const counsellorNames = info.counselors?.map((counselor) => ({
         counselor_name: counselor.name,
@@ -231,6 +246,8 @@ exports.getAllLeads = async (req, res) => {
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,
+        exam_details: examDetails,
+        exam_documents: examDocuments
       };
     });
 
