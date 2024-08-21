@@ -291,7 +291,7 @@ exports.getStudentAcademicInfoById = async (req, res) => {
         }),
         exam_documents: examInfo.map((exam) => {
           return {
-            name: exam.dataValues.document
+            exam_documents: exam.dataValues.document
           }
         })
       };
