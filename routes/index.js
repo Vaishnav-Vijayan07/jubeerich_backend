@@ -15,6 +15,7 @@ const {
   addAdminUsers,
   updateAdminUsers,
   deleteAdminUsers,
+  getAllCounsellors,
 } = require("../controller/admin_user_controller");
 const {
   getAllAccessPowers,
@@ -149,6 +150,7 @@ const router = express.Router();
 router.post("/login", login);
 
 router.get("/admin_users", [authMiddleware.checkUserAuth], getAllAdminUsers);
+router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], getAllCounsellors);
 router.get(
   "/admin_users/:id",
   [authMiddleware.checkUserAuth],
