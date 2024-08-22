@@ -345,11 +345,50 @@ exports.getStudentAcademicInfoById = async (req, res) => {
 
     // Fetch basic information for the student
     const academicInfo = await db.userAcademicInfo.findOne({
-      where: { user_id: studentId },
+      where: { user_id: studentId }
     });
+    console.log('academicInfo',academicInfo.dataValues);
 
-    // Extract data values, or use default empty object if no data
-    const acadmicInfoData = academicInfo ? academicInfo.dataValues : {};
+      // const examInfo = await db.userPrimaryInfo.findAll({
+      //   where: { id: studentId },
+      //   include:[
+      //     {
+      //       model: db.userExams,
+      //       as: "exams",
+      //       attributes: ["exam_name","marks", "document"],
+      //       required: false,
+      //     },
+      //   ]
+      // });
+
+      const examInfo = await db.userExams.findAll({ where: { student_id: studentId }});
+
+      console.log('examInfo',examInfo.map(exam => exam.dataValues));
+    
+    // const acadmicInfoData = academicInfo ? academicInfo.dataValues : {};
+    let acadmicInfoData;
+    acadmicInfoData = academicInfo ? academicInfo.dataValues : {};
+
+    if (examInfo && examInfo.length > 0) {
+      acadmicInfoData = { 
+        ...acadmicInfoData, 
+        exam_details: examInfo.map((exam) => {
+          return {
+            exam_name: exam.dataValues.exam_name,
+            marks: exam.dataValues.marks
+          };
+        }),
+        exam_documents: examInfo.map((exam) => {
+          return {
+            exam_documents: exam.dataValues.document
+          }
+        })
+      };
+    }
+    
+
+    console.log('acadmicInfoData',acadmicInfoData);
+    
 
     // Send the response with combined information
     res.status(200).json({

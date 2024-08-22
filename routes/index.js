@@ -363,6 +363,7 @@ router.post(
 );
 router.post(
   "/saveStudentAcademicInfo",
+  uploadMultiple,
   [authMiddleware.checkUserAuth],
   saveStudentAcademicInfo
 );

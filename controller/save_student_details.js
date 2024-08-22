@@ -3,7 +3,7 @@ const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, where } = require("sequelize");
 
 
 exports.saveStudentBasicInfo = async (req, res) => {
@@ -231,8 +231,21 @@ exports.saveStudentBasicInfo = async (req, res) => {
 // };
 
 exports.saveStudentAcademicInfo = async (req, res) => {
-  const { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, company, years, user_id } =
+  let { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, company, years, user_id, exam_details } =
     req.body;
+
+    console.log('BODY', req.body);
+    
+
+  console.log('Documents', req.files['exam_documents']);
+  
+
+  exam_details = exam_details ? JSON.parse(exam_details) : null
+  console.log('exam_details',exam_details);
+  
+  const examDocuments = req.files && req.files['exam_documents'];
+
+  console.log("Files ===>", examDocuments)
 
   const transaction = await sequelize.transaction();
 
@@ -240,6 +253,12 @@ exports.saveStudentAcademicInfo = async (req, res) => {
     let UserAcadamicInfo = await db.userAcademicInfo.findOne({
       where: { user_id: user_id },
     });
+
+    let examDetails = await db.userExams.findAll({
+      where:{
+        student_id : user_id
+      }
+    })
 
     let UserAccadamicDetails;
 
@@ -276,7 +295,56 @@ exports.saveStudentAcademicInfo = async (req, res) => {
       );
     }
 
+    if (Array.isArray(exam_details) && exam_details.length > 0) {
+      const examDetailsPromises = exam_details.map(async (exam, index) => {
+        
+        const examDocument = examDocuments ? examDocuments[index] : null;
+
+        if(examDetails.length) {
+          
+          let updateData = {
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+          };
+        
+          if (examDocument && (examDocument.size != 0)) {
+            updateData.document = await examDocument.filename;
+          }
+          
+      
+          const updatedExam = await db.userExams.update(
+            updateData,
+            {
+              where: {
+                student_id: user_id,
+                exam_name: exam.exam_name,
+              },
+              transaction,
+            }
+          );
+      
+          return updatedExam;
+        } else {
+
+          // Create the exam record
+          const createdExam = await db.userExams.create({
+            // student_id: userPrimaryInfo.id,
+            student_id: user_id,
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+            document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+          }, { transaction });
+
+          return createdExam;
+        }
+      });
+    
+      await Promise.all(examDetailsPromises);
+    }
+
+    
     await transaction.commit();
+
 
     return res.status(201).json({
       status: true,

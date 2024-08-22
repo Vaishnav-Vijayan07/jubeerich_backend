@@ -353,7 +353,7 @@ exports.updateLead = async (req, res) => {
   }
 
   const { id } = req.params; // Get the lead ID from the URL parameters
-  const {
+  let {
     full_name,
     email,
     phone,
@@ -370,15 +370,13 @@ exports.updateLead = async (req, res) => {
     remarks,
     lead_received_date,
     ielts,
-    // exam_details,
-    // changedFiles
+    exam_details,
   } = req.body;
 
 
-  // exam_details = exam_details ? JSON.parse(exam_details) : null 
-  // preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
-  // changedFiles = changedFiles ? JSON.parse(changedFiles) : null
-  // console.log('changedFiles',changedFiles);
+  exam_details = exam_details ? JSON.parse(exam_details) : null 
+  preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
+  console.log('Controller Files',req.files);
    
   console.log("body =========>", req.body);
 
@@ -398,6 +396,10 @@ exports.updateLead = async (req, res) => {
     }
 
     
+    console.log('REGION ==>', region_id);
+    console.log('REGION TYPE ==>', typeof  region_id);
+
+    
 
     // Check if referenced IDs exist in their respective tables
     const entities = [
@@ -405,12 +407,12 @@ exports.updateLead = async (req, res) => {
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
-      { model: "region", id: region_id },
-      // { model: "region", id: region_id != 'null' ? region_id : null },
-      { model: "admin_user", id: counsiler_id },
-      // { model: "admin_user", id: counsiler_id != 'null' ? counsiler_id : null },
-      { model: "branch", id: branch_id },
-      // { model: "branch", id: branch_id != 'null' ? branch_id : null },
+      // { model: "region", id: region_id },
+      { model: "region", id: region_id != 'null' ? region_id : null },
+      // { model: "admin_user", id: counsiler_id },
+      { model: "admin_user", id: counsiler_id != 'null' ? counsiler_id : null },
+      // { model: "branch", id: branch_id },
+      { model: "branch", id: branch_id != 'null' ? branch_id : null },
       { model: "admin_user", id: updated_by },
     ];
 
@@ -461,6 +463,7 @@ exports.updateLead = async (req, res) => {
         });
       }
     }
+    
 
     // Update user information
     await lead.update(
@@ -492,56 +495,40 @@ exports.updateLead = async (req, res) => {
       await lead.setPreferredCountries(preferred_country, { transaction });
     }
 
-    // if (Array.isArray(exam_details) && exam_details.length > 0) {
-    //   const examDetailsPromises = exam_details.map(async (exam, index) => {
-    //     console.log('Documents',examDocuments);
+    if (Array.isArray(exam_details) && exam_details.length > 0) {
+      const examDetailsPromises = exam_details.map(async (exam, index) => {
         
-    //     const examDocument = examDocuments ? examDocuments[index] : null;
-    //     // const changedFile = changedFiles ? changedFiles[index] : null
+        const examDocument = examDocuments ? examDocuments[index] : null;
 
-    //     let updateData = {
-    //       exam_name: exam.exam_name,
-    //       marks: exam.marks,
-    //     };
-    //     console.log('Exam Name', exam.exam_name);
-    //     console.log('Changed Files', changedFiles);
-                
-    //       if (examDocument && examDocument.filename) {
-    //         // if (examDocument && examDocument.filename && changedFiles.includes(exam.exam_name)) {
-    //         console.log('Entered 1');
-    //         console.log('Filename',examDocument.filename);
+        let updateData = {
+          exam_name: exam.exam_name,
+          marks: exam.marks,
+        };
+      
+        if (examDocument && (examDocument.size != 0)) {
+          console.log('Entered 1');
+          console.log('Filename',examDocument.filename);
             
-    //         updateData.document = examDocument.filename;
-    //       } else {
-    //         console.log('Not Updated');
-            
-    //       }
-    //     // }
-
-    //     console.log('updateData',updateData);
+          updateData.document = examDocument.filename;
+        }
         
     
-    //     const updatedExam = await db.userExams.update(
-    //       // {
-    //       //   exam_name: exam.exam_name,
-    //       //   marks: exam.marks,
-    //       //   document: examDocument ? examDocument.filename : null,
-    //       // },
-    //       updateData,
-    //       {
-    //         where: {
-    //           student_id: id,
-    //           exam_name: exam.exam_name,
-    //         },
-    //         transaction,
-    //       }
-    //     );
+        const updatedExam = await db.userExams.update(
+          updateData,
+          {
+            where: {
+              student_id: id,
+              exam_name: exam.exam_name,
+            },
+            transaction,
+          }
+        );
     
-    //     return updatedExam;
-    //   });
+        return updatedExam;
+      });
     
-    //   await Promise.all(examDetailsPromises);
-    // }
+      await Promise.all(examDetailsPromises);
+    }
     
 
     await transaction.commit();
