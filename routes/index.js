@@ -124,6 +124,7 @@ const {
   getStudentStudyPreferenceInfoById,
   finishTask,
   getTaskById,
+  assignNewCountry,
 } = require("../controller/task_controller");
 const {
   saveStudentBasicInfo,
@@ -354,6 +355,7 @@ router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
 router.get("/tasks/:id", [authMiddleware.checkUserAuth], getTaskById);
 router.put("/finish_task", [authMiddleware.checkUserAuth], finishTask);
+router.put("/assign_new_country", [authMiddleware.checkUserAuth], assignNewCountry);
 router.post(
   "/saveStudentBasicInfo",
   [authMiddleware.checkUserAuth],

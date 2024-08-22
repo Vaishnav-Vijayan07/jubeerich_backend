@@ -53,7 +53,6 @@ exports.getTaskById = async (req, res) => {
   }
 };
 
-
 exports.finishTask = async (req, res) => {
   try {
     const { isCompleted, id } = req.body;
@@ -161,6 +160,97 @@ exports.finishTask = async (req, res) => {
   }
 };
 
+exports.assignNewCountry = async (req, res) => {
+  try {
+    const { id, newCountryId } = req.body;
+    const task = await db.tasks.findByPk(id);
+
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found.",
+      });
+    }
+
+    const studentId = task.studentId;
+    const student = await db.userPrimaryInfo.findByPk(studentId);
+
+    if (!student) {
+      return res.status(404).json({
+        status: false,
+        message: "Student not found.",
+      });
+    }
+
+    if (newCountryId) {
+      // Check if the new country is already assigned to the student
+      const existingCountry = await db.userContries.findOne({
+        where: {
+          user_primary_info_id: studentId,
+          country_id: newCountryId,
+        },
+      });
+
+      if (existingCountry) {
+        return res.status(400).json({
+          status: false,
+          message: "The country is already assigned to the student.",
+        });
+      }
+
+      // Find the least assigned user for the new country
+      const users = await getLeastAssignedUsers(newCountryId);
+      if (users?.leastAssignedUserId) {
+        const leastAssignedUserId = users.leastAssignedUserId;
+
+        // Assign the new counselor to the student
+        await db.userCounselors.create({
+          user_id: studentId,
+          counselor_id: leastAssignedUserId,
+        });
+
+        // Add the new country to the student's preferred countries
+        await db.userContries.create({
+          user_primary_info_id: studentId,
+          country_id: newCountryId,
+        });
+
+        // Create a task for the least assigned user
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 1);
+
+        const country = await db.country.findByPk(newCountryId, {
+          attributes: ['country_name'],
+        });
+
+        const countryName = country ? country.country_name : "Unknown";
+
+        await db.tasks.create({
+          studentId: student.id,
+          userId: leastAssignedUserId,
+          title: `${student.full_name} - ${countryName} - ${student.phone}`,
+          dueDate: dueDate,
+          updatedBy: req.userDecodeId,
+        });
+      }
+    }
+
+    // Send success response
+    return res.status(200).json({
+      status: true,
+      message: "Task successfully updated and assigned.",
+      task,
+    });
+
+  } catch (error) {
+    console.error(`Error finishing task: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 exports.getStudentBasicInfoById = async (req, res) => {
   try {
@@ -247,7 +337,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
     });
   }
 };
-
 
 exports.getStudentAcademicInfoById = async (req, res) => {
   try {
@@ -360,7 +449,3 @@ const getLeastAssignedUsers = async (countryId) => {
     };
   }
 };
-
-
-
-
