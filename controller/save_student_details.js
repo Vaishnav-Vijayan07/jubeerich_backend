@@ -3,7 +3,7 @@ const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, where } = require("sequelize");
 
 
 exports.saveStudentBasicInfo = async (req, res) => {
@@ -237,7 +237,7 @@ exports.saveStudentAcademicInfo = async (req, res) => {
     console.log('BODY', req.body);
     
 
-  console.log('User ID', user_id);
+  console.log('Documents', req.files['exam_documents']);
   
 
   exam_details = exam_details ? JSON.parse(exam_details) : null
@@ -253,6 +253,12 @@ exports.saveStudentAcademicInfo = async (req, res) => {
     let UserAcadamicInfo = await db.userAcademicInfo.findOne({
       where: { user_id: user_id },
     });
+
+    let examDetails = await db.userExams.findAll({
+      where:{
+        student_id : user_id
+      }
+    })
 
     console.log('UserAcadamicInfo',UserAcadamicInfo);
     
@@ -274,6 +280,65 @@ exports.saveStudentAcademicInfo = async (req, res) => {
         },
         { transaction }
       );
+
+      console.log('Updating 1');
+
+      // if (Array.isArray(exam_details) && exam_details.length > 0) {
+      //   const examDetailsPromises = exam_details.map(async (exam, index) => {
+          
+      //     const examDocument = examDocuments ? examDocuments[index] : null;
+  
+      //     console.log('EXAM NAME', exam.exam_name);
+      //     console.log('Marks', exam.marks);
+
+      //     if(examDetails.length) {
+            
+      //       let updateData = {
+      //         exam_name: exam.exam_name,
+      //         marks: exam.marks,
+      //       };
+          
+      //       console.log('SIZE',(examDocument.size));
+            
+      //       if (examDocument && (examDocument.size != 0)) {
+      //         console.log('Entered Document');
+              
+      //         updateData.document = await examDocument.filename;
+      //       }
+            
+        
+      //       const updatedExam = await db.userExams.update(
+      //         {
+      //           where: {
+      //             student_id: user_id,
+      //             exam_name: exam.exam_name,
+      //           },
+      //           transaction,
+      //           updateData,
+      //         }
+      //       );
+        
+      //       return updatedExam;
+      //     } else {
+
+      //       // Create the exam record
+      //       const createdExam = await db.userExams.create({
+      //         // student_id: userPrimaryInfo.id,
+      //         student_id: user_id,
+      //         exam_name: exam.exam_name,
+      //         marks: exam.marks,
+      //         document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+      //       }, { transaction });
+
+      //       return createdExam;
+      //     }
+
+
+      //   });
+      
+      //   await Promise.all(examDetailsPromises);
+      // }
+
     } else {
       UserAccadamicDetails = await db.userAcademicInfo.create(
         {
@@ -290,26 +355,100 @@ exports.saveStudentAcademicInfo = async (req, res) => {
         },
         { transaction }
       );
+
+      // if (Array.isArray(exam_details) && exam_details.length > 0) {
+      //   const examDetailsPromises = exam_details.map(async (exam, index) => {
+      //     const examDocument = examDocuments ? examDocuments[index] : null;
+  
+      //     // Create the exam record
+      //     const createdExam = await db.userExams.create({
+      //       // student_id: userPrimaryInfo.id,
+      //       student_id: user_id,
+      //       exam_name: exam.exam_name,
+      //       marks: exam.marks,
+      //       document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+      //     }, { transaction });
+  
+      //     return createdExam;
+      //   });
+  
+      //   await Promise.all(examDetailsPromises);
+      // }
     }
+
+    // if (Array.isArray(exam_details) && exam_details.length > 0) {
+    //   const examDetailsPromises = exam_details.map(async (exam, index) => {
+    //     const examDocument = examDocuments ? examDocuments[index] : null;
+
+    //     // Create the exam record
+    //     const createdExam = await db.userExams.create({
+    //       // student_id: userPrimaryInfo.id,
+    //       student_id: user_id,
+    //       exam_name: exam.exam_name,
+    //       marks: exam.marks,
+    //       document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+    //     }, { transaction });
+
+    //     return createdExam;
+    //   });
+
+    //   await Promise.all(examDetailsPromises);
+    // }
 
     if (Array.isArray(exam_details) && exam_details.length > 0) {
       const examDetailsPromises = exam_details.map(async (exam, index) => {
+        
         const examDocument = examDocuments ? examDocuments[index] : null;
 
-        // Create the exam record
-        const createdExam = await db.userExams.create({
-          // student_id: userPrimaryInfo.id,
-          student_id: user_id,
-          exam_name: exam.exam_name,
-          marks: exam.marks,
-          document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
-        }, { transaction });
+        console.log('EXAM NAME', exam.exam_name);
+        console.log('Marks', exam.marks);
 
-        return createdExam;
+        if(examDetails.length) {
+          
+          let updateData = {
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+          };
+        
+          console.log('SIZE',(examDocument.size));
+          
+          if (examDocument && (examDocument.size != 0)) {
+            console.log('Entered Document');
+            
+            updateData.document = await examDocument.filename;
+          }
+          
+      
+          const updatedExam = await db.userExams.update(
+            updateData,
+            {
+              where: {
+                student_id: user_id,
+                exam_name: exam.exam_name,
+              },
+              transaction,
+            }
+          );
+      
+          return updatedExam;
+        } else {
+
+          // Create the exam record
+          const createdExam = await db.userExams.create({
+            // student_id: userPrimaryInfo.id,
+            student_id: user_id,
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+            document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+          }, { transaction });
+
+          return createdExam;
+        }
       });
-
+    
       await Promise.all(examDetailsPromises);
     }
+
     
     await transaction.commit();
 
