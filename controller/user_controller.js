@@ -257,11 +257,7 @@ exports.createLead = async (req, res) => {
         if (users?.leastAssignedUserId) {
           leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
         }
-        console.log("leastAssignedUserId ==========>", users.leastAssignedUserId);
       }
-
-      console.log("leastAssignedUsers ==>", leastAssignedUsers);
-
 
       if (leastAssignedUsers.length > 0) {
         // Remove existing counselors for the student
@@ -295,8 +291,6 @@ exports.createLead = async (req, res) => {
 
         // Create tasks for each least assigned user
         for (const leastUserId of leastAssignedUsers) {
-          console.log("leastUserId ============>", leastUserId);
-          console.log("userPrimaryInfo.id ============>", userPrimaryInfo.id);
 
           const task = await db.tasks.create(
             {
