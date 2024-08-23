@@ -135,7 +135,7 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
       ielts: {
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.STRING,
         defaultValue: false,
         allowNull: true,
       },
