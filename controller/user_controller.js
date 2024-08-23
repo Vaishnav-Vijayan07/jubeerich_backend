@@ -39,6 +39,7 @@ exports.createLead = async (req, res) => {
     remarks,
     lead_received_date,
     zipcode,
+    ielts,
     exam_details
   } = req.body;
 
@@ -209,6 +210,7 @@ exports.createLead = async (req, res) => {
         branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
+        ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
         created_by: userId,
@@ -364,6 +366,7 @@ exports.updateLead = async (req, res) => {
     city,
     preferred_country, // This should be an array of country IDs
     office_type,
+    ielts,
     region_id,
     counsiler_id,
     branch_id,
@@ -485,6 +488,7 @@ exports.updateLead = async (req, res) => {
         branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
+        ielts,
         lead_received_date,
         zipcode,
         regional_manager_id: regionalManagerId,
