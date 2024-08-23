@@ -92,7 +92,7 @@ exports.bulkUpload = async (req, res) => {
             const phoneKey = phone || "";
 
             // Handle preferred_country, ensuring it can be a single ID or comma-separated list
-            let preferred_country = row.getCell(10).value;
+            let preferred_country = row.getCell(11).value;
             if (typeof preferred_country === 'string') {
               preferred_country = preferred_country.split(',').map(id => parseInt(id.trim(), 11)).filter(id => !isNaN(id));
             } else {
