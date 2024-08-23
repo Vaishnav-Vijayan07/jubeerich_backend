@@ -213,7 +213,7 @@ exports.createLead = async (req, res) => {
         assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
         created_by: userId,
         assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        regional_manager_id: regionalManagerId,
+        regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
       },
       { transaction }
     );
@@ -506,18 +506,18 @@ exports.updateLead = async (req, res) => {
           exam_name: exam.exam_name,
           marks: exam.marks,
         };
-      
-        if (examDocument && (examDocument.size != 0)) {            
+
+        if (examDocument && (examDocument.size != 0)) {
           updateData.document = await examDocument.filename;
         }
 
-        const examExist = await db.userExams.findOne({ where: { student_id: id, exam_name: exam?.exam_name }});
+        const examExist = await db.userExams.findOne({ where: { student_id: id, exam_name: exam?.exam_name } });
 
         let updatedExam;
         let createdExam;
 
-        if(examExist){
-           updatedExam = await db.userExams.update(
+        if (examExist) {
+          updatedExam = await db.userExams.update(
             updateData,
             {
               where: {
@@ -539,10 +539,10 @@ exports.updateLead = async (req, res) => {
           }, { transaction });
 
           return createdExam
-  
+
         }
-        
-    
+
+
         // const updatedExam = await db.userExams.update(
         //   updateData,
         //   {
@@ -553,7 +553,7 @@ exports.updateLead = async (req, res) => {
         //     transaction,
         //   }
         // );
-    
+
         // return updatedExam;
 
       });
