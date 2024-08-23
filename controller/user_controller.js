@@ -41,10 +41,10 @@ exports.createLead = async (req, res) => {
     exam_details
   } = req.body;
 
-  exam_details = exam_details ? JSON.parse(exam_details) : null 
-  preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
-  console.log('preferred_country',preferred_country);
-  
+  exam_details = exam_details ? JSON.parse(exam_details) : null
+  preferred_country = preferred_country ? JSON.parse(preferred_country) : null
+  console.log('preferred_country', preferred_country);
+
   console.log("req. files ========+>", req.files);
 
   const examDocuments = req.files && req.files['exam_documents'];
@@ -100,16 +100,33 @@ exports.createLead = async (req, res) => {
     }
 
     // Only check existence for non-null fields
+    // if (region_id !== 'null') {
+    //   const regionExists = await checkIfEntityExists("region", region_id);
+    //   if (!regionExists) {
+    //     await transaction.rollback(); // Rollback the transaction if region ID is invalid
+    //     return res.status(400).json({
+    //       status: false,
+    //       message: "Invalid region ID provided",
+    //       errors: [{ msg: "Please provide a valid region ID" }],
+    //     });
+    //   }
+    // }
+
+    let regionalManagerId = null;
     if (region_id !== 'null') {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
-        await transaction.rollback(); // Rollback the transaction if region ID is invalid
+        await transaction.rollback();
         return res.status(400).json({
           status: false,
           message: "Invalid region ID provided",
           errors: [{ msg: "Please provide a valid region ID" }],
         });
       }
+
+      // Fetch the regional manager for the region
+      const region = await db.region.findOne({ where: { id: region_id } });
+      regionalManagerId = region ? region.regional_manager_id : null;
     }
 
     if (counsiler_id !== 'null') {
@@ -172,12 +189,7 @@ exports.createLead = async (req, res) => {
     }
 
     const receivedDate = new Date();
-
     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
-
-    console.log("userId ===>", userId);
-    console.log("process.env.CRE_ID", process.env.CRE_ID);
-
 
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
@@ -191,15 +203,16 @@ exports.createLead = async (req, res) => {
         source_id,
         channel_id,
         zipcode,
-        region_id:  region_id != 'null' ? region_id : null,
-        counsiler_id:  counsiler_id != 'null' ? counsiler_id : null,
-        branch_id:  branch_id != 'null' ? branch_id : null,
+        region_id: region_id != 'null' ? region_id : null,
+        counsiler_id: counsiler_id != 'null' ? counsiler_id : null,
+        branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
         created_by: userId,
         assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
+        regional_manager_id: regionalManagerId,
       },
       { transaction }
     );
@@ -303,7 +316,6 @@ exports.createLead = async (req, res) => {
             { transaction }
           );
         }
-
       }
     }
 
@@ -362,10 +374,10 @@ exports.updateLead = async (req, res) => {
   } = req.body;
 
 
-  exam_details = exam_details ? JSON.parse(exam_details) : null 
-  preferred_country = preferred_country ? JSON.parse(preferred_country) : null 
-  console.log('Controller Files',req.files);
-   
+  exam_details = exam_details ? JSON.parse(exam_details) : null
+  preferred_country = preferred_country ? JSON.parse(preferred_country) : null
+  console.log('Controller Files', req.files);
+
   console.log("body =========>", req.body);
 
   const examDocuments = req.files && req.files['exam_documents'];
@@ -383,11 +395,11 @@ exports.updateLead = async (req, res) => {
       });
     }
 
-    
-    console.log('REGION ==>', region_id);
-    console.log('REGION TYPE ==>', typeof  region_id);
 
-    
+    console.log('REGION ==>', region_id);
+    console.log('REGION TYPE ==>', typeof region_id);
+
+
 
     // Check if referenced IDs exist in their respective tables
     const entities = [
@@ -395,11 +407,8 @@ exports.updateLead = async (req, res) => {
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
-      // { model: "region", id: region_id },
       { model: "region", id: region_id != 'null' ? region_id : null },
-      // { model: "admin_user", id: counsiler_id },
       { model: "admin_user", id: counsiler_id != 'null' ? counsiler_id : null },
-      // { model: "branch", id: branch_id },
       { model: "branch", id: branch_id != 'null' ? branch_id : null },
       { model: "admin_user", id: updated_by },
     ];
@@ -451,7 +460,13 @@ exports.updateLead = async (req, res) => {
         });
       }
     }
-    
+
+    let regionalManagerId = null;
+    if (region_id !== 'null') {
+      const region = await db.region.findOne({ where: { id: region_id } });
+      regionalManagerId = region ? region.regional_manager_id : null;
+    }
+
 
     // Update user information
     await lead.update(
@@ -470,7 +485,8 @@ exports.updateLead = async (req, res) => {
         updated_by,
         remarks,
         lead_received_date,
-        zipcode
+        zipcode,
+        regional_manager_id: regionalManagerId,
       },
       { transaction }
     );
@@ -482,22 +498,22 @@ exports.updateLead = async (req, res) => {
 
     if (Array.isArray(exam_details) && exam_details.length > 0) {
       const examDetailsPromises = exam_details.map(async (exam, index) => {
-        
+
         const examDocument = examDocuments ? examDocuments[index] : null;
 
         let updateData = {
           exam_name: exam.exam_name,
           marks: exam.marks,
         };
-      
+
         if (examDocument && (examDocument.size != 0)) {
           console.log('Entered 1');
-          console.log('Filename',examDocument.filename);
-            
+          console.log('Filename', examDocument.filename);
+
           updateData.document = examDocument.filename;
         }
-        
-    
+
+
         const updatedExam = await db.userExams.update(
           updateData,
           {
@@ -508,13 +524,13 @@ exports.updateLead = async (req, res) => {
             transaction,
           }
         );
-    
+
         return updatedExam;
       });
-    
+
       await Promise.all(examDetailsPromises);
     }
-    
+
 
     await transaction.commit();
 

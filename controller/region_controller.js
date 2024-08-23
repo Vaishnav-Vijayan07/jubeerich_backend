@@ -6,9 +6,23 @@ const { validationResult, check } = require("express-validator");
 const regionValidationRules = [
   check("region_name").not().isEmpty().withMessage("Region name is required"),
   check("region_description").optional().isString().withMessage("Region description must be a string"),
-  check("regional_manager_id").optional().isString().withMessage("Regional manager id is required"),
+  check("regional_manager_id").optional().isInt().withMessage("Regional manager id must be an integer"),
   check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
+
+// Utility function to generate a unique slug
+async function generateUniqueSlug(name, model) {
+  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '').toUpperCase();
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  while (await model.findOne({ where: { slug: uniqueSlug } })) {
+    uniqueSlug = `${baseSlug}_${counter}`;
+    counter++;
+  }
+
+  return uniqueSlug;
+}
 
 // Get all regions
 exports.getAllRegions = async (req, res) => {
@@ -86,11 +100,13 @@ exports.addRegion = [
     const { region_name, region_description, updated_by, regional_manager_id } = req.body;
 
     try {
+      const slug = await generateUniqueSlug(region_name, Region);
       const newRegion = await Region.create({
         region_name,
         region_description,
         regional_manager_id,
         updated_by,
+        slug, // Add the slug here
       });
       res.status(201).json({
         status: true,
@@ -131,13 +147,19 @@ exports.updateRegion = [
         });
       }
 
-      // Update only the fields that are provided in the request body
-      const updatedRegion = await region.update({
+      const updatedData = {
         region_name: req.body.region_name ?? region.region_name,
         region_description: req.body.region_description ?? region.region_description,
         updated_by: req.body.updated_by ?? region.updated_by,
         regional_manager_id: req.body.regional_manager_id ?? region.regional_manager_id,
-      });
+      };
+
+      // Update slug if region_name is changed
+      if (req.body.region_name && req.body.region_name !== region.region_name) {
+        updatedData.slug = await generateUniqueSlug(req.body.region_name, Region);
+      }
+
+      const updatedRegion = await region.update(updatedData);
 
       res.status(200).json({
         status: true,
@@ -181,6 +203,7 @@ exports.deleteRegion = async (req, res) => {
   }
 };
 
+// Get all regional managers
 exports.getAllRegionalManagers = async (req, res) => {
   try {
     const regionalManagerId = parseInt(process.env.REGIONAL_MANAGER_ID, 10);
