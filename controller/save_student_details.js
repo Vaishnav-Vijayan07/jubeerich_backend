@@ -310,20 +310,55 @@ exports.saveStudentAcademicInfo = async (req, res) => {
           if (examDocument && (examDocument.size != 0)) {
             updateData.document = await examDocument.filename;
           }
+
+          const examExist = await db.userExams.findOne({ where: { student_id: user_id, exam_name: exam?.exam_name }});
+
+          console.log('examExist',examExist);
           
+          let updatedExam;
+          let createdExam;
+  
+          if(examExist){
+            console.log('===> ENTERED EXIST');
+            
+             updatedExam = await db.userExams.update(
+              updateData,
+              {
+                where: {
+                  student_id: user_id,
+                  exam_name: exam.exam_name,
+                },
+                transaction,
+              }
+            );
+  
+            return updatedExam
+  
+          } else {
+            console.log(' ==> NOT ENTERED EXIST');
+            createdExam = await db.userExams.create({
+              student_id: user_id,
+              exam_name: exam.exam_name,
+              marks: exam.marks,
+              document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+            }, { transaction });
+  
+            return createdExam
+    
+          }
       
-          const updatedExam = await db.userExams.update(
-            updateData,
-            {
-              where: {
-                student_id: user_id,
-                exam_name: exam.exam_name,
-              },
-              transaction,
-            }
-          );
+          // const updatedExam = await db.userExams.update(
+          //   updateData,
+          //   {
+          //     where: {
+          //       student_id: user_id,
+          //       exam_name: exam.exam_name,
+          //     },
+          //     transaction,
+          //   }
+          // );
       
-          return updatedExam;
+          // return updatedExam;
         } else {
 
           // Create the exam record
