@@ -53,6 +53,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(100),
         allowNull: true,
       },
+      zipcode: {
+        type: Sequelize.STRING(10),
+        allowNull: true,
+      },
       office_type: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -118,11 +122,6 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
       },
       is_deleted: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-      },
-      ielts: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: false,

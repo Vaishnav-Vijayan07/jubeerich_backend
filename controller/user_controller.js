@@ -37,7 +37,7 @@ exports.createLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
-    ielts,
+    zipcode,
     exam_details
   } = req.body;
 
@@ -190,11 +190,9 @@ exports.createLead = async (req, res) => {
         category_id,
         source_id,
         channel_id,
-        region_id,
+        zipcode,
         region_id:  region_id != 'null' ? region_id : null,
-        // counsiler_id,
         counsiler_id:  counsiler_id != 'null' ? counsiler_id : null,
-        // branch_id,
         branch_id:  branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
@@ -202,8 +200,6 @@ exports.createLead = async (req, res) => {
         assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
         created_by: userId,
         assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        ielts,
-        // preferred_country: preferred_country[0]
       },
       { transaction }
     );
@@ -214,7 +210,7 @@ exports.createLead = async (req, res) => {
     }
 
     // Handle exam details
-    if (Array.isArray(exam_details) && exam_details.length > 0) {
+    if (Array.isArray(exam_details) && exam_details?.length > 0) {
       const examDetailsPromises = exam_details.map(async (exam, index) => {
         const examDocument = examDocuments ? examDocuments[index] : null;
 
@@ -223,7 +219,7 @@ exports.createLead = async (req, res) => {
           student_id: userPrimaryInfo.id,
           exam_name: exam.exam_name,
           marks: exam.marks,
-          document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+          document: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
         }, { transaction });
 
         return createdExam;
@@ -253,8 +249,6 @@ exports.createLead = async (req, res) => {
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
 
-      console.log("CRE RECEPTION =============>", process.env.CRE_RECEPTION_ID, userRole?.role_id);
-
       let leastAssignedUsers = [];
 
       for (const countryId of preferred_country) {
@@ -276,7 +270,7 @@ exports.createLead = async (req, res) => {
         });
 
         // Add new counselors
-        const userCounselorsData = leastAssignedUsers.map(userId => ({
+        const userCounselorsData = leastAssignedUsers?.map(userId => ({
           user_id: userPrimaryInfo.id,
           counselor_id: userId,
         }));
@@ -369,7 +363,7 @@ exports.updateLead = async (req, res) => {
     updated_by,
     remarks,
     lead_received_date,
-    ielts,
+    zipcode,
     exam_details,
   } = req.body;
 
@@ -476,16 +470,13 @@ exports.updateLead = async (req, res) => {
         category_id: category_id ? category_id : null,
         source_id,
         channel_id,
-        // region_id,
         region_id: region_id != 'null' ? region_id : null,
-        // counsiler_id,
         counsiler_id: counsiler_id != 'null' ? counsiler_id : null,
-        // branch_id,
         branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
         remarks,
         lead_received_date,
-        ielts,
+        zipcode
       },
       { transaction }
     );
