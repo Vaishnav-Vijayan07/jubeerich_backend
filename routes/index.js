@@ -116,6 +116,7 @@ const {
   deleteLead,
   updateUserStatus,
   getStatusWithAccessPowers,
+  deleteExams
 } = require("../controller/user_controller");
 const {
   getTasks,
@@ -351,6 +352,7 @@ router.post("/assign_cres", [authMiddleware.checkUserAuth], assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], autoAssign);
 router.put("/leads/:id", uploadMultiple, [authMiddleware.checkUserAuth], updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
+router.delete("/exams", [authMiddleware.checkUserAuth], deleteExams);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
 router.get("/tasks/:id", [authMiddleware.checkUserAuth], getTaskById);

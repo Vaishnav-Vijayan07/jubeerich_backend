@@ -8,6 +8,7 @@ const AccessRole = db.accessRoles;
 const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
 const { Op, Sequelize, where } = require("sequelize");
+// const userExams = require("../models/userExams");
 
 exports.createLead = async (req, res) => {
   // Validate the request
@@ -505,27 +506,56 @@ exports.updateLead = async (req, res) => {
           exam_name: exam.exam_name,
           marks: exam.marks,
         };
-
-        if (examDocument && (examDocument.size != 0)) {
-          console.log('Entered 1');
-          console.log('Filename', examDocument.filename);
-
-          updateData.document = examDocument.filename;
+      
+        if (examDocument && (examDocument.size != 0)) {            
+          updateData.document = await examDocument.filename;
         }
 
+        const examExist = await db.userExams.findOne({ where: { student_id: id, exam_name: exam?.exam_name }});
 
-        const updatedExam = await db.userExams.update(
-          updateData,
-          {
-            where: {
-              student_id: id,
-              exam_name: exam.exam_name,
-            },
-            transaction,
-          }
-        );
+        let updatedExam;
+        let createdExam;
 
-        return updatedExam;
+        if(examExist){
+           updatedExam = await db.userExams.update(
+            updateData,
+            {
+              where: {
+                student_id: id,
+                exam_name: exam.exam_name,
+              },
+              transaction,
+            }
+          );
+
+          return updatedExam
+
+        } else {
+          createdExam = await db.userExams.create({
+            student_id: id,
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+            document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
+          }, { transaction });
+
+          return createdExam
+  
+        }
+        
+    
+        // const updatedExam = await db.userExams.update(
+        //   updateData,
+        //   {
+        //     where: {
+        //       student_id: id,
+        //       exam_name: exam.exam_name,
+        //     },
+        //     transaction,
+        //   }
+        // );
+    
+        // return updatedExam;
+
       });
 
       await Promise.all(examDetailsPromises);
@@ -747,5 +777,37 @@ const getLeastAssignedUsers = async (countryId) => {
     return {
       leastAssignedUserId: null
     };
+  }
+};
+
+exports.deleteExams = async (req, res) => {
+  const { exam_name, id } = req.body;
+
+  try {
+    const exam = await db.userExams.destroy({
+      where: {
+        exam_name: exam_name,
+        student_id: id
+      }
+    });
+
+    if (exam > 0) {
+      return res.status(200).json({
+        status: true,
+        message: "Exam deleted successfully",
+      });
+    } else {
+      return res.status(404).json({
+        status: false,
+        message: "Exam deleteion failed",
+      });
+    }
+
+  } catch (error) {
+    console.error(`Error deleting Exam: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
   }
 };
