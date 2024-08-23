@@ -247,7 +247,6 @@ const validateRowData = (data) => {
   if (!data.source_id) errors.push("Invalid source");
   if (!data.channel_id) errors.push("Invalid channel");
   if (!data.office_type) errors.push("Invalid office type");
-  if (!data.preferred_country || !data.preferred_country.length) errors.push("Preferred country is required");
 
   return errors;
 };
