@@ -16,6 +16,7 @@ const {
   updateAdminUsers,
   deleteAdminUsers,
   getAllCounsellors,
+  getFranchiseCounsellors,
 } = require("../controller/admin_user_controller");
 const {
   getAllAccessPowers,
@@ -154,6 +155,7 @@ router.post("/login", login);
 
 router.get("/admin_users", [authMiddleware.checkUserAuth], getAllAdminUsers);
 router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], getAllCounsellors);
+router.get("/get_franchise_counsellors", [authMiddleware.checkUserAuth], getFranchiseCounsellors);
 router.get(
   "/admin_users/:id",
   [authMiddleware.checkUserAuth],
