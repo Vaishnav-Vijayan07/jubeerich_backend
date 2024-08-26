@@ -146,6 +146,7 @@ const {
 const { bulkUpload } = require("../controller/lead_import_controller");
 const { assignCres, autoAssign } = require("../controller/assign_leads_controller");
 const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCreTl, getAllLeads } = require("../controller/lead_listing_controller");
+const { getAllFranchises, getFranchiseById, addFranchise, updateFranchise, deleteFranchise } = require("../controller/franchise_controller");
 
 const router = express.Router();
 
@@ -331,6 +332,12 @@ router.get("/branches/:id", [authMiddleware.checkUserAuth], getBranchById);
 router.post("/branches", [authMiddleware.checkUserAuth], addBranch);
 router.put("/branches/:id", [authMiddleware.checkUserAuth], updateBranch);
 router.delete("/branches/:id", [authMiddleware.checkUserAuth], deleteBranch);
+
+router.get("/franchise", [authMiddleware.checkUserAuth], getAllFranchises);
+router.get("/franchise/:id", [authMiddleware.checkUserAuth], getFranchiseById);
+router.post("/franchise", [authMiddleware.checkUserAuth], addFranchise);
+router.put("/franchise/:id", [authMiddleware.checkUserAuth], updateFranchise);
+router.delete("/franchise/:id", [authMiddleware.checkUserAuth], deleteFranchise);
 
 router.get("/status", [authMiddleware.checkUserAuth], getAllStatuses);
 router.get("/status/:id", [authMiddleware.checkUserAuth], getStatusById);

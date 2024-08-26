@@ -123,7 +123,7 @@ exports.getAdminUsersById = (req, res, next) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
-  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id } = req.body;
+  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
 
@@ -164,7 +164,8 @@ exports.addAdminUsers = async (req, res) => {
       //   profile_image_path: profileImage ? profileImage.path : null,
       branch_id,
       region_id,
-      country_id
+      country_id,
+      franchise_id
     });
 
     res.json({
