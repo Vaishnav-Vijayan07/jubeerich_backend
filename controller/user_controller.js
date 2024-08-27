@@ -369,6 +369,7 @@ exports.createLead = async (req, res) => {
         }
       }
     }
+    
 
     // Commit the transaction
     await transaction.commit();
