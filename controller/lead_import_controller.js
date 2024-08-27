@@ -241,70 +241,69 @@ exports.bulkUpload = async (req, res) => {
                   title: `${user.full_name} - ${countryName} - ${user.phone}`,
                   dueDate: dueDate,
                   updatedBy: userId,
-                },
-                { transaction }
+                }
               );
             }
           }
-        
+
+        }
       }
     }
-  }
 
     // Generate error report
     if (invalidRows.length > 0) {
-    const errorWorkbook = new Excel.Workbook();
-    const errorSheet = errorWorkbook.addWorksheet("Invalid Rows");
+      const errorWorkbook = new Excel.Workbook();
+      const errorSheet = errorWorkbook.addWorksheet("Invalid Rows");
 
-    const originalSheet = workbook.getWorksheet(1);
-    const headerRow = originalSheet.getRow(1).values;
-    headerRow.push("Errors"); // Add 'Errors' to the end of the header row
-    errorSheet.addRow(headerRow);
+      const originalSheet = workbook.getWorksheet(1);
+      const headerRow = originalSheet.getRow(1).values;
+      headerRow.push("Errors"); // Add 'Errors' to the end of the header row
+      errorSheet.addRow(headerRow);
 
-    invalidRows.forEach(({ rowData, errors }, index) => {
-      const errorDetails = errors.join("; ");
-      const rowWithErrors = [
-        index + 1, // Serial Number
-        rowData.lead_received_date,
-        rowData.source_slug,
-        rowData.channel_slug,
-        rowData.full_name,
-        rowData.email,
-        rowData.phone,
-        rowData.city,
-        rowData.office_type_slug,
-        rowData.preferred_country.join(', '), // Convert array back to comma-separated string for the report
-        rowData.ielts,
-        rowData.remarks,
-        errorDetails,
-      ];
+      invalidRows.forEach(({ rowData, errors }, index) => {
+        const errorDetails = errors.join("; ");
+        const rowWithErrors = [
+          index + 1, // Serial Number
+          rowData.lead_received_date,
+          rowData.source_slug,
+          rowData.channel_slug,
+          rowData.full_name,
+          rowData.email,
+          rowData.phone,
+          rowData.city,
+          rowData.office_type_slug,
+          rowData.preferred_country.join(', '), // Convert array back to comma-separated string for the report
+          rowData.ielts,
+          rowData.remarks,
+          errorDetails,
+        ];
 
-      errorSheet.addRow(rowWithErrors);
-    });
+        errorSheet.addRow(rowWithErrors);
+      });
 
-    const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
-    const errorFilePath = path.join("uploads/rejected_files", errorFileName);
-    await errorWorkbook.xlsx.writeFile(errorFilePath);
+      const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
+      const errorFilePath = path.join("uploads/rejected_files", errorFileName);
+      await errorWorkbook.xlsx.writeFile(errorFilePath);
 
-    return res.status(201).json({
+      return res.status(201).json({
+        status: false,
+        message: "Some rows contain invalid data",
+        errors: invalidRows,
+        invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
+      });
+    } else {
+      res.status(200).json({
+        status: true,
+        message: "Data processed and saved successfully",
+      });
+    }
+  } catch (error) {
+    console.error(`Error processing bulk upload: ${error}`);
+    res.status(500).json({
       status: false,
-      message: "Some rows contain invalid data",
-      errors: invalidRows,
-      invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
-    });
-  } else {
-    res.status(200).json({
-      status: true,
-      message: "Data processed and saved successfully",
+      message: "Internal server error",
     });
   }
-} catch (error) {
-  console.error(`Error processing bulk upload: ${error}`);
-  res.status(500).json({
-    status: false,
-    message: "Internal server error",
-  });
-}
 };
 
 const validateRowData = (data) => {
