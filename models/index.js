@@ -209,4 +209,14 @@ db.region.belongsTo(db.adminUsers, {
   foreignKey: "regional_manager_id",
 });
 
+db.franchise.hasMany(db.adminUsers, {
+  foreignKey: "franchise_id",
+  as: "adminUsers",
+})
+
+db.adminUsers.belongsTo(db.franchise, {
+  foreignKey: 'franchise_id',
+  as: 'franchise', // Alias for accessing the associated Franchise
+});
+
 module.exports = db;
