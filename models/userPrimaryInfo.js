@@ -105,6 +105,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      franchise_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "franchise",
+          key: "id",
+        },
+        allowNull: true,
+      },
       assigned_cre: {
         type: Sequelize.INTEGER,
         references: {

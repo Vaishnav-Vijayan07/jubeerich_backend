@@ -5,6 +5,7 @@ const Channel = db.leadChannel;
 const AdminUsers = db.adminUsers;
 const OfficeType = db.officeType;
 const Region = db.region;
+const Franchise = db.franchise;
 const UserPrimaryInfo = db.userPrimaryInfo;
 const UserCountries = db.userContries; // Import the UserCountries model
 const fs = require("fs");
@@ -28,6 +29,7 @@ exports.bulkUpload = async (req, res) => {
 
     const sources = await Source.findAll();
     const regions = await Region.findAll();
+    const franchises = await Franchise.findAll();
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
     const creTl = await AdminUsers.findOne({ where: { role_id: 4 } });  // Find the user_id of cre_tl
@@ -39,6 +41,11 @@ exports.bulkUpload = async (req, res) => {
 
     const regionSlugToId = regions.reduce((acc, region) => {
       acc[region.slug] = region.id;
+      return acc;
+    }, {});
+
+    const franchiseSlugToId = franchises.reduce((acc, franchise) => {
+      acc[franchise.slug] = franchise.id;
       return acc;
     }, {});
 
@@ -57,10 +64,6 @@ exports.bulkUpload = async (req, res) => {
       acc[officeType.slug] = officeType.id;
       return acc;
     }, {});
-
-    console.log("regionSlugToId ===>", regionSlugToId);
-    console.log("regionSlugToManagerId ===>", regionSlugToManagerId);
-    
 
     // Query existing records from the database
     const existingRecords = await UserPrimaryInfo.findAll({
@@ -83,7 +86,13 @@ exports.bulkUpload = async (req, res) => {
             const sourceSlug = row.getCell(3).value;
             const channelSlug = row.getCell(4).value;
             const officeTypeSlug = row.getCell(9).value;
-            const regionSlug = row.getCell(10).value;
+            let regionSlug = null
+            let franchiseSlug = null
+            if (officeTypeSlug == "REGION") {
+              regionSlug = row.getCell(10).value;
+            } else if (officeTypeSlug == "FRANCHISE") {
+              franchiseSlug = row.getCell(10).value
+            }
 
             const email = row.getCell(6).value;
             const phone = row.getCell(7).value;
@@ -117,6 +126,7 @@ exports.bulkUpload = async (req, res) => {
               assigned_cre_tl: creTl ? creTl.id : null,
               created_by: userId,
               region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
+              franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
               assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null
             };
 
@@ -169,6 +179,10 @@ exports.bulkUpload = async (req, res) => {
         const userId = user.id;
         const userJsonData = jsonData.find(data => data.email === user.email);
         const preferredCountries = userJsonData.preferred_country;
+        const franchiseId = user.franchise_id
+
+        console.log("franchiseId ======================>", franchiseId);
+        
 
         // Create user-countries associations
         const userCountries = preferredCountries.map(countryId => ({
@@ -178,6 +192,63 @@ exports.bulkUpload = async (req, res) => {
 
         if (userCountries.length > 0) {
           await UserCountries.bulkCreate(userCountries);
+        }
+
+        if (franchiseId) {
+          let leastAssignedUsers = [];
+          for (const countryId of preferredCountries) {
+
+            const users = await getLeastAssignedCounsellor(countryId, franchiseId);
+            if (users?.leastAssignedUserId) {
+              leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+            }
+          }
+
+          if (leastAssignedUsers.length > 0) {
+            // Remove existing counselors for the student
+            await db.userCounselors.destroy({
+              where: { user_id: userId },
+            });
+
+            // Add new counselors
+            const userCounselorsData = leastAssignedUsers?.map(counsellorId => ({
+              user_id: userId,
+              counselor_id: counsellorId,
+            }));
+
+            await db.userCounselors.bulkCreate(userCounselorsData);
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 1);
+
+            let countryName = "Unknown";
+            if (preferredCountries.length > 0) {
+              // const country = await db.country.findByPk(countryIds[0]);
+              const countries = await db.country.findAll({
+                where: { id: preferredCountries },
+                attributes: ['country_name'],
+              });
+
+              if (countries) {
+                countryName = countries.map(country => country.country_name).join(', ');
+              }
+            }
+
+            // Create tasks for each least assigned user
+            for (const leastUserId of leastAssignedUsers) {
+
+              const task = await db.tasks.create(
+                {
+                  studentId: user.id,
+                  userId: leastUserId,
+                  title: `${user.full_name} - ${countryName} - ${user.phone}`,
+                  dueDate: dueDate,
+                  updatedBy: userId,
+                }
+              );
+            }
+          }
+
         }
       }
     }
@@ -249,4 +320,62 @@ const validateRowData = (data) => {
   if (!data.office_type) errors.push("Invalid office type");
 
   return errors;
+};
+
+
+const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
+  const roleId = process.env.FRANCHISE_COUNSELLOR_ID;
+  try {
+    // Use raw SQL to execute the query
+    const [results] = await db.sequelize.query(`
+      WITH user_assignments AS (
+        SELECT 
+          "admin_users"."id" AS "user_id", 
+          COUNT("user_counselors"."counselor_id") AS "assignment_count"
+        FROM "admin_users"
+        LEFT JOIN "user_counselors" 
+          ON "admin_users"."id" = "user_counselors"."counselor_id"
+        WHERE "admin_users"."role_id" = :roleId 
+          AND "admin_users"."country_id" = :countryId
+          AND "admin_users"."franchise_id" = :franchiseId
+        GROUP BY "admin_users"."id"
+      )
+      SELECT "user_id"
+      FROM user_assignments
+      ORDER BY "assignment_count" ASC, "user_id" ASC
+      LIMIT 1;
+    `, {
+      replacements: { roleId, countryId, franchiseId },
+      type: db.Sequelize.QueryTypes.SELECT
+    });
+
+    console.log("results ===>", results);
+
+    // Check if results is defined and not null
+    if (!results || Object.keys(results).length === 0) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    // Extract user_id if results has user_id
+    const leastAssignedUserId = results.user_id;
+
+
+    // If user_id is undefined, return an error response
+    if (leastAssignedUserId === undefined) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    return {
+      leastAssignedUserId
+    };
+  } catch (error) {
+    console.error(`Error finding least assigned users: ${error}`);
+    return {
+      leastAssignedUserId: null
+    };
+  }
 };

@@ -40,6 +40,7 @@ exports.createLead = async (req, res) => {
     lead_received_date,
     zipcode,
     ielts,
+    franchise_id,
     exam_details
   } = req.body;
 
@@ -101,18 +102,6 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    // Only check existence for non-null fields
-    // if (region_id !== 'null') {
-    //   const regionExists = await checkIfEntityExists("region", region_id);
-    //   if (!regionExists) {
-    //     await transaction.rollback(); // Rollback the transaction if region ID is invalid
-    //     return res.status(400).json({
-    //       status: false,
-    //       message: "Invalid region ID provided",
-    //       errors: [{ msg: "Please provide a valid region ID" }],
-    //     });
-    //   }
-    // }
 
     let regionalManagerId = null;
     if (region_id !== 'null') {
@@ -206,6 +195,7 @@ exports.createLead = async (req, res) => {
         channel_id,
         zipcode,
         region_id: region_id != 'null' ? region_id : null,
+        franchise_id: franchise_id != 'null' ? franchise_id : null,
         counsiler_id: counsiler_id != 'null' ? counsiler_id : null,
         branch_id: branch_id != 'null' ? branch_id : null,
         updated_by,
@@ -320,7 +310,66 @@ exports.createLead = async (req, res) => {
           );
         }
       }
+    } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+      if (franchise_id) {
+
+        let leastAssignedUsers = [];
+        for (const countryId of preferred_country) {
+
+          const users = await getLeastAssignedCounsellor(countryId, franchise_id);
+          if (users?.leastAssignedUserId) {
+            leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+          }
+        }
+
+        if (leastAssignedUsers.length > 0) {
+          // Remove existing counselors for the student
+          await db.userCounselors.destroy({
+            where: { user_id: userPrimaryInfo.id },
+          });
+
+          // Add new counselors
+          const userCounselorsData = leastAssignedUsers?.map(userId => ({
+            user_id: userPrimaryInfo.id,
+            counselor_id: userId,
+          }));
+
+          await db.userCounselors.bulkCreate(userCounselorsData);
+
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 1);
+
+          let countryName = "Unknown";
+          if (preferred_country.length > 0) {
+            // const country = await db.country.findByPk(countryIds[0]);
+            const countries = await db.country.findAll({
+              where: { id: preferred_country },
+              attributes: ['country_name'],
+            });
+
+            if (countries) {
+              countryName = countries.map(country => country.country_name).join(', ');
+            }
+          }
+
+          // Create tasks for each least assigned user
+          for (const leastUserId of leastAssignedUsers) {
+
+            const task = await db.tasks.create(
+              {
+                studentId: userPrimaryInfo.id,
+                userId: leastUserId,
+                title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
+                dueDate: dueDate,
+                updatedBy: userId,
+              },
+              { transaction }
+            );
+          }
+        }
+      }
     }
+    
 
     // Commit the transaction
     await transaction.commit();
@@ -742,6 +791,63 @@ const getLeastAssignedUsers = async (countryId) => {
           ON "admin_users"."id" = "user_counselors"."counselor_id"
         WHERE "admin_users"."role_id" = :roleId 
           AND "admin_users"."country_id" = :countryId
+        GROUP BY "admin_users"."id"
+      )
+      SELECT "user_id"
+      FROM user_assignments
+      ORDER BY "assignment_count" ASC, "user_id" ASC
+      LIMIT 1;
+    `, {
+      replacements: { roleId, countryId },
+      type: db.Sequelize.QueryTypes.SELECT
+    });
+
+    console.log("results ===>", results);
+
+    // Check if results is defined and not null
+    if (!results || Object.keys(results).length === 0) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    // Extract user_id if results has user_id
+    const leastAssignedUserId = results.user_id;
+
+
+    // If user_id is undefined, return an error response
+    if (leastAssignedUserId === undefined) {
+      return {
+        leastAssignedUserId: null
+      };
+    }
+
+    return {
+      leastAssignedUserId
+    };
+  } catch (error) {
+    console.error(`Error finding least assigned users: ${error}`);
+    return {
+      leastAssignedUserId: null
+    };
+  }
+};
+
+const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
+  const roleId = process.env.FRANCHISE_COUNSELLOR_ID;
+  try {
+    // Use raw SQL to execute the query
+    const [results] = await db.sequelize.query(`
+      WITH user_assignments AS (
+        SELECT 
+          "admin_users"."id" AS "user_id", 
+          COUNT("user_counselors"."counselor_id") AS "assignment_count"
+        FROM "admin_users"
+        LEFT JOIN "user_counselors" 
+          ON "admin_users"."id" = "user_counselors"."counselor_id"
+        WHERE "admin_users"."role_id" = :roleId 
+          AND "admin_users"."country_id" = :countryId
+          AND "admin_users"."franchise_id" = :franchiseId
         GROUP BY "admin_users"."id"
       )
       SELECT "user_id"
