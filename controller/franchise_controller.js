@@ -12,6 +12,20 @@ const franchiseValidationRules = [
     check("pocName").not().isEmpty().withMessage("Point of contact name is required"),
 ];
 
+// Utility function to generate a unique slug
+async function generateUniqueSlug(name, model) {
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '').toUpperCase();
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+
+    while (await model.findOne({ where: { slug: uniqueSlug } })) {
+        uniqueSlug = `${baseSlug}_${counter}`;
+        counter++;
+    }
+
+    return uniqueSlug;
+}
+
 // Get all franchises
 exports.getAllFranchises = async (req, res) => {
     try {
@@ -72,12 +86,14 @@ exports.addFranchise = [
         const { name, email, address, phone, pocName } = req.body;
 
         try {
+            const slug = await generateUniqueSlug(name, Franchise);
             const newFranchise = await Franchise.create({
                 name,
                 email,
                 address,
                 phone,
                 pocName,
+                slug, // Add the slug here
             });
             res.status(201).json({
                 status: true,
@@ -125,6 +141,11 @@ exports.updateFranchise = [
                 phone: req.body.phone !== undefined ? req.body.phone : franchise.phone,
                 pocName: req.body.pocName !== undefined ? req.body.pocName : franchise.pocName,
             };
+
+            // Update slug if name is changed
+            if (req.body.name && req.body.name !== franchise.name) {
+                updatedData.slug = await generateUniqueSlug(req.body.name, Franchise);
+            }
 
             const updatedFranchise = await franchise.update(updatedData);
 
