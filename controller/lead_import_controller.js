@@ -181,6 +181,9 @@ exports.bulkUpload = async (req, res) => {
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id
 
+        console.log("franchiseId ======================>", franchiseId);
+        
+
         // Create user-countries associations
         const userCountries = preferredCountries.map(countryId => ({
           user_primary_info_id: userId,
