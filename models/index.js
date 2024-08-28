@@ -45,6 +45,7 @@ db.userContries = require("./userContries")(sequelize, Sequelize);
 db.userCounselors = require("./userCounselors")(sequelize, Sequelize);
 db.userExams = require("./userExams")(sequelize, Sequelize);
 db.franchise = require("./franchise")(sequelize, Sequelize);
+db.comments = require("./comments")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -55,6 +56,10 @@ db.accessRoles.belongsTo(db.adminUsers, {
 
 // AdminUser model
 db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
+
+// comments
+db.comments.belongsTo(db.adminUsers, { foreignKey: 'user_id', as: "user" });
+db.comments.belongsTo(db.userPrimaryInfo, { foreignKey: 'lead_id', as: "lead" });
 
 // Country model
 db.country.hasMany(db.adminUsers, { foreignKey: 'country_id' });

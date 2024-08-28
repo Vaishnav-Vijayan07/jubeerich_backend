@@ -148,6 +148,7 @@ const { bulkUpload } = require("../controller/lead_import_controller");
 const { assignCres, autoAssign } = require("../controller/assign_leads_controller");
 const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCreTl, getAllLeads } = require("../controller/lead_listing_controller");
 const { getAllFranchises, getFranchiseById, addFranchise, updateFranchise, deleteFranchise } = require("../controller/franchise_controller");
+const { getCommentsByLeadId, createComment, updateComment, deleteComment } = require("../controller/comments_controller");
 
 const router = express.Router();
 
@@ -323,11 +324,18 @@ router.delete(
   deleteUniversity
 );
 
+//programs
 router.get("/programs", [authMiddleware.checkUserAuth], getAllPrograms);
 router.get("/programs/:id", [authMiddleware.checkUserAuth], getProgramById);
 router.post("/programs", [authMiddleware.checkUserAuth], addProgram);
 router.put("/programs/:id", [authMiddleware.checkUserAuth], updateProgram);
 router.delete("/programs/:id", [authMiddleware.checkUserAuth], deleteProgram);
+
+//comments
+router.get("/comment/:leadId", [authMiddleware.checkUserAuth], getCommentsByLeadId);
+router.post("/comment", [authMiddleware.checkUserAuth], createComment);
+router.put("/comment/:id", [authMiddleware.checkUserAuth], updateComment);
+router.delete("/comment/:id", [authMiddleware.checkUserAuth], deleteComment);
 
 router.get("/branches", [authMiddleware.checkUserAuth], getAllBranches);
 router.get("/branches/:id", [authMiddleware.checkUserAuth], getBranchById);
