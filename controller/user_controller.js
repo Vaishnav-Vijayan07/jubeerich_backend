@@ -44,6 +44,9 @@ exports.createLead = async (req, res) => {
     exam_details
   } = req.body;
 
+  console.log("req. files ========+>",req.body);
+  
+
   exam_details = exam_details ? JSON.parse(exam_details) : null
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null
   console.log('preferred_country', preferred_country);
