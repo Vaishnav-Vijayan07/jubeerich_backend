@@ -149,6 +149,7 @@ const { assignCres, autoAssign } = require("../controller/assign_leads_controlle
 const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCreTl, getAllLeads } = require("../controller/lead_listing_controller");
 const { getAllFranchises, getFranchiseById, addFranchise, updateFranchise, deleteFranchise } = require("../controller/franchise_controller");
 const { getCommentsByLeadId, createComment, updateComment, deleteComment } = require("../controller/comments_controller");
+const { getAllTasks, addTask, updateTask, deleteTask } = require("../controller/ordinary_task_controller");
 
 const router = express.Router();
 
@@ -330,6 +331,13 @@ router.get("/programs/:id", [authMiddleware.checkUserAuth], getProgramById);
 router.post("/programs", [authMiddleware.checkUserAuth], addProgram);
 router.put("/programs/:id", [authMiddleware.checkUserAuth], updateProgram);
 router.delete("/programs/:id", [authMiddleware.checkUserAuth], deleteProgram);
+
+//tasks
+router.get("/ordinary_task", [authMiddleware.checkUserAuth], getAllTasks);
+router.get("/ordinary_task/:id", [authMiddleware.checkUserAuth], getTaskById);
+router.post("/ordinary_task", [authMiddleware.checkUserAuth], addTask);
+router.put("/ordinary_task/:id", [authMiddleware.checkUserAuth], updateTask);
+router.delete("/ordinary_task/:id", [authMiddleware.checkUserAuth], deleteTask);
 
 //comments
 router.get("/comment/:leadId", [authMiddleware.checkUserAuth], getCommentsByLeadId);

@@ -81,7 +81,7 @@ exports.createComment = async (req, res) => {
 // Update a comment
 exports.updateComment = async (req, res) => {
     const id = parseInt(req.params.id);
-    const { lead_id, user_id, comment } = req.body;
+    const { comment } = req.body;
 
     try {
         const existingComment = await Comments.findByPk(id);
@@ -94,8 +94,6 @@ exports.updateComment = async (req, res) => {
         }
 
         const updatedComment = await existingComment.update({
-            lead_id,
-            user_id,
             comment,
             updated_at: new Date(),
         });

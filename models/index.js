@@ -46,6 +46,7 @@ db.userCounselors = require("./userCounselors")(sequelize, Sequelize);
 db.userExams = require("./userExams")(sequelize, Sequelize);
 db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
+db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
