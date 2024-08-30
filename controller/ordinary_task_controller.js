@@ -1,6 +1,8 @@
 const db = require("../models");
+const { Op } = require('sequelize');
 const Task = db.ordinaryTasks;
 const { validationResult, check } = require("express-validator");
+const moment = require('moment');
 
 // Validation rules for Task
 const taskValidationRules = [
@@ -12,26 +14,100 @@ const taskValidationRules = [
 ];
 
 // Get all tasks
+// exports.getAllTasks = async (req, res) => {
+//     try {
+//         const userId = req.userDecodeId;
+//         const tasks = await Task.findAll({
+//             where: {
+//                 user_id: userId
+//             }
+//         });
+//         res.status(200).json({
+//             status: true,
+//             data: tasks,
+//         });
+//     } catch (error) {
+//         console.error(`Error retrieving tasks: ${error}`);
+//         res.status(500).json({
+//             status: false,
+//             message: "Internal server error",
+//         });
+//     }
+// };
+
 exports.getAllTasks = async (req, res) => {
     try {
         const userId = req.userDecodeId;
-        const tasks = await Task.findAll({
+
+        // Define start and end of today using moment
+        const todayStart = moment().startOf('day').toDate();
+        const todayEnd = moment().endOf('day').toDate();
+
+        // Fetch today's tasks using start and end of day for comparison
+        const todaysTasks = await Task.findAll({
             where: {
-                user_id: userId
-            }
+                user_id: userId,
+                due_date: {
+                    [Op.between]: [todayStart, todayEnd], // Tasks due today
+                },
+                status: {
+                    [Op.not]: 'completed', // Exclude completed tasks
+                },
+            },
         });
+
+        // Fetch upcoming tasks (due after today)
+        const upcomingTasks = await Task.findAll({
+            where: {
+                user_id: userId,
+                due_date: {
+                    [Op.gt]: todayEnd, // Tasks due after today
+                },
+                status: {
+                    [Op.not]: 'completed', // Exclude completed tasks
+                },
+            },
+        });
+
+        // Fetch completed tasks
+        const completedTasks = await Task.findAll({
+            where: {
+                user_id: userId,
+                status: 'completed', // Completed tasks regardless of the due date
+            },
+        });
+
+        const expiredTasks = await Task.findAll({
+            where: {
+                user_id: userId,
+                due_date: {
+                    [Op.lt]: todayStart, // Tasks due before today
+                },
+                status: {
+                    [Op.not]: 'completed', // Exclude completed tasks
+                },
+            },
+        });
+
+        // Respond with categorized tasks
         res.status(200).json({
             status: true,
-            data: tasks,
+            data: {
+                todaysTasks,
+                upcomingTasks,
+                completedTasks,
+                expiredTasks,
+            },
         });
     } catch (error) {
         console.error(`Error retrieving tasks: ${error}`);
         res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: 'Internal server error',
         });
     }
 };
+
 
 // Get task by ID
 exports.getTaskById = async (req, res) => {
