@@ -19,7 +19,6 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.Op = Op;
 
-db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.accessRoles = require("./accessRoles")(sequelize, Sequelize);
 db.accessPowers = require("./accessPowers")(sequelize, Sequelize);
 db.leadCategory = require("./leadCategory")(sequelize, Sequelize);
@@ -47,6 +46,8 @@ db.userExams = require("./userExams")(sequelize, Sequelize);
 db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
+db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
+
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {

@@ -13,28 +13,6 @@ const taskValidationRules = [
     check("priority").optional().isIn(["low", "medium", "high"]).withMessage("Invalid priority"),
 ];
 
-// Get all tasks
-// exports.getAllTasks = async (req, res) => {
-//     try {
-//         const userId = req.userDecodeId;
-//         const tasks = await Task.findAll({
-//             where: {
-//                 user_id: userId
-//             }
-//         });
-//         res.status(200).json({
-//             status: true,
-//             data: tasks,
-//         });
-//     } catch (error) {
-//         console.error(`Error retrieving tasks: ${error}`);
-//         res.status(500).json({
-//             status: false,
-//             message: "Internal server error",
-//         });
-//     }
-// };
-
 exports.getAllTasks = async (req, res) => {
     try {
         const userId = req.userDecodeId;
