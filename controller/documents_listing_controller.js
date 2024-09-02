@@ -13,9 +13,15 @@ exports.getAllDocuments = async (req, res) => {
             attributes: ['id', 'exam_name', 'document'],
         });
 
+        // Add the full download URL to each document
+        const examDocsWithUrls = examDocs.map(doc => ({
+            ...doc.dataValues,
+            downloadUrl: `${process.env.BASE_URL}/uploads/examDocuments/${doc.document}`, // Construct the full URL
+        }));
+
         res.status(200).json({
             status: true,
-            data: examDocs,
+            data: examDocsWithUrls,
         });
     } catch (error) {
         console.error(`Error retrieving documents: ${error}`);
