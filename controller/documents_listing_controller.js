@@ -1,6 +1,7 @@
 const { where } = require("sequelize");
 const db = require("../models");
 const UserExams = db.userExams;
+const path = require('path')
 
 exports.getAllDocuments = async (req, res) => {
     try {
@@ -17,6 +18,7 @@ exports.getAllDocuments = async (req, res) => {
         const examDocsWithUrls = examDocs.map(doc => ({
             ...doc.dataValues,
             downloadUrl: `${process.env.BASE_URL}/uploads/examDocuments/${doc.document}`, // Construct the full URL
+            extension: path.extname(doc.document).slice(1)
         }));
 
         res.status(200).json({
