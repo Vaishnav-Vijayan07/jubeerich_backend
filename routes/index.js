@@ -150,6 +150,7 @@ const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCre
 const { getAllFranchises, getFranchiseById, addFranchise, updateFranchise, deleteFranchise } = require("../controller/franchise_controller");
 const { getCommentsByLeadId, createComment, updateComment, deleteComment } = require("../controller/comments_controller");
 const { getAllTasks, addTask, updateTask, deleteTask } = require("../controller/ordinary_task_controller");
+const { getAllDocuments } = require("../controller/documents_listing_controller");
 
 const router = express.Router();
 
@@ -439,5 +440,6 @@ router.post(
 );
 
 router.get("/regional_managers", [authMiddleware.checkUserAuth], getAllRegionalManagers)
+router.get("/get_all_docs/:id", [authMiddleware.checkUserAuth], getAllDocuments)
 
 module.exports = router;
