@@ -44,8 +44,8 @@ exports.createLead = async (req, res) => {
     exam_details
   } = req.body;
 
-  console.log("req. files ========+>",req.body);
-  
+  console.log("req. files ========+>", req.body);
+
 
   exam_details = exam_details ? JSON.parse(exam_details) : null
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null
@@ -205,7 +205,7 @@ exports.createLead = async (req, res) => {
         remarks,
         ielts,
         lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl: userRole?.role_id === process.env.CRE_TL_ID && creTl ? creTl.id : null,
+        assigned_cre_tl: userRole?.role_id === process.env.IT_TEAM_ID && office_type === process.env.CORPORATE_OFFICE_ID && creTl ? creTl.id : null,
         created_by: userId,
         assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
         regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
@@ -432,7 +432,7 @@ exports.updateLead = async (req, res) => {
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
-  
+
   console.log('Controller Files', req.files);
   console.log("body =========>", req.body);
 

@@ -2,7 +2,7 @@ const db = require("../models");
 const { Op } = require('sequelize');
 const Task = db.ordinaryTasks;
 const { validationResult, check } = require("express-validator");
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 // Validation rules for Task
 const taskValidationRules = [
@@ -17,16 +17,23 @@ exports.getAllTasks = async (req, res) => {
     try {
         const userId = req.userDecodeId;
 
-        // Define start and end of today using moment
-        const todayStart = moment().startOf('day').toDate();
-        const todayEnd = moment().endOf('day').toDate();
+        // Define your desired timezone, e.g., 'Asia/Kolkata'
+        const timezone = 'Asia/Kolkata';
+
+        // Define start and end of today using moment with timezone
+        const todayStart = moment.tz(timezone).startOf('day').toDate();
+        const todayEnd = moment.tz(timezone).endOf('day').toDate();
+        const currentTime = moment.tz(timezone).toDate(); // Current time in your timezone
 
         // Fetch today's tasks using start and end of day for comparison
         const todaysTasks = await Task.findAll({
             where: {
                 user_id: userId,
                 due_date: {
-                    [Op.between]: [todayStart, todayEnd], // Tasks due today
+                    [Op.and]: [
+                        { [Op.gte]: todayStart }, // Tasks due after or at start of today
+                        { [Op.lte]: todayEnd }, // Tasks due before or at end of today
+                    ],
                 },
                 status: {
                     [Op.not]: 'completed', // Exclude completed tasks
@@ -55,11 +62,12 @@ exports.getAllTasks = async (req, res) => {
             },
         });
 
+        // Fetch expired tasks (due before current time)
         const expiredTasks = await Task.findAll({
             where: {
                 user_id: userId,
                 due_date: {
-                    [Op.lt]: todayStart, // Tasks due before today
+                    [Op.lt]: currentTime, // Tasks due before current time
                 },
                 status: {
                     [Op.not]: 'completed', // Exclude completed tasks
@@ -85,8 +93,6 @@ exports.getAllTasks = async (req, res) => {
         });
     }
 };
-
-
 // Get task by ID
 exports.getTaskById = async (req, res) => {
     const id = parseInt(req.params.id);
