@@ -46,6 +46,7 @@ exports.createLead = async (req, res) => {
 
   console.log("req. files ========+>", req.body);
 
+
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   console.log("preferred_country", preferred_country);
@@ -214,10 +215,7 @@ exports.createLead = async (req, res) => {
         remarks,
         ielts,
         lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl:
-          userRole?.role_id === process.env.CRE_TL_ID && creTl
-            ? creTl.id
-            : null,
+        assigned_cre_tl: userRole?.role_id === process.env.IT_TEAM_ID && office_type === process.env.CORPORATE_OFFICE_ID && creTl ? creTl.id : null,
         created_by: userId,
         assign_type:
           userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
@@ -401,6 +399,7 @@ exports.createLead = async (req, res) => {
       }
     }
 
+
     // Commit the transaction
     await transaction.commit();
 
@@ -456,10 +455,11 @@ exports.updateLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+  // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
-  console.log("Controller Files", req.files);
 
+  console.log('Controller Files', req.files);
   console.log("body =========>", req.body);
 
   const examDocuments = req.files && req.files["exam_documents"];
@@ -477,18 +477,15 @@ exports.updateLead = async (req, res) => {
       });
     }
 
-    console.log("REGION ==>", region_id);
-    console.log("REGION TYPE ==>", typeof region_id);
-
     // Check if referenced IDs exist in their respective tables
     const entities = [
       { model: "lead_category", id: category_id },
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
-      { model: "region", id: region_id != "null" ? region_id : null },
-      { model: "admin_user", id: counsiler_id != "null" ? counsiler_id : null },
-      { model: "branch", id: branch_id != "null" ? branch_id : null },
+      { model: "region", id: region_id !== 'null' ? region_id : null },
+      { model: "admin_user", id: counsiler_id !== 'null' ? counsiler_id : null },
+      { model: "branch", id: branch_id !== 'null' ? branch_id : null },
       { model: "admin_user", id: updated_by },
     ];
 
@@ -557,9 +554,9 @@ exports.updateLead = async (req, res) => {
         category_id: category_id ? category_id : null,
         source_id,
         channel_id,
-        region_id: region_id != "null" ? region_id : null,
-        counsiler_id: counsiler_id != "null" ? counsiler_id : null,
-        branch_id: branch_id != "null" ? branch_id : null,
+        region_id: region_id !== 'null' ? region_id : null,
+        counsiler_id: counsiler_id !== 'null' ? counsiler_id : null,
+        branch_id: branch_id !== 'null' ? branch_id : null,
         updated_by,
         remarks,
         ielts,
@@ -570,11 +567,23 @@ exports.updateLead = async (req, res) => {
       { transaction }
     );
 
-    // Update associated preferred countries
+    // Handle preferred country assignments
+    const currentPreferredCountries = await lead.getPreferredCountries();
+
+    // Check if preferred countries are changed
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await lead.setPreferredCountries(preferred_country, { transaction });
+      const currentCountryIds = currentPreferredCountries.map(country => country.id);
+
+      if (JSON.stringify(currentCountryIds.sort()) !== JSON.stringify(preferred_country.sort())) {
+        // Remove current assignments
+        await lead.setPreferredCountries([], { transaction });
+
+        // Add new assignments
+        await lead.setPreferredCountries(preferred_country, { transaction });
+      }
     }
 
+    // Handle exam details
     if (Array.isArray(exam_details) && exam_details.length > 0) {
       const examDetailsPromises = exam_details.map(async (exam, index) => {
         const examDocument = examDocuments ? examDocuments[index] : null;
@@ -584,53 +593,30 @@ exports.updateLead = async (req, res) => {
           marks: exam.marks,
         };
 
-        if (examDocument && examDocument.size != 0) {
-          updateData.document = await examDocument.filename;
+        if (examDocument && examDocument.size !== 0) {
+          updateData.document = examDocument.filename;
         }
 
         const examExist = await db.userExams.findOne({
-          where: { student_id: id, exam_name: exam?.exam_name },
+          where: { student_id: id, exam_name: exam.exam_name },
         });
 
-        let updatedExam;
-        let createdExam;
-
         if (examExist) {
-          updatedExam = await db.userExams.update(updateData, {
+          return db.userExams.update(updateData, {
             where: {
               student_id: id,
               exam_name: exam.exam_name,
             },
             transaction,
           });
-
-          return updatedExam;
         } else {
-          createdExam = await db.userExams.create(
-            {
-              student_id: id,
-              exam_name: exam.exam_name,
-              marks: exam.marks,
-              document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
-            },
-            { transaction }
-          );
-
-          return createdExam;
+          return db.userExams.create({
+            student_id: id,
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+            document: examDocument ? examDocument.filename : null,
+          }, { transaction });
         }
-
-        // const updatedExam = await db.userExams.update(
-        //   updateData,
-        //   {
-        //     where: {
-        //       student_id: id,
-        //       exam_name: exam.exam_name,
-        //     },
-        //     transaction,
-        //   }
-        // );
-
-        // return updatedExam;
       });
 
       await Promise.all(examDetailsPromises);

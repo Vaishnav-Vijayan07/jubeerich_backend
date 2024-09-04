@@ -123,7 +123,7 @@ exports.bulkUpload = async (req, res) => {
               source_slug: sourceSlug,
               channel_slug: channelSlug,
               office_type_slug: officeTypeSlug,
-              assigned_cre_tl: creTl ? creTl.id : null,
+              assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
               created_by: userId,
               region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
               franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
@@ -182,7 +182,7 @@ exports.bulkUpload = async (req, res) => {
         const franchiseId = user.franchise_id
 
         console.log("franchiseId ======================>", franchiseId);
-        
+
 
         // Create user-countries associations
         const userCountries = preferredCountries.map(countryId => ({

@@ -475,6 +475,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
+        {
+          model: db.userExams,
+          as: "exams",
+          attributes: ["exam_name","marks", "document"],
+          required: false,
+        },
       ],
     });
 
@@ -483,6 +489,15 @@ exports.geLeadsForCreTl = async (req, res) => {
         country_name: country.country_name,
         id: country.id,
       }));
+
+      const examDetails = info.exams.map((exam)=> ({
+        exam_name: exam.exam_name,
+        marks: exam.marks,
+      }))
+      
+      const examDocuments = info.exams.map((exam)=> ({
+        exam_documents: exam.document,
+      }))
 
       return {
         ...info.toJSON(),
@@ -501,6 +516,8 @@ exports.geLeadsForCreTl = async (req, res) => {
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,
+        exam_details: examDetails,
+        exam_documents: examDocuments
       };
     });
 
