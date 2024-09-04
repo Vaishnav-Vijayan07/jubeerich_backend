@@ -45,6 +45,8 @@ db.userContries = require("./userContries")(sequelize, Sequelize);
 db.userCounselors = require("./userCounselors")(sequelize, Sequelize);
 db.userExams = require("./userExams")(sequelize, Sequelize);
 db.franchise = require("./franchise")(sequelize, Sequelize);
+db.academicInfos = require("./academicinfo")(sequelize, Sequelize);
+db.workInfos = require("./workinfos")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -52,23 +54,21 @@ db.accessRoles.belongsTo(db.adminUsers, {
   as: "updatedByUser",
 });
 
-
 // AdminUser model
-db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
+db.adminUsers.belongsTo(db.country, { foreignKey: "country_id" });
 
 // Country model
-db.country.hasMany(db.adminUsers, { foreignKey: 'country_id' });
+db.country.hasMany(db.adminUsers, { foreignKey: "country_id" });
 
 db.userPrimaryInfo.hasMany(db.userExams, {
-  foreignKey: 'student_id',
-  as: 'exams'
+  foreignKey: "student_id",
+  as: "exams",
 });
 
 db.userExams.belongsTo(db.userPrimaryInfo, {
-  foreignKey: 'student_id',
-  as: 'user'
+  foreignKey: "student_id",
+  as: "user",
 });
-
 
 db.accessRoles.belongsToMany(db.accessPowers, {
   through: "accessRolePowers",
@@ -212,11 +212,33 @@ db.region.belongsTo(db.adminUsers, {
 db.franchise.hasMany(db.adminUsers, {
   foreignKey: "franchise_id",
   as: "adminUsers",
-})
+});
 
 db.adminUsers.belongsTo(db.franchise, {
-  foreignKey: 'franchise_id',
-  as: 'franchise', // Alias for accessing the associated Franchise
+  foreignKey: "franchise_id",
+  as: "franchise", // Alias for accessing the associated Franchise
+});
+
+// Association for AcademicInfos and UserPrimaryInfo
+db.academicInfos.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "user_id",
+  as: "userAcademicInfo",
+});
+
+db.userPrimaryInfo.hasMany(db.academicInfos, {
+  foreignKey: "user_id",
+  as: "userAcademicInfos",
+});
+
+// Association for WorkInfos and UserPrimaryInfo
+db.workInfos.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "user_id",
+  as: "userWorkInfo",
+});
+
+db.userPrimaryInfo.hasMany(db.workInfos, {
+  foreignKey: "user_id",
+  as: "userWorkInfos",
 });
 
 module.exports = db;

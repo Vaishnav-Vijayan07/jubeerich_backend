@@ -1,11 +1,12 @@
 const express = require("express");
 const multer = require("multer");
-const path = require('path');
-const uploadMultiple = require('../middleware/multerConfig');
+const path = require("path");
+const uploadMultiple = require("../middleware/multerConfig");
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+const parseData = multer();
 
 const admnController = require("../controller/admin");
 const authMiddleware = require("../middleware/auth");
@@ -117,7 +118,7 @@ const {
   deleteLead,
   updateUserStatus,
   getStatusWithAccessPowers,
-  deleteExams
+  deleteExams,
 } = require("../controller/user_controller");
 const {
   getTasks,
@@ -132,6 +133,8 @@ const {
   saveStudentBasicInfo,
   saveStudentAcademicInfo,
   saveStudentStudyPreferenceInfo,
+  deleteStudentAcademicInfo,
+  saveStudentWorkInfo,
 } = require("../controller/save_student_details");
 const {
   getAllStatuses,
@@ -145,17 +148,40 @@ const {
   listAllAccessRolesWithStatuses,
 } = require("../controller/status_config");
 const { bulkUpload } = require("../controller/lead_import_controller");
-const { assignCres, autoAssign } = require("../controller/assign_leads_controller");
-const { getLeads, getLeadsByCreatedUser, geLeadsForCreTl, getAssignedLeadsForCreTl, getAllLeads } = require("../controller/lead_listing_controller");
-const { getAllFranchises, getFranchiseById, addFranchise, updateFranchise, deleteFranchise } = require("../controller/franchise_controller");
+const {
+  assignCres,
+  autoAssign,
+} = require("../controller/assign_leads_controller");
+const {
+  getLeads,
+  getLeadsByCreatedUser,
+  geLeadsForCreTl,
+  getAssignedLeadsForCreTl,
+  getAllLeads,
+} = require("../controller/lead_listing_controller");
+const {
+  getAllFranchises,
+  getFranchiseById,
+  addFranchise,
+  updateFranchise,
+  deleteFranchise,
+} = require("../controller/franchise_controller");
 
 const router = express.Router();
 
 router.post("/login", login);
 
 router.get("/admin_users", [authMiddleware.checkUserAuth], getAllAdminUsers);
-router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], getAllCounsellors);
-router.get("/get_franchise_counsellors", [authMiddleware.checkUserAuth], getFranchiseCounsellors);
+router.get(
+  "/get_all_counsellors",
+  [authMiddleware.checkUserAuth],
+  getAllCounsellors
+);
+router.get(
+  "/get_franchise_counsellors",
+  [authMiddleware.checkUserAuth],
+  getFranchiseCounsellors
+);
 router.get(
   "/admin_users/:id",
   [authMiddleware.checkUserAuth],
@@ -339,7 +365,11 @@ router.get("/franchise", [authMiddleware.checkUserAuth], getAllFranchises);
 router.get("/franchise/:id", [authMiddleware.checkUserAuth], getFranchiseById);
 router.post("/franchise", [authMiddleware.checkUserAuth], addFranchise);
 router.put("/franchise/:id", [authMiddleware.checkUserAuth], updateFranchise);
-router.delete("/franchise/:id", [authMiddleware.checkUserAuth], deleteFranchise);
+router.delete(
+  "/franchise/:id",
+  [authMiddleware.checkUserAuth],
+  deleteFranchise
+);
 
 router.get("/status", [authMiddleware.checkUserAuth], getAllStatuses);
 router.get("/status/:id", [authMiddleware.checkUserAuth], getStatusById);
@@ -347,7 +377,12 @@ router.post("/status", [authMiddleware.checkUserAuth], addStatus);
 router.put("/status/:id", [authMiddleware.checkUserAuth], updateStatus);
 router.delete("/status/:id", [authMiddleware.checkUserAuth], deleteStatus);
 
-router.post("/leads", uploadMultiple, [authMiddleware.checkUserAuth], createLead);
+router.post(
+  "/leads",
+  uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  createLead
+);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], getAllLeads);
 router.get(
@@ -356,17 +391,30 @@ router.get(
   getLeadsByCreatedUser
 );
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], geLeadsForCreTl);
-router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], getAssignedLeadsForCreTl);
+router.get(
+  "/assigned_leads_cre_tl",
+  [authMiddleware.checkUserAuth],
+  getAssignedLeadsForCreTl
+);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], autoAssign);
-router.put("/leads/:id", uploadMultiple, [authMiddleware.checkUserAuth], updateLead);
+router.put(
+  "/leads/:id",
+  uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  updateLead
+);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], deleteLead);
 router.delete("/exams", [authMiddleware.checkUserAuth], deleteExams);
 
 router.get("/tasks", [authMiddleware.checkUserAuth], getTasks);
 router.get("/tasks/:id", [authMiddleware.checkUserAuth], getTaskById);
 router.put("/finish_task", [authMiddleware.checkUserAuth], finishTask);
-router.put("/assign_new_country", [authMiddleware.checkUserAuth], assignNewCountry);
+router.put(
+  "/assign_new_country",
+  [authMiddleware.checkUserAuth],
+  assignNewCountry
+);
 router.post(
   "/saveStudentBasicInfo",
   [authMiddleware.checkUserAuth],
@@ -377,6 +425,19 @@ router.post(
   uploadMultiple,
   [authMiddleware.checkUserAuth],
   saveStudentAcademicInfo
+);
+
+router.post(
+  "/saveStudentWorkInfo",
+  parseData.none(),
+  [authMiddleware.checkUserAuth],
+  saveStudentWorkInfo
+);
+
+router.delete(
+  "/academic_work_info/:type/:id",
+  [authMiddleware.checkUserAuth],
+  deleteStudentAcademicInfo
 );
 router.post(
   "/saveStudentStudyPreferenceInfo",
@@ -422,6 +483,10 @@ router.post(
   bulkUpload
 );
 
-router.get("/regional_managers", [authMiddleware.checkUserAuth], getAllRegionalManagers)
+router.get(
+  "/regional_managers",
+  [authMiddleware.checkUserAuth],
+  getAllRegionalManagers
+);
 
 module.exports = router;
