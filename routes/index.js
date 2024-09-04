@@ -215,6 +215,7 @@ router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAut
 // Additional routes
 router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
 router.get("/get_all_docs/:id", [authMiddleware.checkUserAuth], DocumentsListingController.getAllDocuments);
+router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellors);
 
 // Campus routes
 router.get("/campuses", [authMiddleware.checkUserAuth], CampusController.getAllCampuses);
