@@ -94,7 +94,8 @@ exports.bulkUpload = async (req, res) => {
               franchiseSlug = row.getCell(10).value
             }
 
-            const email = row.getCell(6).value;
+            let emailCell = row.getCell(6);
+            let email = emailCell.text || emailCell.value; 
             const phone = row.getCell(7).value;
 
             const emailKey = email || "";
