@@ -30,7 +30,7 @@ exports.createLead = async (req, res) => {
     source_id,
     channel_id,
     city,
-    preferred_country,  // This should be an array of country IDs
+    preferred_country, // This should be an array of country IDs
     office_type,
     region_id,
     counsiler_id,
@@ -41,19 +41,19 @@ exports.createLead = async (req, res) => {
     zipcode,
     ielts,
     franchise_id,
-    exam_details
+    exam_details,
   } = req.body;
 
   console.log("req. files ========+>", req.body);
 
 
-  exam_details = exam_details ? JSON.parse(exam_details) : null
-  preferred_country = preferred_country ? JSON.parse(preferred_country) : null
-  console.log('preferred_country', preferred_country);
+  exam_details = exam_details ? JSON.parse(exam_details) : null;
+  preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
+  console.log("preferred_country", preferred_country);
 
   console.log("req. files ========+>", req.files);
 
-  const examDocuments = req.files && req.files['exam_documents'];
+  const examDocuments = req.files && req.files["exam_documents"];
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -61,11 +61,16 @@ exports.createLead = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     console.log("userId===>", userId);
-    const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } });  // Find the user_id of cre_tl
+    const creTl = await AdminUsers.findOne({
+      where: { role_id: process.env.CRE_TL_ID },
+    }); // Find the user_id of cre_tl
     const user = await AdminUsers.findOne({ where: { id: userId } });
 
     // Check if referenced IDs exist in their respective tables
-    const categoryExists = await checkIfEntityExists("lead_category", category_id);
+    const categoryExists = await checkIfEntityExists(
+      "lead_category",
+      category_id
+    );
     if (!categoryExists) {
       await transaction.rollback(); // Rollback the transaction if category ID is invalid
       return res.status(400).json({
@@ -105,9 +110,8 @@ exports.createLead = async (req, res) => {
       });
     }
 
-
     let regionalManagerId = null;
-    if (region_id !== 'null') {
+    if (region_id !== "null") {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
         await transaction.rollback();
@@ -123,8 +127,11 @@ exports.createLead = async (req, res) => {
       regionalManagerId = region ? region.regional_manager_id : null;
     }
 
-    if (counsiler_id !== 'null') {
-      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
+    if (counsiler_id !== "null") {
+      const counsilerExists = await checkIfEntityExists(
+        "admin_user",
+        counsiler_id
+      );
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -135,7 +142,7 @@ exports.createLead = async (req, res) => {
       }
     }
 
-    if (branch_id !== 'null') {
+    if (branch_id !== "null") {
       const branchExists = await checkIfEntityExists("branch", branch_id);
       if (!branchExists) {
         await transaction.rollback(); // Rollback the transaction if branch ID is invalid
@@ -148,7 +155,10 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
+      const updatedByExists = await checkIfEntityExists(
+        "admin_user",
+        updated_by
+      );
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -197,25 +207,31 @@ exports.createLead = async (req, res) => {
         source_id,
         channel_id,
         zipcode,
-        region_id: region_id != 'null' ? region_id : null,
-        franchise_id: franchise_id != 'null' ? franchise_id : null,
-        counsiler_id: counsiler_id != 'null' ? counsiler_id : null,
-        branch_id: branch_id != 'null' ? branch_id : null,
+        region_id: region_id != "null" ? region_id : null,
+        franchise_id: franchise_id != "null" ? franchise_id : null,
+        counsiler_id: counsiler_id != "null" ? counsiler_id : null,
+        branch_id: branch_id != "null" ? branch_id : null,
         updated_by,
         remarks,
         ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl: userRole?.role_id === process.env.IT_TEAM_ID && office_type === process.env.CORPORATE_OFFICE_ID && creTl ? creTl.id : null,
         created_by: userId,
-        assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
+        assign_type:
+          userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
+        regional_manager_id:
+          userRole?.role_id == process.env.IT_TEAM_ID
+            ? regionalManagerId
+            : null,
       },
       { transaction }
     );
 
     // Associate the preferred countries with the user
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await userPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
+      await userPrimaryInfo.setPreferredCountries(preferred_country, {
+        transaction,
+      });
     }
 
     // Handle exam details
@@ -224,12 +240,15 @@ exports.createLead = async (req, res) => {
         const examDocument = examDocuments ? examDocuments[index] : null;
 
         // Create the exam record
-        const createdExam = await db.userExams.create({
-          student_id: userPrimaryInfo.id,
-          exam_name: exam.exam_name,
-          marks: exam.marks,
-          document: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
-        }, { transaction });
+        const createdExam = await db.userExams.create(
+          {
+            student_id: userPrimaryInfo.id,
+            exam_name: exam.exam_name,
+            marks: exam.marks,
+            document: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
+          },
+          { transaction }
+        );
 
         return createdExam;
       });
@@ -242,8 +261,10 @@ exports.createLead = async (req, res) => {
       dueDate.setDate(dueDate.getDate() + 1);
 
       // const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
-      const country = await db.country.findAll({ where: { id: preferred_country } });  // Assuming at least one country is selected
-      const countryNames = country.map(c => c.country_name).join(", ");
+      const country = await db.country.findAll({
+        where: { id: preferred_country },
+      }); // Assuming at least one country is selected
+      const countryNames = country.map((c) => c.country_name).join(", ");
 
       // Create a task for the new lead
       const task = await db.tasks.create(
@@ -257,14 +278,14 @@ exports.createLead = async (req, res) => {
         { transaction }
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
-
       let leastAssignedUsers = [];
 
       for (const countryId of preferred_country) {
-
         const users = await getLeastAssignedUsers(countryId);
         if (users?.leastAssignedUserId) {
-          leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+          leastAssignedUsers = leastAssignedUsers.concat(
+            users.leastAssignedUserId
+          );
         }
       }
 
@@ -275,7 +296,7 @@ exports.createLead = async (req, res) => {
         });
 
         // Add new counselors
-        const userCounselorsData = leastAssignedUsers?.map(userId => ({
+        const userCounselorsData = leastAssignedUsers?.map((userId) => ({
           user_id: userPrimaryInfo.id,
           counselor_id: userId,
         }));
@@ -290,17 +311,18 @@ exports.createLead = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: preferred_country },
-            attributes: ['country_name'],
+            attributes: ["country_name"],
           });
 
           if (countries) {
-            countryName = countries.map(country => country.country_name).join(', ');
+            countryName = countries
+              .map((country) => country.country_name)
+              .join(", ");
           }
         }
 
         // Create tasks for each least assigned user
         for (const leastUserId of leastAssignedUsers) {
-
           const task = await db.tasks.create(
             {
               studentId: userPrimaryInfo.id,
@@ -315,13 +337,16 @@ exports.createLead = async (req, res) => {
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
       if (franchise_id) {
-
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
-
-          const users = await getLeastAssignedCounsellor(countryId, franchise_id);
+          const users = await getLeastAssignedCounsellor(
+            countryId,
+            franchise_id
+          );
           if (users?.leastAssignedUserId) {
-            leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+            leastAssignedUsers = leastAssignedUsers.concat(
+              users.leastAssignedUserId
+            );
           }
         }
 
@@ -332,7 +357,7 @@ exports.createLead = async (req, res) => {
           });
 
           // Add new counselors
-          const userCounselorsData = leastAssignedUsers?.map(userId => ({
+          const userCounselorsData = leastAssignedUsers?.map((userId) => ({
             user_id: userPrimaryInfo.id,
             counselor_id: userId,
           }));
@@ -347,17 +372,18 @@ exports.createLead = async (req, res) => {
             // const country = await db.country.findByPk(countryIds[0]);
             const countries = await db.country.findAll({
               where: { id: preferred_country },
-              attributes: ['country_name'],
+              attributes: ["country_name"],
             });
 
             if (countries) {
-              countryName = countries.map(country => country.country_name).join(', ');
+              countryName = countries
+                .map((country) => country.country_name)
+                .join(", ");
             }
           }
 
           // Create tasks for each least assigned user
           for (const leastUserId of leastAssignedUsers) {
-
             const task = await db.tasks.create(
               {
                 studentId: userPrimaryInfo.id,
@@ -436,7 +462,7 @@ exports.updateLead = async (req, res) => {
   console.log('Controller Files', req.files);
   console.log("body =========>", req.body);
 
-  const examDocuments = req.files && req.files['exam_documents'];
+  const examDocuments = req.files && req.files["exam_documents"];
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -512,7 +538,7 @@ exports.updateLead = async (req, res) => {
     }
 
     let regionalManagerId = null;
-    if (region_id !== 'null') {
+    if (region_id !== "null") {
       const region = await db.region.findOne({ where: { id: region_id } });
       regionalManagerId = region ? region.regional_manager_id : null;
     }
@@ -761,7 +787,8 @@ const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
   try {
     // Use raw SQL to execute the query
-    const [results] = await db.sequelize.query(`
+    const [results] = await db.sequelize.query(
+      `
       WITH user_assignments AS (
         SELECT 
           "admin_users"."id" AS "user_id", 
@@ -777,38 +804,39 @@ const getLeastAssignedUsers = async (countryId) => {
       FROM user_assignments
       ORDER BY "assignment_count" ASC, "user_id" ASC
       LIMIT 1;
-    `, {
-      replacements: { roleId, countryId },
-      type: db.Sequelize.QueryTypes.SELECT
-    });
+    `,
+      {
+        replacements: { roleId, countryId },
+        type: db.Sequelize.QueryTypes.SELECT,
+      }
+    );
 
     console.log("results ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     // Extract user_id if results has user_id
     const leastAssignedUserId = results.user_id;
 
-
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     return {
-      leastAssignedUserId
+      leastAssignedUserId,
     };
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
-      leastAssignedUserId: null
+      leastAssignedUserId: null,
     };
   }
 };
@@ -817,7 +845,8 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
   const roleId = process.env.FRANCHISE_COUNSELLOR_ID;
   try {
     // Use raw SQL to execute the query
-    const [results] = await db.sequelize.query(`
+    const [results] = await db.sequelize.query(
+      `
       WITH user_assignments AS (
         SELECT 
           "admin_users"."id" AS "user_id", 
@@ -834,38 +863,39 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
       FROM user_assignments
       ORDER BY "assignment_count" ASC, "user_id" ASC
       LIMIT 1;
-    `, {
-      replacements: { roleId, countryId },
-      type: db.Sequelize.QueryTypes.SELECT
-    });
+    `,
+      {
+        replacements: { roleId, countryId },
+        type: db.Sequelize.QueryTypes.SELECT,
+      }
+    );
 
     console.log("results ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     // Extract user_id if results has user_id
     const leastAssignedUserId = results.user_id;
 
-
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     return {
-      leastAssignedUserId
+      leastAssignedUserId,
     };
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
-      leastAssignedUserId: null
+      leastAssignedUserId: null,
     };
   }
 };
@@ -877,8 +907,8 @@ exports.deleteExams = async (req, res) => {
     const exam = await db.userExams.destroy({
       where: {
         exam_name: exam_name,
-        student_id: id
-      }
+        student_id: id,
+      },
     });
 
     if (exam > 0) {
@@ -892,7 +922,6 @@ exports.deleteExams = async (req, res) => {
         message: "Exam deleteion failed",
       });
     }
-
   } catch (error) {
     console.error(`Error deleting Exam: ${error}`);
     return res.status(500).json({

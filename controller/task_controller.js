@@ -78,22 +78,22 @@ exports.finishTask = async (req, res) => {
     // Fetch preferred countries from the join table
     const preferredCountries = await db.userContries.findAll({
       where: { user_primary_info_id: studentId },
-      attributes: ['country_id'],
+      attributes: ["country_id"],
     });
 
-    const countryIds = preferredCountries.map(entry => entry.country_id);
+    const countryIds = preferredCountries.map((entry) => entry.country_id);
 
     // Fetch least assigned users for each country
     let leastAssignedUsers = [];
     for (const countryId of countryIds) {
-
       const users = await getLeastAssignedUsers(countryId);
-      if(users?.leastAssignedUserId){
-        leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+      if (users?.leastAssignedUserId) {
+        leastAssignedUsers = leastAssignedUsers.concat(
+          users.leastAssignedUserId
+        );
       }
       console.log("users ==========>", users.leastAssignedUserId);
     }
-
 
     if (leastAssignedUsers.length > 0) {
       // Remove existing counselors for the student
@@ -102,7 +102,7 @@ exports.finishTask = async (req, res) => {
       });
 
       // Add new counselors
-      const userCounselorsData = leastAssignedUsers.map(userId => ({
+      const userCounselorsData = leastAssignedUsers.map((userId) => ({
         user_id: studentId,
         counselor_id: userId,
       }));
@@ -118,11 +118,13 @@ exports.finishTask = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: countryIds },
-            attributes: ['country_name'],
+            attributes: ["country_name"],
           });
-      
+
           if (countries) {
-            countryName = countries.map(country => country.country_name).join(', ');
+            countryName = countries
+              .map((country) => country.country_name)
+              .join(", ");
           }
         }
 
@@ -150,7 +152,6 @@ exports.finishTask = async (req, res) => {
       task,
       leastAssignedUsers,
     });
-
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
     return res.status(500).json({
@@ -220,7 +221,7 @@ exports.assignNewCountry = async (req, res) => {
         dueDate.setDate(dueDate.getDate() + 1);
 
         const country = await db.country.findByPk(newCountryId, {
-          attributes: ['country_name'],
+          attributes: ["country_name"],
         });
 
         const countryName = country ? country.country_name : "Unknown";
@@ -241,7 +242,6 @@ exports.assignNewCountry = async (req, res) => {
       message: "Task successfully updated and assigned.",
       task,
     });
-
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
     return res.status(500).json({
@@ -250,7 +250,6 @@ exports.assignNewCountry = async (req, res) => {
     });
   }
 };
-
 
 exports.getStudentBasicInfoById = async (req, res) => {
   try {
@@ -277,13 +276,13 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "lead_received_date",
         "status_id",
         "followup_date",
-        "lead_received_date"
+        "lead_received_date",
       ],
       include: [
         {
           model: db.country,
-          as: "preferredCountries",  // Adjusted alias to match Sequelize associations
-          attributes: ["id", "country_name"],  // Only include ID and name
+          as: "preferredCountries", // Adjusted alias to match Sequelize associations
+          attributes: ["id", "country_name"], // Only include ID and name
           through: {
             attributes: [], // Exclude attributes from the join table
           },
@@ -303,6 +302,14 @@ exports.getStudentBasicInfoById = async (req, res) => {
           as: "status",
           attributes: ["status_name"],
         },
+        {
+          model: db.academicInfos,
+          as: "userAcademicInfos", // The alias you defined in the association
+        },
+        {
+          model: db.workInfos,
+          as: "userWorkInfos", // The alias you defined in the association
+        },
       ],
       nest: true,
     });
@@ -314,14 +321,16 @@ exports.getStudentBasicInfoById = async (req, res) => {
     // Combine primaryInfoData with filtered preferredCountries
     const combinedInfo = {
       ...primaryInfoData,
-      country_ids: primaryInfo?.preferredCountries?.map(country => country.id) || [],
-      country_names: primaryInfo?.preferredCountries?.map(country => country.country_name) || [],
+      country_ids:
+        primaryInfo?.preferredCountries?.map((country) => country.id) || [],
+      country_names:
+        primaryInfo?.preferredCountries?.map(
+          (country) => country.country_name
+        ) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       ...basicInfoData,
     };
-
-    console.log("Combined info:", combinedInfo);
 
     // Send the response with combined information
     res.status(200).json({
@@ -344,57 +353,77 @@ exports.getStudentAcademicInfoById = async (req, res) => {
     console.log("Fetching info for studentId:", studentId);
 
     // Fetch basic information for the student
-    const academicInfo = await db.userAcademicInfo.findOne({
-      where: { user_id: studentId }
+    // const academicInfo = await db.userAcademicInfo.findOne({
+    //   where: { user_id: studentId },
+    //   attributes: ["id", "qualification", "place", "percentage"],
+    // });
+
+    // const academicValues = await db.academicInfos.findAll({
+    //   where: { user_id: studentId },
+    //   attributes: [
+    //     "id",
+    //     "qualification",
+    //     "place",
+    //     "percentage",
+    //     "year_of_passing",
+    //     "backlogs",
+    //   ],
+    // });
+
+    // const workValues = await db.workInfos.findAll({
+    //   where: { user_id: studentId },
+    //   attributes: ["id", "company", "years", "designation", "from", "to"],
+    // });
+
+    const [academicValues, workValues] = await Promise.all([
+      await db.academicInfos.findAll({
+        where: { user_id: studentId },
+        attributes: [
+          "id",
+          "qualification",
+          "place",
+          "percentage",
+          "year_of_passing",
+          "backlogs",
+        ],
+      }),
+
+      await db.workInfos.findAll({
+        where: { user_id: studentId },
+        attributes: ["id", "company", "years", "designation", "from", "to"],
+      }),
+    ]);
+
+    const examInfo = await db.userExams.findAll({
+      where: { student_id: studentId },
     });
-    console.log('academicInfo',academicInfo.dataValues);
 
-      // const examInfo = await db.userPrimaryInfo.findAll({
-      //   where: { id: studentId },
-      //   include:[
-      //     {
-      //       model: db.userExams,
-      //       as: "exams",
-      //       attributes: ["exam_name","marks", "document"],
-      //       required: false,
-      //     },
-      //   ]
-      // });
-
-      const examInfo = await db.userExams.findAll({ where: { student_id: studentId }});
-
-      console.log('examInfo',examInfo.map(exam => exam.dataValues));
-    
-    // const acadmicInfoData = academicInfo ? academicInfo.dataValues : {};
-    let acadmicInfoData;
-    acadmicInfoData = academicInfo ? academicInfo.dataValues : {};
+    let acadmicInfoData = null;
 
     if (examInfo && examInfo.length > 0) {
-      acadmicInfoData = { 
-        ...acadmicInfoData, 
+      acadmicInfoData = {
         exam_details: examInfo.map((exam) => {
           return {
+            id: exam.id,
             exam_name: exam.dataValues.exam_name,
-            marks: exam.dataValues.marks
+            marks: exam.dataValues.marks,
+            exam_documents: exam.dataValues.document,
+            document: exam.dataValues.document,
+            
           };
         }),
-        exam_documents: examInfo.map((exam) => {
-          return {
-            exam_documents: exam.dataValues.document
-          }
-        })
       };
     }
-    
-
-    console.log('acadmicInfoData',acadmicInfoData);
-    
-
+    console.log("acadmicInfoData", acadmicInfoData);
     // Send the response with combined information
     res.status(200).json({
       status: true,
       message: "Student info retrieved successfully",
-      data: acadmicInfoData,
+      data: {
+        exam_info: acadmicInfoData,
+        academicValues,
+        workValues,
+      },
     });
   } catch (error) {
     console.error(`Error fetching student info: ${error}`);
@@ -416,7 +445,9 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
     });
 
     // Extract data values, or use default empty object if no data
-    const studyPreferenceInfoData = studyPreferenceInfo ? studyPreferenceInfo.dataValues : {};
+    const studyPreferenceInfoData = studyPreferenceInfo
+      ? studyPreferenceInfo.dataValues
+      : {};
 
     // Send the response with combined information
     res.status(200).json({
@@ -437,7 +468,8 @@ const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
   try {
     // Use raw SQL to execute the query
-    const [results] = await db.sequelize.query(`
+    const [results] = await db.sequelize.query(
+      `
       WITH user_assignments AS (
         SELECT 
           "admin_users"."id" AS "user_id", 
@@ -453,38 +485,39 @@ const getLeastAssignedUsers = async (countryId) => {
       FROM user_assignments
       ORDER BY "assignment_count" ASC, "user_id" ASC
       LIMIT 1;
-    `, {
-      replacements: { roleId, countryId },
-      type: db.Sequelize.QueryTypes.SELECT
-    });
+    `,
+      {
+        replacements: { roleId, countryId },
+        type: db.Sequelize.QueryTypes.SELECT,
+      }
+    );
 
     console.log("results ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     // Extract user_id if results has user_id
     const leastAssignedUserId = results.user_id;
 
-
     // If user_id is undefined, return an error response
     if (leastAssignedUserId === undefined) {
       return {
-        leastAssignedUserId: null
+        leastAssignedUserId: null,
       };
     }
 
     return {
-      leastAssignedUserId
+      leastAssignedUserId,
     };
   } catch (error) {
     console.error(`Error finding least assigned users: ${error}`);
     return {
-      leastAssignedUserId: null
+      leastAssignedUserId: null,
     };
   }
 };

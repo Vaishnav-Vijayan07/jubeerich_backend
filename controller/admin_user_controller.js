@@ -27,7 +27,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
       });
     }
 
-
     console.log("userJson ==>", users);
 
     const usersWithRoleAndCountry = users.map((user) => {
@@ -80,7 +79,6 @@ exports.getAllCounsellors = async (req, res, next) => {
         message: "Admin users not found",
       });
     }
-
 
     console.log("userJson ==>", users);
 
@@ -135,7 +133,6 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       });
     }
 
-
     console.log("userJson ==>", users);
 
     const usersWithRoleAndCountry = users.map((user) => {
@@ -177,7 +174,20 @@ exports.getAdminUsersById = (req, res, next) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
-  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
+  const {
+    employee_id,
+    name,
+    email,
+    phone,
+    address,
+    username,
+    updated_by,
+    role_id,
+    branch_id,
+    region_id,
+    country_id,
+    franchise_id,
+  } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
 
@@ -193,10 +203,14 @@ exports.addAdminUsers = async (req, res) => {
 
     if (conflicts.length > 0) {
       const conflictFields = [];
-      if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
-      if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
-      if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
-      if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
+      if (conflicts.some((user) => user.employee_id === employee_id))
+        conflictFields.push("Employee ID");
+      if (conflicts.some((user) => user.email === email))
+        conflictFields.push("Email");
+      if (conflicts.some((user) => user.phone === phone))
+        conflictFields.push("Phone");
+      if (conflicts.some((user) => user.username === username))
+        conflictFields.push("Username");
 
       return res.status(409).json({
         status: false,
@@ -219,7 +233,7 @@ exports.addAdminUsers = async (req, res) => {
       branch_id,
       region_id,
       country_id,
-      franchise_id
+      franchise_id,
     });
 
     res.json({
@@ -238,13 +252,36 @@ exports.addAdminUsers = async (req, res) => {
 
 exports.updateAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);
-  const { employee_id, name, email, phone, address, username, updated_by, branch_id, role_id, region_id, country_id } = req.body;
+  const {
+    employee_id,
+    name,
+    email,
+    phone,
+    address,
+    username,
+    updated_by,
+    branch_id,
+    role_id,
+    region_id,
+    country_id,
+  } = req.body;
   const profileImage = req.file; // New profile image (if uploaded)
 
   try {
-    const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
+    const userWithEmail = await db.adminUsers.findAll({
+      where: {
+        email,
+        id: { [Op.ne]: id },
+      },
+    });
 
-    // Fetch the old image path
+    if (userWithEmail.length > 0) {
+      return res.status(409).json({
+        status: false,
+        message: "Email already exists",
+      });
+    }
+
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
       return res.status(404).json({
@@ -274,13 +311,13 @@ exports.updateAdminUsers = async (req, res) => {
       phone,
       address,
       username,
-      password,
+      // password,
       updated_by,
       profile_image_path: profileImage ? profileImage.path : null,
       branch_id,
       role_id,
       region_id,
-      country_id
+      country_id,
     });
 
     res.json({
@@ -311,7 +348,10 @@ exports.deleteAdminUsers = async (req, res) => {
     }
 
     // Update the access_roles table to set updated_by to null where it references the admin user to be deleted
-    await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
+    await db.accessRoles.update(
+      { updated_by: null },
+      { where: { updated_by: id } }
+    );
 
     // Delete the admin user
     await user.destroy();

@@ -4,7 +4,13 @@ const { checkIfEntityExists } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Op, Sequelize, where } = require("sequelize");
-
+const fs = require("fs");
+const path = require("path");
+const {
+  addOrUpdateAcademic,
+  addOrUpdateWork,
+  addOrUpdateExamDocs,
+} = require("../utils/academic_query_helper");
 
 exports.saveStudentBasicInfo = async (req, res) => {
   const {
@@ -16,7 +22,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
     full_name,
     email,
     phone,
-    preferred_country,  // This should be an array of country IDs
+    preferred_country, // This should be an array of country IDs
     office_type,
     region_id,
     counsiler_id,
@@ -26,7 +32,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
     state,
     country,
     address,
-    ielts
+    ielts,
   } = req.body;
 
   const transaction = await sequelize.transaction();
@@ -49,19 +55,23 @@ exports.saveStudentBasicInfo = async (req, res) => {
         region_id,
         counsiler_id,
         branch_id,
-        ielts
+        ielts,
       },
       { transaction }
     );
 
     // Update preferred countries if provided
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await updatedUserPrimaryInfo.setPreferredCountries(preferred_country, { transaction });
+      await updatedUserPrimaryInfo.setPreferredCountries(preferred_country, {
+        transaction,
+      });
     }
 
     // Check if userBasicInfo exists and update or create accordingly
     let userBasicDetails;
-    const userBasicInfo = await db.userBasicInfo.findOne({ where: { user_id } });
+    const userBasicInfo = await db.userBasicInfo.findOne({
+      where: { user_id },
+    });
 
     if (userBasicInfo) {
       userBasicDetails = await userBasicInfo.update(
@@ -74,7 +84,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
           secondary_number,
           state,
           country,
-          address
+          address,
         },
         { transaction }
       );
@@ -90,7 +100,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
           secondary_number,
           state,
           country,
-          address
+          address,
         },
         { transaction }
       );
@@ -105,8 +115,8 @@ exports.saveStudentBasicInfo = async (req, res) => {
       message: "Basic details updated successfully",
       data: {
         updatedUserPrimaryInfo,
-        userBasicDetails
-      }
+        userBasicDetails,
+      },
     });
   } catch (error) {
     // Rollback the transaction in case of error
@@ -120,7 +130,6 @@ exports.saveStudentBasicInfo = async (req, res) => {
     });
   }
 };
-
 
 // exports.saveStudentBasicInfo = async (req, res) => {
 //   const {
@@ -231,165 +240,170 @@ exports.saveStudentBasicInfo = async (req, res) => {
 // };
 
 exports.saveStudentAcademicInfo = async (req, res) => {
-  let { qualification, place, percentage, year_of_passing, backlogs, work_experience, designation, company, years, user_id, exam_details } =
-    req.body;
+  let { academicRecords, exam_details, user_id } = req.body;
 
-    console.log('BODY', req.body);
-    
+  // Ensure the exam documents are handled correctly
+  const files = req.files?.exam_documents || [];
 
-  console.log('Documents', req.files['exam_documents']);
-  
+  // Check if there is any data to process
+  const hasAcademicData = academicRecords && academicRecords.length > 0;
+  const hasExamData = exam_details && exam_details.length > 0;
 
-  exam_details = exam_details ? JSON.parse(exam_details) : null
-  console.log('exam_details',exam_details);
-  
-  const examDocuments = req.files && req.files['exam_documents'];
+  if (!hasAcademicData && !hasExamData) {
+    return res.status(400).json({
+      status: false,
+      message: "No academic or exam data provided to save.",
+    });
+  }
 
-  console.log("Files ===>", examDocuments)
-
+  // Start a transaction only if there is data to process
   const transaction = await sequelize.transaction();
 
   try {
-    let UserAcadamicInfo = await db.userAcademicInfo.findOne({
-      where: { user_id: user_id },
-    });
+    let academicResult = { success: true };
+    let examResult = { success: true };
 
-    let examDetails = await db.userExams.findAll({
-      where:{
-        student_id : user_id
-      }
-    })
-
-    let UserAccadamicDetails;
-
-    if (UserAcadamicInfo) {
-      UserAccadamicDetails = await UserAcadamicInfo.update(
-        {
-          qualification,
-          place,
-          percentage,
-          year_of_passing,
-          backlogs,
-          work_experience,
-          designation,
-          company,
-          years
-        },
-        { transaction }
-      );
-    } else {
-      UserAccadamicDetails = await db.userAcademicInfo.create(
-        {
-          qualification,
-          place,
-          percentage,
-          year_of_passing,
-          backlogs,
-          work_experience,
-          designation,
-          company,
-          years,
-          user_id,
-        },
-        { transaction }
+    if (hasExamData) {
+      examResult = await addOrUpdateExamDocs(
+        exam_details,
+        user_id,
+        files,
+        transaction
       );
     }
 
-    if (Array.isArray(exam_details) && exam_details.length > 0) {
-      const examDetailsPromises = exam_details.map(async (exam, index) => {
-        
-        const examDocument = examDocuments ? examDocuments[index] : null;
+    if (hasAcademicData) {
+      academicResult = await addOrUpdateAcademic(
+        academicRecords,
+        user_id,
+        transaction
+      );
+    }
 
-        if(examDetails.length) {
-          
-          let updateData = {
-            exam_name: exam.exam_name,
-            marks: exam.marks,
-          };
-        
-          if (examDocument && (examDocument.size != 0)) {
-            updateData.document = await examDocument.filename;
-          }
-
-          const examExist = await db.userExams.findOne({ where: { student_id: user_id, exam_name: exam?.exam_name }});
-
-          console.log('examExist',examExist);
-          
-          let updatedExam;
-          let createdExam;
-  
-          if(examExist){
-            console.log('===> ENTERED EXIST');
-            
-             updatedExam = await db.userExams.update(
-              updateData,
-              {
-                where: {
-                  student_id: user_id,
-                  exam_name: exam.exam_name,
-                },
-                transaction,
-              }
-            );
-  
-            return updatedExam
-  
-          } else {
-            console.log(' ==> NOT ENTERED EXIST');
-            createdExam = await db.userExams.create({
-              student_id: user_id,
-              exam_name: exam.exam_name,
-              marks: exam.marks,
-              document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
-            }, { transaction });
-  
-            return createdExam
-    
-          }
-      
-          // const updatedExam = await db.userExams.update(
-          //   updateData,
-          //   {
-          //     where: {
-          //       student_id: user_id,
-          //       exam_name: exam.exam_name,
-          //     },
-          //     transaction,
-          //   }
-          // );
-      
-          // return updatedExam;
-        } else {
-
-          // Create the exam record
-          const createdExam = await db.userExams.create({
-            // student_id: userPrimaryInfo.id,
-            student_id: user_id,
-            exam_name: exam.exam_name,
-            marks: exam.marks,
-            document: examDocument ? examDocument.filename : null, // Save the filename of the uploaded document
-          }, { transaction });
-
-          return createdExam;
-        }
+    if (academicResult.success && examResult.success) {
+      await transaction.commit();
+      return res.status(201).json({
+        status: true,
+        message: "Academic and exam details updated successfully",
       });
-    
-      await Promise.all(examDetailsPromises);
+    } else {
+      throw new Error("Failed to update all records");
+    }
+  } catch (error) {
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.saveStudentWorkInfo = async (req, res) => {
+  let { workExperience, user_id } = req.body;
+
+  console.log("workExperience", workExperience);
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    const workResult = await addOrUpdateWork(
+      workExperience,
+      user_id,
+      transaction
+    );
+
+    if (workResult.success) {
+      await transaction.commit();
+      return res.status(201).json({
+        status: true,
+        message: "Academic and work details updated successfully",
+      });
+    } else {
+      throw new Error("Failed to update all records");
+    }
+  } catch (error) {
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+exports.deleteStudentAcademicInfo = async (req, res) => {
+  const { id, type } = req.params;
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    let record;
+    let message;
+
+    switch (type) {
+      case "academic":
+        record = await db.academicInfos.findByPk(id);
+        message = "Academic record";
+        break;
+      case "work":
+        record = await db.workInfos.findByPk(id);
+        message = "Work record";
+        break;
+      case "exam":
+        record = await db.userExams.findByPk(id);
+        message = "Exam record";
+        break;
+      default:
+        throw new Error("Invalid type specified");
     }
 
-    
+    if (!record) {
+      throw new Error(`${message} not found`);
+    }
+
+    if (type === "exam") {
+      const file = record.document;
+      if (file) {
+        const filePath = path.join(
+          __dirname,
+          "..",
+          "uploads",
+          "examDocuments",
+          file
+        );
+
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error(`Failed to delete file: ${filePath}`, err);
+          } else {
+            console.log(`Successfully deleted file: ${filePath}`);
+          }
+        });
+      }
+    }
+
+    await record.destroy({ transaction });
+
+    // Commit the transaction
     await transaction.commit();
+    console.log(`${message} with id:${id} successfully deleted`);
 
-
-    return res.status(201).json({
+    return res.status(200).json({
       status: true,
-      message: "Academic details updated successfully",
-      data: { UserAccadamicDetails },
+      message: `${message} successfully deleted`,
     });
   } catch (error) {
-    await transaction.rollback();
+    if (!transaction.finished) {
+      // Rollback the transaction only if it's not already finished
+      await transaction.rollback();
+    }
     console.error(`Error: ${error.message}`);
-
     return res.status(500).json({
       status: false,
       message: "Internal server error",
@@ -477,7 +491,7 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
     stream,
     course,
     duration,
-    course_fee
+    course_fee,
   } = req.body;
 
   const transaction = await sequelize.transaction();
