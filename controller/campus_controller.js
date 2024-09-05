@@ -12,8 +12,21 @@ const campusValidationRules = [
 // Get all campuses
 exports.getAllCampuses = async (req, res) => {
     try {
-        const campuses = await Campus.findAll();
-        res.status(200).json({ status: true, data: campuses });
+        const campuses = await Campus.findAll({
+            include: [
+                {
+                    model: db.university,
+                    attributes: ['university_name'], // Specify the attributes you want to retrieve from the University model
+                },
+            ],
+        });
+
+        const modifiedCampuses = campuses.map((campus) => ({
+            ...campus.toJSON(),
+            university: campus.university ? campus.university.university_name : null, // Check if university data exists and add its name
+        }));
+
+        res.status(200).json({ status: true, data: modifiedCampuses });
     } catch (error) {
         console.error(`Error retrieving campuses: ${error}`);
         res.status(500).json({ status: false, message: "Internal server error" });

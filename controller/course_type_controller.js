@@ -4,9 +4,8 @@ const { validationResult, check } = require("express-validator");
 
 // Validation rules for CourseType
 const courseTypeValidationRules = [
-  check("course_type_name").not().isEmpty().withMessage("Course type name is required"),
-  check("course_type_description").optional().isString().withMessage("Course type description must be a string"),
-  check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
+  check("type_name").not().isEmpty().withMessage("Course type name is required"),
+  check("description").optional().isString().withMessage("Course type description must be a string")
 ];
 
 // Get all course types
@@ -45,13 +44,14 @@ exports.addCourseType = [
       return res.status(400).json({ status: false, message: "Validation failed", errors: errors.array() });
     }
 
-    const { course_type_name, course_type_description, updated_by } = req.body;
+    const userId = req.userDecodeId;
+    const { type_name, description } = req.body;
 
     try {
       const newCourseType = await CourseType.create({
-        course_type_name,
-        course_type_description,
-        updated_by,
+        type_name,
+        description,
+        updated_by: userId,
       });
       res.status(201).json({ status: true, message: "Course type created successfully", data: newCourseType });
     } catch (error) {
@@ -73,6 +73,7 @@ exports.updateCourseType = [
     }
 
     try {
+      const userId = req.userDecodeId;
       const courseType = await CourseType.findByPk(id);
       if (!courseType) {
         return res.status(404).json({ status: false, message: "Course type not found" });
@@ -80,9 +81,9 @@ exports.updateCourseType = [
 
       // Update only the fields that are provided in the request body
       const updatedCourseType = await courseType.update({
-        course_type_name: req.body.course_type_name ?? courseType.course_type_name,
-        course_type_description: req.body.course_type_description ?? courseType.course_type_description,
-        updated_by: req.body.updated_by ?? courseType.updated_by,
+        type_name: req.body.type_name ?? courseType.type_name,
+        description: req.body.description ?? courseType.description,
+        updated_by: userId,
       });
 
       res.status(200).json({ status: true, message: "Course type updated successfully", data: updatedCourseType });
