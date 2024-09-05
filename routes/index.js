@@ -198,17 +198,17 @@ router.put("/assign_new_country", [authMiddleware.checkUserAuth], TaskController
 router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentBasicInfo);
 router.post("/saveStudentAcademicInfo", uploadMultiple, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentAcademicInfo);
 router.post(
-    "/saveStudentWorkInfo",
-    parseData.none(),
-    [authMiddleware.checkUserAuth],
-    SaveStudentDetailsController.saveStudentWorkInfo
-  );
-  
-  router.delete(
-    "/academic_work_info/:type/:id",
-    [authMiddleware.checkUserAuth],
-    SaveStudentDetailsController.deleteStudentAcademicInfo
-  );
+  "/saveStudentWorkInfo",
+  parseData.none(),
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentWorkInfo
+);
+
+router.delete(
+  "/academic_work_info/:type/:id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.deleteStudentAcademicInfo
+);
 router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentStudyPreferenceInfo);
 router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentBasicInfoById);
 router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentAcademicInfoById);
