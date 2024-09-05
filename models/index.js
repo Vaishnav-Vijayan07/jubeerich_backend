@@ -55,15 +55,14 @@ db.stream = require("./stream")(sequelize, Sequelize);
 db.courseType = require("./courseType")(sequelize, Sequelize);
 
 // course relation
-db.university.hasMany(db.campus, { foreignKey: 'university_id' })
-db.campus.belongsTo(db.university, { foreignKey: 'university_id' })
+db.university.hasMany(db.campus, { foreignKey: "university_id" });
+db.campus.belongsTo(db.university, { foreignKey: "university_id" });
 
-db.stream.hasMany(db.course, { foreignKey: 'stream_id' })
-db.course.belongsTo(db.stream, { foreignKey: 'stream_id' })
+db.stream.hasMany(db.course, { foreignKey: "stream_id" });
+db.course.belongsTo(db.stream, { foreignKey: "stream_id" });
 
-
-db.courseType.hasMany(db.course, { foreignKey: 'course_type_id' })
-db.course.belongsTo(db.courseType, { foreignKey: 'course_type_id' })
+db.courseType.hasMany(db.course, { foreignKey: "course_type_id" });
+db.course.belongsTo(db.courseType, { foreignKey: "course_type_id" });
 db.academicInfos = require("./academicinfo")(sequelize, Sequelize);
 db.workInfos = require("./workinfos")(sequelize, Sequelize);
 
@@ -74,11 +73,14 @@ db.accessRoles.belongsTo(db.adminUsers, {
 });
 
 // AdminUser model
-db.adminUsers.belongsTo(db.country, { foreignKey: 'country_id' });
+db.adminUsers.belongsTo(db.country, { foreignKey: "country_id" });
 
 // comments
-db.comments.belongsTo(db.adminUsers, { foreignKey: 'user_id', as: "user" });
-db.comments.belongsTo(db.userPrimaryInfo, { foreignKey: 'lead_id', as: "lead" });
+db.comments.belongsTo(db.adminUsers, { foreignKey: "user_id", as: "user" });
+db.comments.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "lead_id",
+  as: "lead",
+});
 
 // Country model
 db.country.hasMany(db.adminUsers, { foreignKey: "country_id" });
