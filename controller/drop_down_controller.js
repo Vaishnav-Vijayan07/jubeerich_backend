@@ -2,43 +2,77 @@ const db = require("../models");
 
 const getDropdownData = async (req, res) => {
   try {
+    const { types } = req.query; // e.g., types=universities,countries,courses
+    const requestedTypes = types ? types.split(",") : []; // convert to array
+
+    console.log(requestedTypes);
+
+    const promises = [];
+
+    if (!types || requestedTypes.includes("universities")) {
+      promises.push(
+        db.university.findAll({ attributes: ["id", "university_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null)); // add null if not requested
+    }
+
+    if (!types || requestedTypes.includes("countries")) {
+      promises.push(db.country.findAll({ attributes: ["id", "country_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("sources")) {
+      promises.push(
+        db.leadSource.findAll({ attributes: ["id", "source_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("courses")) {
+      promises.push(db.course.findAll({ attributes: ["id", "course_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("courseTypes")) {
+      promises.push(db.courseType.findAll({ attributes: ["id", "type_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("streams")) {
+      promises.push(db.stream.findAll({ attributes: ["id", "stream_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("campuses")) {
+      promises.push(db.campus.findAll({ attributes: ["id", "campus_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    console.log(promises);
+
     const [
       universityDetails,
       countryDetails,
+      sourceDetails,
       courseDetails,
       courseTypeDetails,
       streamDetails,
       campusDetails,
-    ] = await Promise.all([
-      db.university.findAll({
-        attributes: ["id", "university_name"],
-      }),
-      db.country.findAll({
-        attributes: ["id", "country_name"],
-      }),
-      db.course.findAll({
-        attributes: ["id", "course_name"],
-      }),
-      db.courseType.findAll({
-        attributes: ["id", "type_name"],
-      }),
-      db.stream.findAll({
-        attributes: ["id", "stream_name"],
-      }),
-      db.campus.findAll({
-        attributes: ["id", "campus_name"],
-      }),
-    ]);
+    ] = await Promise.all(promises);
 
-    // Mapping the data into { label: name, value: id } format
     const formatData = (data, name) => {
-      return data.map((item) => ({
-        label: item[name],
-        value: item.id,
-      }));
+      return data
+        ? data.map((item) => ({ label: item[name], value: item.id }))
+        : [];
     };
 
-    // Prepare the final response
     res.status(200).json({
       status: true,
       data: {
@@ -48,6 +82,7 @@ const getDropdownData = async (req, res) => {
         courseTypes: formatData(courseTypeDetails, "type_name"),
         streams: formatData(streamDetails, "stream_name"),
         campuses: formatData(campusDetails, "campus_name"),
+        sources: formatData(sourceDetails, "source_name"),
       },
     });
   } catch (error) {
