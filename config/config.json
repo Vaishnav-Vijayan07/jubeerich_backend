@@ -2,7 +2,7 @@
     "development": {
         "username": "postgres",
         "password": "root",
-        "database": "jubeerichDB",
+        "database": "jubeerichdb",
         "host": "localhost",
         "dialect": "postgres"
     },
