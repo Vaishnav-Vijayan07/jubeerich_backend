@@ -45,11 +45,16 @@ const CourseController = require("../controller/course controller");
 const CourseTypeController = require("../controller/course_type_controller");
 const StreamController = require("../controller/stream_controller");
 const getDropdownData = require("../controller/drop_down_controller");
+const studyPreferencesByUserPrimaryInfoController = require('../controller/study_preference_controller');
+const studyPreferencesDetailsController = require('../controller/study_preference_details');
 
 const router = express.Router();
 
 // Auth routes
 router.post("/login", authController.login);
+
+router.post('/study_preferences_details', [authMiddleware.checkUserAuth], studyPreferencesDetailsController.createStudyPreferenceDetails);
+router.put('/study_preferences_details/:id', [authMiddleware.checkUserAuth], studyPreferencesDetailsController.updateStudyPreferenceDetails);
 
 // Admin Users routes
 router.get(
@@ -797,5 +802,8 @@ router.delete(
 
 //Select Dropdown Data route
 router.get("/dropdown", [authMiddleware.checkUserAuth], getDropdownData);
+
+
+router.post('/createStudyPreferencesByUserPrimaryInfo', [authMiddleware.checkUserAuth], studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo)
 
 module.exports = router;
