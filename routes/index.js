@@ -44,11 +44,16 @@ const CampusController = require("../controller/campus_controller");
 const CourseController = require("../controller/course controller");
 const CourseTypeController = require("../controller/course_type_controller");
 const StreamController = require("../controller/stream_controller");
+const studyPreferencesByUserPrimaryInfoController = require('../controller/study_preference_controller');
+const studyPreferencesDetailsController = require('../controller/study_preference_details');
 
 const router = express.Router();
 
 // Auth routes
 router.post("/login", authController.login);
+
+router.post('/study_preferences_details', [authMiddleware.checkUserAuth], studyPreferencesDetailsController.createStudyPreferenceDetails);
+router.put('/study_preferences_details/:id', [authMiddleware.checkUserAuth], studyPreferencesDetailsController.updateStudyPreferenceDetails);
 
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
@@ -257,5 +262,8 @@ router.get("/streams/:id", [authMiddleware.checkUserAuth], StreamController.getS
 router.post("/streams", [authMiddleware.checkUserAuth], StreamController.addStream);
 router.put("/streams/:id", [authMiddleware.checkUserAuth], StreamController.updateStream);
 router.delete("/streams/:id", [authMiddleware.checkUserAuth], StreamController.deleteStream);
+
+
+router.post('/createStudyPreferencesByUserPrimaryInfo', [authMiddleware.checkUserAuth], studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo)
 
 module.exports = router;
