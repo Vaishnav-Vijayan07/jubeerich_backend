@@ -187,6 +187,7 @@ exports.addAdminUsers = async (req, res) => {
     region_id,
     country_id,
     franchise_id,
+    country_ids
   } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
@@ -236,6 +237,10 @@ exports.addAdminUsers = async (req, res) => {
       franchise_id,
     });
 
+    if (branch_id && Array.isArray(country_ids) && country_ids.length > 0) {
+      await newUser.setCountries(country_ids); // Use Sequelize's utility method for many-to-many relationships
+    }
+
     res.json({
       status: true,
       data: newUser,
@@ -264,10 +269,12 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
+    franchise_id,
+    country_ids,
   } = req.body;
-  const profileImage = req.file; // New profile image (if uploaded)
 
   try {
+    // Check if the email already exists for another user
     const userWithEmail = await db.adminUsers.findAll({
       where: {
         email,
@@ -282,6 +289,7 @@ exports.updateAdminUsers = async (req, res) => {
       });
     }
 
+    // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
       return res.status(404).json({
@@ -289,41 +297,34 @@ exports.updateAdminUsers = async (req, res) => {
         message: "Admin user not found",
       });
     }
-    // const oldImagePath = user.profile_image_path;
 
-    // // Delete the old image if it exists
-    // const deleteOldImage = (oldImagePath) => {
-    //   if (oldImagePath) {
-    //     fs.unlink(oldImagePath, (err) => {
-    //       if (err) {
-    //         console.error("Error deleting old image:", err);
-    //       }
-    //     });
-    //   }
-    // };
-    // deleteOldImage(oldImagePath);
-
-    // Update the user with the new image path
-    const updatedUser = await user.update({
+    // Update the admin user
+    await user.update({
       employee_id,
       name,
       email,
       phone,
       address,
       username,
-      // password,
       updated_by,
-      profile_image_path: profileImage ? profileImage.path : null,
+      // profile_image_path: profileImage ? profileImage.path : user.profile_image_path,
       branch_id,
       role_id,
       region_id,
       country_id,
+      franchise_id,
     });
+
+    // If role_id is 5, handle updating associated countries
+    if (branch_id && Array.isArray(country_ids)) {
+      // Update the associated countries using the setCountries method for many-to-many relationships
+      await user.setCountries(country_ids);
+    }
 
     res.json({
       status: true,
       message: "Admin user updated successfully",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
     console.error("Error updating admin user:", error);
@@ -333,6 +334,91 @@ exports.updateAdminUsers = async (req, res) => {
     });
   }
 };
+
+
+// exports.updateAdminUsers = async (req, res) => {
+//   const id = parseInt(req.params.id);
+//   const {
+//     employee_id,
+//     name,
+//     email,
+//     phone,
+//     address,
+//     username,
+//     updated_by,
+//     branch_id,
+//     role_id,
+//     region_id,
+//     country_id,
+//   } = req.body;
+//   const profileImage = req.file; // New profile image (if uploaded)
+
+//   try {
+//     const userWithEmail = await db.adminUsers.findAll({
+//       where: {
+//         email,
+//         id: { [Op.ne]: id },
+//       },
+//     });
+
+//     if (userWithEmail.length > 0) {
+//       return res.status(409).json({
+//         status: false,
+//         message: "Email already exists",
+//       });
+//     }
+
+//     const user = await db.adminUsers.findByPk(id);
+//     if (!user) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Admin user not found",
+//       });
+//     }
+//     // const oldImagePath = user.profile_image_path;
+
+//     // // Delete the old image if it exists
+//     // const deleteOldImage = (oldImagePath) => {
+//     //   if (oldImagePath) {
+//     //     fs.unlink(oldImagePath, (err) => {
+//     //       if (err) {
+//     //         console.error("Error deleting old image:", err);
+//     //       }
+//     //     });
+//     //   }
+//     // };
+//     // deleteOldImage(oldImagePath);
+
+//     // Update the user with the new image path
+//     const updatedUser = await user.update({
+//       employee_id,
+//       name,
+//       email,
+//       phone,
+//       address,
+//       username,
+//       // password,
+//       updated_by,
+//       // profile_image_path: profileImage ? profileImage.path : null,
+//       branch_id,
+//       role_id,
+//       region_id,
+//       country_id,
+//     });
+
+//     res.json({
+//       status: true,
+//       message: "Admin user updated successfully",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Error updating admin user:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.deleteAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);

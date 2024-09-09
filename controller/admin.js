@@ -85,7 +85,10 @@ exports.getUserDetails = (req, res, next) => {
     })
     .then((userDB) => {
       if (userDB == null) throw new Error("user not found");
-      res.status(200).send(userDB);
+      res.status(200).json({
+        status: true,
+        data: userDB,
+      });
     })
     .catch((error) => {
       console.log(`error in getting user ${error.toString()}`);

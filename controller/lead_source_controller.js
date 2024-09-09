@@ -21,36 +21,82 @@ async function generateUniqueSlug(name) {
 }
 
 // Get all sources
-exports.getAllSources = (req, res) => {
-  Source.findAll()
-    .then((sources) => {
-      res.status(200).json(sources);
-    })
-    .catch((error) => {
-      console.error(`Error retrieving sources: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+exports.getAllSources = async (req, res) => {
+  try {
+    // Fetch all sources with associated lead type name
+    const sources = await Source.findAll({
+      include: [
+        {
+          model: db.leadType,
+          as: 'leadType',
+          attributes: ['name'], // Include only the lead type name
+        },
+      ],
     });
+
+    // Transform the sources to include leadType name directly
+    const transformedSources = sources.map((source) => {
+      const sourceData = source.get({ plain: true });
+      return {
+        ...sourceData,
+        leadType: sourceData.leadType ? sourceData.leadType.name : null,
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: transformedSources,
+    });
+  } catch (error) {
+    console.error(`Error retrieving sources: ${error}`);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
+
 // Get source by ID
-exports.getSourceById = (req, res) => {
+exports.getSourceById = async (req, res) => {
   const id = parseInt(req.params.id);
-  Source.findByPk(id)
-    .then((source) => {
-      if (!source) {
-        return res.status(404).json({ message: "Source not found" });
-      }
-      res.status(200).json(source);
-    })
-    .catch((error) => {
-      console.error(`Error retrieving source: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+
+  try {
+    // Fetch the source by ID with associated lead type name
+    const source = await Source.findByPk(id, {
+      include: [
+        {
+          model: db.leadType,
+          as: 'leadType',
+          attributes: ['name'], // Include only the lead type name
+        },
+      ],
     });
+
+    if (!source) {
+      return res.status(404).json({ message: "Source not found" });
+    }
+
+    // Transform the source to include leadType name directly
+    const sourceData = source.get({ plain: true });
+    const result = {
+      ...sourceData,
+      lead_type_name: sourceData.leadType ? sourceData.leadType.name : null, // Extract lead type name
+      leadType: undefined, // Remove the nested leadType object
+    };
+
+    res.status(200).json({
+      status: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error(`Error retrieving source: ${error}`);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
+
 
 // Add a new source
 exports.addSource = async (req, res) => {
-  const { source_name, source_description, updated_by } = req.body;
+  const { source_name, source_description, lead_type_id } = req.body;
+  const userId = req.userDecodeId; // Assuming userDecodeId is available in req
 
   try {
     // Generate the slug
@@ -60,8 +106,9 @@ exports.addSource = async (req, res) => {
     const newSource = await Source.create({
       source_name,
       source_description,
-      updated_by,
+      updated_by: userId, // Use userId as the updated_by value
       slug, // Add slug here
+      lead_type_id, // Reference the lead type ID
     });
 
     res.status(201).json({
@@ -78,7 +125,8 @@ exports.addSource = async (req, res) => {
 // Update a source
 exports.updateSource = async (req, res) => {
   const id = parseInt(req.params.id);
-  const { source_name, source_description, updated_by } = req.body;
+  const { source_name, source_description, lead_type_id } = req.body;
+  const userId = req.userDecodeId; // Assuming userDecodeId is available in req
 
   try {
     const source = await Source.findByPk(id);
@@ -90,7 +138,8 @@ exports.updateSource = async (req, res) => {
     // Prepare updated data
     const updatedData = {
       source_description,
-      updated_by,
+      updated_by: userId, // Update with the current user's ID
+      lead_type_id, // Update the lead type ID
     };
 
     // Only update the slug if the source name has changed

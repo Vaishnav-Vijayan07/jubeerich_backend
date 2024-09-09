@@ -2,6 +2,24 @@ const db = require("../models");
 const Country = db.country;
 const { validationResult, check } = require("express-validator");
 
+async function generateUniqueSlug(name) {
+  // Create a base slug with underscores and capitalize it
+  const baseSlug = name.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric characters with underscores
+    .replace(/(^_+|_+$)/g, '')   // Remove leading and trailing underscores
+    .toUpperCase();              // Capitalize the slug
+
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  while (await Channel.findOne({ where: { slug: uniqueSlug } })) {
+    uniqueSlug = `${baseSlug}_${counter}`; // Use underscore instead of hyphen for uniqueness
+    counter++;
+  }
+
+  return uniqueSlug;
+}
+
 // Validation rules for Country
 const countryValidationRules = [
   check("country_name").not().isEmpty().withMessage("Country name is required"),
@@ -65,10 +83,12 @@ exports.addCountry = [
     const { country_name, isd, country_code } = req.body;
 
     try {
+      const slug = await generateUniqueSlug(country_name)
       const newCountry = await Country.create({
         country_name,
         isd,
         country_code,
+        slug
       });
       res.status(201).json({
         status: true,
@@ -109,12 +129,22 @@ exports.updateCountry = [
         });
       }
 
-      // Update only the fields that are provided in the request body
-      const updatedCountry = await country.update({
-        country_name: req.body.country_name ?? country.country_name,
+      // Prepare updated data
+      const updatedData = {
         isd: req.body.isd ?? country.isd,
         country_code: req.body.country_code ?? country.country_code,
-      });
+      };
+
+      // Check if the country_name has changed and update the slug accordingly
+      if (req.body.country_name && req.body.country_name !== country.country_name) {
+        updatedData.country_name = req.body.country_name;
+        updatedData.slug = await generateUniqueSlug(req.body.country_name);
+      } else {
+        updatedData.country_name = req.body.country_name ?? country.country_name;
+      }
+
+      // Update the country with the prepared data
+      const updatedCountry = await country.update(updatedData);
 
       res.status(200).json({
         status: true,
@@ -144,7 +174,7 @@ exports.deleteCountry = async (req, res) => {
       });
     }
 
-  
+
     await country.destroy();
     res.status(200).json({
       status: true,

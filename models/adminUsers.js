@@ -56,7 +56,16 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
-        model: "franchise", // name of the target table
+        model: "franchise",
+        key: "id",
+      },
+      onDelete: "SET NULL",
+    },
+    branch_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "branches",
         key: "id",
       },
       onDelete: "SET NULL",

@@ -16,6 +16,7 @@ const AccesPowerController = require("../controller/access_power_controller");
 const AccessRolesController = require("../controller/access_roles_controller");
 const authController = require("../controller/auth_controller");
 const LeadCategoryController = require("../controller/lead_category_controller");
+const LeadTypeController = require("../controller/lead_type_controller");
 const LeadChannelController = require("../controller/lead_channel_controller");
 const LeadSourceController = require("../controller/lead_source_controller");
 const OfficeTypeController = require("../controller/office_type_controller");
@@ -77,6 +78,13 @@ router.get("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryCon
 router.post("/lead_category", [authMiddleware.checkUserAuth], LeadCategoryController.addCategory);
 router.put("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryController.updateCategory);
 router.delete("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryController.deleteCategory);
+
+// Lead Type routes
+router.get("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.getAllLeadTypes);
+router.get("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.getLeadTypeById);
+router.post("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.addLeadType);
+router.put("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.updateLeadType);
+router.delete("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.deleteLeadType);
 
 // Lead Sources routes
 router.get("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.getAllSources);

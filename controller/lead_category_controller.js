@@ -6,7 +6,10 @@ const Category = db.leadCategory;
 exports.getAllCategories = async (req, res) => {
   Category.findAll({ order: [["createdAt", "DESC"]] })
     .then((categories) => {
-      res.status(200).json(categories);
+      res.status(200).json({
+        status: true,
+        data: categories,
+      });
     })
     .catch((error) => {
       console.error(`Error retrieving categories: ${error}`);
@@ -22,7 +25,10 @@ exports.getCategoryById = (req, res) => {
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }
-      res.status(200).json(category);
+      res.status(200).json({
+        status: true,
+        data: category,
+      });
     })
     .catch((error) => {
       console.error(`Error retrieving category: ${error}`);

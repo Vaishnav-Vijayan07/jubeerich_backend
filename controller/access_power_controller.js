@@ -5,7 +5,10 @@ const AccessPowers = db.accessPowers;
 exports.getAllAccessPowers = (req, res) => {
   AccessPowers.findAll()
     .then((powers) => {
-      res.status(200).json(powers);
+      res.status(200).json({
+        status: true,
+        data: powers,
+      });
     })
     .catch((error) => {
       console.error(`Error retrieving access powers: ${error}`);
@@ -21,7 +24,10 @@ exports.getAccessPowerById = (req, res) => {
       if (!power) {
         return res.status(404).json({ message: "Access power not found" });
       }
-      res.status(200).json(power);
+      res.status(200).json({
+        status: true,
+        data: power,
+      });
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
