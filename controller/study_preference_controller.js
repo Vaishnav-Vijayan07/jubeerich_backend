@@ -71,3 +71,43 @@ exports.getStudyPreferencesByUserPrimaryInfo = async (req, res) => {
         });
     }
 };
+
+exports.createStudyPreferencesByUserPrimaryInfo = async (req, res) => {
+    const { userPrimaryInfoId, countryIds } = req.body;
+
+    console.log('userPrimaryInfoId',userPrimaryInfoId);
+    console.log('countryIds',countryIds);
+    
+
+    if (!userPrimaryInfoId || !countryIds.length) {
+        return res.status(400).json({
+            status: false,
+            message: "Invalid input. Please provide userPrimaryInfoId.",
+        });
+    }
+
+    try {
+
+        for(let index = 0; index < countryIds.length; index++){
+            const createUserPrimaryJoinInfo = await db.studyPreference.create(
+                {
+                    userPrimaryInfoId,
+                    countryId: countryIds[index]
+                }
+            )
+            console.log('createUserPrimaryJoinInfo',createUserPrimaryJoinInfo);
+        }
+
+        res.status(200).json({
+            status: true,
+            message: 'Created UserPrimaryJoinInfo'
+        });
+
+    } catch (error) {
+        console.error(`Error creating study preferences: ${error}`);
+        res.status(500).json({
+            status: false,
+            message: "Internal server error",
+        });
+    }
+};

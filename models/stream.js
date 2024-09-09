@@ -10,7 +10,7 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING(100),
                 allowNull: false,
             },
-            description: {
+            stream_description: {
                 type: Sequelize.TEXT,
                 allowNull: true,
             },

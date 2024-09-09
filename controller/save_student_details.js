@@ -238,7 +238,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
 //     });
 //   }
 // };
-
+// REF
 exports.saveStudentAcademicInfo = async (req, res) => {
   let { academicRecords, exam_details, user_id } = req.body;
 
