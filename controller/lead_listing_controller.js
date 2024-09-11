@@ -214,7 +214,7 @@ exports.getAllLeads = async (req, res) => {
         {
           model: db.userExams,
           as: "exams",
-          attributes: ["exam_name", "marks", "document"],
+          // attributes: ["exam_name","marks", "document"],
           required: false,
         },
       ],
@@ -226,13 +226,19 @@ exports.getAllLeads = async (req, res) => {
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_name: exam.exam_name,
-        marks: exam.marks,
+      const examDetails = info.exams.map((exam)=> ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by
       }))
-
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.document,
+      
+      const examDocuments = info.exams.map((exam)=> ({
+        exam_documents: exam.score_card,
       }))
 
       const counsellorNames = info.counselors?.map((counselor) => ({
@@ -487,7 +493,7 @@ exports.geLeadsForCreTl = async (req, res) => {
         {
           model: db.userExams,
           as: "exams",
-          attributes: ["exam_name", "marks", "document"],
+          // attributes: ["exam_name","marks", "document"],
           required: false,
         },
       ],
@@ -499,13 +505,24 @@ exports.geLeadsForCreTl = async (req, res) => {
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_name: exam.exam_name,
-        marks: exam.marks,
-      }))
+      // const examDetails = info.exams.map((exam)=> ({
+      //   exam_name: exam.exam_name,
+      //   marks: exam.marks,
+      // }))
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.document,
+      const examDetails = info.exams.map((exam)=> ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by
+      }))
+      
+      const examDocuments = info.exams.map((exam)=> ({
+        exam_documents: exam.score_card,
       }))
 
       return {
@@ -639,7 +656,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         {
           model: db.userExams,
           as: "exams",
-          attributes: ["exam_name", "marks", "document"],
+          // attributes: ["exam_name","marks", "document"],
           required: false,
         },
       ],
@@ -651,13 +668,24 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_name: exam.exam_name,
-        marks: exam.marks,
-      }))
+      // const examDetails = info.exams.map((exam)=> ({
+      //   exam_name: exam.exam_name,
+      //   marks: exam.marks,
+      // }))
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.document,
+      const examDetails = info.exams.map((exam)=> ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by
+      }))
+      
+      const examDocuments = info.exams.map((exam)=> ({
+        exam_documents: exam.score_card,
       }))
 
       return {
