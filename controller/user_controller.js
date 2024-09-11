@@ -44,6 +44,10 @@ exports.createLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+
+  console.log("req.body ================>", req.body);
+  
+
   console.log("req. files ========+>", req.body);
 
 

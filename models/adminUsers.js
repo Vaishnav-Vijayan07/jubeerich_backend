@@ -70,6 +70,15 @@ module.exports = (sequelize, Sequelize) => {
       },
       onDelete: "SET NULL",
     },
+    region_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "regions",
+        key: "id",
+      },
+      onDelete: "SET NULL",
+    },
     updated_by: {
       type: Sequelize.INTEGER,
     },

@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
             model: "user_primary_info",
             key: "id",
           },
-          onDelete: "CASCADE", // Delete exams if the user is deleted
+          onDelete: "CASCADE",
         },
         exam_name: {
           type: Sequelize.STRING(100),
