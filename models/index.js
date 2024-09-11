@@ -122,6 +122,11 @@ db.userPrimaryInfo.belongsTo(db.leadCategory, {
   foreignKey: "category_id",
 });
 
+db.userPrimaryInfo.belongsTo(db.leadType, {
+  as: "type_name",
+  foreignKey: "lead_type_id",
+});
+
 db.userPrimaryInfo.belongsTo(db.adminUsers, {
   as: "updated_by_user",
   foreignKey: "updated_by",

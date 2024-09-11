@@ -44,6 +44,11 @@ exports.createLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+  // let lead_type_id;
+  // if(category_id){
+  //   lead_type_id = category_id;
+  // }
+
 
   console.log("req.body ================>", req.body);
   
@@ -208,6 +213,7 @@ exports.createLead = async (req, res) => {
         city,
         office_type,
         category_id,
+        lead_type_id: category_id ? category_id : null,
         source_id,
         channel_id,
         zipcode,
@@ -459,6 +465,11 @@ exports.updateLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+  // let lead_type_id;
+  // if(category_id){
+  //   lead_type_id = category_id;
+  // }
+
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
@@ -556,6 +567,7 @@ exports.updateLead = async (req, res) => {
         city,
         office_type,
         category_id: category_id ? category_id : null,
+        lead_type_id: category_id ? category_id : null,
         source_id,
         channel_id,
         region_id: region_id !== 'null' ? region_id : null,
