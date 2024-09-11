@@ -44,15 +44,7 @@ exports.createLead = async (req, res) => {
     exam_details,
   } = req.body;
 
-  // let lead_type_id;
-  // if(category_id){
-  //   lead_type_id = category_id;
-  // }
-
-
   console.log("req.body ================>", req.body);
-  
-
   console.log("req. files ========+>", req.body);
 
 
