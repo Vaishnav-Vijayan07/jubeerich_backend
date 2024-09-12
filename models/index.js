@@ -55,7 +55,20 @@ db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
 db.courseType = require("./courseType")(sequelize, Sequelize);
 db.studyPreference = require("./studyPreference")(sequelize, Sequelize);
-db.studyPreferenceDetails = require("./studyPreferenceDetails")(sequelize, Sequelize);
+db.studyPreferenceDetails = require("./studyPreferenceDetails")(
+  sequelize,
+  Sequelize
+);
+
+db.studyPreference.hasMany(db.studyPreferenceDetails, {
+  foreignKey: "studyPreferenceId", // foreign key in studyPreferenceDetails
+  as: "studyPreferenceDetails",
+});
+
+db.studyPreferenceDetails.belongsTo(db.studyPreference, {
+  foreignKey: "studyPreferenceId", // foreign key in studyPreferenceDetails
+  as: "studyPreference",
+});
 
 // course relation
 db.university.hasMany(db.campus, { foreignKey: "university_id" });
@@ -274,10 +287,22 @@ db.userPrimaryInfo.hasMany(db.workInfos, {
   as: "userWorkInfos",
 });
 
-db.userPrimaryInfo.hasMany(db.studyPreference, { foreignKey: 'userPrimaryInfoId', as: 'studyPreferences' });
-db.country.hasMany(db.studyPreference, { foreignKey: 'countryId', as: 'studyPreferences' });
-db.studyPreference.belongsTo(db.userPrimaryInfo, { foreignKey: 'userPrimaryInfoId', as: 'userPrimaryInfo' });
-db.studyPreference.belongsTo(db.country, { foreignKey: 'countryId', as: 'country' });
+db.userPrimaryInfo.hasMany(db.studyPreference, {
+  foreignKey: "userPrimaryInfoId",
+  as: "studyPreferences",
+});
+db.country.hasMany(db.studyPreference, {
+  foreignKey: "countryId",
+  as: "studyPreferences",
+});
+db.studyPreference.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "userPrimaryInfoId",
+  as: "userPrimaryInfo",
+});
+db.studyPreference.belongsTo(db.country, {
+  foreignKey: "countryId",
+  as: "country",
+});
 
 db.leadSource.belongsTo(db.leadType, {
   foreignKey: 'lead_type_id',

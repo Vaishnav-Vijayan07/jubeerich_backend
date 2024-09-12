@@ -359,6 +359,10 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
         record = await db.userExams.findByPk(id);
         message = "Exam record";
         break;
+      case "studyPreference":
+        record = await db.studyPreferenceDetails.findByPk(id);
+        message = "Study preference record";
+        break;
       default:
         throw new Error("Invalid type specified");
     }

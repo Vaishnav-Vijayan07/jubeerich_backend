@@ -57,7 +57,7 @@ module.exports = (sequelize, Sequelize) => {
                 },
             },
             intakeYear: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.STRING(4),
                 allowNull: false,
             },
             intakeMonth: {

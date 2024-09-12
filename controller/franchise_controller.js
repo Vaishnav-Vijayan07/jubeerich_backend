@@ -42,11 +42,10 @@ exports.getAllFranchises = async (req, res) => {
         {
           model: db.adminUsers,
           as: "adminUsers", // Alias for the join, can be any name
-        //   required: true, // This will perform a right join
+          //   required: true, // This will perform a right join
         },
       ],
     });
-
     res.status(200).json({
       status: true,
       data: franchises,

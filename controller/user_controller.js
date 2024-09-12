@@ -41,12 +41,12 @@ exports.createLead = async (req, res) => {
     zipcode,
     ielts,
     franchise_id,
+    lead_type_id,
     exam_details,
   } = req.body;
 
   console.log("req.body ================>", req.body);
   console.log("req. files ========+>", req.body);
-
 
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
@@ -205,7 +205,7 @@ exports.createLead = async (req, res) => {
         city,
         office_type,
         category_id,
-        lead_type_id: category_id ? category_id : null,
+        lead_type_id,
         source_id,
         channel_id,
         zipcode,
@@ -217,7 +217,12 @@ exports.createLead = async (req, res) => {
         remarks,
         ielts,
         lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl: userRole?.role_id === process.env.IT_TEAM_ID && office_type === process.env.CORPORATE_OFFICE_ID && creTl ? creTl.id : null,
+        assigned_cre_tl:
+          userRole?.role_id === process.env.IT_TEAM_ID &&
+          office_type === process.env.CORPORATE_OFFICE_ID &&
+          creTl
+            ? creTl.id
+            : null,
         created_by: userId,
         assign_type:
           userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
@@ -228,6 +233,23 @@ exports.createLead = async (req, res) => {
       },
       { transaction }
     );
+
+    const userPrimaryId = userPrimaryInfo?.id;
+    console.log("USER ID", userPrimaryId);
+
+    if (preferred_country.length > 0) {
+      const studyPreferences = await Promise.all(
+        preferred_country.map(async (countryId) => {
+          return await db.studyPreference.create(
+            {
+              userPrimaryInfoId: userPrimaryId,
+              countryId,
+            },
+            { transaction } // Pass the transaction here inside the create call
+          );
+        })
+      );
+    }
 
     // Associate the preferred countries with the user
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
@@ -245,9 +267,16 @@ exports.createLead = async (req, res) => {
         const createdExam = await db.userExams.create(
           {
             student_id: userPrimaryInfo.id,
-            exam_name: exam.exam_name,
-            marks: exam.marks,
-            document: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
+            exam_type: exam.exam_type,
+            score_card: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
+            exam_date: exam.exam_date,
+            listening_score: exam.listening_score,
+            speaking_score: exam.speaking_score,
+            reading_score: exam.reading_score,
+            writing_score: exam.writing_score,
+            // overall_score: exam.marks,
+            overall_score: exam.overall_score,
+            updated_by: updated_by
           },
           { transaction }
         );
@@ -401,7 +430,6 @@ exports.createLead = async (req, res) => {
       }
     }
 
-
     // Commit the transaction
     await transaction.commit();
 
@@ -441,6 +469,7 @@ exports.updateLead = async (req, res) => {
     email,
     phone,
     category_id,
+    lead_type_id,
     source_id,
     channel_id,
     city,
@@ -457,16 +486,11 @@ exports.updateLead = async (req, res) => {
     exam_details,
   } = req.body;
 
-  // let lead_type_id;
-  // if(category_id){
-  //   lead_type_id = category_id;
-  // }
-
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
-  console.log('Controller Files', req.files);
+  console.log("Controller Files", req.files);
   console.log("body =========>", req.body);
 
   const examDocuments = req.files && req.files["exam_documents"];
@@ -490,9 +514,12 @@ exports.updateLead = async (req, res) => {
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
-      { model: "region", id: region_id !== 'null' ? region_id : null },
-      { model: "admin_user", id: counsiler_id !== 'null' ? counsiler_id : null },
-      { model: "branch", id: branch_id !== 'null' ? branch_id : null },
+      { model: "region", id: region_id !== "null" ? region_id : null },
+      {
+        model: "admin_user",
+        id: counsiler_id !== "null" ? counsiler_id : null,
+      },
+      { model: "branch", id: branch_id !== "null" ? branch_id : null },
       { model: "admin_user", id: updated_by },
     ];
 
@@ -559,12 +586,12 @@ exports.updateLead = async (req, res) => {
         city,
         office_type,
         category_id: category_id ? category_id : null,
-        lead_type_id: category_id ? category_id : null,
+        lead_type_id,
         source_id,
         channel_id,
-        region_id: region_id !== 'null' ? region_id : null,
-        counsiler_id: counsiler_id !== 'null' ? counsiler_id : null,
-        branch_id: branch_id !== 'null' ? branch_id : null,
+        region_id: region_id !== "null" ? region_id : null,
+        counsiler_id: counsiler_id !== "null" ? counsiler_id : null,
+        branch_id: branch_id !== "null" ? branch_id : null,
         updated_by,
         remarks,
         ielts,
@@ -580,9 +607,14 @@ exports.updateLead = async (req, res) => {
 
     // Check if preferred countries are changed
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      const currentCountryIds = currentPreferredCountries.map(country => country.id);
+      const currentCountryIds = currentPreferredCountries.map(
+        (country) => country.id
+      );
 
-      if (JSON.stringify(currentCountryIds.sort()) !== JSON.stringify(preferred_country.sort())) {
+      if (
+        JSON.stringify(currentCountryIds.sort()) !==
+        JSON.stringify(preferred_country.sort())
+      ) {
         // Remove current assignments
         await lead.setPreferredCountries([], { transaction });
 
@@ -597,32 +629,55 @@ exports.updateLead = async (req, res) => {
         const examDocument = examDocuments ? examDocuments[index] : null;
 
         let updateData = {
-          exam_name: exam.exam_name,
-          marks: exam.marks,
-        };
-
-        if (examDocument && examDocument.size !== 0) {
-          updateData.document = examDocument.filename;
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          // overall_score: exam.marks,
+          overall_score: exam.overall_score,
+          updated_by: updated_by
         }
 
-        const examExist = await db.userExams.findOne({
-          where: { student_id: id, exam_name: exam.exam_name },
-        });
+        if (examDocument && examDocument.size !== 0) {
+          updateData.score_card = examDocument.filename;
+        }
+        console.log('exam.exam_type',exam.exam_type);
+        
 
-        if (examExist) {
+        // let examExist;
+        // if(exam?.id){
+        //   // examExist = await db.userExams.findOne({
+        //   //   // where: { student_id: id, exam_type: exam.exam_type },
+        //   //   where: { student_id: id, id: exam?.id },
+        //   // });
+        // }
+        // console.log('examExist',examExist);
+
+        // if (examExist) {
+        if (exam.id) {
           return db.userExams.update(updateData, {
             where: {
               student_id: id,
-              exam_name: exam.exam_name,
+              // exam_type: exam.exam_type,
+              id: exam.id,
             },
             transaction,
           });
         } else {
           return db.userExams.create({
             student_id: id,
-            exam_name: exam.exam_name,
-            marks: exam.marks,
-            document: examDocument ? examDocument.filename : null,
+            exam_type: exam.exam_type,
+            exam_date: exam.exam_date,
+            listening_score: exam.listening_score,
+            speaking_score: exam.speaking_score,
+            reading_score: exam.reading_score,
+            writing_score: exam.writing_score,
+            // overall_score: exam.marks,
+            overall_score: exam.overall_score,
+            updated_by: updated_by,
+            score_card: examDocument ? examDocument.filename : null,
           }, { transaction });
         }
       });
@@ -909,12 +964,12 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 };
 
 exports.deleteExams = async (req, res) => {
-  const { exam_name, id } = req.body;
+  const { exam_type, id } = req.body;
 
   try {
     const exam = await db.userExams.destroy({
       where: {
-        exam_name: exam_name,
+        exam_type: exam_type,
         student_id: id,
       },
     });
