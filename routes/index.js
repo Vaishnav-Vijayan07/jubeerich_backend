@@ -728,6 +728,12 @@ router.get(
   AdminUserController.getAllCounsellors
 );
 
+router.get(
+  "/get_all_counsellors/:id",
+  [authMiddleware.checkUserAuth],
+  AdminUserController.getAllCounsellorsByBranch
+);
+
 // Campus routes
 router.get(
   "/campuses",
