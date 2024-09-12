@@ -15,7 +15,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
         {
           model: db.country,
           as: "countries", // Ensure this alias matches your many-to-many association setup
-          attributes: ["country_name"],
+          attributes: ["id", "country_name"],
           through: { attributes: [] }, // This removes the join table details from the response
         },
       ],
@@ -33,9 +33,16 @@ exports.getAllAdminUsers = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
+        // countries: userJson.countries
+        //   ? userJson.countries.map((country) => country.country_name)
+        // : [], // List of country names
         countries: userJson.countries
-          ? userJson.countries.map((country) => country.country_name)
-          : [], // List of country names
+          ? userJson.countries.map((country) => {
+            return {
+              value: country?.id,
+              label: country?.country_name
+            }
+          }) : [],
         access_role: undefined, // Remove the access_role object
       };
     });
@@ -321,7 +328,7 @@ exports.updateAdminUsers = async (req, res) => {
     await user.update(updateData);
 
     // If role_id is 5, handle updating associated countries
-    if (branch_id && Array.isArray(country_ids)) {
+    if (Array.isArray(country_ids)) {
       // Update the associated countries using the setCountries method for many-to-many relationships
       await user.setCountries(country_ids);
     }

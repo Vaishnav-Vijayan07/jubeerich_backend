@@ -675,7 +675,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
       const examDetails = info.exams.map((exam)=> ({
         exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
+        exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
         marks: exam.overall_score,
         listening_score: exam.listening_score,
         speaking_score: exam.speaking_score,

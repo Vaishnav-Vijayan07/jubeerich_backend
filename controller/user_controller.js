@@ -253,7 +253,8 @@ exports.createLead = async (req, res) => {
             speaking_score: exam.speaking_score,
             reading_score: exam.reading_score,
             writing_score: exam.writing_score,
-            overall_score: exam.marks,
+            // overall_score: exam.marks,
+            overall_score: exam.overall_score,
             updated_by: updated_by
           },
           { transaction }
@@ -606,7 +607,8 @@ exports.updateLead = async (req, res) => {
           speaking_score: exam.speaking_score,
           reading_score: exam.reading_score,
           writing_score: exam.writing_score,
-          overall_score: exam.marks,
+          // overall_score: exam.marks,
+          overall_score: exam.overall_score,
           updated_by: updated_by
         }
 
@@ -644,7 +646,8 @@ exports.updateLead = async (req, res) => {
             speaking_score: exam.speaking_score,
             reading_score: exam.reading_score,
             writing_score: exam.writing_score,
-            overall_score: exam.marks,
+            // overall_score: exam.marks,
+            overall_score: exam.overall_score,
             updated_by: updated_by,
             score_card: examDocument ? examDocument.filename : null,
           }, { transaction });
