@@ -585,6 +585,11 @@ router.post(
   AssignLeadsController.autoAssign
 );
 router.post(
+  "/assign_branch_counselor",
+  [authMiddleware.checkUserAuth],
+  AssignLeadsController.assignCres
+);
+router.post(
   "/assign_counselor_tl",
   [authMiddleware.checkUserAuth],
   AssignLeadsController.assignCounselorTL

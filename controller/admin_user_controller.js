@@ -12,12 +12,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
           as: "access_role",
           attributes: ["role_name"],
         },
-        {
-          model: db.country,
-          as: "countries", // Ensure this alias matches your many-to-many association setup
-          attributes: ["id", "country_name"],
-          through: { attributes: [] }, // This removes the join table details from the response
-        },
       ],
     });
 
