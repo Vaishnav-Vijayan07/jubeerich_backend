@@ -33,6 +33,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      lead_type_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "lead_types",
+          key: "id",
+        },
+        allowNull: true,
+      },
       source_id: {
         type: Sequelize.INTEGER,
         references: {

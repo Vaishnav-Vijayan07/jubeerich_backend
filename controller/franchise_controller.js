@@ -9,10 +9,10 @@ const franchiseValidationRules = [
   check("email").isEmail().withMessage("Valid email is required"),
   check("address").not().isEmpty().withMessage("Address is required"),
   check("phone").isNumeric().withMessage("Phone number must be numeric"),
-  check("pocName")
-    .not()
-    .isEmpty()
-    .withMessage("Point of contact name is required"),
+  // check("pocName")
+  //   .not()
+  //   .isEmpty()
+  //   .withMessage("Point of contact name is required"),
 ];
 
 // Utility function to generate a unique slug

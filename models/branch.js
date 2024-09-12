@@ -21,39 +21,39 @@ module.exports = (sequelize, Sequelize) => {
     },
     address: {
       type: Sequelize.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     city: {
       type: Sequelize.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
     state: {
       type: Sequelize.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
     country: {
       type: Sequelize.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
     pincode: {
       type: Sequelize.STRING(20),
-      allowNull: false,
+      allowNull: true,
     },
     contact_person_email: {
       type: Sequelize.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     contact_person_name: {
       type: Sequelize.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     contact_person_mobile: {
       type: Sequelize.STRING(20),
-      allowNull: false,
+      allowNull: true,
     },
     contact_person_designation: {
       type: Sequelize.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     website: {
       type: Sequelize.STRING(255),

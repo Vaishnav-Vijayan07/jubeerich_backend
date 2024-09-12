@@ -1,25 +1,22 @@
 const db = require("../models");
 const Channel = db.leadChannel;
 
-// Function to generate a unique slug
 async function generateUniqueSlug(name) {
-  // Create a base slug with underscores and capitalize it
   const baseSlug = name.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric characters with underscores
-    .replace(/(^_+|_+$)/g, '')   // Remove leading and trailing underscores
-    .toUpperCase();              // Capitalize the slug
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/(^_+|_+$)/g, '') 
+    .toUpperCase();         
 
   let uniqueSlug = baseSlug;
   let counter = 1;
 
   while (await Channel.findOne({ where: { slug: uniqueSlug } })) {
-    uniqueSlug = `${baseSlug}_${counter}`; // Use underscore instead of hyphen for uniqueness
+    uniqueSlug = `${baseSlug}_${counter}`;
     counter++;
   }
 
   return uniqueSlug;
 }
-
 
 // Get all channels
 exports.getAllChannels = (req, res) => {

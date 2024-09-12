@@ -3,6 +3,46 @@ const Branch = db.branches;
 const { validationResult, check } = require("express-validator");
 
 // Validation rules for Branch
+// const branchValidationRules = [
+//   check("branch_name").not().isEmpty().withMessage("Branch name is required"),
+//   check("email")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Email is required")
+//     .isEmail()
+//     .withMessage("Invalid email format"),
+//   check("phone").not().isEmpty().withMessage("Phone is required"),
+//   check("address").not().isEmpty().withMessage("Address is required"),
+//   check("city").not().isEmpty().withMessage("City is required"),
+//   check("state").not().isEmpty().withMessage("State is required"),
+//   check("country").not().isEmpty().withMessage("Country is required"),
+//   check("pincode").not().isEmpty().withMessage("Pincode is required"),
+//   check("contact_person_email")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Contact person email is required")
+//     .isEmail()
+//     .withMessage("Invalid email format"),
+//   check("contact_person_name")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Contact person name is required"),
+//   check("contact_person_mobile")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Contact person mobile is required"),
+//   check("contact_person_designation")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Contact person designation is required"),
+//   check("status")
+//     .not()
+//     .isEmpty()
+//     .withMessage("Status is required")
+//     .isBoolean()
+//     .withMessage("Status must be a boolean value"),
+// ];
+
 const branchValidationRules = [
   check("branch_name").not().isEmpty().withMessage("Branch name is required"),
   check("email")
@@ -12,29 +52,6 @@ const branchValidationRules = [
     .isEmail()
     .withMessage("Invalid email format"),
   check("phone").not().isEmpty().withMessage("Phone is required"),
-  check("address").not().isEmpty().withMessage("Address is required"),
-  check("city").not().isEmpty().withMessage("City is required"),
-  check("state").not().isEmpty().withMessage("State is required"),
-  check("country").not().isEmpty().withMessage("Country is required"),
-  check("pincode").not().isEmpty().withMessage("Pincode is required"),
-  check("contact_person_email")
-    .not()
-    .isEmpty()
-    .withMessage("Contact person email is required")
-    .isEmail()
-    .withMessage("Invalid email format"),
-  check("contact_person_name")
-    .not()
-    .isEmpty()
-    .withMessage("Contact person name is required"),
-  check("contact_person_mobile")
-    .not()
-    .isEmpty()
-    .withMessage("Contact person mobile is required"),
-  check("contact_person_designation")
-    .not()
-    .isEmpty()
-    .withMessage("Contact person designation is required"),
   check("status")
     .not()
     .isEmpty()

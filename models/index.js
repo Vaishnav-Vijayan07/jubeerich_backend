@@ -21,6 +21,7 @@ db.Op = Op;
 
 db.accessRoles = require("./accessRoles")(sequelize, Sequelize);
 db.accessPowers = require("./accessPowers")(sequelize, Sequelize);
+db.leadType = require("./leadType")(sequelize, Sequelize);
 db.leadCategory = require("./leadCategory")(sequelize, Sequelize);
 db.leadChannel = require("./leadChannel")(sequelize, Sequelize);
 db.leadSource = require("./leadSource")(sequelize, Sequelize);
@@ -47,6 +48,7 @@ db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
+db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -131,6 +133,11 @@ db.leadChannel.belongsTo(db.leadSource, {
 db.userPrimaryInfo.belongsTo(db.leadCategory, {
   as: "category_name",
   foreignKey: "category_id",
+});
+
+db.userPrimaryInfo.belongsTo(db.leadType, {
+  as: "type_name",
+  foreignKey: "lead_type_id",
 });
 
 db.userPrimaryInfo.belongsTo(db.adminUsers, {
@@ -296,6 +303,25 @@ db.studyPreference.belongsTo(db.userPrimaryInfo, {
 db.studyPreference.belongsTo(db.country, {
   foreignKey: "countryId",
   as: "country",
+});
+
+db.adminUsers.belongsToMany(db.country, {
+  through: db.adminUserCountries,
+  foreignKey: "admin_user_id",
+  otherKey: "country_id",
+  as: "countries",
+});
+
+db.country.belongsToMany(db.adminUsers, {
+  through: db.adminUserCountries,
+  foreignKey: "country_id",
+  otherKey: "admin_user_id",
+  as: "adminUsers",
+});
+
+db.leadSource.belongsTo(db.leadType, {
+  foreignKey: 'lead_type_id',
+  as: 'leadType',
 });
 
 module.exports = db;

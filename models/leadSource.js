@@ -1,5 +1,3 @@
-const { v4: uuidv4 } = require('uuid');
-
 module.exports = (sequelize, Sequelize) => {
   const LeadSource = sequelize.define("lead_source", {
     id: {
@@ -24,6 +22,16 @@ module.exports = (sequelize, Sequelize) => {
     updated_by: {
       type: Sequelize.STRING(255),
       allowNull: true,
+    },
+    lead_type_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'lead_types',
+        key: 'id',
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE', 
     },
   });
   return LeadSource;

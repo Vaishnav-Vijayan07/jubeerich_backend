@@ -6,10 +6,7 @@ const { validationResult, check } = require("express-validator");
 const universityValidationRules = [
   check("university_name").not().isEmpty().withMessage("University name is required"),
   check("location").not().isEmpty().withMessage("Location is required"),
-  check("country_id").optional().isInt().withMessage("Country ID must be an integer"),
-  check("website_url").optional().isURL().withMessage("Website URL must be a valid URL"),
-  check("image_url").optional().isURL().withMessage("Image URL must be a valid URL"),
-  check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
+  check("country_id").optional().isInt().withMessage("Choose a country"),
 ];
 
 // Helper function to check if country exists

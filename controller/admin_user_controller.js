@@ -14,8 +14,9 @@ exports.getAllAdminUsers = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
+          as: "countries", // Ensure this alias matches your many-to-many association setup
           attributes: ["country_name"],
+          through: { attributes: [] }, // This removes the join table details from the response
         },
       ],
     });
@@ -27,22 +28,21 @@ exports.getAllAdminUsers = async (req, res, next) => {
       });
     }
 
-    // console.log("userJson ==>", users);
-
-    const usersWithRoleAndCountry = users.map((user) => {
+    const usersWithRoleAndCountries = users.map((user) => {
       const userJson = user.toJSON();
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => country.country_name)
+          : [], // List of country names
         access_role: undefined, // Remove the access_role object
-        country: undefined, // Remove the country object
       };
     });
 
     res.status(200).json({
       status: true,
-      data: usersWithRoleAndCountry,
+      data: usersWithRoleAndCountries,
     });
   } catch (error) {
     console.error(`Error in getting admin users: ${error}`);
@@ -52,6 +52,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
     });
   }
 };
+
 
 exports.getAllCounsellors = async (req, res, next) => {
   try {
@@ -187,6 +188,7 @@ exports.addAdminUsers = async (req, res) => {
     region_id,
     country_id,
     franchise_id,
+    country_ids
   } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
@@ -236,6 +238,10 @@ exports.addAdminUsers = async (req, res) => {
       franchise_id,
     });
 
+    if (branch_id && Array.isArray(country_ids) && country_ids.length > 0) {
+      await newUser.setCountries(country_ids); // Use Sequelize's utility method for many-to-many relationships
+    }
+
     res.json({
       status: true,
       data: newUser,
@@ -264,24 +270,29 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
+    franchise_id,
+    country_ids,
   } = req.body;
-  const profileImage = req.file; // New profile image (if uploaded)
 
   try {
-    const userWithEmail = await db.adminUsers.findAll({
-      where: {
-        email,
-        id: { [Op.ne]: id },
-      },
-    });
-
-    if (userWithEmail.length > 0) {
-      return res.status(409).json({
-        status: false,
-        message: "Email already exists",
+    // Check if the email already exists for another user
+    if (email) {
+      const userWithEmail = await db.adminUsers.findAll({
+        where: {
+          email,
+          id: { [Op.ne]: id },
+        },
       });
+
+      if (userWithEmail.length > 0) {
+        return res.status(409).json({
+          status: false,
+          message: "Email already exists",
+        });
+      }
     }
 
+    // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
       return res.status(404).json({
@@ -289,41 +300,36 @@ exports.updateAdminUsers = async (req, res) => {
         message: "Admin user not found",
       });
     }
-    // const oldImagePath = user.profile_image_path;
 
-    // // Delete the old image if it exists
-    // const deleteOldImage = (oldImagePath) => {
-    //   if (oldImagePath) {
-    //     fs.unlink(oldImagePath, (err) => {
-    //       if (err) {
-    //         console.error("Error deleting old image:", err);
-    //       }
-    //     });
-    //   }
-    // };
-    // deleteOldImage(oldImagePath);
+    // Prepare update data, retaining existing values if new values are not provided
+    const updateData = {
+      employee_id: employee_id ?? user.employee_id,
+      name: name ?? user.name,
+      email: email ?? user.email,
+      phone: phone ?? user.phone,
+      address: address ?? user.address,
+      username: username ?? user.username,
+      updated_by: updated_by ?? user.updated_by,
+      branch_id: branch_id ?? user.branch_id,
+      role_id: role_id ?? user.role_id,
+      region_id: region_id ?? user.region_id,
+      country_id: country_id ?? user.country_id,
+      franchise_id: franchise_id ?? user.franchise_id,
+    };
 
-    // Update the user with the new image path
-    const updatedUser = await user.update({
-      employee_id,
-      name,
-      email,
-      phone,
-      address,
-      username,
-      // password,
-      updated_by,
-      profile_image_path: profileImage ? profileImage.path : null,
-      branch_id,
-      role_id,
-      region_id,
-      country_id,
-    });
+    // Update the admin user
+    await user.update(updateData);
+
+    // If role_id is 5, handle updating associated countries
+    if (branch_id && Array.isArray(country_ids)) {
+      // Update the associated countries using the setCountries method for many-to-many relationships
+      await user.setCountries(country_ids);
+    }
 
     res.json({
       status: true,
       message: "Admin user updated successfully",
-      data: updatedUser,
+      data: user,
     });
   } catch (error) {
     console.error("Error updating admin user:", error);
@@ -333,6 +339,92 @@ exports.updateAdminUsers = async (req, res) => {
     });
   }
 };
+
+
+
+// exports.updateAdminUsers = async (req, res) => {
+//   const id = parseInt(req.params.id);
+//   const {
+//     employee_id,
+//     name,
+//     email,
+//     phone,
+//     address,
+//     username,
+//     updated_by,
+//     branch_id,
+//     role_id,
+//     region_id,
+//     country_id,
+//   } = req.body;
+//   const profileImage = req.file; // New profile image (if uploaded)
+
+//   try {
+//     const userWithEmail = await db.adminUsers.findAll({
+//       where: {
+//         email,
+//         id: { [Op.ne]: id },
+//       },
+//     });
+
+//     if (userWithEmail.length > 0) {
+//       return res.status(409).json({
+//         status: false,
+//         message: "Email already exists",
+//       });
+//     }
+
+//     const user = await db.adminUsers.findByPk(id);
+//     if (!user) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Admin user not found",
+//       });
+//     }
+//     // const oldImagePath = user.profile_image_path;
+
+//     // // Delete the old image if it exists
+//     // const deleteOldImage = (oldImagePath) => {
+//     //   if (oldImagePath) {
+//     //     fs.unlink(oldImagePath, (err) => {
+//     //       if (err) {
+//     //         console.error("Error deleting old image:", err);
+//     //       }
+//     //     });
+//     //   }
+//     // };
+//     // deleteOldImage(oldImagePath);
+
+//     // Update the user with the new image path
+//     const updatedUser = await user.update({
+//       employee_id,
+//       name,
+//       email,
+//       phone,
+//       address,
+//       username,
+//       // password,
+//       updated_by,
+//       // profile_image_path: profileImage ? profileImage.path : null,
+//       branch_id,
+//       role_id,
+//       region_id,
+//       country_id,
+//     });
+
+//     res.json({
+//       status: true,
+//       message: "Admin user updated successfully",
+//       data: updatedUser,
+//     });
+//   } catch (error) {
+//     console.error("Error updating admin user:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.deleteAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);
