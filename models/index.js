@@ -48,6 +48,8 @@ db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
+db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
+db.workInfos = require("./workInfos")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -79,8 +81,6 @@ db.course.belongsTo(db.stream, { foreignKey: "stream_id" });
 
 db.courseType.hasMany(db.course, { foreignKey: "course_type_id" });
 db.course.belongsTo(db.courseType, { foreignKey: "course_type_id" });
-db.academicInfos = require("./academicinfo")(sequelize, Sequelize);
-db.workInfos = require("./workinfos")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
