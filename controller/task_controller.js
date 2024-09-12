@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+const { Sequelize, where, Op } = require("sequelize");
 const db = require("../models");
 
 exports.getTasks = async (req, res) => {
@@ -265,6 +265,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
       attributes: [
+        "id",
         "full_name",
         "email",
         "phone",
@@ -286,6 +287,11 @@ exports.getStudentBasicInfoById = async (req, res) => {
           through: {
             attributes: [], // Exclude attributes from the join table
           },
+        },
+        {
+          model: db.studyPreference,
+          as: "studyPreferences",
+          attributes: ["id"], // Include the country name
         },
         {
           model: db.leadSource,
@@ -409,7 +415,6 @@ exports.getStudentAcademicInfoById = async (req, res) => {
             marks: exam.dataValues.marks,
             exam_documents: exam.dataValues.document,
             document: exam.dataValues.document,
-            
           };
         }),
       };

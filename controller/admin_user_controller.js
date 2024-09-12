@@ -27,7 +27,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
       });
     }
 
-    console.log("userJson ==>", users);
+    // console.log("userJson ==>", users);
 
     const usersWithRoleAndCountry = users.map((user) => {
       const userJson = user.toJSON();
@@ -80,7 +80,7 @@ exports.getAllCounsellors = async (req, res, next) => {
       });
     }
 
-    console.log("userJson ==>", users);
+    // console.log("userJson ==>", users);
 
     const usersWithRoleAndCountry = users.map((user) => {
       const userJson = user.toJSON();
