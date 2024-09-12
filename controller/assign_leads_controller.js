@@ -115,6 +115,155 @@ exports.assignCres = async (req, res) => {
     }
 };
 
+exports.assignCounselorTL = async (req, res) => {
+    const { branch_id, user_ids } = req.body;
+    const userId = req.userDecodeId;
+
+    // Start a transaction
+    const transaction = await sequelize.transaction();
+
+    try {
+        // Validate branch_id
+        if (!branch_id) {
+            return res.status(400).json({
+                status: false,
+                message: "branch_id is required",
+            });
+        }
+
+        // Validate user_ids
+        if (!Array.isArray(user_ids) || user_ids.length === 0) {
+            return res.status(400).json({
+                status: false,
+                message: "user_ids must be a non-empty array",
+            });
+        }
+
+        // Validate each user_id
+        for (const user_id of user_ids) {
+            if (typeof user_id !== "number") {
+                return res.status(400).json({
+                    status: false,
+                    message: "Each user_id must be a number",
+                });
+            }
+        }
+
+        // Find the counselor based on the branch_id
+        const counsellor = await db.adminUsers.findOne({
+            where: {
+                branch_id,
+                role_id: process.env.COUNSELLOR_TL_ID,
+                status: 'true',
+            },
+            transaction,
+        });
+
+        // Validate if a counselor is found
+        if (!counsellor) {
+            return res.status(404).json({
+                status: false,
+                message: "No active counselor tl found for the provided branch",
+            });
+        }
+
+        // Extract the counselor's ID
+        const counsellor_id = counsellor.id;
+
+        // Process each user_id
+        await Promise.all(
+            user_ids.map(async (user_id) => {
+                // Step 1: Fetch user info with associated countries
+                const userInfo = await db.userPrimaryInfo.findOne({
+                    where: { id: user_id },
+                    transaction,
+                });
+
+                if (!userInfo) {
+                    throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+                }
+
+                // Update assigned_counsellor for the user
+                await db.userPrimaryInfo.update(
+                    { assigned_counsellor_tl: counsellor_id, updated_by: userId, assign_type: "direct_assign" },
+                    { where: { id: user_id }, transaction }
+                );
+            })
+        );
+
+        // Commit transaction
+        await transaction.commit();
+
+        return res.status(200).json({
+            status: true,
+            message: "Counselor tl assigned successfully",
+        });
+    } catch (error) {
+        // Rollback transaction
+        await transaction.rollback();
+        console.error(`Error assigning counselor tl: ${error}`);
+        return res.status(500).json({
+            status: false,
+            message: "Internal server error",
+        });
+    }
+};
+
+exports.listBranches = async (req, res) => {
+    const transaction = await sequelize.transaction();
+    const userId = req.userDecodeId;
+    try {
+        const adminUser = await db.adminUsers.findOne({
+            where: { id: userId },
+            attributes: ['region_id'], // Fetch only the region_id field
+            transaction,
+        });
+
+        // Check if the admin user exists
+        if (!adminUser) {
+            return res.status(404).json({
+                status: false,
+                message: "Admin user not found",
+            });
+        }
+
+        // Extract the branch_id
+        const { region_id } = adminUser;
+
+        // Fetch the branch details using the branch_id
+        const branch = await db.branches.findAll({
+            where: { region_id },
+            transaction,
+        });
+
+        // Check if the branch exists
+        if (!branch) {
+            return res.status(404).json({
+                status: false,
+                message: "Branch not found for the given region",
+            });
+        }
+
+        // Commit transaction
+        await transaction.commit();
+
+        // Respond with the branch details
+        return res.status(200).json({
+            status: true,
+            message: "Branch details retrieved successfully",
+            data: branch,
+        });
+
+    } catch (err) {
+        await transaction.rollback();
+        console.error("Error in finding branches:", error);
+        res.status(500).json({
+            status: false,
+            message: "Internal server error",
+        });
+    }
+}
+
 exports.autoAssign = async (req, res) => {
     const { leads_ids } = req.body;
     const userId = req.userDecodeId;

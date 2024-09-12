@@ -187,8 +187,7 @@ exports.addAdminUsers = async (req, res) => {
     branch_id,
     region_id,
     country_id,
-    franchise_id,
-    country_ids
+    franchise_id
   } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
@@ -238,10 +237,6 @@ exports.addAdminUsers = async (req, res) => {
       franchise_id,
     });
 
-    if (branch_id && Array.isArray(country_ids) && country_ids.length > 0) {
-      await newUser.setCountries(country_ids); // Use Sequelize's utility method for many-to-many relationships
-    }
-
     res.json({
       status: true,
       data: newUser,
@@ -270,8 +265,7 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
-    franchise_id,
-    country_ids,
+    franchise_id
   } = req.body;
 
   try {
@@ -319,12 +313,6 @@ exports.updateAdminUsers = async (req, res) => {
 
     // Update the admin user
     await user.update(updateData);
-
-    // If role_id is 5, handle updating associated countries
-    if (branch_id && Array.isArray(country_ids)) {
-      // Update the associated countries using the setCountries method for many-to-many relationships
-      await user.setCountries(country_ids);
-    }
 
     res.json({
       status: true,

@@ -571,6 +571,16 @@ router.post(
   [authMiddleware.checkUserAuth],
   AssignLeadsController.autoAssign
 );
+router.post(
+  "/assign_counselor_tl",
+  [authMiddleware.checkUserAuth],
+  AssignLeadsController.assignCounselorTL
+);
+router.get(
+  "/list_manager_branches",
+  [authMiddleware.checkUserAuth],
+  AssignLeadsController.listBranches
+);
 router.put(
   "/leads/:id",
   uploadMultiple,

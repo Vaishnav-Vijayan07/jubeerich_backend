@@ -48,7 +48,6 @@ db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
-db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -279,20 +278,6 @@ db.userPrimaryInfo.hasMany(db.studyPreference, { foreignKey: 'userPrimaryInfoId'
 db.country.hasMany(db.studyPreference, { foreignKey: 'countryId', as: 'studyPreferences' });
 db.studyPreference.belongsTo(db.userPrimaryInfo, { foreignKey: 'userPrimaryInfoId', as: 'userPrimaryInfo' });
 db.studyPreference.belongsTo(db.country, { foreignKey: 'countryId', as: 'country' });
-
-db.adminUsers.belongsToMany(db.country, {
-  through: db.adminUserCountries,
-  foreignKey: "admin_user_id",
-  otherKey: "country_id",
-  as: "countries",
-});
-
-db.country.belongsToMany(db.adminUsers, {
-  through: db.adminUserCountries,
-  foreignKey: "country_id",
-  otherKey: "admin_user_id",
-  as: "adminUsers",
-});
 
 db.leadSource.belongsTo(db.leadType, {
   foreignKey: 'lead_type_id',
