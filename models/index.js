@@ -50,6 +50,9 @@ db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
 db.workInfos = require("./workInfos")(sequelize, Sequelize);
+db.previousVisaDecline = require('./previousVisaDecline')(sequelize, Sequelize);
+db.previousVisaApprove = require('./previousVisaApproval')(sequelize, Sequelize);
+db.travelHistory = require('./travelHistory')(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -275,6 +278,39 @@ db.userPrimaryInfo.hasMany(db.academicInfos, {
   foreignKey: "user_id",
   as: "userAcademicInfos",
 });
+
+// Association for PreviousVisaDecline and UserPrimaryInfo
+db.previousVisaDecline.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "previousVisaDecline"
+})
+
+db.userPrimaryInfo.hasMany(db.previousVisaDecline, {
+  foreignKey: "student_id",
+  as: "previousVisaDeclines"
+})
+
+// Association for PreviousVisaApprove and UserPrimaryInfo
+db.previousVisaApprove.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "previousVisaApprove"
+})
+
+db.userPrimaryInfo.hasMany(db.previousVisaApprove, {
+  foreignKey: "student_id",
+  as: "previousVisaApprovals"
+})
+
+// Association for TravelHistory and UserPrimaryInfo
+db.travelHistory.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "travelHistory"
+})
+
+db.userPrimaryInfo.hasMany(db.travelHistory, {
+  foreignKey: "student_id",
+  as: "travelHistories"
+})
 
 // Association for WorkInfos and UserPrimaryInfo
 db.workInfos.belongsTo(db.userPrimaryInfo, {

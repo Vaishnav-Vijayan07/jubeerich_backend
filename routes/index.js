@@ -48,6 +48,7 @@ const StreamController = require("../controller/stream_controller");
 const getDropdownData = require("../controller/drop_down_controller");
 const studyPreferencesByUserPrimaryInfoController = require("../controller/study_preference_controller");
 const studyPreferencesDetailsController = require("../controller/study_preference_details");
+const visaProcessController = require("../controller/visa_process");
 
 const router = express.Router();
 
@@ -734,6 +735,12 @@ router.get(
   AdminUserController.getAllCounsellorsByBranch
 );
 
+router.get(
+  "/get_all_counsellors_tl/:id",
+  [authMiddleware.checkUserAuth],
+  AdminUserController.getAllCounsellorsTLByBranch
+);
+
 // Campus routes
 router.get(
   "/campuses",
@@ -850,5 +857,9 @@ router.post(
   [authMiddleware.checkUserAuth],
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
+
+router.post('/visa_decline_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess)
+router.post('/visa_approve_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess)
+router.post('/travel_history', [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory)
 
 module.exports = router;
