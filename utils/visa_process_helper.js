@@ -10,15 +10,12 @@ const batchUpsertVisaProcess = async (model, records, transaction) => {
         transaction,
     });
 
-    console.log('existingRecords', existingRecords);
-
     const updatePromises = [];
     const addPromises = [];
 
     records.forEach((record) => {
         if (record.id === "0") {
             const { id, ...recordWithOutid } = record;
-            console.log('recordWithOutid', recordWithOutid);
             addPromises.push(model.create(recordWithOutid, { transaction }));
         } else {
             const existingRecord = existingRecords.find((r) => r.id == record.id);
@@ -29,8 +26,6 @@ const batchUpsertVisaProcess = async (model, records, transaction) => {
                         updateFields[key] = record[key];
                     }
                 });
-
-                console.log("UPDATE FILEDS", updateFields);
 
                 if (Object.keys(updateFields).length > 0) {
                     updatePromises.push(
@@ -51,8 +46,6 @@ const addOrUpdateVisaDecline = async (visaDecline, userId, transaction) => {
             updated_by: userId
         }));
 
-        console.log("Visa Declines", visaDeclineData);
-
         await batchUpsertVisaProcess(db.previousVisaDecline, visaDeclineData, transaction);
         return { success: true };
     } catch (error) {
@@ -68,8 +61,6 @@ const addOrUpdateVisaApprove = async (visaApprove, userId, transaction) => {
             updated_by: userId
         }));
 
-        console.log("Visa Approve", visaApproveData);
-
         await batchUpsertVisaProcess(db.previousVisaApprove, visaApproveData, transaction);
         return { success: true };
     } catch (error) {
@@ -84,8 +75,6 @@ const addOrUpdateTravelHistory = async (travelHistory, userId, transaction) => {
             ...visaRecord,
             updated_by: userId
         }));
-
-        console.log("Travel History ", travelHistoryData);
 
         await batchUpsertVisaProcess(db.travelHistory, travelHistoryData, transaction);
         return { success: true };

@@ -1,7 +1,6 @@
 const { where } = require("sequelize");
 const db = require("../models");
 const { addOrUpdateVisaDecline, addOrUpdateVisaApprove, addOrUpdateTravelHistory, getVisaData } = require("../utils/visa_process_helper");
-
 const sequelize = db.sequelize;
 
 exports.saveVisaDeclineProcess = async (req, res, next) => {
@@ -26,9 +25,7 @@ exports.saveVisaDeclineProcess = async (req, res, next) => {
     }
   } catch (error) {
     console.log(error);
-    if (!transaction.success) {
-      await transaction.rollback();
-    }
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
@@ -59,9 +56,7 @@ exports.saveVisaApproveProcess = async (req, res, next) => {
     }
   } catch (error) {
     console.log(error);
-    if (!transaction.success) {
-      await transaction.rollback();
-    }
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
@@ -92,9 +87,7 @@ exports.saveTravelHistory = async (req, res, next) => {
     }
   } catch (error) {
     console.log(error);
-    if (!transaction.success) {
-      await transaction.rollback();
-    }
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
@@ -109,11 +102,7 @@ exports.getAllVisaProcess = async (req, res, next) => {
 
     const previousVisaDeclineData = await getVisaData(db.previousVisaDecline, id, 'declined');
 
-    console.log('previousVisaDeclineData', previousVisaDeclineData);
-
     const previousVisaApproveData = await getVisaData(db.previousVisaApprove, id, 'approved');
-
-    console.log('previousVisaApproveData', previousVisaApproveData);
 
     const travelHistory = await db.travelHistory.findAll({
       where: { student_id: id },
@@ -125,8 +114,6 @@ exports.getAllVisaProcess = async (req, res, next) => {
         }
       ]
     })
-
-    console.log('travelHistory', travelHistory);
 
     return res.json({
       message: "Fetched Successfully",
@@ -214,9 +201,6 @@ exports.deleteVisaProcessItem = async(req,res,next) => {
         throw new Error("Invalid type specified");
     }
 
-    console.log('visaData',visaData);
-    
-
     if (!visaData) {
       await transaction.rollback();
       throw new Error(`${message} not found`);
@@ -233,9 +217,7 @@ exports.deleteVisaProcessItem = async(req,res,next) => {
 
   } catch (error) {
     console.log(error);
-    if (!transaction.finished) {
-      await transaction.rollback();
-    }
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
