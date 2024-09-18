@@ -858,8 +858,10 @@ router.post(
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
 
-router.post('/visa_decline_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess)
-router.post('/visa_approve_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess)
-router.post('/travel_history', [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory)
+router.post('/visa_decline_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess);
+router.post('/visa_approve_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess);
+router.post('/travel_history', [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
+router.get('/visa_process/:id', [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
+router.delete('/delete_visa_item/:formName/:id', [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
 
 module.exports = router;

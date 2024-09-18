@@ -13,9 +13,13 @@ module.exports = (sequelize, Sequelize) => {
                 key: "id",
             },
         },
-        country_name: {
-            type: Sequelize.STRING(100),
+        country_id: {
+            type: Sequelize.INTEGER,
             allowNull: false,
+            references: {
+                model: "countries",
+                key: "id"
+            }
         },
         start_date: {
             type: Sequelize.DATE,

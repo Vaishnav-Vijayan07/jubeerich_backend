@@ -13,21 +13,33 @@ module.exports = (sequelize, Sequelize) => {
                 key: "id",
             },
         },
-        country_name: {
-            type: Sequelize.STRING(100),
+        country_id: {
+            type: Sequelize.INTEGER,
             allowNull: false,
+            references: {
+                model: "countries",
+                key: "id"
+            }
         },
         visa_type: {
             type: Sequelize.STRING(100),
             allowNull: false
         },
         course_applied: {
-            type: Sequelize.STRING(255),
-            allowNull: false
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+                model: "course",
+                key: "id"
+            }
         },
-        institute_applied: {
-            type: Sequelize.STRING(255),
-            allowNull: false
+        university_applied: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+                model: "universities", // Need to change as Institutions
+                key: "id"
+            }
         },
         updated_by: {
             type: Sequelize.INTEGER,
