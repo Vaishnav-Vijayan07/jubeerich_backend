@@ -107,31 +107,11 @@ router.put("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.
 router.delete("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.deleteLeadType);
 
 // Lead Sources routes
-router.get(
-  "/lead_source",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.getAllSources
-);
-router.get(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.getSourceById
-);
-router.post(
-  "/lead_source",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.addSource
-);
-router.put(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.updateSource
-);
-router.delete(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.deleteSource
-);
+router.get("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.getAllSources);
+router.get("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.getSourceById);
+router.post("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.addSource);
+router.put("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.updateSource);
+router.delete("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.deleteSource);
 
 // Lead Channels routes
 router.get("/lead_channel", [authMiddleware.checkUserAuth], LeadChannelController.getAllChannels);
@@ -224,7 +204,7 @@ router.put("/status/:id", [authMiddleware.checkUserAuth], StatusController.updat
 router.delete("/status/:id", [authMiddleware.checkUserAuth], StatusController.deleteStatus);
 
 // Leads routes
-router.post("/leads", uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
+router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController.getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
 router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
@@ -232,11 +212,10 @@ router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingControlle
 router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
-router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
 router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/assign_counselor_tl", [authMiddleware.checkUserAuth], AssignLeadsController.assignCounselorTL);
 router.get("/list_manager_branches", [authMiddleware.checkUserAuth], AssignLeadsController.listBranches);
-router.put("/leads/:id", uploadMultiple, [authMiddleware.checkUserAuth], UserController.updateLead);
+router.put("/leads/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.updateLead);
 router.delete("/leads/:id", [authMiddleware.checkUserAuth], UserController.deleteLead);
 router.delete("/exams", [authMiddleware.checkUserAuth], UserController.deleteExams);
 
@@ -267,6 +246,25 @@ router.post(
   [authMiddleware.checkUserAuth],
   SaveStudentDetailsController.saveStudentStudyPreferenceInfo
 );
+router.post(
+  "/studentPrimaryEducation/:type",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadMultiple,
+  SaveStudentDetailsController.saveStudentPrimaryEducation
+);
+router.get(
+  "/studentPrimaryEducation/:student_id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.studentPrimaryEducationDetails
+);
+
+router.post(
+  "/graduationDetails",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadGraduationDocs,
+  SaveStudentDetailsController.saveStudentGraduationDetails
+);
+
 router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentBasicInfoById);
 router.get("/getStudentAcademicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentAcademicInfoById);
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentStudyPreferenceInfoById);
@@ -286,6 +284,10 @@ router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAut
 router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
 router.get("/get_all_docs/:id", [authMiddleware.checkUserAuth], DocumentsListingController.getAllDocuments);
 router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellors);
+
+router.get("/get_all_counsellors/:id", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellorsByBranch);
+
+router.get("/get_all_counsellors_tl/:id", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellorsTLByBranch);
 
 // Campus routes
 router.get("/campuses", [authMiddleware.checkUserAuth], CampusController.getAllCampuses);
@@ -324,10 +326,10 @@ router.post(
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
 
-router.post('/visa_decline_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess);
-router.post('/visa_approve_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess);
-router.post('/travel_history', [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
-router.get('/visa_process/:id', [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
-router.delete('/delete_visa_item/:formName/:id', [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
+router.post("/visa_decline_process", [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess);
+router.post("/visa_approve_process", [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess);
+router.post("/travel_history", [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
+router.get("/visa_process/:id", [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
+router.delete("/delete_visa_item/:formName/:id", [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
 
 module.exports = router;
