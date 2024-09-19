@@ -108,6 +108,122 @@ exports.getAllCounsellors = async (req, res, next) => {
   }
 };
 
+exports.getAllCounsellorsByBranch = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const users = await db.adminUsers.findAll({
+      // where: {
+      //   role_id: process.env.BRANCH_COUNSELLOR_ROLE_ID,
+      //   branch_id: id
+      // },
+      where: {
+        role_id: {
+          [Op.in]: [process.env.BRANCH_COUNSELLOR_ROLE_ID, process.env.BRANCH_COUNSELLOR_TL_ROLE_ID],
+        },
+        branch_id: id,
+      },      
+      include: [
+        {
+          model: db.accessRoles,
+          as: "access_role",
+          attributes: ["role_name"],
+        },
+        {
+          model: db.country,
+          as: "country", // Ensure this alias matches your association setup
+          attributes: ["country_name"],
+        },
+      ],
+    });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin users not found !",
+      });
+    }
+
+    // console.log("userJson ==>", users);
+
+    const usersWithRoleAndCountry = users.map((user) => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        role: userJson.access_role ? userJson.access_role.role_name : null,
+        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        access_role: undefined, // Remove the access_role object
+        country: undefined, // Remove the country object
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: usersWithRoleAndCountry,
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const users = await db.adminUsers.findAll({
+      where: {
+        role_id: process.env.BRANCH_COUNSELLOR_TL_ROLE_ID,
+        branch_id: id
+      },
+      include: [
+        {
+          model: db.accessRoles,
+          as: "access_role",
+          attributes: ["role_name"],
+        },
+        {
+          model: db.country,
+          as: "country", // Ensure this alias matches your association setup
+          attributes: ["country_name"],
+        },
+      ],
+    });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin users not found !",
+      });
+    }
+
+    // console.log("userJson ==>", users);
+
+    const usersWithRoleAndCountry = users.map((user) => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        role: userJson.access_role ? userJson.access_role.role_name : null,
+        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        access_role: undefined, // Remove the access_role object
+        country: undefined, // Remove the country object
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: usersWithRoleAndCountry,
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 exports.getFranchiseCounsellors = async (req, res, next) => {
   try {
     const users = await db.adminUsers.findAll({

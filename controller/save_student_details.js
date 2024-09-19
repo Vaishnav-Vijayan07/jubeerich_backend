@@ -10,6 +10,7 @@ const {
   addOrUpdateAcademic,
   addOrUpdateWork,
   addOrUpdateExamDocs,
+  addOrUpdateGraduationData,
 } = require("../utils/academic_query_helper");
 
 exports.saveStudentBasicInfo = async (req, res) => {
@@ -336,6 +337,7 @@ exports.saveStudentWorkInfo = async (req, res) => {
     });
   }
 };
+
 exports.deleteStudentAcademicInfo = async (req, res) => {
   const { id, type } = req.params;
 
@@ -346,6 +348,7 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
     let record;
     let message;
 
+    // Determine the type of record to delete
     switch (type) {
       case "academic":
         record = await db.academicInfos.findByPk(id);
@@ -363,15 +366,21 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
         record = await db.studyPreferenceDetails.findByPk(id);
         message = "Study preference record";
         break;
+      case "graduation":
+        record = await db.graduationDetails.findByPk(id);
+        message = "Graduation record";
+        break;
       default:
         throw new Error("Invalid type specified");
     }
 
+    // If the record is not found, throw an error
     if (!record) {
       throw new Error(`${message} not found`);
     }
 
-    if (type === "exam") {
+    // If the record is of type 'exam', delete the associated document
+    if (type == "exam") {
       const file = record.document;
       if (file) {
         const filePath = path.join(
@@ -382,16 +391,54 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
           file
         );
 
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.error(`Failed to delete file: ${filePath}`, err);
-          } else {
-            console.log(`Successfully deleted file: ${filePath}`);
-          }
-        });
+        if (fs.existsSync(filePath)) {
+          fs.unlink(filePath, (err) => {
+            if (err) {
+              console.error(`Failed to delete file: ${filePath}`, err);
+            } else {
+              console.log(`Successfully deleted file: ${filePath}`);
+            }
+          });
+        }
       }
     }
 
+    // If the record is of type 'graduation', delete multiple associated documents
+    if (type == "graduation") {
+      const fileFields = [
+        "certificate",
+        "admit_card",
+        "registration_certificate",
+        "backlog_certificate",
+        "grading_scale_info",
+      ];
+
+      fileFields.forEach((field) => {
+        const docName = record[field];
+        if (docName) {
+          const filePath = path.join(
+            __dirname,
+            "..",
+            "uploads",
+            "graduationDocuments",
+            docName
+          );
+
+          // Check if the file exists before attempting to delete
+          if (fs.existsSync(filePath)) {
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                console.error(`Failed to delete file: ${filePath}`, err);
+              } else {
+                console.log(`Successfully deleted file: ${filePath}`);
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Proceed with the deletion of the record from the database
     await record.destroy({ transaction });
 
     // Commit the transaction
@@ -558,6 +605,283 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
     await transaction.rollback();
     console.error(`Error: ${error.message}`);
 
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.saveStudentPrimaryEducation = async (req, res) => {
+  const { student_id, primary, secondary, operation } = req.body;
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    if (!student_id) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "Student ID is required" });
+    }
+
+    const student = await db.userPrimaryInfo.findByPk(student_id);
+    if (!student) {
+      await transaction.rollback();
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    const { type } = req.params;
+    if (!type || (type !== "primary" && type !== "secondary")) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "Invalid type provided" });
+    }
+
+    const formData = type === "primary" ? primary : secondary;
+    if (!formData) {
+      await transaction.rollback();
+      return res.status(400).json({ error: `${type} details are required` });
+    }
+
+    const filePaths = {
+      mark_sheet: req.files[`${type}_mark_sheet`]
+        ? req.files[`${type}_mark_sheet`][0].filename
+        : null,
+      certificate: req.files[`${type}_certificate`]
+        ? req.files[`${type}_certificate`][0].filename
+        : null,
+      admit_card: req.files[`${type}_admit_card`]
+        ? req.files[`${type}_admit_card`][0].filename
+        : null,
+    };
+
+    const saveOrUpdateEducationDetails = async () => {
+      if (operation === "add") {
+        // Add new education details
+        await student.createEducationDetail(
+          {
+            qualification: formData.qualification,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            percentage: formData.percentage,
+            mark_sheet: filePaths.mark_sheet,
+            admit_card: filePaths.admit_card,
+            certificate: filePaths.certificate,
+          },
+          { transaction }
+        );
+
+        return res
+          .status(201)
+          .json({ message: "Education details added successfully" });
+      } else if (operation === "update") {
+        // Update existing education details
+        const existingDetails = await db.educationDetails.findOne({
+          where: { student_id, qualification: formData.qualification },
+        });
+
+        if (!existingDetails) {
+          await transaction.rollback();
+          return res.status(404).json({ error: "Education details not found" });
+        }
+
+        await existingDetails.update(
+          {
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            percentage: formData.percentage,
+            mark_sheet: filePaths.mark_sheet || existingDetails.mark_sheet,
+            admit_card: filePaths.admit_card || existingDetails.admit_card,
+            certificate: filePaths.certificate || existingDetails.certificate,
+          },
+          {
+            transaction,
+          }
+        );
+
+        return res.status(200).json({
+          message: "Education details updated successfully",
+          status: true,
+        });
+      } else {
+        await transaction.rollback();
+        return res.status(400).json({ error: "Invalid operation" });
+      }
+    };
+
+    await saveOrUpdateEducationDetails();
+    await transaction.commit();
+  } catch (error) {
+    console.error("Error saving education details:", error);
+    await transaction.rollback();
+    res.status(500).json({ error: "Failed to save education details" });
+  }
+};
+
+exports.studentPrimaryEducationDetails = async (req, res) => {
+  try {
+    const { student_id } = req.params;
+
+    // Fetch student primary info and related details in parallel
+    const [student, graduationDetails] = await Promise.all([
+      db.userPrimaryInfo.findByPk(student_id, {
+        include: [
+          {
+            model: db.educationDetails,
+            as: "educationDetails",
+          },
+        ],
+      }),
+      db.userPrimaryInfo.findByPk(student_id, {
+        include: [
+          {
+            model: db.graduationDetails,
+            as: "graduationDetails",
+          },
+        ],
+      }),
+    ]);
+
+    // Check if the student exists
+    if (!student) {
+      return res.status(404).json({
+        status: false,
+        message: "Student not found",
+      });
+    }
+
+    console.log(graduationDetails.graduationDetails);
+    console.log(student.educationDetails);
+
+    // Retrieve primary and secondary education details
+    const educationDetails = student.educationDetails;
+    const graduationData = graduationDetails.graduationDetails;
+
+    let primaryDetails = null;
+    let secondaryDetails = null;
+
+    // Assuming "primary" and "secondary" qualifications are stored in the `qualification` field
+    educationDetails.forEach((detail) => {
+      const formattedDetail = {
+        id: detail?.id,
+        startDate: detail?.start_date,
+        endDate: detail?.end_date,
+        qualification: detail?.qualification,
+        percentage: detail?.percentage,
+        certificate: detail?.certificate || null,
+        mark_sheet: detail?.mark_sheet || null,
+        admit_card: detail?.admit_card || null,
+      };
+
+      if (detail.qualification.toLowerCase() === "10th") {
+        primaryDetails = formattedDetail;
+      } else if (detail.qualification.toLowerCase() === "plustwo") {
+        secondaryDetails = formattedDetail;
+      }
+    });
+
+    // Format graduation details if available
+    const graduationDetailsFormatted = graduationData.map((detail) => {
+      return {
+        id: detail?.id,
+        start_date: detail?.start_date,
+        end_date: detail?.end_date,
+        qualification: detail?.qualification,
+        percentage: detail?.percentage,
+        certificate: detail?.certificate || null,
+        registration_certificate: detail?.registration_certificate || null,
+        backlog_certificate: detail?.backlog_certificate || null,
+        grading_scale_info: detail?.grading_scale_info || null,
+        admit_card: detail?.admit_card || null,
+        conversion_formula: detail?.conversion_formula || ""
+      };
+    });
+
+    // Respond with formatted education details
+    return res.status(200).json({
+      status: true,
+      primary: primaryDetails,
+      secondary: secondaryDetails,
+      graduation: graduationDetailsFormatted, // Corrected response key
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.saveStudentGraduationDetails = async (req, res) => {
+  const transaction = await sequelize.transaction(); // Start a transaction
+
+  try {
+    const { student_id, graduation } = req.body;
+    const files = req.files;
+
+    console.log(student_id);
+
+    // Debugging information
+    console.log("Graduation data:", graduation);
+    console.log("Files data:", files);
+
+    if (!student_id || !Array.isArray(graduation) || !files) {
+      throw new Error("Invalid input data");
+    }
+
+    const modifiedData = [];
+
+    // Iterate over graduation details
+    graduation.forEach((item, index) => {
+      const fields = [
+        "certificate",
+        "admit_card",
+        "registration_certificate",
+        "backlog_certificate",
+        "grading_scale_info",
+      ];
+
+      const isUpdate = item?.id !== "0";
+
+      const itemData = {
+        id: item.id,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        percentage: Number(item.percentage),
+        conversion_formula: item.conversion_formula,
+        qualification: item.qualification,
+        student_id: Number(student_id),
+      };
+
+      fields.forEach((field) => {
+        const fieldName = `graduation[${index}][${field}]`;
+        const file = files.find((file) => file.fieldname === fieldName);
+
+        if (!isUpdate || (isUpdate && file)) {
+          // Only add field if it's not an update or if a new file is provided
+          itemData[field] = file ? file.filename : null;
+        }
+      });
+
+      // Push the item data to the modifiedData array
+      modifiedData.push(itemData);
+    });
+
+    console.log("Modified data:", modifiedData);
+
+    // Add or update graduation data with transaction
+    await addOrUpdateGraduationData(modifiedData, transaction);
+
+    // Commit the transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Success",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    // Rollback the transaction if an error occurs
+    await transaction.rollback();
     return res.status(500).json({
       status: false,
       message: "Internal server error",

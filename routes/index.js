@@ -48,6 +48,7 @@ const StreamController = require("../controller/stream_controller");
 const getDropdownData = require("../controller/drop_down_controller");
 const studyPreferencesByUserPrimaryInfoController = require("../controller/study_preference_controller");
 const studyPreferencesDetailsController = require("../controller/study_preference_details");
+const visaProcessController = require("../controller/visa_process");
 
 const router = express.Router();
 
@@ -106,11 +107,31 @@ router.put("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.
 router.delete("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.deleteLeadType);
 
 // Lead Sources routes
-router.get("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.getAllSources);
-router.get("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.getSourceById);
-router.post("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.addSource);
-router.put("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.updateSource);
-router.delete("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.deleteSource);
+router.get(
+  "/lead_source",
+  [authMiddleware.checkUserAuth],
+  LeadSourceController.getAllSources
+);
+router.get(
+  "/lead_source/:id",
+  [authMiddleware.checkUserAuth],
+  LeadSourceController.getSourceById
+);
+router.post(
+  "/lead_source",
+  [authMiddleware.checkUserAuth],
+  LeadSourceController.addSource
+);
+router.put(
+  "/lead_source/:id",
+  [authMiddleware.checkUserAuth],
+  LeadSourceController.updateSource
+);
+router.delete(
+  "/lead_source/:id",
+  [authMiddleware.checkUserAuth],
+  LeadSourceController.deleteSource
+);
 
 // Lead Channels routes
 router.get("/lead_channel", [authMiddleware.checkUserAuth], LeadChannelController.getAllChannels);
@@ -229,7 +250,7 @@ router.put("/assign_new_country", [authMiddleware.checkUserAuth], TaskController
 router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentBasicInfo);
 router.post(
   "/saveStudentAcademicInfo",
-  uploadMultiple,
+  uploadMultiple.uploadMultiple,
   [authMiddleware.checkUserAuth],
   SaveStudentDetailsController.saveStudentAcademicInfo
 );
@@ -302,5 +323,11 @@ router.post(
   [authMiddleware.checkUserAuth],
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
+
+router.post('/visa_decline_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaDeclineProcess);
+router.post('/visa_approve_process', [authMiddleware.checkUserAuth], visaProcessController.saveVisaApproveProcess);
+router.post('/travel_history', [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
+router.get('/visa_process/:id', [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
+router.delete('/delete_visa_item/:formName/:id', [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
 
 module.exports = router;

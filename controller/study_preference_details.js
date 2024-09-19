@@ -97,6 +97,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
         .status(404)
         .json({ message: "No study preferences found for this student" });
     }
+    
 
     res.status(200).json({ data: studyPreferences[0] });
   } catch (error) {
