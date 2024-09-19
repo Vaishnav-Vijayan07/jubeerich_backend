@@ -48,7 +48,13 @@ db.franchise = require("./franchise")(sequelize, Sequelize);
 db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
-db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
+db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
+db.workInfos = require("./workInfos")(sequelize, Sequelize);
+db.previousVisaDecline = require('./previousVisaDecline')(sequelize, Sequelize);
+db.previousVisaApprove = require('./previousVisaApproval')(sequelize, Sequelize);
+db.travelHistory = require('./travelHistory')(sequelize, Sequelize);
+
+// course
 db.campus = require("./campus")(sequelize, Sequelize);
 db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
@@ -102,8 +108,6 @@ db.course.belongsTo(db.stream, { foreignKey: "stream_id" });
 
 db.courseType.hasMany(db.course, { foreignKey: "course_type_id" });
 db.course.belongsTo(db.courseType, { foreignKey: "course_type_id" });
-db.academicInfos = require("./academicinfo")(sequelize, Sequelize);
-db.workInfos = require("./workinfos")(sequelize, Sequelize);
 
 db.adminUsers.belongsTo(db.accessRoles, { foreignKey: "role_id" });
 db.accessRoles.belongsTo(db.adminUsers, {
@@ -299,6 +303,116 @@ db.userPrimaryInfo.hasMany(db.academicInfos, {
   as: "userAcademicInfos",
 });
 
+// Association for PreviousVisaDecline and UserPrimaryInfo
+db.previousVisaDecline.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "previousVisaDecline"
+})
+
+db.userPrimaryInfo.hasMany(db.previousVisaDecline, {
+  foreignKey: "student_id",
+  as: "previousVisaDeclines"
+})
+
+// Association for PreviousVisaDecline and Country
+db.previousVisaDecline.belongsTo(db.country, {
+  foreignKey: "country_id",
+  as: "declined_country"
+})
+
+db.country.hasMany(db.previousVisaDecline, {
+  foreignKey: "country_id",
+  as: "previousVisaDeclinesCountries"
+})
+
+// Association for PreviousVisaDecline and Courses
+db.previousVisaDecline.belongsTo(db.course, {
+  foreignKey: "course_applied",
+  as: "declined_course"
+})
+
+db.course.hasMany(db.previousVisaDecline, {
+  foreignKey: "course_applied",
+  as: "previousVisaDeclinesCourses"
+})
+
+// Association for PreviousVisaDecline and Universities
+db.previousVisaDecline.belongsTo(db.university, {
+  foreignKey: "university_applied",
+  as: "declined_university_applied"
+})
+
+db.university.hasMany(db.previousVisaDecline, {
+  foreignKey: "university_applied",
+  as: "previousVisaDeclinesUniversityApplied"
+})
+
+// Association for PreviousVisaApprove and UserPrimaryInfo
+db.previousVisaApprove.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "previousVisaApprove"
+})
+
+db.userPrimaryInfo.hasMany(db.previousVisaApprove, {
+  foreignKey: "student_id",
+  as: "previousVisaApprovals"
+})
+
+// Association for PreviousVisaApprove and Countries
+db.previousVisaApprove.belongsTo(db.country, {
+  foreignKey: "country_id",
+  as: "approved_country"
+})
+
+db.country.hasMany(db.previousVisaApprove, {
+  foreignKey: "country_id",
+  as: "previousVisaApprovalsCountries"
+})
+
+// Association for PreviousVisaApprove and Courses
+db.previousVisaApprove.belongsTo(db.course, {
+  foreignKey: "course_applied",
+  as: "approved_course"
+})
+
+db.course.hasMany(db.previousVisaApprove, {
+  foreignKey: "course_applied",
+  as: "previousVisaApprovalsCourses"
+})
+
+// Association for PreviousVisaApprove and University
+db.previousVisaApprove.belongsTo(db.university, {
+  foreignKey: "university_applied",
+  as: "approved_university_applied"
+})
+
+db.university.hasMany(db.previousVisaApprove, {
+  foreignKey: "university_applied",
+  as: "previousVisaApprovalsUniversityApplied"
+})
+
+// Association for TravelHistory and UserPrimaryInfo
+db.travelHistory.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "travelHistory"
+})
+
+db.userPrimaryInfo.hasMany(db.travelHistory, {
+  foreignKey: "student_id",
+  as: "travelHistories"
+})
+
+// Association for TravelHistory and Countries
+db.travelHistory.belongsTo(db.country, {
+  foreignKey: "country_id",
+  as: "travelHistoryCountry"
+})
+
+db.country.hasMany(db.travelHistory, {
+  foreignKey: "student_id",
+  as: "travelHistoryCountries"
+})
+
 // Association for WorkInfos and UserPrimaryInfo
 db.workInfos.belongsTo(db.userPrimaryInfo, {
   foreignKey: "user_id",
@@ -325,20 +439,6 @@ db.studyPreference.belongsTo(db.userPrimaryInfo, {
 db.studyPreference.belongsTo(db.country, {
   foreignKey: "countryId",
   as: "country",
-});
-
-db.adminUsers.belongsToMany(db.country, {
-  through: db.adminUserCountries,
-  foreignKey: "admin_user_id",
-  otherKey: "country_id",
-  as: "countries",
-});
-
-db.country.belongsToMany(db.adminUsers, {
-  through: db.adminUserCountries,
-  foreignKey: "country_id",
-  otherKey: "admin_user_id",
-  as: "adminUsers",
 });
 
 db.leadSource.belongsTo(db.leadType, {

@@ -12,12 +12,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
           as: "access_role",
           attributes: ["role_name"],
         },
-        {
-          model: db.country,
-          as: "countries", // Ensure this alias matches your many-to-many association setup
-          attributes: ["country_name"],
-          through: { attributes: [] }, // This removes the join table details from the response
-        },
       ],
     });
 
@@ -33,9 +27,16 @@ exports.getAllAdminUsers = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
+        // countries: userJson.countries
+        //   ? userJson.countries.map((country) => country.country_name)
+        // : [], // List of country names
         countries: userJson.countries
-          ? userJson.countries.map((country) => country.country_name)
-          : [], // List of country names
+          ? userJson.countries.map((country) => {
+            return {
+              value: country?.id,
+              label: country?.country_name
+            }
+          }) : [],
         access_role: undefined, // Remove the access_role object
       };
     });
@@ -78,6 +79,122 @@ exports.getAllCounsellors = async (req, res, next) => {
       return res.status(404).json({
         status: false,
         message: "Admin users not found",
+      });
+    }
+
+    // console.log("userJson ==>", users);
+
+    const usersWithRoleAndCountry = users.map((user) => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        role: userJson.access_role ? userJson.access_role.role_name : null,
+        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        access_role: undefined, // Remove the access_role object
+        country: undefined, // Remove the country object
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: usersWithRoleAndCountry,
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAllCounsellorsByBranch = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const users = await db.adminUsers.findAll({
+      // where: {
+      //   role_id: process.env.BRANCH_COUNSELLOR_ROLE_ID,
+      //   branch_id: id
+      // },
+      where: {
+        role_id: {
+          [Op.in]: [process.env.BRANCH_COUNSELLOR_ROLE_ID, process.env.BRANCH_COUNSELLOR_TL_ROLE_ID],
+        },
+        branch_id: id,
+      },      
+      include: [
+        {
+          model: db.accessRoles,
+          as: "access_role",
+          attributes: ["role_name"],
+        },
+        {
+          model: db.country,
+          as: "country", // Ensure this alias matches your association setup
+          attributes: ["country_name"],
+        },
+      ],
+    });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin users not found !",
+      });
+    }
+
+    // console.log("userJson ==>", users);
+
+    const usersWithRoleAndCountry = users.map((user) => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        role: userJson.access_role ? userJson.access_role.role_name : null,
+        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        access_role: undefined, // Remove the access_role object
+        country: undefined, // Remove the country object
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      data: usersWithRoleAndCountry,
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const users = await db.adminUsers.findAll({
+      where: {
+        role_id: process.env.BRANCH_COUNSELLOR_TL_ROLE_ID,
+        branch_id: id
+      },
+      include: [
+        {
+          model: db.accessRoles,
+          as: "access_role",
+          attributes: ["role_name"],
+        },
+        {
+          model: db.country,
+          as: "country", // Ensure this alias matches your association setup
+          attributes: ["country_name"],
+        },
+      ],
+    });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin users not found !",
       });
     }
 
@@ -187,8 +304,7 @@ exports.addAdminUsers = async (req, res) => {
     branch_id,
     region_id,
     country_id,
-    franchise_id,
-    country_ids
+    franchise_id
   } = req.body;
   //   const profileImage = req.file;
   console.log("req.body==============>", req.body);
@@ -238,10 +354,6 @@ exports.addAdminUsers = async (req, res) => {
       franchise_id,
     });
 
-    if (branch_id && Array.isArray(country_ids) && country_ids.length > 0) {
-      await newUser.setCountries(country_ids); // Use Sequelize's utility method for many-to-many relationships
-    }
-
     res.json({
       status: true,
       data: newUser,
@@ -270,8 +382,7 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
-    franchise_id,
-    country_ids,
+    franchise_id
   } = req.body;
 
   try {
@@ -319,12 +430,6 @@ exports.updateAdminUsers = async (req, res) => {
 
     // Update the admin user
     await user.update(updateData);
-
-    // If role_id is 5, handle updating associated countries
-    if (branch_id && Array.isArray(country_ids)) {
-      // Update the associated countries using the setCountries method for many-to-many relationships
-      await user.setCountries(country_ids);
-    }
 
     res.json({
       status: true,
