@@ -3,16 +3,11 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-  process.env.DB_dbname,
-  process.env.DB_user,
-  process.env.DB_pss,
-  {
-    dialect: "postgres",
-    host: process.env.DB_host,
-    port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
-  }
-);
+const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, process.env.DB_pss, {
+  dialect: "postgres",
+  host: process.env.DB_host,
+  port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
+});
 
 const db = {};
 db.Sequelize = Sequelize;
@@ -50,6 +45,7 @@ db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
 db.workInfos = require("./workInfos")(sequelize, Sequelize);
+db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -57,10 +53,7 @@ db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
 db.courseType = require("./courseType")(sequelize, Sequelize);
 db.studyPreference = require("./studyPreference")(sequelize, Sequelize);
-db.studyPreferenceDetails = require("./studyPreferenceDetails")(
-  sequelize,
-  Sequelize
-);
+db.studyPreferenceDetails = require("./studyPreferenceDetails")(sequelize, Sequelize);
 
 db.studyPreference.hasMany(db.studyPreferenceDetails, {
   foreignKey: "studyPreferenceId", // foreign key in studyPreferenceDetails
@@ -305,8 +298,23 @@ db.studyPreference.belongsTo(db.country, {
 });
 
 db.leadSource.belongsTo(db.leadType, {
-  foreignKey: 'lead_type_id',
-  as: 'leadType',
+  foreignKey: "lead_type_id",
+  as: "leadType",
+});
+
+// campus course association
+db.campus.belongsToMany(db.course, {
+  through: "campus_course",
+  foreignKey: "campus_id",
+  otherKey: "course_id",
+  as: "courses",
+});
+
+db.course.belongsToMany(db.campus, {
+  through: "campus_course",
+  foreignKey: "course_id",
+  otherKey: "campus_id",
+  as: "campuses",
 });
 
 module.exports = db;

@@ -113,6 +113,14 @@ module.exports = (sequelize, Sequelize) => {
         },
         allowNull: true,
       },
+      assigned_branch_counselor: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+        allowNull: true,
+      },
       assigned_regional_manager: {
         type: Sequelize.INTEGER,
         references: {

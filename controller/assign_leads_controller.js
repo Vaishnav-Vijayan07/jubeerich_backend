@@ -323,6 +323,87 @@ exports.assignBranchCounselors = async (req, res) => {
     }
 };
 
+exports.autoAssignBranchCounselors = async (req, res) => {
+    const { leads_ids } = req.body;
+    const userId = req.userDecodeId;
+
+    // Validate leads_ids
+    if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+        return res.status(400).json({
+            status: false,
+            message: "leads_ids must be a non-empty array",
+        });
+    }
+
+    if (!leads_ids.every((id) => typeof id === "number")) {
+        return res.status(400).json({
+            status: false,
+            message: "Each user_id must be a number",
+        });
+    }
+
+    // Start a new transaction
+    const transaction = await sequelize.transaction();
+
+    try {
+        // Fetch all CREs with their assignment counts
+        const leastCounselor = await getLeastAssignedCounselors();
+
+        if (leastCounselor.length === 0) {
+            throw new Error("No available Counselors to assign leads");
+        }
+
+        // Prepare the bulk update data
+        const updatePromises = leads_ids.map(async (id, index) => {
+            const userInfo = await UserPrimaryInfo.findOne({
+                where: id, include: {
+                    model: db.country,
+                    as: 'preferredCountries',
+                },
+            });
+            const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
+            const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 1);
+
+            const task = await db.tasks.upsert(
+                {
+                    studentId: id,
+                    userId: currentCounselor,
+                    title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+                    dueDate: dueDate,
+                    updatedBy: userId,
+                },
+                { transaction }
+            );
+            return UserPrimaryInfo.update(
+                { assigned_cre: currentCounselor, assign_type: "auto_assign" },
+                { where: { id }, transaction }
+            );
+        });
+
+        // Perform bulk update
+        await Promise.all(updatePromises);
+
+        // Commit the transaction
+        await transaction.commit();
+
+        res.status(200).json({
+            status: true,
+            message: "Leads assigned successfully",
+        });
+    } catch (error) {
+        // Rollback the transaction in case of an error
+        await transaction.rollback();
+        console.error("Error in autoAssign:", error);
+        res.status(500).json({
+            status: false,
+            message: "Internal server error",
+        });
+    }
+};
+
 exports.listBranches = async (req, res) => {
     const transaction = await sequelize.transaction();
     const userId = req.userDecodeId;
@@ -478,8 +559,42 @@ const getLeastAssignedCre = async () => {
             ],
             where: {
                 [Sequelize.Op.or]: [
-                    { role_id: 3 }, // Assuming role_id 3 is for CREs
-                    { role_id: 4 }  // Adding role_id 4
+                    { role_id: process.env.CRE_ID },
+                    { role_id: process.env.CRE_TL_ID }
+                ],
+            },
+            order: [[Sequelize.literal("assignment_count"), "ASC"]],
+        });
+
+        return creList.map((cre) => ({
+            user_id: cre.dataValues.user_id,
+            assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+        }));
+    } catch (error) {
+        console.error("Error fetching CREs with assignment counts:", error);
+        throw error;
+    }
+};
+
+const getLeastAssignedCounselors = async () => {
+    try {
+        // Fetch all CREs with their current assignment counts
+        const creList = await db.adminUsers.findAll({
+            attributes: [
+                ["id", "user_id"],
+                "username",
+                [
+                    Sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM "user_primary_info"
+              WHERE "user_primary_info"."assigned_branch_counselor" = "admin_user"."id"
+            )`),
+                    "assignment_count",
+                ],
+            ],
+            where: {
+                [Sequelize.Op.or]: [
+                    { role_id: process.env.BRANCH_COUNSELLOR_ID },
                 ],
             },
             order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order

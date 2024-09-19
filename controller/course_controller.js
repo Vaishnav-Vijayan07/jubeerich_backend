@@ -5,30 +5,16 @@ const { validationResult, check } = require("express-validator");
 // Validation rules for Course
 const courseValidationRules = [
   check("course_name").not().isEmpty().withMessage("Course name is required"),
-  check("course_description")
-    .optional()
-    .isString()
-    .withMessage("Course description must be a string"),
-  check("course_type_id")
-    .not()
-    .isEmpty()
-    .isInt()
-    .withMessage("Course type ID must be an integer"),
-  check("stream_id")
-    .not()
-    .isEmpty()
-    .isInt()
-    .withMessage("Stream ID must be an integer"),
-  check("updated_by")
-    .optional()
-    .isInt()
-    .withMessage("Updated by must be an integer"),
+  check("course_description").optional().isString().withMessage("Course description must be a string"),
+  check("course_type_id").not().isEmpty().isInt().withMessage("Course type ID must be an integer"),
+  check("stream_id").not().isEmpty().isInt().withMessage("Stream ID must be an integer"),
+  check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
 
 // Get all courses
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await db.course.findAll({
+    const courses = await Course.findAll({
       include: [
         {
           model: db.courseType,
@@ -39,7 +25,14 @@ exports.getAllCourses = async (req, res) => {
           attributes: ["id", "stream_name"],
         },
       ],
-      attributes: ["id", "course_name", "course_description"],
+      attributes: [
+        "id",
+        "course_name",
+        "course_description",
+        "stream_id",
+        "course_type_id",
+        "updated_by",
+      ],
     });
 
     res.status(200).json({ status: true, data: courses });
@@ -53,11 +46,20 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const course = await Course.findByPk(id);
+    const course = await Course.findByPk(id, {
+      include: [
+        {
+          model: db.courseType,
+          attributes: ["id", "type_name"],
+        },
+        {
+          model: db.stream,
+          attributes: ["id", "stream_name"],
+        },
+      ],
+    });
     if (!course) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Course not found" });
+      return res.status(404).json({ status: false, message: "Course not found" });
     }
     res.status(200).json({ status: true, data: course });
   } catch (error) {
@@ -80,13 +82,8 @@ exports.addCourse = [
       });
     }
 
-    const {
-      course_name,
-      course_description,
-      course_type_id,
-      stream_id,
-      updated_by,
-    } = req.body;
+    const { course_name, course_description, course_type_id, stream_id } = req.body;
+    const userId = req.userDecodeId;
 
     try {
       const newCourse = await Course.create({
@@ -94,7 +91,7 @@ exports.addCourse = [
         course_description,
         course_type_id,
         stream_id,
-        updated_by,
+        updated_by: userId,
       });
       res.status(201).json({
         status: true,
@@ -114,6 +111,8 @@ exports.updateCourse = [
   ...courseValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id, 10);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -126,21 +125,16 @@ exports.updateCourse = [
     try {
       const course = await Course.findByPk(id);
       if (!course) {
-        return res
-          .status(404)
-          .json({ status: false, message: "Course not found" });
+        return res.status(404).json({ status: false, message: "Course not found" });
       }
-
-      console.log(req.body);
 
       // Update only the fields that are provided in the request body
       const updatedCourse = await course.update({
         course_name: req.body.course_name ?? course.course_name,
-        course_description:
-          req.body.course_description ?? course.course_description,
+        course_description: req.body.course_description ?? course.course_description,
         course_type_id: req.body.course_type_id ?? course.course_type_id,
         stream_id: req.body.stream_id ?? course.stream_id,
-        updated_by: req.body.updated_by ?? course.updated_by,
+        updated_by: userId,
       });
 
       res.status(200).json({
@@ -162,15 +156,11 @@ exports.deleteCourse = async (req, res) => {
   try {
     const course = await Course.findByPk(id);
     if (!course) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Course not found" });
+      return res.status(404).json({ status: false, message: "Course not found" });
     }
 
     await course.destroy();
-    res
-      .status(200)
-      .json({ status: true, message: "Course deleted successfully" });
+    res.status(200).json({ status: true, message: "Course deleted successfully" });
   } catch (error) {
     console.error(`Error deleting course: ${error}`);
     res.status(500).json({ status: false, message: "Internal server error" });

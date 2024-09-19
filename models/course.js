@@ -11,17 +11,8 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(100),
         allowNull: false,
       },
-      course_code: {
-        type: Sequelize.STRING(20),
-        allowNull: true,
-        unique: true,
-      },
       course_description: {
         type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      credit_hours: {
-        type: Sequelize.INTEGER,
         allowNull: true,
       },
       stream_id: {

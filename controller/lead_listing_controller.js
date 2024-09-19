@@ -403,7 +403,7 @@ exports.geLeadsForCreTl = async (req, res) => {
   try {
     // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
-      where: { role_id: 3 },
+      where: { role_id: process.env.CRE_ID },
       attributes: ["id", "name"],
     });
 
@@ -566,7 +566,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
   try {
     // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
-      where: { role_id: 3 },
+      where: { role_id: process.env.CRE_ID },
       attributes: ["id", "name"],
     });
 
