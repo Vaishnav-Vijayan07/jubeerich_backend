@@ -49,8 +49,6 @@ db.comments = require("./comments")(sequelize, Sequelize);
 db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
-
-// course
 db.campus = require("./campus")(sequelize, Sequelize);
 db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
@@ -60,6 +58,30 @@ db.studyPreferenceDetails = require("./studyPreferenceDetails")(
   sequelize,
   Sequelize
 );
+db.graduationDetails = require("./graduationDetails")(sequelize, Sequelize);
+db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
+
+//Associations
+
+db.graduationDetails.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "student", // This represents the user/student who owns this education detail
+});
+
+db.userPrimaryInfo.hasMany(db.graduationDetails, {
+  foreignKey: "student_id",
+  as: "graduationDetails", // This will hold the user's multiple education records
+});
+
+db.educationDetails.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "student", // This represents the user/student who owns this education detail
+});
+
+db.userPrimaryInfo.hasMany(db.educationDetails, {
+  foreignKey: "student_id",
+  as: "educationDetails", // This will hold the user's multiple education records
+});
 
 db.studyPreference.hasMany(db.studyPreferenceDetails, {
   foreignKey: "studyPreferenceId", // foreign key in studyPreferenceDetails
@@ -320,8 +342,8 @@ db.country.belongsToMany(db.adminUsers, {
 });
 
 db.leadSource.belongsTo(db.leadType, {
-  foreignKey: 'lead_type_id',
-  as: 'leadType',
+  foreignKey: "lead_type_id",
+  as: "leadType",
 });
 
 module.exports = db;

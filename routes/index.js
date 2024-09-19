@@ -167,11 +167,31 @@ router.delete(
 );
 
 // Lead Type routes
-router.get("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.getAllLeadTypes);
-router.get("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.getLeadTypeById);
-router.post("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.addLeadType);
-router.put("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.updateLeadType);
-router.delete("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.deleteLeadType);
+router.get(
+  "/lead_type",
+  [authMiddleware.checkUserAuth],
+  LeadTypeController.getAllLeadTypes
+);
+router.get(
+  "/lead_type/:id",
+  [authMiddleware.checkUserAuth],
+  LeadTypeController.getLeadTypeById
+);
+router.post(
+  "/lead_type",
+  [authMiddleware.checkUserAuth],
+  LeadTypeController.addLeadType
+);
+router.put(
+  "/lead_type/:id",
+  [authMiddleware.checkUserAuth],
+  LeadTypeController.updateLeadType
+);
+router.delete(
+  "/lead_type/:id",
+  [authMiddleware.checkUserAuth],
+  LeadTypeController.deleteLeadType
+);
 
 // Lead Sources routes
 router.get(
@@ -545,7 +565,7 @@ router.delete(
 // Leads routes
 router.post(
   "/leads",
-  uploadMultiple,
+  uploadMultiple.uploadMultiple,
   [authMiddleware.checkUserAuth],
   UserController.createLead
 );
@@ -586,7 +606,7 @@ router.post(
 );
 router.put(
   "/leads/:id",
-  uploadMultiple,
+  uploadMultiple.uploadMultiple,
   [authMiddleware.checkUserAuth],
   UserController.updateLead
 );
@@ -627,7 +647,7 @@ router.post(
 );
 router.post(
   "/saveStudentAcademicInfo",
-  uploadMultiple,
+  uploadMultiple.uploadMultiple,
   [authMiddleware.checkUserAuth],
   SaveStudentDetailsController.saveStudentAcademicInfo
 );
@@ -648,6 +668,25 @@ router.post(
   [authMiddleware.checkUserAuth],
   SaveStudentDetailsController.saveStudentStudyPreferenceInfo
 );
+router.post(
+  "/studentPrimaryEducation/:type",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadMultiple,
+  SaveStudentDetailsController.saveStudentPrimaryEducation
+);
+router.get(
+  "/studentPrimaryEducation/:student_id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.studentPrimaryEducationDetails
+);
+
+router.post(
+  "/graduationDetails",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadGraduationDocs,
+  SaveStudentDetailsController.saveStudentGraduationDetails
+);
+
 router.get(
   "/getStudentBasicInfo/:id",
   [authMiddleware.checkUserAuth],
