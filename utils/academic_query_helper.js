@@ -275,29 +275,46 @@ const addOrUpdateAcademic = async (academicRecords, userId, transaction) => {
 };
 
 const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
+  console.log('files ==>',files);
+  
   const records = examRecords.map((record) => {
     // Find the file associated with the current record
     const fileitem = files?.find(
-      (file) => file.originalname === record.document
+      // (file) => file.originalname === record.document
+      (file) => file.originalname === record.score_card
     );
 
     console.log(files);
-    console.log(fileitem);
+    console.log('fileitem===>',fileitem);
 
     // If a file is found, update the document field with the file's filename
     if (fileitem) {
+      // return {
+      //   ...record,
+      //   document: fileitem.filename, // Update with the actual file name
+      //   marks: Number(record.marks), // Ensure marks is a number
+      //   student_id: Number(userId), // Add the user ID
+      // };
+
       return {
         ...record,
-        document: fileitem.filename, // Update with the actual file name
-        marks: Number(record.marks), // Ensure marks is a number
+        score_card: fileitem.filename, // Update with the actual file name
         student_id: Number(userId), // Add the user ID
       };
     }
 
     // If no file is found, return the record as is, but ensure marks is a number
+
+    // return {
+    //   ...record,
+    //   marks: Number(record.marks), // Ensure marks is a number
+    //   student_id: Number(userId), // Add the user ID
+    // };
+
     return {
       ...record,
-      marks: Number(record.marks), // Ensure marks is a number
+      score_card: fileitem.filename, // Need to change add more file
+      // marks: Number(record.marks), // Ensure marks is a number
       student_id: Number(userId), // Add the user ID
     };
   });

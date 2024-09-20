@@ -409,17 +409,32 @@ exports.getStudentAcademicInfoById = async (req, res) => {
     if (examInfo && examInfo.length > 0) {
       acadmicInfoData = {
         exam_details: examInfo.map((exam) => {
+          // console.log('EXAM ======', exam);
+          
+          // return {
+          //   id: exam.id,
+          //   exam_name: exam.dataValues.exam_name,
+          //   marks: exam.dataValues.marks,
+          //   exam_documents: exam.dataValues.document,
+          //   document: exam.dataValues.document,
+          // };
+
           return {
             id: exam.id,
-            exam_name: exam.dataValues.exam_name,
-            marks: exam.dataValues.marks,
-            exam_documents: exam.dataValues.document,
-            document: exam.dataValues.document,
+            exam_type: exam.dataValues.exam_type,
+            listening_score: exam.dataValues.listening_score,
+            speaking_score: exam.dataValues.speaking_score,
+            reading_score: exam.dataValues.reading_score,
+            writing_score: exam.dataValues.writing_score,
+            overall_score: exam.dataValues.overall_score,
+            exam_date: exam.dataValues.exam_date,
+            exam_documents: exam.dataValues.score_card,
+            document: exam.dataValues.score_card,
           };
         }),
       };
     }
-    console.log("acadmicInfoData", acadmicInfoData);
+    // console.log("acadmicInfoData", acadmicInfoData);
     // Send the response with combined information
     res.status(200).json({
       status: true,

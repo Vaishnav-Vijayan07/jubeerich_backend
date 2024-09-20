@@ -250,6 +250,8 @@ exports.saveStudentAcademicInfo = async (req, res) => {
   const hasAcademicData = academicRecords && academicRecords.length > 0;
   const hasExamData = exam_details && exam_details.length > 0;
 
+  console.log('EXAMS ===> ', exam_details);
+
   if (!hasAcademicData && !hasExamData) {
     return res.status(400).json({
       status: false,
