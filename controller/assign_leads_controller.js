@@ -4,608 +4,600 @@ const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 
 exports.assignCres = async (req, res) => {
-    const { cre_id, user_ids } = req.body;
-    const userId = req.userDecodeId;
+  const { cre_id, user_ids } = req.body;
+  const userId = req.userDecodeId;
 
-    // Start a transaction
-    const transaction = await sequelize.transaction();
+  // Start a transaction
+  const transaction = await sequelize.transaction();
 
-    try {
-        // Validate cre_id
-        if (!cre_id) {
-            return res.status(400).json({
-                status: false,
-                message: "cre_id is required",
-            });
-        }
-
-        // Validate user_ids
-        if (!Array.isArray(user_ids) || user_ids.length === 0) {
-            return res.status(400).json({
-                status: false,
-                message: "user_ids must be a non-empty array",
-            });
-        }
-
-        // Validate each user_id
-        for (const user_id of user_ids) {
-            if (typeof user_id !== "number") {
-                return res.status(400).json({
-                    status: false,
-                    message: "Each user_id must be a number",
-                });
-            }
-        }
-
-        // Process each user_id
-        await Promise.all(
-            user_ids.map(async (user_id) => {
-                // Step 1: Fetch user info with associated countries
-                const userInfo = await db.userPrimaryInfo.findOne({
-                    where: { id: user_id },
-                    include: {
-                        model: db.country,
-                        as: 'preferredCountries',
-                    },
-                    transaction
-                });
-
-                if (!userInfo) {
-                    throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
-                }
-
-                // Handle multiple preferred countries
-                const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
-
-                // Step 2: Check if the task with studentId exists
-                const existingTask = await db.tasks.findOne({
-                    where: { studentId: user_id },
-                    transaction,
-                });
-
-                // Step 3: Create or update task
-                if (existingTask) {
-                    // Update existing task
-                    await existingTask.update(
-                        {
-                            userId: cre_id,
-                            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-                            updatedBy: userId,
-                        },
-                        { transaction }
-                    );
-                } else {
-                    // Create new task
-                    await db.tasks.create(
-                        {
-                            studentId: user_id,
-                            userId: cre_id,
-                            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-                            updatedBy: userId,
-                        },
-                        { transaction }
-                    );
-                }
-
-                // Update assigned_cre for the user
-                await db.userPrimaryInfo.update(
-                    { assigned_cre: cre_id, updated_by: userId, assign_type: "direct_assign" },
-                    { where: { id: user_id }, transaction }
-                );
-            })
-        );
-
-        // Commit transaction
-        await transaction.commit();
-
-        return res.status(200).json({
-            status: true,
-            message: "CRE assigned successfully",
-        });
-    } catch (error) {
-        // Rollback transaction
-        await transaction.rollback();
-        console.error(`Error assigning CRE: ${error}`);
-        return res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
+  try {
+    // Validate cre_id
+    if (!cre_id) {
+      return res.status(400).json({
+        status: false,
+        message: "cre_id is required",
+      });
     }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Process each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        // Step 1: Fetch user info with associated countries
+        const userInfo = await db.userPrimaryInfo.findOne({
+          where: { id: user_id },
+          include: {
+            model: db.country,
+            as: "preferredCountries",
+          },
+          transaction,
+        });
+
+        if (!userInfo) {
+          throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+        }
+
+        // Handle multiple preferred countries
+        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+
+        // Step 2: Check if the task with studentId exists
+        const existingTask = await db.tasks.findOne({
+          where: { studentId: user_id },
+        });
+
+        // Step 3: Create or update task
+        if (existingTask) {
+          // Update existing task
+          await existingTask.update(
+            {
+              userId: cre_id,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        } else {
+          // Create new task
+          await db.tasks.create(
+            {
+              studentId: user_id,
+              userId: cre_id,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        }
+
+        // Update assigned_cre for the user
+        await db.userPrimaryInfo.update(
+          { assigned_cre: cre_id, updated_by: userId, assign_type: "direct_assign" },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+
+    // Commit transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "CRE assigned successfully",
+    });
+  } catch (error) {
+    // Rollback transaction
+    await transaction.rollback();
+    console.error(`Error assigning CRE: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 exports.assignCounselorTL = async (req, res) => {
-    const { branch_id, user_ids } = req.body;
-    // user_ids reffered to lead id
+  const { branch_id, user_ids } = req.body;
+  // user_ids reffered to lead id
 
-    const userId = req.userDecodeId;
+  const userId = req.userDecodeId;
 
-    // Start a transaction
-    const transaction = await sequelize.transaction();
+  // Start a transaction
+  const transaction = await sequelize.transaction();
 
-    try {
-        // Validate branch_id
-        if (!branch_id) {
-            return res.status(400).json({
-                status: false,
-                message: "branch_id is required",
-            });
-        }
-
-        // Validate user_ids
-        if (!Array.isArray(user_ids) || user_ids.length === 0) {
-            return res.status(400).json({
-                status: false,
-                message: "user_ids must be a non-empty array",
-            });
-        }
-
-        // Validate each user_id
-        for (const user_id of user_ids) {
-            if (typeof user_id !== "number") {
-                return res.status(400).json({
-                    status: false,
-                    message: "Each user_id must be a number",
-                });
-            }
-        }
-
-        // Find the counselor based on the branch_id
-        const counsellor = await db.adminUsers.findOne({
-            where: {
-                branch_id,
-                role_id: process.env.COUNSELLOR_TL_ID,
-                status: 'true',
-            },
-            transaction,
-        });
-
-        // Validate if a counselor is found
-        if (!counsellor) {
-            return res.status(404).json({
-                status: false,
-                message: "No active counselor tl found for the provided branch",
-            });
-        }
-
-        // Extract the counselor's ID
-        const counsellor_id = counsellor.id;
-
-        // Process each user_id
-        await Promise.all(
-            user_ids.map(async (user_id) => {
-                // Step 1: Fetch user info with associated countries
-                const userInfo = await db.userPrimaryInfo.findOne({
-                    where: { id: user_id },
-                    transaction,
-                });
-
-                if (!userInfo) {
-                    throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
-                }
-
-                // Update assigned_counsellor for the user
-                await db.userPrimaryInfo.update(
-                    { assigned_counsellor_tl: counsellor_id, updated_by: userId, assign_type: "direct_assign" },
-                    { where: { id: user_id }, transaction }
-                );
-            })
-        );
-
-        // Commit transaction
-        await transaction.commit();
-
-        return res.status(200).json({
-            status: true,
-            message: "Counselor tl assigned successfully",
-        });
-    } catch (error) {
-        // Rollback transaction
-        await transaction.rollback();
-        console.error(`Error assigning counselor tl: ${error}`);
-        return res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
+  try {
+    // Validate branch_id
+    if (!branch_id) {
+      return res.status(400).json({
+        status: false,
+        message: "branch_id is required",
+      });
     }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Find the counselor based on the branch_id
+    const counsellor = await db.adminUsers.findOne({
+      where: {
+        branch_id,
+        role_id: process.env.COUNSELLOR_TL_ID,
+        status: "true",
+      },
+      transaction,
+    });
+
+    // Validate if a counselor is found
+    if (!counsellor) {
+      return res.status(404).json({
+        status: false,
+        message: "No active counselor tl found for the provided branch",
+      });
+    }
+
+    // Extract the counselor's ID
+    const counsellor_id = counsellor.id;
+
+    // Process each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        // Step 1: Fetch user info with associated countries
+        const userInfo = await db.userPrimaryInfo.findOne({
+          where: { id: user_id },
+          transaction,
+        });
+
+        if (!userInfo) {
+          throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+        }
+
+        // Update assigned_counsellor for the user
+        await db.userPrimaryInfo.update(
+          { assigned_counsellor_tl: counsellor_id, updated_by: userId, assign_type: "direct_assign" },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+
+    // Commit transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Counselor tl assigned successfully",
+    });
+  } catch (error) {
+    // Rollback transaction
+    await transaction.rollback();
+    console.error(`Error assigning counselor tl: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 exports.assignBranchCounselors = async (req, res) => {
-    const { counselor_id, user_ids } = req.body;
-    const userId = req.userDecodeId;
+  const { counselor_id, user_ids } = req.body;
+  const userId = req.userDecodeId;
 
-    // Start a transaction
-    const transaction = await sequelize.transaction();
+  // Start a transaction
+  const transaction = await sequelize.transaction();
 
-    try {
-        // Validate counselor_id
-        if (!counselor_id) {
-            return res.status(400).json({
-                status: false,
-                message: "counselor_id is required",
-            });
-        }
-
-        // Validate user_ids
-        if (!Array.isArray(user_ids) || user_ids.length === 0) {
-            return res.status(400).json({
-                status: false,
-                message: "user_ids must be a non-empty array",
-            });
-        }
-
-        // Validate each user_id
-        for (const user_id of user_ids) {
-            if (typeof user_id !== "number") {
-                return res.status(400).json({
-                    status: false,
-                    message: "Each user_id must be a number",
-                });
-            }
-        }
-
-        // Process each user_id
-        await Promise.all(
-            user_ids.map(async (user_id) => {
-                // Step 1: Fetch user info with associated countries
-                const userInfo = await db.userPrimaryInfo.findOne({
-                    where: { id: user_id },
-                    include: {
-                        model: db.country,
-                        as: 'preferredCountries',
-                    },
-                    transaction
-                });
-
-                if (!userInfo) {
-                    throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
-                }
-
-                // Handle multiple preferred countries
-                const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
-
-                // Step 2: Check if the task with studentId exists
-                const existingTask = await db.tasks.findOne({
-                    where: { studentId: user_id },
-                    transaction,
-                });
-
-                // Step 3: Create or update task
-                if (existingTask) {
-                    // Update existing task
-                    await existingTask.update(
-                        {
-                            userId: counselor_id,
-                            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-                            updatedBy: userId,
-                        },
-                        { transaction }
-                    );
-                } else {
-                    // Create new task
-                    await db.tasks.create(
-                        {
-                            studentId: user_id,
-                            userId: counselor_id,
-                            title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-                            updatedBy: userId,
-                        },
-                        { transaction }
-                    );
-                }
-
-                // Update assigned_cre for the user
-                await db.userPrimaryInfo.update(
-                    { assigned_cre: counselor_id, updated_by: userId, assign_type: "direct_assign" },
-                    { where: { id: user_id }, transaction }
-                );
-            })
-        );
-
-        // Commit transaction
-        await transaction.commit();
-
-        return res.status(200).json({
-            status: true,
-            message: "Counselor assigned successfully",
-        });
-    } catch (error) {
-        // Rollback transaction
-        await transaction.rollback();
-        console.error(`Error assigning counselor: ${error}`);
-        return res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
+  try {
+    // Validate counselor_id
+    if (!counselor_id) {
+      return res.status(400).json({
+        status: false,
+        message: "counselor_id is required",
+      });
     }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Process each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        // Step 1: Fetch user info with associated countries
+        const userInfo = await db.userPrimaryInfo.findOne({
+          where: { id: user_id },
+          include: {
+            model: db.country,
+            as: "preferredCountries",
+          },
+          transaction,
+        });
+
+        if (!userInfo) {
+          throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+        }
+
+        // Handle multiple preferred countries
+        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+
+        // Step 2: Check if the task with studentId exists
+        const existingTask = await db.tasks.findOne({
+          where: { studentId: user_id },
+          transaction,
+        });
+
+        // Step 3: Create or update task
+        if (existingTask) {
+          // Update existing task
+          await existingTask.update(
+            {
+              userId: counselor_id,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        } else {
+          // Create new task
+          await db.tasks.create(
+            {
+              studentId: user_id,
+              userId: counselor_id,
+              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              updatedBy: userId,
+            },
+            { transaction }
+          );
+        }
+
+        // Update assigned_cre for the user
+        await db.userPrimaryInfo.update(
+          { assigned_cre: counselor_id, updated_by: userId, assign_type: "direct_assign" },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+
+    // Commit transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Counselor assigned successfully",
+    });
+  } catch (error) {
+    // Rollback transaction
+    await transaction.rollback();
+    console.error(`Error assigning counselor: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 exports.autoAssignBranchCounselors = async (req, res) => {
-    const { leads_ids } = req.body;
-    const userId = req.userDecodeId;
+  const { leads_ids } = req.body;
+  const userId = req.userDecodeId;
 
-    // Validate leads_ids
-    if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
-        return res.status(400).json({
-            status: false,
-            message: "leads_ids must be a non-empty array",
-        });
+  // Validate leads_ids
+  if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "leads_ids must be a non-empty array",
+    });
+  }
+
+  if (!leads_ids.every((id) => typeof id === "number")) {
+    return res.status(400).json({
+      status: false,
+      message: "Each user_id must be a number",
+    });
+  }
+
+  // Start a new transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Fetch all CREs with their assignment counts
+    const leastCounselor = await getLeastAssignedCounselors();
+
+    if (leastCounselor.length === 0) {
+      throw new Error("No available Counselors to assign leads");
     }
 
-    if (!leads_ids.every((id) => typeof id === "number")) {
-        return res.status(400).json({
-            status: false,
-            message: "Each user_id must be a number",
-        });
-    }
+    // Prepare the bulk update data
+    const updatePromises = leads_ids.map(async (id, index) => {
+      const userInfo = await UserPrimaryInfo.findOne({
+        where: id,
+        include: {
+          model: db.country,
+          as: "preferredCountries",
+        },
+      });
+      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
 
-    // Start a new transaction
-    const transaction = await sequelize.transaction();
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
 
-    try {
-        // Fetch all CREs with their assignment counts
-        const leastCounselor = await getLeastAssignedCounselors();
+      const task = await db.tasks.upsert(
+        {
+          studentId: id,
+          userId: currentCounselor,
+          title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+          dueDate: dueDate,
+          updatedBy: userId,
+        },
+        { transaction }
+      );
+      return UserPrimaryInfo.update(
+        { assigned_cre: currentCounselor, assign_type: "auto_assign" },
+        { where: { id }, transaction }
+      );
+    });
 
-        if (leastCounselor.length === 0) {
-            throw new Error("No available Counselors to assign leads");
-        }
+    // Perform bulk update
+    await Promise.all(updatePromises);
 
-        // Prepare the bulk update data
-        const updatePromises = leads_ids.map(async (id, index) => {
-            const userInfo = await UserPrimaryInfo.findOne({
-                where: id, include: {
-                    model: db.country,
-                    as: 'preferredCountries',
-                },
-            });
-            const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
-            const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
+    // Commit the transaction
+    await transaction.commit();
 
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 1);
-
-            const task = await db.tasks.upsert(
-                {
-                    studentId: id,
-                    userId: currentCounselor,
-                    title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                    dueDate: dueDate,
-                    updatedBy: userId,
-                },
-                { transaction }
-            );
-            return UserPrimaryInfo.update(
-                { assigned_cre: currentCounselor, assign_type: "auto_assign" },
-                { where: { id }, transaction }
-            );
-        });
-
-        // Perform bulk update
-        await Promise.all(updatePromises);
-
-        // Commit the transaction
-        await transaction.commit();
-
-        res.status(200).json({
-            status: true,
-            message: "Leads assigned successfully",
-        });
-    } catch (error) {
-        // Rollback the transaction in case of an error
-        await transaction.rollback();
-        console.error("Error in autoAssign:", error);
-        res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
-    }
+    res.status(200).json({
+      status: true,
+      message: "Leads assigned successfully",
+    });
+  } catch (error) {
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
+    console.error("Error in autoAssign:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 exports.listBranches = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    const userId = req.userDecodeId;
-    try {
-        const adminUser = await db.adminUsers.findOne({
-            where: { id: userId },
-            attributes: ['region_id'], // Fetch only the region_id field
-            transaction,
-        });
+  const transaction = await sequelize.transaction();
+  const userId = req.userDecodeId;
+  try {
+    const adminUser = await db.adminUsers.findOne({
+      where: { id: userId },
+      attributes: ["region_id"], // Fetch only the region_id field
+      transaction,
+    });
 
-        // Check if the admin user exists
-        if (!adminUser) {
-            return res.status(404).json({
-                status: false,
-                message: "Admin user not found",
-            });
-        }
-
-        // Extract the branch_id
-        const { region_id } = adminUser;
-
-        // Fetch the branch details using the branch_id
-        const branch = await db.branches.findAll({
-            where: { region_id },
-            transaction,
-        });
-
-        // Check if the branch exists
-        if (!branch) {
-            return res.status(404).json({
-                status: false,
-                message: "Branch not found for the given region",
-            });
-        }
-
-        // Commit transaction
-        await transaction.commit();
-
-        // Respond with the branch details
-        return res.status(200).json({
-            status: true,
-            message: "Branch details retrieved successfully",
-            data: branch,
-        });
-
-    } catch (err) {
-        await transaction.rollback();
-        console.error("Error in finding branches:", error);
-        res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
+    // Check if the admin user exists
+    if (!adminUser) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin user not found",
+      });
     }
-}
+
+    // Extract the branch_id
+    const { region_id } = adminUser;
+
+    // Fetch the branch details using the branch_id
+    const branch = await db.branches.findAll({
+      where: { region_id },
+      transaction,
+    });
+
+    // Check if the branch exists
+    if (!branch) {
+      return res.status(404).json({
+        status: false,
+        message: "Branch not found for the given region",
+      });
+    }
+
+    // Commit transaction
+    await transaction.commit();
+
+    // Respond with the branch details
+    return res.status(200).json({
+      status: true,
+      message: "Branch details retrieved successfully",
+      data: branch,
+    });
+  } catch (err) {
+    await transaction.rollback();
+    console.error("Error in finding branches:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 exports.autoAssign = async (req, res) => {
-    const { leads_ids } = req.body;
-    const userId = req.userDecodeId;
+  const { leads_ids } = req.body;
+  const userId = req.userDecodeId;
 
-    // Validate leads_ids
-    if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
-        return res.status(400).json({
-            status: false,
-            message: "leads_ids must be a non-empty array",
-        });
+  // Validate leads_ids
+  if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "leads_ids must be a non-empty array",
+    });
+  }
+
+  if (!leads_ids.every((id) => typeof id === "number")) {
+    return res.status(400).json({
+      status: false,
+      message: "Each user_id must be a number",
+    });
+  }
+
+  // Start a new transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Fetch all CREs with their assignment counts
+    const leastCre = await getLeastAssignedCre();
+
+    if (leastCre.length === 0) {
+      throw new Error("No available CREs to assign leads");
     }
 
-    if (!leads_ids.every((id) => typeof id === "number")) {
-        return res.status(400).json({
-            status: false,
-            message: "Each user_id must be a number",
-        });
-    }
+    // Prepare the bulk update data
+    const updatePromises = leads_ids.map(async (id, index) => {
+      const userInfo = await UserPrimaryInfo.findOne({
+        where: id,
+        include: {
+          model: db.country,
+          as: "preferredCountries",
+        },
+      });
+      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const currentCre = leastCre[index % leastCre.length].user_id;
 
-    // Start a new transaction
-    const transaction = await sequelize.transaction();
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 1);
 
-    try {
-        // Fetch all CREs with their assignment counts
-        const leastCre = await getLeastAssignedCre();
+      const task = await db.tasks.upsert(
+        {
+          studentId: id,
+          userId: currentCre,
+          title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+          dueDate: dueDate,
+          updatedBy: userId,
+        },
+        { transaction }
+      );
+      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign" }, { where: { id }, transaction });
+    });
 
-        if (leastCre.length === 0) {
-            throw new Error("No available CREs to assign leads");
-        }
+    // Perform bulk update
+    await Promise.all(updatePromises);
 
-        // Prepare the bulk update data
-        const updatePromises = leads_ids.map(async (id, index) => {
-            const userInfo = await UserPrimaryInfo.findOne({
-                where: id, include: {
-                    model: db.country,
-                    as: 'preferredCountries',
-                },
-            });
-            const countries = userInfo.preferredCountries.map(c => c.country_name).join(', ') || 'Unknown Country';
-            const currentCre = leastCre[index % leastCre.length].user_id;
+    // Commit the transaction
+    await transaction.commit();
 
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 1);
-
-            const task = await db.tasks.upsert(
-                {
-                    studentId: id,
-                    userId: currentCre,
-                    title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-                    dueDate: dueDate,
-                    updatedBy: userId,
-                },
-                { transaction }
-            );
-            return UserPrimaryInfo.update(
-                { assigned_cre: currentCre, assign_type: "auto_assign" },
-                { where: { id }, transaction }
-            );
-        });
-
-        // Perform bulk update
-        await Promise.all(updatePromises);
-
-        // Commit the transaction
-        await transaction.commit();
-
-        res.status(200).json({
-            status: true,
-            message: "Leads assigned successfully",
-        });
-    } catch (error) {
-        // Rollback the transaction in case of an error
-        await transaction.rollback();
-        console.error("Error in autoAssign:", error);
-        res.status(500).json({
-            status: false,
-            message: "Internal server error",
-        });
-    }
+    res.status(200).json({
+      status: true,
+      message: "Leads assigned successfully",
+    });
+  } catch (error) {
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
+    console.error("Error in autoAssign:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 // round robin method
 const getLeastAssignedCre = async () => {
-    try {
-        // Fetch all CREs with their current assignment counts
-        const creList = await db.adminUsers.findAll({
-            attributes: [
-                ["id", "user_id"],
-                "username",
-                [
-                    Sequelize.literal(`(
+  try {
+    // Fetch all CREs with their current assignment counts
+    const creList = await db.adminUsers.findAll({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
               SELECT COUNT(*)
               FROM "user_primary_info"
               WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
             )`),
-                    "assignment_count",
-                ],
-            ],
-            where: {
-                [Sequelize.Op.or]: [
-                    { role_id: process.env.CRE_ID },
-                    { role_id: process.env.CRE_TL_ID }
-                ],
-            },
-            order: [[Sequelize.literal("assignment_count"), "ASC"]],
-        });
+          "assignment_count",
+        ],
+      ],
+      where: {
+        [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+    });
 
-        return creList.map((cre) => ({
-            user_id: cre.dataValues.user_id,
-            assignment_count: parseInt(cre.dataValues.assignment_count, 10),
-        }));
-    } catch (error) {
-        console.error("Error fetching CREs with assignment counts:", error);
-        throw error;
-    }
+    return creList.map((cre) => ({
+      user_id: cre.dataValues.user_id,
+      assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+    }));
+  } catch (error) {
+    console.error("Error fetching CREs with assignment counts:", error);
+    throw error;
+  }
 };
 
 const getLeastAssignedCounselors = async () => {
-    try {
-        // Fetch all CREs with their current assignment counts
-        const creList = await db.adminUsers.findAll({
-            attributes: [
-                ["id", "user_id"],
-                "username",
-                [
-                    Sequelize.literal(`(
+  try {
+    // Fetch all CREs with their current assignment counts
+    const creList = await db.adminUsers.findAll({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
               SELECT COUNT(*)
               FROM "user_primary_info"
               WHERE "user_primary_info"."assigned_branch_counselor" = "admin_user"."id"
             )`),
-                    "assignment_count",
-                ],
-            ],
-            where: {
-                [Sequelize.Op.or]: [
-                    { role_id: process.env.BRANCH_COUNSELLOR_ID },
-                ],
-            },
-            order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
-        });
+          "assignment_count",
+        ],
+      ],
+      where: {
+        [Sequelize.Op.or]: [{ role_id: process.env.BRANCH_COUNSELLOR_ID }],
+      },
+      order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
+    });
 
-        return creList.map((cre) => ({
-            user_id: cre.dataValues.user_id,
-            assignment_count: parseInt(cre.dataValues.assignment_count, 10),
-        }));
-    } catch (error) {
-        console.error("Error fetching CREs with assignment counts:", error);
-        throw error;
-    }
+    return creList.map((cre) => ({
+      user_id: cre.dataValues.user_id,
+      assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+    }));
+  } catch (error) {
+    console.error("Error fetching CREs with assignment counts:", error);
+    throw error;
+  }
 };

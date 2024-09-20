@@ -75,6 +75,7 @@ exports.getLeads = async (req, res) => {
       ],
     });
 
+
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
@@ -110,6 +111,7 @@ exports.getLeads = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
+      // data: leads,
       allCres: null,
     });
   } catch (error) {

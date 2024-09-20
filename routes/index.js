@@ -212,7 +212,8 @@ router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingControlle
 router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
-router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
+router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
+router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignBranchCounselors);
 router.post("/assign_counselor_tl", [authMiddleware.checkUserAuth], AssignLeadsController.assignCounselorTL);
 router.get("/list_manager_branches", [authMiddleware.checkUserAuth], AssignLeadsController.listBranches);
 router.put("/leads/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.updateLead);

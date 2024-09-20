@@ -10,11 +10,9 @@ const getDropdownData = async (req, res) => {
     const promises = [];
 
     if (!types || requestedTypes.includes("universities")) {
-      promises.push(
-        db.university.findAll({ attributes: ["id", "university_name"] })
-      );
+      promises.push(db.university.findAll({ attributes: ["id", "university_name"] }));
     } else {
-      promises.push(Promise.resolve(null)); // add null if not requested
+      promises.push(Promise.resolve(null));
     }
 
     if (!types || requestedTypes.includes("countries")) {
@@ -23,10 +21,20 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("leadTypes")) {
+      promises.push(db.leadType.findAll({ attributes: ["id", "name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
     if (!types || requestedTypes.includes("sources")) {
-      promises.push(
-        db.leadSource.findAll({ attributes: ["id", "source_name"] })
-      );
+      promises.push(db.leadSource.findAll({ attributes: ["id", "source_name", "lead_type_id"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("channels")) {
+      promises.push(db.leadChannel.findAll({ attributes: ["id", "channel_name", "source_id"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -49,6 +57,43 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("officeType")) {
+      promises.push(db.officeType.findAll({ attributes: ["id", "office_type_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("region")) {
+      promises.push(db.region.findAll({ attributes: ["id", "region_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("status")) {
+      promises.push(db.status.findAll({ attributes: ["id", "status_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("adminUsers")) {
+      promises.push(db.adminUsers.findAll({ attributes: ["id", "name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("cres")) {
+      promises.push(
+        db.adminUsers.findAll({
+          attributes: ["id", "name"],
+          where: {
+            role_id: process.env.CRE_ID,
+          },
+        })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
     if (!types || requestedTypes.includes("campuses")) {
       promises.push(db.campus.findAll({ attributes: ["id", "campus_name"] }));
     } else {
@@ -60,16 +105,23 @@ const getDropdownData = async (req, res) => {
     const [
       universityDetails,
       countryDetails,
+      leadTypeDetails,
       sourceDetails,
+      channelDetails,
       courseDetails,
       courseTypeDetails,
       streamDetails,
+      officeTypeDetails,
+      regionDetails,
+      statusDetails,
+      adminUserDetails,
+      cresDetails,
       campusDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
       return data
-        ? data.map((item) => ({ label: item[name], value: item.id }))
+        ? data.map((item) => ({ label: item[name], value: item.id, lead_type: item.lead_type_id, source_id: item.source_id }))
         : [];
     };
 
@@ -78,11 +130,18 @@ const getDropdownData = async (req, res) => {
       data: {
         universities: formatData(universityDetails, "university_name"),
         countries: formatData(countryDetails, "country_name"),
+        leadTypes: formatData(leadTypeDetails, "name"),
         courses: formatData(courseDetails, "course_name"),
         courseTypes: formatData(courseTypeDetails, "type_name"),
         streams: formatData(streamDetails, "stream_name"),
         campuses: formatData(campusDetails, "campus_name"),
         sources: formatData(sourceDetails, "source_name"),
+        channels: formatData(channelDetails, "channel_name"),
+        officeTypes: formatData(officeTypeDetails, "office_type_name"),
+        regions: formatData(regionDetails, "region_name"),
+        statuses: formatData(statusDetails, "status_name"),
+        adminUsers: formatData(adminUserDetails, "name"),
+        cres: formatData(cresDetails, "name"), 
       },
     });
   } catch (error) {
