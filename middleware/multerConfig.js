@@ -66,4 +66,26 @@ const uploadGraduationDocs = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
 }).any();
 
-module.exports = { uploadMultiple, uploadGraduationDocs };
+const multerStorageWorkDocs = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("Inside multer destination ->", file);
+
+    // Default to 'uploads/' if the field name is not explicitly mapped
+    const uploadFolder = "uploads/workDocuments";
+    cb(null, uploadFolder);
+  },
+  filename: (req, file, cb) => {
+    console.log("Inside multer filename ->", file);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${file.fieldname}-${basename}-${uniqueSuffix}${ext}`);
+  },
+});
+
+const uploadWorkDocs = multer({
+  storage: multerStorageWorkDocs,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+}).any();
+
+module.exports = { uploadMultiple, uploadGraduationDocs, uploadWorkDocs };
