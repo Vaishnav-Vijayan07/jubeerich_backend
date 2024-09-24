@@ -382,7 +382,8 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
-    franchise_id
+    franchise_id,
+    password // Include the password field in the request body
   } = req.body;
 
   try {
@@ -428,6 +429,13 @@ exports.updateAdminUsers = async (req, res) => {
       franchise_id: franchise_id ?? user.franchise_id,
     };
 
+    // If password is not null, hash and update it; otherwise, retain the existing password
+    if (password !== null && password !== undefined) {
+      updateData.password = bcrypt.hashSync(password + process.env.SECRET);
+    } else {
+      updateData.password = user.password; // Retain existing password
+    }
+
     // Update the admin user
     await user.update(updateData);
 
@@ -444,8 +452,6 @@ exports.updateAdminUsers = async (req, res) => {
     });
   }
 };
-
-
 
 // exports.updateAdminUsers = async (req, res) => {
 //   const id = parseInt(req.params.id);
