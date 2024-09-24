@@ -410,7 +410,7 @@ exports.getStudentAcademicInfoById = async (req, res) => {
       acadmicInfoData = {
         exam_details: examInfo.map((exam) => {
           // console.log('EXAM ======', exam);
-          
+
           // return {
           //   id: exam.id,
           //   exam_name: exam.dataValues.exam_name,
@@ -429,7 +429,7 @@ exports.getStudentAcademicInfoById = async (req, res) => {
             overall_score: exam.dataValues.overall_score,
             exam_date: exam.dataValues.exam_date,
             exam_documents: exam.dataValues.score_card,
-            document: exam.dataValues.score_card,
+            score_card: exam.dataValues.score_card,
           };
         }),
       };
@@ -447,6 +447,54 @@ exports.getStudentAcademicInfoById = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error fetching student info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+exports.getStudentWorkInfoById = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    console.log("Fetching info for studentId:", studentId);
+
+    // Find the user by their primary key (studentId)
+    const user = await db.userPrimaryInfo.findByPk(studentId);
+
+    // If user is not found, return an error response
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    // Retrieve the associated workInfos using the magic method
+    const workInfos = await user.getUserWorkInfos();
+
+    const workDataFormatted = workInfos.map((work) => {
+      return {
+        id: work?.id,
+        years: work?.years,
+        company: work?.company,
+        designation: work?.designation,
+        from: work?.from,
+        to: work?.to,
+        bank_statement: work?.bank_statement || null,
+        job_offer_document: work?.job_offer_document || null,
+        appointment_document: work?.appointment_document || null,
+        payslip_document: work?.payslip_document || null,
+      };
+    });
+
+    // Return the work information in the response
+    res.status(200).json({
+      status: true,
+      message: "Student Work info retrieved successfully",
+      data: workDataFormatted, // Include the fetched workInfos in the response
+    });
+  } catch (error) {
+    console.error(`Error fetching student Work info: ${error}`);
     res.status(500).json({
       status: false,
       message: "Internal server error",

@@ -12,6 +12,7 @@ const {
   addOrUpdateExamDocs,
   addOrUpdateGraduationData,
 } = require("../utils/academic_query_helper");
+const { deleteFile } = require("../utils/upsert_helpers");
 
 exports.saveStudentBasicInfo = async (req, res) => {
   const {
@@ -250,7 +251,7 @@ exports.saveStudentAcademicInfo = async (req, res) => {
   const hasAcademicData = academicRecords && academicRecords.length > 0;
   const hasExamData = exam_details && exam_details.length > 0;
 
-  console.log('EXAMS ===> ', exam_details);
+  console.log("EXAMS ===> ", exam_details);
 
   if (!hasAcademicData && !hasExamData) {
     return res.status(400).json({
@@ -307,17 +308,60 @@ exports.saveStudentAcademicInfo = async (req, res) => {
 exports.saveStudentWorkInfo = async (req, res) => {
   let { workExperience, user_id } = req.body;
 
-  console.log("workExperience", workExperience);
-
   // Start a transaction
   const transaction = await sequelize.transaction();
 
+  const files = req.files;
+
+  // Debugging information
+  console.log("workExperience", workExperience);
+  console.log("Files data:", files);
+
+  if (!user_id || !Array.isArray(workExperience) || !files) {
+    throw new Error("Invalid input data");
+  }
+
+  const modifiedData = [];
+
+  // Iterate over graduation details
+  workExperience.forEach((item, index) => {
+    const fields = [
+      "appointment_document",
+      "bank_statement",
+      "job_offer_document",
+      "payslip_document",
+    ];
+
+    const isUpdate = item?.id !== "0";
+
+    const itemData = {
+      id: item.id,
+      company: item.company,
+      years: Number(item.years),
+      designation: item.designation,
+      from: item.from,
+      to: item.to,
+      user_id: Number(user_id),
+    };
+
+    fields.forEach((field) => {
+      const fieldName = `workExperience[${index}][${field}]`;
+      const file = files.find((file) => file.fieldname === fieldName);
+
+      if (!isUpdate || (isUpdate && file)) {
+        // Only add field if it's not an update or if a new file is provided
+        itemData[field] = file ? file.filename : null;
+      }
+    });
+
+    // Push the item data to the modifiedData array
+    modifiedData.push(itemData);
+  });
+
+  console.log("Modified data:", modifiedData);
+
   try {
-    const workResult = await addOrUpdateWork(
-      workExperience,
-      user_id,
-      transaction
-    );
+    const workResult = await addOrUpdateWork(modifiedData, transaction);
 
     if (workResult.success) {
       await transaction.commit();
@@ -383,25 +427,9 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
 
     // If the record is of type 'exam', delete the associated document
     if (type == "exam") {
-      const file = record.document;
+      const file = record.score_card;
       if (file) {
-        const filePath = path.join(
-          __dirname,
-          "..",
-          "uploads",
-          "examDocuments",
-          file
-        );
-
-        if (fs.existsSync(filePath)) {
-          fs.unlink(filePath, (err) => {
-            if (err) {
-              console.error(`Failed to delete file: ${filePath}`, err);
-            } else {
-              console.log(`Successfully deleted file: ${filePath}`);
-            }
-          });
-        }
+        deleteFile("examDocuments", file);
       }
     }
 
@@ -418,24 +446,23 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
       fileFields.forEach((field) => {
         const docName = record[field];
         if (docName) {
-          const filePath = path.join(
-            __dirname,
-            "..",
-            "uploads",
-            "graduationDocuments",
-            docName
-          );
+          deleteFile("graduationDocuments", docName);
+        }
+      });
+    }
 
-          // Check if the file exists before attempting to delete
-          if (fs.existsSync(filePath)) {
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error(`Failed to delete file: ${filePath}`, err);
-              } else {
-                console.log(`Successfully deleted file: ${filePath}`);
-              }
-            });
-          }
+    if (type == "work") {
+      const fileFields = [
+        "appointment_document",
+        "bank_statement",
+        "job_offer_document",
+        "payslip_document",
+      ];
+
+      fileFields.forEach((field) => {
+        const docName = record[field];
+        if (docName) {
+          deleteFile("workDocuments", docName);
         }
       });
     }
@@ -793,7 +820,7 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
         backlog_certificate: detail?.backlog_certificate || null,
         grading_scale_info: detail?.grading_scale_info || null,
         admit_card: detail?.admit_card || null,
-        conversion_formula: detail?.conversion_formula || ""
+        conversion_formula: detail?.conversion_formula || "",
       };
     });
 

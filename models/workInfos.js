@@ -36,6 +36,26 @@ module.exports = (sequelize, Sequelize) => {
       onUpdate: "CASCADE", // Optional: Update foreign key on referenced table updates
       onDelete: "SET NULL", // Optional: Set foreign key to null on referenced table deletions
     },
+    bank_statement: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
+    job_offer_document: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
+    appointment_document: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
+    payslip_document: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
   });
 
   return WorkInfo;
