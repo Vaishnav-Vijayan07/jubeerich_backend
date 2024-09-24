@@ -174,7 +174,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     const { id } = req.params;
     const users = await db.adminUsers.findAll({
       where: {
-        role_id: process.env.BRANCH_COUNSELLOR_TL_ROLE_ID,
+        role_id: process.env.COUNSELLOR_TL_ID,
         branch_id: id
       },
       include: [
@@ -195,6 +195,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       return res.status(404).json({
         status: false,
         message: "Admin users not found !",
+        data: []
       });
     }
 
@@ -382,7 +383,8 @@ exports.updateAdminUsers = async (req, res) => {
     role_id,
     region_id,
     country_id,
-    franchise_id
+    franchise_id,
+    password // Include the password field in the request body
   } = req.body;
 
   try {
@@ -428,6 +430,13 @@ exports.updateAdminUsers = async (req, res) => {
       franchise_id: franchise_id ?? user.franchise_id,
     };
 
+    // If password is not null, hash and update it; otherwise, retain the existing password
+    if (password !== null && password !== undefined) {
+      updateData.password = bcrypt.hashSync(password + process.env.SECRET);
+    } else {
+      updateData.password = user.password; // Retain existing password
+    }
+
     // Update the admin user
     await user.update(updateData);
 
@@ -444,8 +453,6 @@ exports.updateAdminUsers = async (req, res) => {
     });
   }
 };
-
-
 
 // exports.updateAdminUsers = async (req, res) => {
 //   const id = parseInt(req.params.id);

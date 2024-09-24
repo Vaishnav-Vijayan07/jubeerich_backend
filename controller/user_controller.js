@@ -44,14 +44,8 @@ exports.createLead = async (req, res) => {
     exam_details,
   } = req.body;
 
-  console.log("req.body ================>", req.body);
-  console.log("req. files ========+>", req.body);
-
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
-  console.log("preferred_country", preferred_country);
-
-  console.log("req. files ========+>", req.files);
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -64,7 +58,6 @@ exports.createLead = async (req, res) => {
     const creTl = await AdminUsers.findOne({
       where: { role_id: process.env.CRE_TL_ID },
     }); // Find the user_id of cre_tl
-    const user = await AdminUsers.findOne({ where: { id: userId } });
 
     // Check if referenced IDs exist in their respective tables
     const leadTypeExists = await checkIfEntityExists(
@@ -466,7 +459,6 @@ exports.updateLead = async (req, res) => {
     full_name,
     email,
     phone,
-    category_id,
     lead_type_id,
     source_id,
     channel_id,
@@ -510,6 +502,7 @@ exports.updateLead = async (req, res) => {
     const entities = [
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
+      { model: "lead_type", id: lead_type_id },
       { model: "office_type", id: office_type },
       { model: "region", id: region_id !== "null" ? region_id : null },
       {
