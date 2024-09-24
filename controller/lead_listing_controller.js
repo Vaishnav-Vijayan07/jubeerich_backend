@@ -5,19 +5,18 @@ const AdminUsers = db.adminUsers;
 exports.getLeads = async (req, res) => {
   try {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
-      where: {
-        is_deleted: false,
-      },
+      where: { is_deleted: false },
+      // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
         {
           model: db.leadSource,
           as: "source_name",
           attributes: ["source_name"],
+        },
+        {
+          model: db.leadType,
+          as: "type_name",
+          attributes: ["name"],
         },
         {
           model: db.leadChannel,
@@ -26,15 +25,17 @@ exports.getLeads = async (req, res) => {
         },
         {
           model: db.country,
-          as: "preferredCountries", // Use the alias defined in associations
-          attributes: ["country_name", "id"], // Include the ID attribute
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "preferredCountries", 
+          attributes: ["country_name", "id"], 
+          through: { attributes: [] }, 
+          required: false,
         },
         {
           model: db.adminUsers,
-          as: "counselors", // Use the alias defined in associations
-          attributes: ["name", "id"], // Include the ID attribute
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "counselors", 
+          attributes: ["name", "id"], 
+          through: { attributes: [] }, 
+          required: false,
         },
         {
           model: db.officeType,
@@ -45,13 +46,13 @@ exports.getLeads = async (req, res) => {
           model: db.region,
           as: "region_name",
           attributes: ["region_name"],
-          required: false,
+          required: false, 
         },
         {
           model: db.adminUsers,
           as: "counsiler_name",
           attributes: ["name"],
-          required: false,
+          required: false, 
         },
         {
           model: db.branches,
@@ -84,25 +85,21 @@ exports.getLeads = async (req, res) => {
       const counsellorNames = info.counselors?.map((counselor) => ({
         counselor_name: counselor.name,
         id: counselor.id,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        type_name: info.type_name?.name || null,
+        source_name: info.source_name?.source_name || null,
+        channel_name: info.channel_name?.channel_name || null,
         preferredCountries: preferredCountries,
         counselors: counsellorNames,
-        office_type_name: info.office_type_name
-          ? info.office_type_name.office_type_name
-          : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
-        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        status: info.status ? info.status.status_name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        office_type_name: info.office_type_name?.office_type_name || null,
+        region_name: info.region_name?.region_name || null,
+        counsiler_name: info.counsiler_name?.name || null,
+        status: info.status?.status_name || null,
+        branch_name: info.branch_name?.branch_name || null,
+        updated_by_user: info.updated_by_user?.name || null,
       };
     });
 
@@ -110,7 +107,6 @@ exports.getLeads = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
-      allCres: null,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
@@ -120,6 +116,128 @@ exports.getLeads = async (req, res) => {
     });
   }
 };
+
+
+// exports.getLeads = async (req, res) => {
+//   try {
+//     const userPrimaryInfos = await UserPrimaryInfo.findAll({
+//       where: {
+//         is_deleted: false,
+//       },
+//       include: [
+//         {
+//           model: db.leadCategory,
+//           as: "category_name",
+//           attributes: ["category_name"],
+//         },
+//         {
+//           model: db.leadSource,
+//           as: "source_name",
+//           attributes: ["source_name"],
+//         },
+//         {
+//           model: db.leadChannel,
+//           as: "channel_name",
+//           attributes: ["channel_name"],
+//         },
+//         {
+//           model: db.country,
+//           as: "preferredCountries", // Use the alias defined in associations
+//           attributes: ["country_name", "id"], // Include the ID attribute
+//           // through: { attributes: [] }, // Exclude attributes from join table
+//         },
+//         {
+//           model: db.adminUsers,
+//           as: "counselors", // Use the alias defined in associations
+//           attributes: ["name", "id"], // Include the ID attribute
+//           // through: { attributes: [] }, // Exclude attributes from join table
+//         },
+//         {
+//           model: db.officeType,
+//           as: "office_type_name",
+//           attributes: ["office_type_name"],
+//         },
+//         {
+//           model: db.region,
+//           as: "region_name",
+//           attributes: ["region_name"],
+//           required: false,
+//         },
+//         {
+//           model: db.adminUsers,
+//           as: "counsiler_name",
+//           attributes: ["name"],
+//           required: false,
+//         },
+//         {
+//           model: db.branches,
+//           as: "branch_name",
+//           attributes: ["branch_name"],
+//           required: false,
+//         },
+//         {
+//           model: db.status,
+//           as: "status",
+//           attributes: ["status_name"],
+//           required: false,
+//         },
+//         {
+//           model: db.adminUsers,
+//           as: "updated_by_user",
+//           attributes: ["name"],
+//           required: false,
+//           foreignKey: "updated_by"
+//         }
+//       ],
+//     });
+
+
+//     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+//       const preferredCountries = info.preferredCountries.map((country) => ({
+//         country_name: country.country_name,
+//         id: country.id,
+//       }));
+
+//       const counsellorNames = info.counselors?.map((counselor) => ({
+//         counselor_name: counselor.name,
+//         id: counselor.id,
+//       }))
+
+//       return {
+//         ...info.toJSON(),
+//         category_name: info.category_name
+//           ? info.category_name.category_name
+//           : null,
+//         source_name: info.source_name ? info.source_name.source_name : null,
+//         channel_name: info.channel_name ? info.channel_name.channel_name : null,
+//         preferredCountries: preferredCountries,
+//         counselors: counsellorNames,
+//         office_type_name: info.office_type_name
+//           ? info.office_type_name.office_type_name
+//           : null,
+//         region_name: info.region_name ? info.region_name.region_name : null,
+//         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+//         status: info.status ? info.status.status_name : null,
+//         branch_name: info.branch_name ? info.branch_name.branch_name : null,
+//         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+//       };
+//     });
+
+//     res.status(200).json({
+//       status: true,
+//       message: "User primary info retrieved successfully",
+//       formattedUserPrimaryInfos,
+//       // data: leads,
+//       allCres: null,
+//     });
+//   } catch (error) {
+//     console.error(`Error fetching user primary info: ${error}`);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.getAllLeads = async (req, res) => {
   const cre_id = req.userDecodeId;
@@ -155,9 +273,9 @@ exports.getAllLeads = async (req, res) => {
       },
       include: [
         {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
+          model: db.leadType,
+          as: "type_name",
+          attributes: ["name"],
         },
         {
           model: db.leadSource,
@@ -248,8 +366,8 @@ exports.getAllLeads = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
+        type_name: info.type_name
+          ? info.type_name.name
           : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
@@ -271,7 +389,6 @@ exports.getAllLeads = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
-      allCres: null,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
