@@ -195,6 +195,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       return res.status(404).json({
         status: false,
         message: "Admin users not found !",
+        data: []
       });
     }
 
