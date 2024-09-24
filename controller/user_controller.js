@@ -26,7 +26,6 @@ exports.createLead = async (req, res) => {
     full_name,
     email,
     phone,
-    category_id,
     source_id,
     channel_id,
     city,
@@ -68,16 +67,16 @@ exports.createLead = async (req, res) => {
     const user = await AdminUsers.findOne({ where: { id: userId } });
 
     // Check if referenced IDs exist in their respective tables
-    const categoryExists = await checkIfEntityExists(
-      "lead_category",
-      category_id
+    const leadTypeExists = await checkIfEntityExists(
+      "lead_type_id",
+      lead_type_id
     );
-    if (!categoryExists) {
+    if (!leadTypeExists) {
       await transaction.rollback(); // Rollback the transaction if category ID is invalid
       return res.status(400).json({
         status: false,
-        message: "Invalid category ID provided",
-        errors: [{ msg: "Please provide a valid category ID" }],
+        message: "Invalid Lead Type ID provided",
+        errors: [{ msg: "Please provide a valid Lead Type ID" }],
       });
     }
 
@@ -204,7 +203,6 @@ exports.createLead = async (req, res) => {
         phone,
         city,
         office_type,
-        category_id,
         lead_type_id,
         source_id,
         channel_id,
@@ -510,7 +508,6 @@ exports.updateLead = async (req, res) => {
 
     // Check if referenced IDs exist in their respective tables
     const entities = [
-      { model: "lead_category", id: category_id },
       { model: "lead_source", id: source_id },
       { model: "lead_channel", id: channel_id },
       { model: "office_type", id: office_type },
@@ -585,7 +582,6 @@ exports.updateLead = async (req, res) => {
         phone,
         city,
         office_type,
-        category_id: category_id ? category_id : null,
         lead_type_id,
         source_id,
         channel_id,
@@ -645,17 +641,6 @@ exports.updateLead = async (req, res) => {
         }
         console.log('exam.exam_type',exam.exam_type);
         
-
-        // let examExist;
-        // if(exam?.id){
-        //   // examExist = await db.userExams.findOne({
-        //   //   // where: { student_id: id, exam_type: exam.exam_type },
-        //   //   where: { student_id: id, id: exam?.id },
-        //   // });
-        // }
-        // console.log('examExist',examExist);
-
-        // if (examExist) {
         if (exam.id) {
           return db.userExams.update(updateData, {
             where: {
