@@ -309,7 +309,6 @@ exports.saveStudentWorkInfo = async (req, res) => {
   let { workExperience, user_id } = req.body;
 
   // Start a transaction
-  const transaction = await sequelize.transaction();
 
   const files = req.files;
 
@@ -359,6 +358,7 @@ exports.saveStudentWorkInfo = async (req, res) => {
   });
 
   console.log("Modified data:", modifiedData);
+  const transaction = await sequelize.transaction();
 
   try {
     const workResult = await addOrUpdateWork(modifiedData, transaction);
@@ -416,6 +416,10 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
         record = await db.graduationDetails.findByPk(id);
         message = "Graduation record";
         break;
+      case "fund":
+        record = await db.fundPlan.findByPk(id);
+        message = "Fund plan record";
+        break;
       default:
         throw new Error("Invalid type specified");
     }
@@ -430,6 +434,13 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
       const file = record.score_card;
       if (file) {
         deleteFile("examDocuments", file);
+      }
+    }
+
+    if (type == "fund") {
+      const file = record.supporting_document;
+      if (file) {
+        deleteFile("fundDocuments", file);
       }
     }
 
@@ -768,14 +779,6 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
         ],
       }),
     ]);
-
-    // Check if the student exists
-    if (!student) {
-      return res.status(404).json({
-        status: false,
-        message: "Student not found",
-      });
-    }
 
     console.log(graduationDetails.graduationDetails);
     console.log(student.educationDetails);

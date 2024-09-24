@@ -68,7 +68,7 @@ exports.createLead = async (req, res) => {
 
     // Check if referenced IDs exist in their respective tables
     const leadTypeExists = await checkIfEntityExists(
-      "lead_type_id",
+      "lead_type",
       lead_type_id
     );
     if (!leadTypeExists) {
