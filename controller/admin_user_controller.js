@@ -174,7 +174,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     const { id } = req.params;
     const users = await db.adminUsers.findAll({
       where: {
-        role_id: process.env.BRANCH_COUNSELLOR_TL_ROLE_ID,
+        role_id: process.env.COUNSELLOR_TL_ID,
         branch_id: id
       },
       include: [
