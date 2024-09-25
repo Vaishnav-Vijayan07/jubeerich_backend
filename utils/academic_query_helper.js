@@ -190,6 +190,18 @@ const batchUpsertWorkData = async (model, records, transaction) => {
   );
 };
 
+const batchUpsertFundData = async (model, records, transaction) => {
+  const fileFields = ["supporting_document"];
+
+  return batchUpsertData(
+    model,
+    records,
+    transaction,
+    fileFields,
+    "fundDocuments"
+  );
+};
+
 const addOrUpdateAcademic = async (academicRecords, userId, transaction) => {
   const records = academicRecords.map((record) => ({
     ...record,
@@ -225,27 +237,12 @@ const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
 
     // If a file is found, update the document field with the file's filename
     if (fileitem) {
-      // return {
-      //   ...record,
-      //   document: fileitem.filename, // Update with the actual file name
-      //   marks: Number(record.marks), // Ensure marks is a number
-      //   student_id: Number(userId), // Add the user ID
-      // };
-
       return {
         ...record,
         score_card: fileitem.filename, // Update with the actual file name
         student_id: Number(userId), // Add the user ID
       };
     }
-
-    // If no file is found, return the record as is, but ensure marks is a number
-
-    // return {
-    //   ...record,
-    //   marks: Number(record.marks), // Ensure marks is a number
-    //   student_id: Number(userId), // Add the user ID
-    // };
 
     return {
       ...record,
@@ -317,10 +314,22 @@ const addOrUpdateGraduationData = async (graduationDetails, transaction) => {
   }
 };
 
+const addOrUpdateFundData = async (fundDetails, transaction) => {
+  try {
+    await batchUpsertFundData(db.fundPlan, fundDetails, transaction);
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+
+    throw new Error(`Graduation Update Failed: ${error.message}`);
+  }
+};
+
 module.exports = {
   addOrUpdateAcademic,
   addOrUpdateWork,
   addOrUpdateExamDocs,
   addOrUpdateStudyPreference,
   addOrUpdateGraduationData,
+  addOrUpdateFundData,
 };

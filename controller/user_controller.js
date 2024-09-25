@@ -473,6 +473,7 @@ exports.updateLead = async (req, res) => {
     remarks,
     lead_received_date,
     zipcode,
+    franchise_id,
     exam_details,
   } = req.body;
 
@@ -579,6 +580,7 @@ exports.updateLead = async (req, res) => {
         source_id,
         channel_id,
         region_id: region_id !== "null" ? region_id : null,
+        franchise_id: franchise_id != "null" ? franchise_id : null,
         counsiler_id: counsiler_id !== "null" ? counsiler_id : null,
         branch_id: branch_id !== "null" ? branch_id : null,
         updated_by,
@@ -661,7 +663,7 @@ exports.updateLead = async (req, res) => {
       });
 
       await Promise.all(examDetailsPromises);
-    }
+    } 
 
     await transaction.commit();
 

@@ -49,6 +49,7 @@ db.previousVisaDecline = require('./previousVisaDecline')(sequelize, Sequelize);
 db.previousVisaApprove = require('./previousVisaApproval')(sequelize, Sequelize);
 db.travelHistory = require('./travelHistory')(sequelize, Sequelize);
 db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
+db.fundPlan = require("./fundPlan")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -64,6 +65,17 @@ db.graduationDetails = require("./graduationDetails")(sequelize, Sequelize);
 db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
 
 //Associations
+
+
+db.userPrimaryInfo.hasMany(db.fundPlan, {
+  foreignKey: "student_id",
+  as: "fundPlan",
+})
+
+db.fundPlan.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "student",
+})
 
 db.graduationDetails.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",

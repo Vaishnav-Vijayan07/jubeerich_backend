@@ -75,6 +75,8 @@ exports.getAllCounsellors = async (req, res, next) => {
       ],
     });
 
+    console.log('users',users);
+
     if (!users || users.length === 0) {
       return res.status(404).json({
         status: false,
@@ -336,6 +338,31 @@ exports.addAdminUsers = async (req, res) => {
         message: `${conflictFields.join(", ")} already exists`,
       });
     }
+
+    // if(role_id == BRANCH_COUNSELLOR_TL_ROLE_ID){
+    //   let conflictsData = await db.adminUsers.findByPk({
+    //     where: {
+    //       [Op.and]: [{ role_id }, { email }, { phone }, { username }],
+    //     },
+    //   });
+  
+    //   if (conflictsData.length > 0) {
+    //     const conflictFields = [];
+    //     if (conflictsData.some((user) => user.employee_id === employee_id))
+    //       conflictFields.push("Employee ID");
+    //     if (conflictsData.some((user) => user.email === email))
+    //       conflictFields.push("Email");
+    //     if (conflictsData.some((user) => user.phone === phone))
+    //       conflictFields.push("Phone");
+    //     if (conflictsData.some((user) => user.username === username))
+    //       conflictFields.push("Username");
+  
+    //     return res.status(409).json({
+    //       status: false,
+    //       message: `${conflictFields.join(", ")} already exists`,
+    //     });
+    //   }
+    // }
 
     // Insert the new admin user
     const newUser = await db.adminUsers.create({
