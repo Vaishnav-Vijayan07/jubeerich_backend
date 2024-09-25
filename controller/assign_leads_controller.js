@@ -428,6 +428,7 @@ exports.listBranches = async (req, res) => {
     // Fetch the branch details using the branch_id
     const branch = await db.branches.findAll({
       where: { region_id },
+      attributes: ["id", "branch_name"],
       transaction,
     });
 
@@ -439,6 +440,12 @@ exports.listBranches = async (req, res) => {
       });
     }
 
+    const modifiedBranches = branch.map(branch => ({
+      label: branch.branch_name,
+      value: branch.id,
+      region_id: branch.region_id
+    }));
+
     // Commit transaction
     await transaction.commit();
 
@@ -446,11 +453,11 @@ exports.listBranches = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Branch details retrieved successfully",
-      data: branch,
+      data: modifiedBranches,
     });
   } catch (err) {
     await transaction.rollback();
-    console.error("Error in finding branches:", error);
+    console.error("Error in finding branches:", err);
     res.status(500).json({
       status: false,
       message: "Internal server error",

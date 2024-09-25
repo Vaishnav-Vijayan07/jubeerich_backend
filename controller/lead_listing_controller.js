@@ -376,7 +376,7 @@ exports.getAllLeads = async (req, res) => {
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
+        // region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,

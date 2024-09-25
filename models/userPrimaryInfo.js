@@ -202,34 +202,6 @@ module.exports = (sequelize, Sequelize) => {
           unique: true,
           fields: ["phone"],
         },
-        {
-          name: "category_id_index",
-          fields: ["category_id"],
-        },
-        {
-          name: "source_id_index",
-          fields: ["source_id"],
-        },
-        {
-          name: "channel_id_index",
-          fields: ["channel_id"],
-        },
-        {
-          name: "office_type_index",
-          fields: ["office_type"],
-        },
-        {
-          name: "region_id_index",
-          fields: ["region_id"],
-        },
-        {
-          name: "branch_id_index",
-          fields: ["branch_id"],
-        },
-        {
-          name: "updated_by_index",
-          fields: ["updated_by"],
-        },
       ],
     }
   );
