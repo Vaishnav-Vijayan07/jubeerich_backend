@@ -100,6 +100,12 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("franchise")) {
+      promises.push(db.franchise.findAll({ attributes: ["id", "name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
     console.log(promises);
 
     const [
@@ -117,6 +123,7 @@ const getDropdownData = async (req, res) => {
       adminUserDetails,
       cresDetails,
       campusDetails,
+      franchiseDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -142,6 +149,7 @@ const getDropdownData = async (req, res) => {
         statuses: formatData(statusDetails, "status_name"),
         adminUsers: formatData(adminUserDetails, "name"),
         cres: formatData(cresDetails, "name"), 
+        franchises: formatData(franchiseDetails, "name"), 
       },
     });
   } catch (error) {
