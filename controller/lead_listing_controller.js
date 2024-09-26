@@ -250,6 +250,7 @@ exports.getAllLeads = async (req, res) => {
           { created_by: cre_id },
           { assigned_cre: cre_id },
           { assigned_regional_manager: cre_id },
+          { assigned_counsellor_tl: cre_id },
           {
             [db.Sequelize.Op.and]: [
               db.Sequelize.literal(`EXISTS (
