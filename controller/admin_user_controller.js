@@ -16,7 +16,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
       });
@@ -78,7 +78,7 @@ exports.getAllCounsellors = async (req, res, next) => {
     console.log('users',users);
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
       });
@@ -140,7 +140,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found !",
       });
@@ -195,7 +195,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found !",
         data: []
@@ -249,7 +249,7 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
       });
@@ -430,7 +430,7 @@ exports.updateAdminUsers = async (req, res) => {
     // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin user not found",
       });
@@ -567,7 +567,7 @@ exports.deleteAdminUsers = async (req, res) => {
     // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin user not found",
       });
