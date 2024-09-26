@@ -3,11 +3,16 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, process.env.DB_pss, {
-  dialect: "postgres",
-  host: process.env.DB_host,
-  port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
-});
+const sequelize = new Sequelize(
+  process.env.DB_dbname,
+  process.env.DB_user,
+  process.env.DB_pss,
+  {
+    dialect: "postgres",
+    host: process.env.DB_host,
+    port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
+  }
+);
 
 const db = {};
 db.Sequelize = Sequelize;
@@ -45,11 +50,15 @@ db.ordinaryTasks = require("./ordinaryTask")(sequelize, Sequelize);
 db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
 db.workInfos = require("./workInfos")(sequelize, Sequelize);
-db.previousVisaDecline = require('./previousVisaDecline')(sequelize, Sequelize);
-db.previousVisaApprove = require('./previousVisaApproval')(sequelize, Sequelize);
-db.travelHistory = require('./travelHistory')(sequelize, Sequelize);
+db.previousVisaDecline = require("./previousVisaDecline")(sequelize, Sequelize);
+db.previousVisaApprove = require("./previousVisaApproval")(
+  sequelize,
+  Sequelize
+);
+db.travelHistory = require("./travelHistory")(sequelize, Sequelize);
 db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
 db.fundPlan = require("./fundPlan")(sequelize, Sequelize);
+db.gapReason = require("./ReasonForGap")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
@@ -66,16 +75,25 @@ db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
 
 //Associations
 
+db.userPrimaryInfo.hasMany(db.gapReason, {
+  foreignKey: "student_id",
+  as: "gapReasons",
+});
+
+db.gapReason.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "student",
+});
 
 db.userPrimaryInfo.hasMany(db.fundPlan, {
   foreignKey: "student_id",
   as: "fundPlan",
-})
+});
 
 db.fundPlan.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",
   as: "student",
-})
+});
 
 db.graduationDetails.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",
@@ -314,112 +332,112 @@ db.userPrimaryInfo.hasMany(db.academicInfos, {
 // Association for PreviousVisaDecline and UserPrimaryInfo
 db.previousVisaDecline.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",
-  as: "previousVisaDecline"
-})
+  as: "previousVisaDecline",
+});
 
 db.userPrimaryInfo.hasMany(db.previousVisaDecline, {
   foreignKey: "student_id",
-  as: "previousVisaDeclines"
-})
+  as: "previousVisaDeclines",
+});
 
 // Association for PreviousVisaDecline and Country
 db.previousVisaDecline.belongsTo(db.country, {
   foreignKey: "country_id",
-  as: "declined_country"
-})
+  as: "declined_country",
+});
 
 db.country.hasMany(db.previousVisaDecline, {
   foreignKey: "country_id",
-  as: "previousVisaDeclinesCountries"
-})
+  as: "previousVisaDeclinesCountries",
+});
 
 // Association for PreviousVisaDecline and Courses
 db.previousVisaDecline.belongsTo(db.course, {
   foreignKey: "course_applied",
-  as: "declined_course"
-})
+  as: "declined_course",
+});
 
 db.course.hasMany(db.previousVisaDecline, {
   foreignKey: "course_applied",
-  as: "previousVisaDeclinesCourses"
-})
+  as: "previousVisaDeclinesCourses",
+});
 
 // Association for PreviousVisaDecline and Universities
 db.previousVisaDecline.belongsTo(db.university, {
   foreignKey: "university_applied",
-  as: "declined_university_applied"
-})
+  as: "declined_university_applied",
+});
 
 db.university.hasMany(db.previousVisaDecline, {
   foreignKey: "university_applied",
-  as: "previousVisaDeclinesUniversityApplied"
-})
+  as: "previousVisaDeclinesUniversityApplied",
+});
 
 // Association for PreviousVisaApprove and UserPrimaryInfo
 db.previousVisaApprove.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",
-  as: "previousVisaApprove"
-})
+  as: "previousVisaApprove",
+});
 
 db.userPrimaryInfo.hasMany(db.previousVisaApprove, {
   foreignKey: "student_id",
-  as: "previousVisaApprovals"
-})
+  as: "previousVisaApprovals",
+});
 
 // Association for PreviousVisaApprove and Countries
 db.previousVisaApprove.belongsTo(db.country, {
   foreignKey: "country_id",
-  as: "approved_country"
-})
+  as: "approved_country",
+});
 
 db.country.hasMany(db.previousVisaApprove, {
   foreignKey: "country_id",
-  as: "previousVisaApprovalsCountries"
-})
+  as: "previousVisaApprovalsCountries",
+});
 
 // Association for PreviousVisaApprove and Courses
 db.previousVisaApprove.belongsTo(db.course, {
   foreignKey: "course_applied",
-  as: "approved_course"
-})
+  as: "approved_course",
+});
 
 db.course.hasMany(db.previousVisaApprove, {
   foreignKey: "course_applied",
-  as: "previousVisaApprovalsCourses"
-})
+  as: "previousVisaApprovalsCourses",
+});
 
 // Association for PreviousVisaApprove and University
 db.previousVisaApprove.belongsTo(db.university, {
   foreignKey: "university_applied",
-  as: "approved_university_applied"
-})
+  as: "approved_university_applied",
+});
 
 db.university.hasMany(db.previousVisaApprove, {
   foreignKey: "university_applied",
-  as: "previousVisaApprovalsUniversityApplied"
-})
+  as: "previousVisaApprovalsUniversityApplied",
+});
 
 // Association for TravelHistory and UserPrimaryInfo
 db.travelHistory.belongsTo(db.userPrimaryInfo, {
   foreignKey: "student_id",
-  as: "travelHistory"
-})
+  as: "travelHistory",
+});
 
 db.userPrimaryInfo.hasMany(db.travelHistory, {
   foreignKey: "student_id",
-  as: "travelHistories"
-})
+  as: "travelHistories",
+});
 
 // Association for TravelHistory and Countries
 db.travelHistory.belongsTo(db.country, {
   foreignKey: "country_id",
-  as: "travelHistoryCountry"
-})
+  as: "travelHistoryCountry",
+});
 
 db.country.hasMany(db.travelHistory, {
   foreignKey: "student_id",
-  as: "travelHistoryCountries"
-})
+  as: "travelHistoryCountries",
+});
 
 // Association for WorkInfos and UserPrimaryInfo
 db.workInfos.belongsTo(db.userPrimaryInfo, {

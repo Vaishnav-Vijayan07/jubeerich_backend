@@ -53,27 +53,15 @@ const {
   getStudentFundPlanDetails,
   saveStudentPlanDetails,
 } = require("../controller/fund_paln_controller");
+const {
+  saveGapReason,
+  getAllGapReasons,
+} = require("../controller/gap_reason_controller");
 
 const router = express.Router();
 
 // Auth routes
 router.post("/login", authController.login);
-
-router.post(
-  "/study_preferences_details",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.createStudyPreferenceDetails
-);
-router.get(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.getStudyPreferenceDetails
-);
-router.put(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.updateStudyPreferenceDetails
-);
 
 // Admin Users routes
 router.get(
@@ -664,88 +652,6 @@ router.put(
   TaskController.assignNewCountry
 );
 
-// Save Student Details routes
-router.post(
-  "/saveStudentBasicInfo",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentBasicInfo
-);
-router.post(
-  "/saveStudentAcademicInfo",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentAcademicInfo
-);
-
-router.get(
-  "/studentFundInfo/:id",
-  [authMiddleware.checkUserAuth],
-  getStudentFundPlanDetails
-);
-router.post(
-  "/studentFundInfo",
-  uploadMultiple.uploadFundDocs,
-  [authMiddleware.checkUserAuth],
-  saveStudentPlanDetails
-);
-
-router.get(
-  "/studentWorkInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentWorkInfoById
-);
-router.post(
-  "/studentWorkInfo",
-  uploadMultiple.uploadWorkDocs,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentWorkInfo
-);
-
-router.delete(
-  "/basic_info/:type/:id",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.deleteStudentAcademicInfo
-);
-router.post(
-  "/saveStudentStudyPreferenceInfo",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentStudyPreferenceInfo
-);
-router.post(
-  "/studentPrimaryEducation/:type",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  SaveStudentDetailsController.saveStudentPrimaryEducation
-);
-router.get(
-  "/studentPrimaryEducation/:student_id",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.studentPrimaryEducationDetails
-);
-
-router.post(
-  "/graduationDetails",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadGraduationDocs,
-  SaveStudentDetailsController.saveStudentGraduationDetails
-);
-
-router.get(
-  "/getStudentBasicInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentBasicInfoById
-);
-router.get(
-  "/getStudentAcademicInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentAcademicInfoById
-);
-router.get(
-  "/getStudentStudyPrferenceInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentStudyPreferenceInfoById
-);
-
 // Status Config routes
 router.get(
   "/status_config",
@@ -948,6 +854,130 @@ router.delete(
   "/delete_visa_item/:formName/:id",
   [authMiddleware.checkUserAuth],
   visaProcessController.deleteVisaProcessItem
+);
+
+//multiple data fileds routes
+
+router.post(
+  "/saveStudentBasicInfo",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentBasicInfo
+);
+
+router.get(
+  "/studentAcademicInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getStudentAcademicInfoById
+);
+
+router.post(
+  "/studentAcademicInfo",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentAcademicInfo
+);
+
+router.get(
+  "/studentExamInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getStudentExamInfoById
+);
+
+router.post(
+  "/studentExamInfo",
+  uploadMultiple.uploadExamDocs,
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentExamInfo
+);
+
+router.get(
+  "/studentFundInfo/:id",
+  [authMiddleware.checkUserAuth],
+  getStudentFundPlanDetails
+);
+router.post(
+  "/studentFundInfo",
+  uploadMultiple.uploadFundDocs,
+  [authMiddleware.checkUserAuth],
+  saveStudentPlanDetails
+);
+
+router.get(
+  "/studentWorkInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getStudentWorkInfoById
+);
+router.post(
+  "/studentWorkInfo",
+  uploadMultiple.uploadWorkDocs,
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentWorkInfo
+);
+
+router.get("/gapReason/:id", [authMiddleware.checkUserAuth], getAllGapReasons);
+
+router.post(
+  "/gapReason",
+  uploadMultiple.uploadGapDocs,
+  [authMiddleware.checkUserAuth],
+  saveGapReason
+);
+
+router.delete(
+  "/basic_info/:type/:id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.deleteStudentAcademicInfo
+);
+router.post(
+  "/saveStudentStudyPreferenceInfo",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentStudyPreferenceInfo
+);
+router.post(
+  "/studentPrimaryEducation/:type",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadMultiple,
+  SaveStudentDetailsController.saveStudentPrimaryEducation
+);
+router.get(
+  "/studentPrimaryEducation/:student_id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.studentPrimaryEducationDetails
+);
+
+router.post(
+  "/graduationDetails",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadGraduationDocs,
+  SaveStudentDetailsController.saveStudentGraduationDetails
+);
+
+router.get(
+  "/getStudentBasicInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getStudentBasicInfoById
+);
+
+router.get(
+  "/getStudentStudyPrferenceInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getStudentStudyPreferenceInfoById
+);
+
+router.post(
+  "/study_preferences_details",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.createStudyPreferenceDetails
+);
+router.get(
+  "/study_preferences_details/:id",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.getStudyPreferenceDetails
+);
+router.put(
+  "/study_preferences_details/:id",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.updateStudyPreferenceDetails
 );
 
 module.exports = router;

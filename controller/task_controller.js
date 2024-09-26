@@ -354,105 +354,84 @@ exports.getStudentBasicInfoById = async (req, res) => {
 };
 
 exports.getStudentAcademicInfoById = async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const studentId = req.params.id;
-    console.log("Fetching info for studentId:", studentId);
+    const student = await db.userPrimaryInfo.findByPk(id);
+    if (!student) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
 
-    // Fetch basic information for the student
-    // const academicInfo = await db.userAcademicInfo.findOne({
-    //   where: { user_id: studentId },
-    //   attributes: ["id", "qualification", "place", "percentage"],
-    // });
-
-    // const academicValues = await db.academicInfos.findAll({
-    //   where: { user_id: studentId },
-    //   attributes: [
-    //     "id",
-    //     "qualification",
-    //     "place",
-    //     "percentage",
-    //     "year_of_passing",
-    //     "backlogs",
-    //   ],
-    // });
-
-    // const workValues = await db.workInfos.findAll({
-    //   where: { user_id: studentId },
-    //   attributes: ["id", "company", "years", "designation", "from", "to"],
-    // });
-
-    const [academicValues, workValues] = await Promise.all([
-      await db.academicInfos.findAll({
-        where: { user_id: studentId },
-        attributes: [
-          "id",
-          "qualification",
-          "place",
-          "percentage",
-          "year_of_passing",
-          "backlogs",
-        ],
-      }),
-
-      await db.workInfos.findAll({
-        where: { user_id: studentId },
-        attributes: ["id", "company", "years", "designation", "from", "to"],
-      }),
-    ]);
-
-    const examInfo = await db.userExams.findAll({
-      where: { student_id: studentId },
+    const academicInfos = await student.getUserAcademicInfos();
+    const modifiedData = academicInfos.map((item) => {
+      return {
+        id: item.id,
+        qualification: item.qualification,
+        place: item.place,
+        percentage: item.percentage,
+        year_of_passing: item.year_of_passing,
+        backlogs: item.backlogs,
+      };
     });
 
-    let acadmicInfoData = null;
-
-    if (examInfo && examInfo.length > 0) {
-      acadmicInfoData = {
-        exam_details: examInfo.map((exam) => {
-          // console.log('EXAM ======', exam);
-
-          // return {
-          //   id: exam.id,
-          //   exam_name: exam.dataValues.exam_name,
-          //   marks: exam.dataValues.marks,
-          //   exam_documents: exam.dataValues.document,
-          //   document: exam.dataValues.document,
-          // };
-
-          return {
-            id: exam.id,
-            exam_type: exam.dataValues.exam_type,
-            listening_score: exam.dataValues.listening_score,
-            speaking_score: exam.dataValues.speaking_score,
-            reading_score: exam.dataValues.reading_score,
-            writing_score: exam.dataValues.writing_score,
-            overall_score: exam.dataValues.overall_score,
-            exam_date: exam.dataValues.exam_date,
-            exam_documents: exam.dataValues.score_card,
-            score_card: exam.dataValues.score_card,
-          };
-        }),
-      };
-    }
-    // console.log("acadmicInfoData", acadmicInfoData);
-    // Send the response with combined information
     res.status(200).json({
       status: true,
       message: "Student info retrieved successfully",
-      data: {
-        exam_info: acadmicInfoData,
-        academicValues,
-        workValues,
-      },
+      data: modifiedData,
     });
   } catch (error) {
-    console.error(`Error fetching student info: ${error}`);
+    console.error(`Error fetching student academic info: ${error}`);
     res.status(500).json({
       status: false,
       message: "Internal server error",
     });
   }
 };
+
+exports.getStudentExamInfoById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const student = await db.userPrimaryInfo.findByPk(id);
+    if (!student) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const examInfos = await student.getExams();
+    const modifiedData = examInfos.map((item) => {
+      return {
+        id: item.id,
+        exam_type: item.exam_type,
+        listening_score: item.listening_score,
+        speaking_score: item.speaking_score,
+        reading_score: item.reading_score,
+        writing_score: item.writing_score,
+        overall_score: item.overall_score,
+        exam_date: item.exam_date,
+        score_card: item.score_card || null,
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Student info retrieved successfully",
+      data: modifiedData,
+    });
+  } catch (error) {
+    console.error(`Error fetching student exam info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 exports.getStudentWorkInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;

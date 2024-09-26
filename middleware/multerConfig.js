@@ -116,9 +116,66 @@ const uploadFundDocs = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
 }).any();
 
+const multerStorageGapReasonDocs = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("Inside multer destination ->", file);
+    const uploadFolder = "uploads/gapDocuments";
+
+    // Check if the folder exists, if not create it
+    if (!fs.existsSync(uploadFolder)) {
+      fs.mkdirSync(uploadFolder, { recursive: true });
+      console.log(`Created folder: ${uploadFolder}`);
+    }
+
+    cb(null, uploadFolder);
+  },
+  filename: (req, file, cb) => {
+    console.log("Inside multer filename ->", file);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${file.fieldname}-${basename}-${uniqueSuffix}${ext}`);
+  },
+});
+
+const uploadGapDocs = multer({
+  storage: multerStorageGapReasonDocs,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+}).any();
+
+
+const multerStorageExamDocs = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("Inside multer destination ->", file);
+    const uploadFolder = "uploads/examDocuments";
+
+    // Check if the folder exists, if not create it
+    if (!fs.existsSync(uploadFolder)) {
+      fs.mkdirSync(uploadFolder, { recursive: true });
+      console.log(`Created folder: ${uploadFolder}`);
+    }
+
+    cb(null, uploadFolder);
+  },
+  filename: (req, file, cb) => {
+    console.log("Inside multer filename ->", file);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${file.fieldname}-${basename}-${uniqueSuffix}${ext}`);
+  },
+});
+
+const uploadExamDocs = multer({
+  storage: multerStorageExamDocs,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+}).any();
+
 module.exports = {
   uploadMultiple,
   uploadGraduationDocs,
   uploadWorkDocs,
   uploadFundDocs,
+  uploadGapDocs,
+  uploadExamDocs
 };
