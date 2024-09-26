@@ -120,7 +120,8 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       // },
       where: {
         role_id: {
-          [Op.in]: [process.env.BRANCH_COUNSELLOR_ROLE_ID, process.env.BRANCH_COUNSELLOR_TL_ROLE_ID],
+          // [Op.in]: [process.env.BRANCH_COUNSELLOR_ID, process.env.COUNSELLOR_TL_ID],
+          [Op.in]: [process.env.BRANCH_COUNSELLOR_ID],
         },
         branch_id: id,
       },      
@@ -339,30 +340,24 @@ exports.addAdminUsers = async (req, res) => {
       });
     }
 
-    // if(role_id == BRANCH_COUNSELLOR_TL_ROLE_ID){
-    //   let conflictsData = await db.adminUsers.findByPk({
-    //     where: {
-    //       [Op.and]: [{ role_id }, { email }, { phone }, { username }],
-    //     },
-    //   });
-  
-    //   if (conflictsData.length > 0) {
-    //     const conflictFields = [];
-    //     if (conflictsData.some((user) => user.employee_id === employee_id))
-    //       conflictFields.push("Employee ID");
-    //     if (conflictsData.some((user) => user.email === email))
-    //       conflictFields.push("Email");
-    //     if (conflictsData.some((user) => user.phone === phone))
-    //       conflictFields.push("Phone");
-    //     if (conflictsData.some((user) => user.username === username))
-    //       conflictFields.push("Username");
-  
-    //     return res.status(409).json({
-    //       status: false,
-    //       message: `${conflictFields.join(", ")} already exists`,
-    //     });
-    //   }
-    // }
+
+    let existTL;
+    if(role_id == process.env.COUNSELLOR_TL_ID){
+      existTL = await db.adminUsers.findOne({
+        where: {
+          [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
+        },
+      });
+
+      console.log('existTL',existTL);
+    }
+
+    if(existTL){
+      return res.status(409).json({
+        status: false,
+        message: `TL already exists in the branch`,
+      });
+    }
 
     // Insert the new admin user
     const newUser = await db.adminUsers.create({
