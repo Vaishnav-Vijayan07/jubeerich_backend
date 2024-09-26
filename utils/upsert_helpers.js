@@ -84,7 +84,7 @@ const areDatesEqual = (date1, date2) => {
   );
 };
 
-const deleteFile = (directory, fileName) => {
+const deleteFile = async (directory, fileName) => {
   if (!fileName) return;
 
   const filePath = path.join(__dirname, "..", "uploads", directory, fileName);

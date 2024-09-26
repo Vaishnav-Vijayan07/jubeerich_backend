@@ -650,46 +650,55 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
 exports.saveStudentPrimaryEducation = async (req, res) => {
   const { student_id, primary, secondary, operation } = req.body;
 
+  console.log(primary);
+  console.log(secondary);
+  console.log(operation);
+
+  // Start the transaction
   const transaction = await sequelize.transaction();
 
   try {
+    // Validate the student ID
     if (!student_id) {
       await transaction.rollback();
       return res.status(400).json({ error: "Student ID is required" });
     }
 
+    // Check if the student exists
     const student = await db.userPrimaryInfo.findByPk(student_id);
     if (!student) {
       await transaction.rollback();
       return res.status(404).json({ error: "Student not found" });
     }
 
+    // Validate the type (either primary or secondary)
     const { type } = req.params;
     if (!type || (type !== "primary" && type !== "secondary")) {
       await transaction.rollback();
       return res.status(400).json({ error: "Invalid type provided" });
     }
 
+    // Extract the correct form data based on the type
     const formData = type === "primary" ? primary : secondary;
+    console.log(formData);
+
     if (!formData) {
       await transaction.rollback();
       return res.status(400).json({ error: `${type} details are required` });
     }
 
+    // Handle file paths from uploaded files
     const filePaths = {
-      mark_sheet: req.files[`${type}_mark_sheet`]
-        ? req.files[`${type}_mark_sheet`][0].filename
-        : null,
-      certificate: req.files[`${type}_certificate`]
-        ? req.files[`${type}_certificate`][0].filename
-        : null,
-      admit_card: req.files[`${type}_admit_card`]
-        ? req.files[`${type}_admit_card`][0].filename
-        : null,
+      mark_sheet: req.files?.[`${type}_mark_sheet`]?.[0]?.filename || null,
+      certificate: req.files?.[`${type}_certificate`]?.[0]?.filename || null,
+      admit_card: req.files?.[`${type}_admit_card`]?.[0]?.filename || null,
     };
 
+    // Save or update education details function
     const saveOrUpdateEducationDetails = async () => {
       if (operation === "add") {
+        console.log("HERE ADD");
+
         // Add new education details
         await student.createEducationDetail(
           {
@@ -704,11 +713,15 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
           { transaction }
         );
 
-        return res
-          .status(201)
-          .json({ message: "Education details added successfully" });
+        await transaction.commit();
+
+        return res.status(201).json({
+          status: true,
+          message: "Education details added successfully",
+        });
       } else if (operation === "update") {
-        // Update existing education details
+        console.log("HERE UPDATE");
+        // Find existing education details
         const existingDetails = await db.educationDetails.findOne({
           where: { student_id, qualification: formData.qualification },
         });
@@ -718,6 +731,16 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
           return res.status(404).json({ error: "Education details not found" });
         }
 
+        // Temporarily store paths of old files for deletion after update
+        const oldFilePaths = {
+          mark_sheet: filePaths.mark_sheet ? existingDetails.mark_sheet : null,
+          admit_card: filePaths.admit_card ? existingDetails.admit_card : null,
+          certificate: filePaths.certificate
+            ? existingDetails.certificate
+            : null,
+        };
+
+        // Update the existing details in the database
         await existingDetails.update(
           {
             start_date: formData.startDate,
@@ -727,10 +750,30 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
             admit_card: filePaths.admit_card || existingDetails.admit_card,
             certificate: filePaths.certificate || existingDetails.certificate,
           },
-          {
-            transaction,
-          }
+          { transaction }
         );
+
+        // Commit the transaction to ensure database consistency
+        await transaction.commit();
+
+        // After transaction is successful, delete old files safely
+        const deleteFiles = async () => {
+          const filesToDelete = ["mark_sheet", "admit_card", "certificate"];
+          for (const fileField of filesToDelete) {
+            if (oldFilePaths[fileField]) {
+              try {
+                await deleteFile("educationDocuments", oldFilePaths[fileField]);
+              } catch (err) {
+                console.error(
+                  `Failed to delete old file ${oldFilePaths[fileField]}:`,
+                  err
+                );
+              }
+            }
+          }
+        };
+
+        await deleteFiles(); // Safe to delete files after committing transaction
 
         return res.status(200).json({
           message: "Education details updated successfully",
@@ -742,12 +785,12 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
       }
     };
 
+    // Call the function to save or update education details
     await saveOrUpdateEducationDetails();
-    await transaction.commit();
   } catch (error) {
     console.error("Error saving education details:", error);
     await transaction.rollback();
-    res.status(500).json({ error: "Failed to save education details" });
+    return res.status(500).json({ error: "Failed to save education details" });
   }
 };
 
