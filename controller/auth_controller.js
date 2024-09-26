@@ -71,6 +71,7 @@ exports.login = async (req, res) => {
       role_name: user?.access_role?.role_name,
       power_names: powerNames,
       franchise_id: user?.franchise_id,
+      branch_id: user?.branch_id,
       //   branches: user.branches.map((branch) => ({
       //     id: branch.id,
       //     branch_name: branch.branch_name,

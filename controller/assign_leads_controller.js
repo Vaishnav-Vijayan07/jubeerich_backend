@@ -209,6 +209,102 @@ exports.assignCounselorTL = async (req, res) => {
   }
 };
 
+exports.assignBranchCounselor = async (req, res) => {
+  
+  const { counsellor_id, user_ids } = req.body;
+
+  const userId = req.userDecodeId;
+
+  // Start a transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Validate branch_id
+    if (!counsellor_id) {
+      return res.status(400).json({
+        status: false,
+        message: "counsellor_id is required",
+      });
+    }
+
+    // Validate user_ids
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "user_ids must be a non-empty array",
+      });
+    }
+
+    // Validate each user_id
+    for (const user_id of user_ids) {
+      if (typeof user_id !== "number") {
+        return res.status(400).json({
+          status: false,
+          message: "Each user_id must be a number",
+        });
+      }
+    }
+
+    // Find the counselor based on the branch_id
+    const counsellor = await db.adminUsers.findOne({
+      where: {
+        id: counsellor_id,
+        // role_id: process.env.COUNSELLOR_TL_ID,
+        role_id: process.env.BRANCH_COUNSELLOR_ID,
+        status: "true",
+      },
+      transaction,
+    });
+
+    console.log('counsellor',counsellor);
+
+    // Validate if a counselor is found
+    if (!counsellor) {
+      return res.status(400).json({
+        status: false,
+        message: "No active counsellor found for the provided branch",
+      });
+    }
+    
+    // Process each user_id
+    await Promise.all(
+      user_ids.map(async (user_id) => {
+        // Step 1: Fetch user info with associated countries
+        const userInfo = await db.userPrimaryInfo.findOne({
+          where: { id: user_id },
+          transaction,
+        });
+
+        if (!userInfo) {
+          throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
+        }
+
+        // Update assigned_counsellor for the user
+        await db.userPrimaryInfo.update(
+          { assigned_branch_counselor: counsellor_id, updated_by: userId, assign_type: "direct_assign" },
+          { where: { id: user_id }, transaction }
+        );
+      })
+    );
+
+    // Commit transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Counsellor assigned successfully",
+    });
+  } catch (error) {
+    // Rollback transaction
+    await transaction.rollback();
+    console.error(`Error assigning counsellor: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 exports.assignBranchCounselors = async (req, res) => {
   const { counselor_id, user_ids } = req.body;
   const userId = req.userDecodeId;

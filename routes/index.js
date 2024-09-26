@@ -612,6 +612,11 @@ router.post(
   [authMiddleware.checkUserAuth],
   AssignLeadsController.assignCounselorTL
 );
+router.post(
+  "/assign_branch_counsellors",
+  [authMiddleware.checkUserAuth],
+  AssignLeadsController.assignBranchCounselor
+);
 router.get(
   "/list_manager_branches",
   [authMiddleware.checkUserAuth],
