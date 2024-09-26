@@ -58,7 +58,7 @@ db.previousVisaApprove = require("./previousVisaApproval")(
 db.travelHistory = require("./travelHistory")(sequelize, Sequelize);
 db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
 db.fundPlan = require("./fundPlan")(sequelize, Sequelize);
-db.gapReason = require("./ReasonForGap")(sequelize, Sequelize);
+db.gapReason = require("./reasonForGap")(sequelize, Sequelize);
 
 // course
 db.campus = require("./campus")(sequelize, Sequelize);
