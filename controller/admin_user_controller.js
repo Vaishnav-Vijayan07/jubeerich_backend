@@ -16,7 +16,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
       });
@@ -75,10 +75,13 @@ exports.getAllCounsellors = async (req, res, next) => {
       ],
     });
 
+    console.log('users',users);
+
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
+        data: []
       });
     }
 
@@ -118,7 +121,8 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       // },
       where: {
         role_id: {
-          [Op.in]: [process.env.BRANCH_COUNSELLOR_ROLE_ID, process.env.BRANCH_COUNSELLOR_TL_ROLE_ID],
+          // [Op.in]: [process.env.BRANCH_COUNSELLOR_ID, process.env.COUNSELLOR_TL_ID],
+          [Op.in]: [process.env.BRANCH_COUNSELLOR_ID],
         },
         branch_id: id,
       },      
@@ -137,9 +141,10 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found !",
+        data: []
       });
     }
 
@@ -192,7 +197,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found !",
         data: []
@@ -246,9 +251,10 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin users not found",
+        data: []
       });
     }
 
@@ -307,8 +313,6 @@ exports.addAdminUsers = async (req, res) => {
     country_id,
     franchise_id
   } = req.body;
-  //   const profileImage = req.file;
-  console.log("req.body==============>", req.body);
 
   try {
     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
@@ -334,6 +338,25 @@ exports.addAdminUsers = async (req, res) => {
       return res.status(409).json({
         status: false,
         message: `${conflictFields.join(", ")} already exists`,
+      });
+    }
+
+
+    let existTL;
+    if(role_id == process.env.COUNSELLOR_TL_ID){
+      existTL = await db.adminUsers.findOne({
+        where: {
+          [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
+        },
+      });
+
+      console.log('existTL',existTL);
+    }
+
+    if(existTL){
+      return res.status(409).json({
+        status: false,
+        message: `TL already exists in the branch`,
       });
     }
 
@@ -408,7 +431,7 @@ exports.updateAdminUsers = async (req, res) => {
     // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin user not found",
       });
@@ -545,7 +568,7 @@ exports.deleteAdminUsers = async (req, res) => {
     // Find the admin user by ID
     const user = await db.adminUsers.findByPk(id);
     if (!user) {
-      return res.status(404).json({
+      return res.status(204).json({
         status: false,
         message: "Admin user not found",
       });

@@ -376,7 +376,7 @@ exports.getAllLeads = async (req, res) => {
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
+        // region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,
@@ -650,6 +650,7 @@ exports.geLeadsForCreTl = async (req, res) => {
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
+        franchise_id: info.franchise_id ? info.franchise_id : null,
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,
@@ -780,6 +781,8 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
     });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      console.log('INFO', info);
+      
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -792,7 +795,8 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
       const examDetails = info.exams.map((exam)=> ({
         exam_type: exam.exam_type,
-        exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
+        // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
+        exam_date: exam.exam_date,
         marks: exam.overall_score,
         listening_score: exam.listening_score,
         speaking_score: exam.speaking_score,
@@ -813,6 +817,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
+        franchise_id: info.franchise_id ? info.franchise_id : null,
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,

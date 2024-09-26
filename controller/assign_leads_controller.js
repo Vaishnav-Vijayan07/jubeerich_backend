@@ -116,7 +116,6 @@ exports.assignCres = async (req, res) => {
 
 exports.assignCounselorTL = async (req, res) => {
   const { branch_id, user_ids } = req.body;
-  // user_ids reffered to lead id
 
   const userId = req.userDecodeId;
 
@@ -162,7 +161,7 @@ exports.assignCounselorTL = async (req, res) => {
 
     // Validate if a counselor is found
     if (!counsellor) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: false,
         message: "No active counselor tl found for the provided branch",
       });
@@ -428,6 +427,7 @@ exports.listBranches = async (req, res) => {
     // Fetch the branch details using the branch_id
     const branch = await db.branches.findAll({
       where: { region_id },
+      attributes: ["id", "branch_name"],
       transaction,
     });
 
@@ -439,6 +439,12 @@ exports.listBranches = async (req, res) => {
       });
     }
 
+    const modifiedBranches = branch.map(branch => ({
+      label: branch.branch_name,
+      value: branch.id,
+      region_id: branch.region_id
+    }));
+
     // Commit transaction
     await transaction.commit();
 
@@ -446,11 +452,11 @@ exports.listBranches = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Branch details retrieved successfully",
-      data: branch,
+      data: modifiedBranches,
     });
   } catch (err) {
     await transaction.rollback();
-    console.error("Error in finding branches:", error);
+    console.error("Error in finding branches:", err);
     res.status(500).json({
       status: false,
       message: "Internal server error",
