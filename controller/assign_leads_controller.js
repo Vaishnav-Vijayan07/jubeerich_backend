@@ -116,7 +116,6 @@ exports.assignCres = async (req, res) => {
 
 exports.assignCounselorTL = async (req, res) => {
   const { branch_id, user_ids } = req.body;
-  // user_ids reffered to lead id
 
   const userId = req.userDecodeId;
 
@@ -162,7 +161,7 @@ exports.assignCounselorTL = async (req, res) => {
 
     // Validate if a counselor is found
     if (!counsellor) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: false,
         message: "No active counselor tl found for the provided branch",
       });
