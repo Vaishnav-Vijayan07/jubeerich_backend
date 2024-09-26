@@ -11,8 +11,9 @@ const {
   addOrUpdateWork,
   addOrUpdateExamDocs,
   addOrUpdateGraduationData,
+  addOrUpdateExamData,
 } = require("../utils/academic_query_helper");
-const { deleteFile } = require("../utils/upsert_helpers");
+const { deleteFile, handleFileDeletions } = require("../utils/upsert_helpers");
 
 exports.saveStudentBasicInfo = async (req, res) => {
   const {
@@ -242,49 +243,32 @@ exports.saveStudentBasicInfo = async (req, res) => {
 // };
 // REF
 exports.saveStudentAcademicInfo = async (req, res) => {
-  let { academicRecords, exam_details, user_id } = req.body;
-
-  // Ensure the exam documents are handled correctly
-  const files = req.files?.exam_documents || [];
+  let { academicRecords, user_id } = req.body;
 
   // Check if there is any data to process
   const hasAcademicData = academicRecords && academicRecords.length > 0;
-  const hasExamData = exam_details && exam_details.length > 0;
 
-  console.log("EXAMS ===> ", exam_details);
-
-  if (!hasAcademicData && !hasExamData) {
+  if (!hasAcademicData) {
     return res.status(400).json({
       status: false,
       message: "No academic or exam data provided to save.",
     });
   }
 
+  const records = academicRecords.map((record) => ({
+    ...record,
+    year_of_passing: Number(record.year_of_passing),
+    backlogs: Number(record.backlogs),
+    user_id: user_id,
+  }));
+
   // Start a transaction only if there is data to process
   const transaction = await sequelize.transaction();
 
   try {
-    let academicResult = { success: true };
-    let examResult = { success: true };
+    const academicResult = await addOrUpdateAcademic(records, transaction);
 
-    if (hasExamData) {
-      examResult = await addOrUpdateExamDocs(
-        exam_details,
-        user_id,
-        files,
-        transaction
-      );
-    }
-
-    if (hasAcademicData) {
-      academicResult = await addOrUpdateAcademic(
-        academicRecords,
-        user_id,
-        transaction
-      );
-    }
-
-    if (academicResult.success && examResult.success) {
+    if (academicResult.success) {
       await transaction.commit();
       return res.status(201).json({
         status: true,
@@ -302,6 +286,73 @@ exports.saveStudentAcademicInfo = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  }
+};
+
+exports.saveStudentExamInfo = async (req, res) => {
+  let { examRecords, user_id } = req.body;
+
+  const updated_by = req.userDecodeId;
+
+  // Check if there is any data to process
+  const hasExamData = examRecords && examRecords.length > 0;
+
+  if (!hasExamData) {
+    return res.status(400).json({
+      status: false,
+      message: "No exam data provided to save.",
+    });
+  }
+
+  const records = [];
+  const files = req.files;
+  const field = "score_card";
+
+  examRecords.forEach((record, index) => {
+    const isUpdate = record?.id !== "0";
+    const itemData = {
+      id: record.id,
+      exam_type: record.exam_type,
+      listening_score: Number(record.listening_score),
+      speaking_score: Number(record.speaking_score),
+      reading_score: Number(record.reading_score),
+      writing_score: Number(record.writing_score),
+      overall_score: Number(record.overall_score),
+      exam_date: record.exam_date,
+      student_id: Number(user_id),
+    };
+
+    const fieldName = `examRecords[${index}][${field}]`;
+    const file = files.find((file) => file.fieldname === fieldName);
+    if (!isUpdate || (isUpdate && file)) {
+      itemData[field] = file ? file.filename : null;
+    }
+
+    if (!isUpdate) {
+      itemData.updated_by = updated_by;
+    }
+
+    records.push(itemData);
+  });
+
+  const transaction = await sequelize.transaction();
+  try {
+    const examResult = await addOrUpdateExamData(records, transaction);
+    if (examResult.success) {
+      await transaction.commit();
+      return res.status(201).json({
+        status: true,
+        message: "Academic and exam details updated successfully",
+      });
+    } else {
+      throw new Error("Failed to update all records");
+    }
+  } catch (error) {
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error(`Error updating exam records: ${error}`);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -387,113 +438,57 @@ exports.saveStudentWorkInfo = async (req, res) => {
 exports.deleteStudentAcademicInfo = async (req, res) => {
   const { id, type } = req.params;
 
+  // Define a mapping object to eliminate switch statement
+  const recordTypeMapping = {
+    academic: { model: db.academicInfos, message: "Academic record" },
+    work: { model: db.workInfos, message: "Work record" },
+    exam: { model: db.userExams, message: "Exam record" },
+    studyPreference: {
+      model: db.studyPreferenceDetails,
+      message: "Study preference record",
+    },
+    graduation: { model: db.graduationDetails, message: "Graduation record" },
+    fund: { model: db.fundPlan, message: "Fund plan record" },
+    gap: { model: db.gapReason, message: "Gap reason record" },
+  };
+
   // Start a transaction
   const transaction = await sequelize.transaction();
 
   try {
-    let record;
-    let message;
-
-    // Determine the type of record to delete
-    switch (type) {
-      case "academic":
-        record = await db.academicInfos.findByPk(id);
-        message = "Academic record";
-        break;
-      case "work":
-        record = await db.workInfos.findByPk(id);
-        message = "Work record";
-        break;
-      case "exam":
-        record = await db.userExams.findByPk(id);
-        message = "Exam record";
-        break;
-      case "studyPreference":
-        record = await db.studyPreferenceDetails.findByPk(id);
-        message = "Study preference record";
-        break;
-      case "graduation":
-        record = await db.graduationDetails.findByPk(id);
-        message = "Graduation record";
-        break;
-      case "fund":
-        record = await db.fundPlan.findByPk(id);
-        message = "Fund plan record";
-        break;
-      default:
-        throw new Error("Invalid type specified");
+    // Validate if the type exists in the mapping
+    const recordType = recordTypeMapping[type];
+    if (!recordType) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid type specified" });
     }
 
-    // If the record is not found, throw an error
+    // Fetch the record
+    const record = await recordType.model.findByPk(id);
     if (!record) {
-      throw new Error(`${message} not found`);
+      return res
+        .status(404)
+        .json({ status: false, message: `${recordType.message} not found` });
     }
 
-    // If the record is of type 'exam', delete the associated document
-    if (type == "exam") {
-      const file = record.score_card;
-      if (file) {
-        deleteFile("examDocuments", file);
-      }
-    }
-
-    if (type == "fund") {
-      const file = record.supporting_document;
-      if (file) {
-        deleteFile("fundDocuments", file);
-      }
-    }
-
-    // If the record is of type 'graduation', delete multiple associated documents
-    if (type == "graduation") {
-      const fileFields = [
-        "certificate",
-        "admit_card",
-        "registration_certificate",
-        "backlog_certificate",
-        "grading_scale_info",
-      ];
-
-      fileFields.forEach((field) => {
-        const docName = record[field];
-        if (docName) {
-          deleteFile("graduationDocuments", docName);
-        }
-      });
-    }
-
-    if (type == "work") {
-      const fileFields = [
-        "appointment_document",
-        "bank_statement",
-        "job_offer_document",
-        "payslip_document",
-      ];
-
-      fileFields.forEach((field) => {
-        const docName = record[field];
-        if (docName) {
-          deleteFile("workDocuments", docName);
-        }
-      });
-    }
+    // Handle file deletions
+    await handleFileDeletions(type, record);
 
     // Proceed with the deletion of the record from the database
     await record.destroy({ transaction });
 
     // Commit the transaction
     await transaction.commit();
-    console.log(`${message} with id:${id} successfully deleted`);
+    console.log(`${recordType.message} with id:${id} successfully deleted`);
 
     return res.status(200).json({
       status: true,
-      message: `${message} successfully deleted`,
+      message: `${recordType.message} successfully deleted`,
     });
   } catch (error) {
-    if (!transaction.finished) {
-      // Rollback the transaction only if it's not already finished
-      await transaction.rollback();
-    }
+    // Rollback the transaction if any error occurs
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,

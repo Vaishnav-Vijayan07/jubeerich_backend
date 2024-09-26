@@ -1,48 +1,9 @@
 const db = require("../models");
 const { batchUpsertData } = require("./upsert_helpers");
 
-const batchUpsert = async (model, records, transaction) => {
-  const ids = records.map((record) => record.id).filter((id) => id !== "0");
-
-  console.log(ids);
-
-  // Fetch all existing records that need updating
-  const existingRecords = await model.findAll({
-    where: { id: ids },
-    transaction,
-  });
-
-  console.log(existingRecords);
-
-  const updatePromises = [];
-  const addPromises = [];
-
-  records.forEach((record) => {
-    if (record.id === "0") {
-      const { id, ...recordWithOutid } = record;
-      addPromises.push(model.create(recordWithOutid, { transaction }));
-    } else {
-      const existingRecord = existingRecords.find((r) => r.id == record.id);
-      if (existingRecord) {
-        const updateFields = {};
-        Object.keys(record).forEach((key) => {
-          if (key !== "id" && record[key] !== existingRecord[key]) {
-            updateFields[key] = record[key];
-          }
-        });
-
-        console.log("UPDATE FILEDS", updateFields);
-
-        if (Object.keys(updateFields).length > 0) {
-          updatePromises.push(
-            existingRecord.update(updateFields, { transaction })
-          );
-        }
-      }
-    }
-  });
-
-  await Promise.all([...addPromises, ...updatePromises]);
+const batchUpsertAcademicInfo = async (model, records, transaction) => {
+  const fileFields = null;
+  return batchUpsertData(model, records, transaction, fileFields, "");
 };
 
 const batchUpsertStudyPreference = async (model, records, transaction) => {
@@ -202,18 +163,36 @@ const batchUpsertFundData = async (model, records, transaction) => {
   );
 };
 
-const addOrUpdateAcademic = async (academicRecords, userId, transaction) => {
-  const records = academicRecords.map((record) => ({
-    ...record,
-    year_of_passing: Number(record.year_of_passing),
-    backlogs: Number(record.backlogs),
-    user_id: userId,
-  }));
+const batchUpsertGapReasonData = async (model, records, transaction) => {
+  const fileFields = ["supporting_document"];
 
-  console.log("ACAD Record", records);
+  return batchUpsertData(
+    model,
+    records,
+    transaction,
+    fileFields,
+    "gapDocuments"
+  );
+};
+const batchUpsertExamData = async (model, records, transaction) => {
+  const fileFields = ["score_card"];
 
+  return batchUpsertData(
+    model,
+    records,
+    transaction,
+    fileFields,
+    "examDocuments"
+  );
+};
+
+const addOrUpdateAcademic = async (academicRecords, transaction) => {
   try {
-    await batchUpsert(db.academicInfos, records, transaction);
+    await batchUpsertAcademicInfo(
+      db.academicInfos,
+      academicRecords,
+      transaction
+    );
     return { success: true };
   } catch (error) {
     console.log(error);
@@ -325,6 +304,28 @@ const addOrUpdateFundData = async (fundDetails, transaction) => {
   }
 };
 
+const addOrUpdateGapReasonData = async (gapReasons, transaction) => {
+  try {
+    await batchUpsertGapReasonData(db.gapReason, gapReasons, transaction);
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+
+    throw new Error(`Gap Reason Update Failed: ${error.message}`);
+  }
+};
+
+const addOrUpdateExamData = async (examRecords, transaction) => {
+  try {
+    await batchUpsertExamData(db.userExams, examRecords, transaction);
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+
+    throw new Error(`Gap Reason Update Failed: ${error.message}`);
+  }
+};
+
 module.exports = {
   addOrUpdateAcademic,
   addOrUpdateWork,
@@ -332,4 +333,6 @@ module.exports = {
   addOrUpdateStudyPreference,
   addOrUpdateGraduationData,
   addOrUpdateFundData,
+  addOrUpdateGapReasonData,
+  addOrUpdateExamData,
 };

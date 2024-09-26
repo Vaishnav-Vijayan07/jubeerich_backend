@@ -56,12 +56,14 @@ const batchUpsertData = async (
 
         if (Object.keys(updateFields).length > 0) {
           // Loop through each file-related field
-          fileFields.forEach((field) => {
-            if (Object.keys(updateFields).includes(field)) {
-              const docName = existingRecord[field];
-              deleteFile(fileDirectory, docName);
-            }
-          });
+          if (fileFields) {
+            fileFields.forEach((field) => {
+              if (Object.keys(updateFields).includes(field)) {
+                const docName = existingRecord[field];
+                deleteFile(fileDirectory, docName);
+              }
+            });
+          }
 
           // Push the update operation into the updatePromises array
           updatePromises.push(
@@ -99,4 +101,34 @@ const deleteFile = (directory, fileName) => {
   }
 };
 
-module.exports = { batchUpsertData, deleteFile };
+const handleFileDeletions = async (type, record) => {
+  const fileDeletionMapping = {
+    exam: ["score_card"],
+    fund: ["supporting_document"],
+    gap: ["supporting_document"],
+    graduation: [
+      "certificate",
+      "admit_card",
+      "registration_certificate",
+      "backlog_certificate",
+      "grading_scale_info",
+    ],
+    work: [
+      "appointment_document",
+      "bank_statement",
+      "job_offer_document",
+      "payslip_document",
+    ],
+  };
+
+  const filesToDelete = fileDeletionMapping[type] || [];
+
+  filesToDelete.forEach((field) => {
+    const fileName = record[field];
+    if (fileName) {
+      deleteFile(`${type}Documents`, fileName);
+    }
+  });
+};
+
+module.exports = { batchUpsertData, deleteFile, handleFileDeletions };
