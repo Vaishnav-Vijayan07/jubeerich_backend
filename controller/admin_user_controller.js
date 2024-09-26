@@ -81,6 +81,7 @@ exports.getAllCounsellors = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found",
+        data: []
       });
     }
 
@@ -143,6 +144,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found !",
+        data: []
       });
     }
 
@@ -252,6 +254,7 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found",
+        data: []
       });
     }
 
@@ -310,8 +313,6 @@ exports.addAdminUsers = async (req, res) => {
     country_id,
     franchise_id
   } = req.body;
-  //   const profileImage = req.file;
-  console.log("req.body==============>", req.body);
 
   try {
     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
