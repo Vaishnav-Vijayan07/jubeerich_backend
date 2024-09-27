@@ -583,9 +583,19 @@ router.get(
   LeadListingController.geLeadsForCreTl
 );
 router.get(
+  "/leads_counsellor_tl",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.geLeadsForCounsellorTL
+);
+router.get(
   "/assigned_leads_cre_tl",
   [authMiddleware.checkUserAuth],
   LeadListingController.getAssignedLeadsForCreTl
+);
+router.get(
+  "/assigned_leads_counsellor_tl",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.getAssignedLeadsForCounsellorTL
 );
 router.post(
   "/assign_cres",
@@ -611,11 +621,6 @@ router.post(
   "/assign_counselor_tl",
   [authMiddleware.checkUserAuth],
   AssignLeadsController.assignCounselorTL
-);
-router.post(
-  "/assign_branch_counsellors",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.assignBranchCounselor
 );
 router.get(
   "/list_manager_branches",
