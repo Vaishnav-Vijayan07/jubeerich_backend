@@ -865,6 +865,18 @@ router.post(
 );
 
 router.get(
+  "/basicStudentInfo/:id",
+  [authMiddleware.checkUserAuth],
+  TaskController.getBasicInfoById
+);
+
+router.post(
+  "/basicStudentInfo",
+  [authMiddleware.checkUserAuth],
+  TaskController.saveBasicInfo
+);
+
+router.get(
   "/studentAcademicInfo/:id",
   [authMiddleware.checkUserAuth],
   TaskController.getStudentAcademicInfoById

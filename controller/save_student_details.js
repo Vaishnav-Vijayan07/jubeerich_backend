@@ -9,7 +9,6 @@ const path = require("path");
 const {
   addOrUpdateAcademic,
   addOrUpdateWork,
-  addOrUpdateExamDocs,
   addOrUpdateGraduationData,
   addOrUpdateExamData,
 } = require("../utils/academic_query_helper");

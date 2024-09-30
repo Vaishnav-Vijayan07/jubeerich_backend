@@ -10,7 +10,17 @@ const getDropdownData = async (req, res) => {
     const promises = [];
 
     if (!types || requestedTypes.includes("universities")) {
-      promises.push(db.university.findAll({ attributes: ["id", "university_name"] }));
+      promises.push(
+        db.university.findAll({ attributes: ["id", "university_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("marital")) {
+      promises.push(
+        db.maritalStatus.findAll({ attributes: ["id", "marital_status_name"] })
+      );
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -28,13 +38,21 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("sources")) {
-      promises.push(db.leadSource.findAll({ attributes: ["id", "source_name", "lead_type_id"] }));
+      promises.push(
+        db.leadSource.findAll({
+          attributes: ["id", "source_name", "lead_type_id"],
+        })
+      );
     } else {
       promises.push(Promise.resolve(null));
     }
 
     if (!types || requestedTypes.includes("channels")) {
-      promises.push(db.leadChannel.findAll({ attributes: ["id", "channel_name", "source_id"] }));
+      promises.push(
+        db.leadChannel.findAll({
+          attributes: ["id", "channel_name", "source_id"],
+        })
+      );
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -58,7 +76,9 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("officeType")) {
-      promises.push(db.officeType.findAll({ attributes: ["id", "office_type_name"] }));
+      promises.push(
+        db.officeType.findAll({ attributes: ["id", "office_type_name"] })
+      );
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -110,6 +130,7 @@ const getDropdownData = async (req, res) => {
 
     const [
       universityDetails,
+      maritalStatusDetails,
       countryDetails,
       leadTypeDetails,
       sourceDetails,
@@ -128,7 +149,12 @@ const getDropdownData = async (req, res) => {
 
     const formatData = (data, name) => {
       return data
-        ? data.map((item) => ({ label: item[name], value: item.id, lead_type: item.lead_type_id, source_id: item.source_id }))
+        ? data.map((item) => ({
+            label: item[name],
+            value: item.id,
+            lead_type: item.lead_type_id,
+            source_id: item.source_id,
+          }))
         : [];
     };
 
@@ -148,8 +174,9 @@ const getDropdownData = async (req, res) => {
         regions: formatData(regionDetails, "region_name"),
         statuses: formatData(statusDetails, "status_name"),
         adminUsers: formatData(adminUserDetails, "name"),
-        cres: formatData(cresDetails, "name"), 
-        franchises: formatData(franchiseDetails, "name"), 
+        cres: formatData(cresDetails, "name"),
+        franchises: formatData(franchiseDetails, "name"),
+        maritalStatus: formatData(maritalStatusDetails, "marital_status_name"),
       },
     });
   } catch (error) {

@@ -352,6 +352,98 @@ exports.getStudentBasicInfoById = async (req, res) => {
     });
   }
 };
+exports.getBasicInfoById = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    console.log("Fetching info for studentId:", studentId);
+
+    // Fetch basic information for the student
+    const basicInfo = await db.userBasicInfo.findOne({
+      where: { user_id: studentId },
+    });
+
+    // Fetch primary information for the student
+    const primaryInfo = await db.userPrimaryInfo.findOne({
+      where: { id: studentId },
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "branch_id",
+        "franchise_id",
+        "region_id"
+      ],
+      include: [
+        {
+          model: db.country,
+          as: "preferredCountries", // Adjusted alias to match Sequelize associations
+          attributes: ["id", "country_name"], // Only include ID and name
+          through: {
+            attributes: [], // Exclude attributes from the join table
+          },
+        },
+      ],
+    });
+
+    // Send the response with combined information
+    res.status(200).json({
+      status: true,
+      message: "Student info retrieved successfully",
+      data: {
+        basicInfo: basicInfo,
+        primaryInfo: primaryInfo,
+      },
+    });
+  } catch (error) {
+    console.error(`Error fetching student info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.saveBasicInfo = async (req, res) => {
+  try {
+    const { basicInfo, primaryInfo, student_id } = req.body;
+
+    const existingPrimaryData = await db.userPrimaryInfo.findByPk(student_id);
+    const existingBasicData = await db.userBasicInfo.findOne({
+      where: { user_id: student_id },
+    });
+
+    if (existingPrimaryData) {
+      await existingPrimaryData.update(primaryInfo);
+    } else {
+      return res.status(404).json({
+        status: false,
+        message: "Primary information not found",
+      });
+    }
+
+    if (existingBasicData) {
+      await existingBasicData.update(basicInfo);
+    } else {
+      await db.userBasicInfo.create({ user_id: student_id, ...basicInfo });
+    }
+
+    // Send a success response
+    res.status(200).json({
+      status: true,
+      message: "Basic information saved successfully",
+    });
+  } catch (error) {
+    console.error(`Error saving basic info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 exports.getStudentAcademicInfoById = async (req, res) => {
   const { id } = req.params;
