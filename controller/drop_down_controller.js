@@ -126,6 +126,19 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("branchCounsellors")) {
+      promises.push(
+        db.adminUsers.findAll({
+          attributes: ["id", "name", "branch_id"],
+          where: {
+            role_id: process.env.BRANCH_COUNSELLOR_ID,
+          },
+        })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
     console.log(promises);
 
     const [
@@ -145,6 +158,7 @@ const getDropdownData = async (req, res) => {
       cresDetails,
       campusDetails,
       franchiseDetails,
+      branchCounsellorsDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -154,6 +168,7 @@ const getDropdownData = async (req, res) => {
             value: item.id,
             lead_type: item.lead_type_id,
             source_id: item.source_id,
+            branch_id: item.branch_id,
           }))
         : [];
     };
@@ -177,6 +192,7 @@ const getDropdownData = async (req, res) => {
         cres: formatData(cresDetails, "name"),
         franchises: formatData(franchiseDetails, "name"),
         maritalStatus: formatData(maritalStatusDetails, "marital_status_name"),
+        branchCounsellors: formatData(branchCounsellorsDetails, "name"),
       },
     });
   } catch (error) {

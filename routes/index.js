@@ -583,9 +583,19 @@ router.get(
   LeadListingController.geLeadsForCreTl
 );
 router.get(
+  "/leads_counsellor_tl",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.geLeadsForCounsellorTL
+);
+router.get(
   "/assigned_leads_cre_tl",
   [authMiddleware.checkUserAuth],
   LeadListingController.getAssignedLeadsForCreTl
+);
+router.get(
+  "/assigned_leads_counsellor_tl",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.getAssignedLeadsForCounsellorTL
 );
 router.post(
   "/assign_cres",

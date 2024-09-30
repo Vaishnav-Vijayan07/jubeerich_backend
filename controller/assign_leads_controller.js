@@ -209,6 +209,7 @@ exports.assignCounselorTL = async (req, res) => {
   }
 };
 
+
 exports.assignBranchCounselors = async (req, res) => {
   const { counselor_id, user_ids } = req.body;
   const userId = req.userDecodeId;
@@ -297,7 +298,7 @@ exports.assignBranchCounselors = async (req, res) => {
 
         // Update assigned_cre for the user
         await db.userPrimaryInfo.update(
-          { assigned_cre: counselor_id, updated_by: userId, assign_type: "direct_assign" },
+          { assigned_branch_counselor: counselor_id, updated_by: userId, assign_type: "direct_assign" },
           { where: { id: user_id }, transaction }
         );
       })
@@ -377,7 +378,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
         { transaction }
       );
       return UserPrimaryInfo.update(
-        { assigned_cre: currentCounselor, assign_type: "auto_assign" },
+        { assigned_branch_counselor: currentCounselor, assign_type: "auto_assign" },
         { where: { id }, transaction }
       );
     });
