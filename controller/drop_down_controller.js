@@ -139,7 +139,27 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
-    console.log(promises);
+    if (!types || requestedTypes.includes("access_powers")) {
+      promises.push(
+        db.accessPowers.findAll({ attributes: ["id", "power_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("branches")) {
+      promises.push(db.branches.findAll({ attributes: ["id", "branch_name"] }));
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    if (!types || requestedTypes.includes("access_roles")) {
+      promises.push(
+        db.accessRoles.findAll({ attributes: ["id", "role_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
 
     const [
       universityDetails,
@@ -159,6 +179,9 @@ const getDropdownData = async (req, res) => {
       campusDetails,
       franchiseDetails,
       branchCounsellorsDetails,
+      accessPowerDetails,
+      branchDetails,
+      accessRoleDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -193,6 +216,9 @@ const getDropdownData = async (req, res) => {
         franchises: formatData(franchiseDetails, "name"),
         maritalStatus: formatData(maritalStatusDetails, "marital_status_name"),
         branchCounsellors: formatData(branchCounsellorsDetails, "name"),
+        accessPowers: formatData(accessPowerDetails, "power_name"),
+        branches: formatData(branchDetails, "branch_name"),
+        accessRoles: formatData(accessRoleDetails, "role_name"),
       },
     });
   } catch (error) {
