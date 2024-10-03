@@ -49,6 +49,7 @@ const getDropdownData = require("../controller/drop_down_controller");
 const studyPreferencesByUserPrimaryInfoController = require("../controller/study_preference_controller");
 const studyPreferencesDetailsController = require("../controller/study_preference_details");
 const visaProcessController = require("../controller/visa_process");
+const studentAdditionalController = require("../controller/studentAdditionalDocs");
 const {
   getStudentFundPlanDetails,
   saveStudentPlanDetails,
@@ -1000,6 +1001,27 @@ router.put(
   "/study_preferences_details/:id",
   [authMiddleware.checkUserAuth],
   studyPreferencesDetailsController.updateStudyPreferenceDetails
+);
+
+router.post(
+  "/additional_docs/:id",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  studentAdditionalController.saveAdditionalDocs
+);
+
+router.get(
+  "/additional_docs/:id",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  studentAdditionalController.getAdditionalDocs
+);
+
+router.delete(
+  "/additional_docs/:id/:name",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  studentAdditionalController.deleteAdditionalDocs
 );
 
 module.exports = router;
