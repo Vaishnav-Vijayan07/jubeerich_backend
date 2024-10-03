@@ -29,6 +29,18 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(100),
       allowNull: true,
     },
+    portal_link: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+    },
+    username: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+    },
+    password: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+    },
     updated_by: {
       type: Sequelize.INTEGER,
     },
