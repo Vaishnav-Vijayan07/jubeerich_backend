@@ -112,6 +112,8 @@ const handleFileDeletions = async (type, record) => {
       "registration_certificate",
       "backlog_certificate",
       "grading_scale_info",
+      "transcript",
+      "individual_marksheet",
     ],
     work: [
       "appointment_document",

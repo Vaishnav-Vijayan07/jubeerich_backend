@@ -864,6 +864,8 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
         registration_certificate: detail?.registration_certificate || null,
         backlog_certificate: detail?.backlog_certificate || null,
         grading_scale_info: detail?.grading_scale_info || null,
+        transcript: detail?.transcript || null,
+        individual_marksheet: detail?.individual_marksheet || null,
         admit_card: detail?.admit_card || null,
         conversion_formula: detail?.conversion_formula || "",
       };
@@ -912,6 +914,8 @@ exports.saveStudentGraduationDetails = async (req, res) => {
         "registration_certificate",
         "backlog_certificate",
         "grading_scale_info",
+        "transcript",
+        "individual_marksheet",
       ];
 
       const isUpdate = item?.id !== "0";

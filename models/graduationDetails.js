@@ -71,6 +71,16 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
         defaultValue: null,
       },
+      individual_marksheet: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null,
+      },
+      transcript: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
