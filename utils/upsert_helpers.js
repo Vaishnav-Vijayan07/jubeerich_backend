@@ -118,6 +118,7 @@ const handleFileDeletions = async (type, record) => {
       "bank_statement",
       "job_offer_document",
       "payslip_document",
+      "experience_certificate",
     ],
   };
 

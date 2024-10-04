@@ -140,6 +140,7 @@ const batchUpsertWorkData = async (model, records, transaction) => {
     "bank_statement",
     "job_offer_document",
     "payslip_document",
+    "experience_certificate",
   ];
 
   return batchUpsertData(

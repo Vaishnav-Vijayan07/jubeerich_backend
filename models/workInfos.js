@@ -46,6 +46,11 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
       defaultValue: null,
     },
+    experience_certificate: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
     appointment_document: {
       type: Sequelize.STRING(255),
       allowNull: true,

@@ -23,6 +23,9 @@ exports.getStudentFundPlanDetails = async (req, res) => {
         sponsor_name: plan.sponsor_name,
         approx_annual_income: plan.approx_annual_income,
         itr_status: plan.itr_status ? "yes" : "no",
+        relation_with_sponsor: plan.relation_with_sponsor,
+        sponsorship_amount: plan.sponsorship_amount,
+        name_of_bank: plan.name_of_bank,
         supporting_document: plan.supporting_document
           ? plan.supporting_document
           : null,
@@ -64,6 +67,9 @@ exports.saveStudentPlanDetails = async (req, res) => {
       sponsor_name: item.sponsor_name,
       approx_annual_income: Number(item.approx_annual_income),
       itr_status: item.itr_status == "yes" ? true : false,
+      sponsorship_amount: Number(item.sponsorship_amount),
+      relation_with_sponsor: item.relation_with_sponsor,
+      name_of_bank: item.name_of_bank,
       student_id: Number(student_id),
     };
 
