@@ -33,6 +33,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
+      type: {
+        type: Sequelize.ENUM('education', 'work'), // Restrict values to either "education" or "work"
+        allowNull: false,
+      },
       // The created_at and updated_at fields are automatically managed by Sequelize
     },
     {

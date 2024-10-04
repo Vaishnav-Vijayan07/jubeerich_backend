@@ -21,6 +21,14 @@ module.exports = (sequelize, Sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
+      university_name: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+      college_name: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
       start_date: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -59,6 +67,16 @@ module.exports = (sequelize, Sequelize) => {
         defaultValue: null,
       },
       backlog_certificate: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null,
+      },
+      individual_marksheet: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null,
+      },
+      transcript: {
         type: DataTypes.STRING(255),
         allowNull: true,
         defaultValue: null,

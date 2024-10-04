@@ -123,6 +123,8 @@ const batchUpsertGraduationData = async (model, records, transaction) => {
     "registration_certificate",
     "backlog_certificate",
     "grading_scale_info",
+    "transcript",
+    "individual_marksheet",
   ];
 
   return batchUpsertData(
@@ -140,6 +142,7 @@ const batchUpsertWorkData = async (model, records, transaction) => {
     "bank_statement",
     "job_offer_document",
     "payslip_document",
+    "experience_certificate",
   ];
 
   return batchUpsertData(

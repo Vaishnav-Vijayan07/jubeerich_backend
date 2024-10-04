@@ -3,13 +3,17 @@ const { addOrUpdateGapReasonData } = require("../utils/academic_query_helper");
 
 exports.getAllGapReasons = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id, type } = req.params;
     const student = await db.userPrimaryInfo.findByPk(id);
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
 
-    const gapReasons = await student.getGapReasons();
+    const gapReasons = await student.getGapReasons({
+      where: {
+        type,
+      },
+    });
     if (!gapReasons) {
       return res.status(404).json({ error: "Gap reasons not found" });
     }
@@ -18,6 +22,7 @@ exports.getAllGapReasons = async (req, res) => {
         id: gapReason.id,
         reason: gapReason.reason,
         start_date: gapReason.start_date,
+        type: gapReason.type,
         end_date: gapReason.end_date,
         supporting_document: gapReason.supporting_document
           ? gapReason.supporting_document
@@ -62,6 +67,9 @@ exports.saveGapReason = async (req, res) => {
       end_date: item.end_date,
       student_id: Number(student_id),
     };
+    if (!isUpdate) {
+      itemData["type"] = item.type;
+    }
     const fieldName = `gap[${index}][${field}]`;
     const file = files.find((file) => file.fieldname === fieldName);
     if (!isUpdate || (isUpdate && file)) {

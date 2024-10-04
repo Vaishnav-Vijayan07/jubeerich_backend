@@ -383,7 +383,13 @@ exports.saveStudentWorkInfo = async (req, res) => {
 
   // Iterate over graduation details
   workExperience.forEach((item, index) => {
-    const fields = ["appointment_document", "bank_statement", "job_offer_document", "payslip_document"];
+    const fields = [
+      "appointment_document",
+      "bank_statement",
+      "job_offer_document",
+      "payslip_document",
+      "experience_certificate",
+    ];
 
     const isUpdate = item?.id !== "0";
 
@@ -649,10 +655,6 @@ exports.saveStudentStudyPreferenceInfo = async (req, res) => {
 exports.saveStudentPrimaryEducation = async (req, res) => {
   const { student_id, primary, secondary, operation } = req.body;
 
-  console.log(primary);
-  console.log(secondary);
-  console.log(operation);
-
   // Start the transaction
   const transaction = await sequelize.transaction();
 
@@ -705,6 +707,8 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
             start_date: formData.startDate,
             end_date: formData.endDate,
             percentage: formData.percentage,
+            board_name: formData.board_name,
+            school_name: formData.school_name,
             mark_sheet: filePaths.mark_sheet,
             admit_card: filePaths.admit_card,
             certificate: filePaths.certificate,
@@ -743,6 +747,8 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
             start_date: formData.startDate,
             end_date: formData.endDate,
             percentage: formData.percentage,
+            board_name: formData.board_name,
+            school_name: formData.school_name,
             mark_sheet: filePaths.mark_sheet || existingDetails.mark_sheet,
             admit_card: filePaths.admit_card || existingDetails.admit_card,
             certificate: filePaths.certificate || existingDetails.certificate,
@@ -830,6 +836,8 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
         endDate: detail?.end_date,
         qualification: detail?.qualification,
         percentage: detail?.percentage,
+        board_name: detail?.board_name,
+        school_name: detail?.school_name,
         certificate: detail?.certificate || null,
         mark_sheet: detail?.mark_sheet || null,
         admit_card: detail?.admit_card || null,
@@ -849,11 +857,15 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
         start_date: detail?.start_date,
         end_date: detail?.end_date,
         qualification: detail?.qualification,
+        university_name: detail?.university_name,
+        college_name: detail?.college_name,
         percentage: detail?.percentage,
         certificate: detail?.certificate || null,
         registration_certificate: detail?.registration_certificate || null,
         backlog_certificate: detail?.backlog_certificate || null,
         grading_scale_info: detail?.grading_scale_info || null,
+        transcript: detail?.transcript || null,
+        individual_marksheet: detail?.individual_marksheet || null,
         admit_card: detail?.admit_card || null,
         conversion_formula: detail?.conversion_formula || "",
       };
@@ -896,7 +908,15 @@ exports.saveStudentGraduationDetails = async (req, res) => {
 
     // Iterate over graduation details
     graduation.forEach((item, index) => {
-      const fields = ["certificate", "admit_card", "registration_certificate", "backlog_certificate", "grading_scale_info"];
+      const fields = [
+        "certificate",
+        "admit_card",
+        "registration_certificate",
+        "backlog_certificate",
+        "grading_scale_info",
+        "transcript",
+        "individual_marksheet",
+      ];
 
       const isUpdate = item?.id !== "0";
 
@@ -907,6 +927,8 @@ exports.saveStudentGraduationDetails = async (req, res) => {
         percentage: Number(item.percentage),
         conversion_formula: item.conversion_formula,
         qualification: item.qualification,
+        university_name: item.university_name,
+        college_name: item.college_name,
         student_id: Number(student_id),
       };
 

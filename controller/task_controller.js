@@ -555,6 +555,7 @@ exports.getStudentWorkInfoById = async (req, res) => {
         job_offer_document: work?.job_offer_document || null,
         appointment_document: work?.appointment_document || null,
         payslip_document: work?.payslip_document || null,
+        experience_certificate : work?.experience_certificate || null
       };
     });
 

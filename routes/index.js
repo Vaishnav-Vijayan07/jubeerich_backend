@@ -937,7 +937,7 @@ router.post(
   SaveStudentDetailsController.saveStudentWorkInfo
 );
 
-router.get("/gapReason/:id", [authMiddleware.checkUserAuth], getAllGapReasons);
+router.get("/gapReason/:id/:type", [authMiddleware.checkUserAuth], getAllGapReasons);
 
 router.post(
   "/gapReason",
