@@ -7,6 +7,9 @@ const universityValidationRules = [
   check("university_name").not().isEmpty().withMessage("University name is required"),
   check("location").not().isEmpty().withMessage("Location is required"),
   check("country_id").optional().isInt().withMessage("Choose a country"),
+  check("portal_link").optional().isURL().withMessage("Invalid portal link"),
+  check("username").optional().isString().withMessage("Invalid username"),
+  check("password").optional().isString().withMessage("Invalid password"),
 ];
 
 // Helper function to check if country exists
@@ -88,7 +91,7 @@ exports.addUniversity = [
       });
     }
 
-    const { university_name, location, country_id, website_url, image_url, updated_by } = req.body;
+    const { university_name, location, country_id, website_url, image_url, portal_link, username, password, updated_by } = req.body;
 
     try {
       if (!(await checkCountryExists(country_id))) {
@@ -104,6 +107,9 @@ exports.addUniversity = [
         country_id,
         website_url,
         image_url,
+        portal_link,
+        username,
+        password,
         updated_by,
       });
       res.status(201).json({
@@ -159,6 +165,9 @@ exports.updateUniversity = [
         country_id: req.body.country_id ?? university.country_id,
         website_url: req.body.website_url ?? university.website_url,
         image_url: req.body.image_url ?? university.image_url,
+        portal_link: req.body.portal_link ?? university.portal_link,
+        username: req.body.username ?? university.username,
+        password: req.body.password ?? university.password,
         updated_by: req.body.updated_by ?? university.updated_by,
       });
 

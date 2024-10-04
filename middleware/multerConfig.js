@@ -16,6 +16,10 @@ const multerStorage = multer.diskStorage({
       secondary_mark_sheet: "uploads/educationDocuments",
       secondary_certificate: "uploads/educationDocuments",
       secondary_admit_card: "uploads/educationDocuments",
+      passport_doc: "uploads/studentAdditionalDocs",
+      updated_cv: "uploads/studentAdditionalDocs",
+      profile_assessment_doc: "uploads/studentAdditionalDocs",
+      pte_cred: "uploads/studentAdditionalDocs",
     };
 
     // Default to 'uploads/' if the field name is not explicitly mapped
@@ -43,6 +47,10 @@ const uploadMultiple = multer({
   { name: "secondary_mark_sheet", maxCount: 1 }, // Add field for secondary mark sheet
   { name: "secondary_certificate", maxCount: 1 }, // Add field for secondary certificate
   { name: "secondary_admit_card", maxCount: 1 }, // Add field for secondary certificate
+  { name: "passport_doc", maxCount: 1 }, // Add field for passport
+  { name: "updated_cv", maxCount: 1 }, // Add field for updated CV
+  { name: "profile_assessment_doc", maxCount: 1 }, // Add field for profile assessment
+  { name: "pte_cred", maxCount: 1 }, // Add field for PTE Document
 ]);
 
 const multerStorageGraduationDocs = multer.diskStorage({
