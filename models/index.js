@@ -62,6 +62,7 @@ db.studyPreferenceDetails = require("./studyPreferenceDetails")(sequelize, Seque
 db.graduationDetails = require("./graduationDetails")(sequelize, Sequelize);
 db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
 db.studentAdditionalDocs = require("./studentAdditionalDocs")(sequelize, Sequelize);
+db.passportDetails = require("./passportDetails")(sequelize, Sequelize);
 
 //Associations
 

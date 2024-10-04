@@ -1,0 +1,132 @@
+const db = require("../models");
+const PassportDetails = db.passportDetails;
+const { validationResult, check } = require("express-validator");
+
+// Get all passport details
+exports.getAllPassportDetails = async (req, res) => {
+  try {
+    const passportDetails = await PassportDetails.findAll({
+      attributes: [
+        "id",
+        "user_id",
+        "original_passports_in_hand",
+        "missing_passport_reason",
+        "visa_immigration_history",
+        "name_change",
+        "passports",
+      ],
+    });
+
+    res.status(200).json({ status: true, data: passportDetails });
+  } catch (error) {
+    console.error(`Error retrieving passport details: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// Get passport details by ID
+exports.getPassportDetailsById = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const passportDetails = await PassportDetails.findByPk(id);
+    if (!passportDetails) {
+      return res.status(404).json({ status: false, message: "Passport details not found" });
+    }
+    res.status(200).json({ status: true, data: passportDetails });
+  } catch (error) {
+    console.error(`Error retrieving passport details: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// Add new passport details
+exports.addPassportDetails = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      message: "Validation failed",
+      errors: errors.array(),
+    });
+  }
+
+  const { user_id, original_passports_in_hand, missing_passport_reason, visa_immigration_history, name_change, passports } =
+    req.body;
+
+  try {
+    const newPassportDetails = await PassportDetails.create({
+      user_id,
+      original_passports_in_hand,
+      missing_passport_reason,
+      visa_immigration_history,
+      name_change,
+      passports,
+    });
+    res.status(201).json({
+      status: true,
+      message: "Passport details created successfully",
+      data: newPassportDetails,
+    });
+  } catch (error) {
+    console.error(`Error creating passport details: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// Update passport details
+exports.updatePassportDetails = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: false,
+      message: "Validation failed",
+      errors: errors.array(),
+    });
+  }
+
+  try {
+    const passportDetails = await PassportDetails.findByPk(id);
+    if (!passportDetails) {
+      return res.status(404).json({ status: false, message: "Passport details not found" });
+    }
+
+    // Update only the fields that are provided in the request body
+    const updatedPassportDetails = await passportDetails.update({
+      user_id: req.body.user_id ?? passportDetails.user_id,
+      original_passports_in_hand: req.body.original_passports_in_hand ?? passportDetails.original_passports_in_hand,
+      missing_passport_reason: req.body.missing_passport_reason ?? passportDetails.missing_passport_reason,
+      visa_immigration_history: req.body.visa_immigration_history ?? passportDetails.visa_immigration_history,
+      name_change: req.body.name_change ?? passportDetails.name_change,
+      passports: req.body.passports ?? passportDetails.passports,
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Passport details updated successfully",
+      data: updatedPassportDetails,
+    });
+  } catch (error) {
+    console.error(`Error updating passport details: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// Delete passport details
+exports.deletePassportDetails = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  try {
+    const passportDetails = await PassportDetails.findByPk(id);
+    if (!passportDetails) {
+      return res.status(404).json({ status: false, message: "Passport details not found" });
+    }
+
+    await passportDetails.destroy();
+    res.status(200).json({ status: true, message: "Passport details deleted successfully" });
+  } catch (error) {
+    console.error(`Error deleting passport details: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
