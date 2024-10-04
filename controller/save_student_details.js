@@ -35,6 +35,9 @@ exports.saveStudentBasicInfo = async (req, res) => {
     country,
     address,
     ielts,
+    emergency_contact_name,
+    emergency_contact_relationship,
+    emergency_contact_phone,
   } = req.body;
 
   const transaction = await sequelize.transaction();
@@ -87,6 +90,9 @@ exports.saveStudentBasicInfo = async (req, res) => {
           state,
           country,
           address,
+          emergency_contact_name,
+          emergency_contact_relationship,
+          emergency_contact_phone,
         },
         { transaction }
       );
@@ -103,6 +109,9 @@ exports.saveStudentBasicInfo = async (req, res) => {
           state,
           country,
           address,
+          emergency_contact_name,
+          emergency_contact_relationship,
+          emergency_contact_phone,
         },
         { transaction }
       );
@@ -374,12 +383,7 @@ exports.saveStudentWorkInfo = async (req, res) => {
 
   // Iterate over graduation details
   workExperience.forEach((item, index) => {
-    const fields = [
-      "appointment_document",
-      "bank_statement",
-      "job_offer_document",
-      "payslip_document",
-    ];
+    const fields = ["appointment_document", "bank_statement", "job_offer_document", "payslip_document"];
 
     const isUpdate = item?.id !== "0";
 
@@ -458,17 +462,13 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
     // Validate if the type exists in the mapping
     const recordType = recordTypeMapping[type];
     if (!recordType) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Invalid type specified" });
+      return res.status(400).json({ status: false, message: "Invalid type specified" });
     }
 
     // Fetch the record
     const record = await recordType.model.findByPk(id);
     if (!record) {
-      return res
-        .status(404)
-        .json({ status: false, message: `${recordType.message} not found` });
+      return res.status(404).json({ status: false, message: `${recordType.message} not found` });
     }
 
     // Handle file deletions
@@ -734,9 +734,7 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
         const oldFilePaths = {
           mark_sheet: filePaths.mark_sheet ? existingDetails.mark_sheet : null,
           admit_card: filePaths.admit_card ? existingDetails.admit_card : null,
-          certificate: filePaths.certificate
-            ? existingDetails.certificate
-            : null,
+          certificate: filePaths.certificate ? existingDetails.certificate : null,
         };
 
         // Update the existing details in the database
@@ -763,10 +761,7 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
               try {
                 await deleteFile("educationDocuments", oldFilePaths[fileField]);
               } catch (err) {
-                console.error(
-                  `Failed to delete old file ${oldFilePaths[fileField]}:`,
-                  err
-                );
+                console.error(`Failed to delete old file ${oldFilePaths[fileField]}:`, err);
               }
             }
           }
@@ -901,13 +896,7 @@ exports.saveStudentGraduationDetails = async (req, res) => {
 
     // Iterate over graduation details
     graduation.forEach((item, index) => {
-      const fields = [
-        "certificate",
-        "admit_card",
-        "registration_certificate",
-        "backlog_certificate",
-        "grading_scale_info",
-      ];
+      const fields = ["certificate", "admit_card", "registration_certificate", "backlog_certificate", "grading_scale_info"];
 
       const isUpdate = item?.id !== "0";
 

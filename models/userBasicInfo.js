@@ -57,6 +57,18 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      emergency_contact_name: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      emergency_contact_relationship: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      emergency_contact_phone: {
+        type: Sequelize.STRING(20),
+        allowNull: true,
+      },
     },
     {
       underscored: true,
