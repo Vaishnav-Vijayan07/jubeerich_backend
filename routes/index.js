@@ -391,8 +391,7 @@ router.delete(
 );
 
 // passport details
-router.get("/passport_details", [authMiddleware.checkUserAuth], PassportDetailsController.getAllPassportDetails);
-router.get("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.getPassportDetailsById);
+router.get("/passport_details/:user_id", [authMiddleware.checkUserAuth], PassportDetailsController.getPassportDetailsByUserId);
 router.post("/passport_details", PassportDetailsController.addPassportDetails);
 router.put("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.updatePassportDetails);
 router.delete("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.deletePassportDetails);

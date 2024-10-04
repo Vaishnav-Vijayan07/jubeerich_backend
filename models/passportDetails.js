@@ -39,7 +39,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     {
       underscored: true,
-      tableName: "passport_information",
+      tableName: "passport_details",
     }
   );
 

@@ -3,36 +3,22 @@ const PassportDetails = db.passportDetails;
 const { validationResult, check } = require("express-validator");
 
 // Get all passport details
-exports.getAllPassportDetails = async (req, res) => {
+exports.getPassportDetailsByUserId = async (req, res) => {
+  const userId = parseInt(req.params.user_id, 10);
+
   try {
-    const passportDetails = await PassportDetails.findAll({
-      attributes: [
-        "id",
-        "user_id",
-        "original_passports_in_hand",
-        "missing_passport_reason",
-        "visa_immigration_history",
-        "name_change",
-        "passports",
-      ],
+    const passportDetails = await PassportDetails.findOne({
+      where: { user_id: userId },
     });
 
-    res.status(200).json({ status: true, data: passportDetails });
-  } catch (error) {
-    console.error(`Error retrieving passport details: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
-  }
-};
-
-// Get passport details by ID
-exports.getPassportDetailsById = async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  try {
-    const passportDetails = await PassportDetails.findByPk(id);
     if (!passportDetails) {
-      return res.status(404).json({ status: false, message: "Passport details not found" });
+      return res.status(404).json({ status: false, message: "Passport details not found for this user." });
     }
-    res.status(200).json({ status: true, data: passportDetails });
+
+    res.status(200).json({
+      status: true,
+      data: passportDetails,
+    });
   } catch (error) {
     console.error(`Error retrieving passport details: ${error}`);
     res.status(500).json({ status: false, message: "Internal server error" });
@@ -54,6 +40,18 @@ exports.addPassportDetails = async (req, res) => {
     req.body;
 
   try {
+    // Check if passport details already exist for the given user_id
+    const existingPassportDetails = await PassportDetails.findOne({
+      where: { user_id },
+    });
+
+    if (existingPassportDetails) {
+      return res.status(409).json({
+        status: false,
+        message: "Passport details already exist for this user.",
+      });
+    }
+
     const newPassportDetails = await PassportDetails.create({
       user_id,
       original_passports_in_hand,
@@ -62,6 +60,7 @@ exports.addPassportDetails = async (req, res) => {
       name_change,
       passports,
     });
+
     res.status(201).json({
       status: true,
       message: "Passport details created successfully",
