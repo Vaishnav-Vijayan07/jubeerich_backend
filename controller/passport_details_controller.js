@@ -86,7 +86,7 @@ exports.updatePassportDetails = async (req, res) => {
   }
 
   try {
-    const passportDetails = await PassportDetails.findOne({ where: { user_id: userId } });
+    const passportDetails = await PassportDetails.findOne({ where: { user_id: id } });
     if (!passportDetails) {
       return res.status(404).json({ status: false, message: "Passport details not found" });
     }
