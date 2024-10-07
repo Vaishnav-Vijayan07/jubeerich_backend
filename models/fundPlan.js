@@ -17,6 +17,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(50), // Loan, Savings, FD
       allowNull: false,
     },
+    fund_origin: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+    },
     sponsor_name: {
       type: Sequelize.STRING(255),
       allowNull: true,
@@ -41,13 +45,13 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(255),
       allowNull: true,
     },
-    has_min_6_months_backup: { 
+    has_min_6_months_backup: {
       type: Sequelize.BOOLEAN,
       allowNull: true,
     },
-    source_of_funds: { 
+    source_of_funds: {
       type: Sequelize.TEXT,
-      allowNull: true, 
+      allowNull: true,
     },
     updated_at: {
       type: Sequelize.DATE,
