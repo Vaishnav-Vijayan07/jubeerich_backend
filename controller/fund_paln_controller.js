@@ -71,6 +71,8 @@ exports.saveStudentPlanDetails = async (req, res) => {
       relation_with_sponsor: item.relation_with_sponsor,
       name_of_bank: item.name_of_bank,
       student_id: Number(student_id),
+      has_min_6_months_backup: item.has_min_6_months_backup,
+      source_of_funds: item.source_of_funds,
     };
 
     const fieldName = `fund_details[${index}][${field}]`;

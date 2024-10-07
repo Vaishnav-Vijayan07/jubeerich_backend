@@ -45,6 +45,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING(500),
             allowNull: false
         },
+        declined_letter: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
         updated_by: {
             type: Sequelize.INTEGER,
             allowNull: false,

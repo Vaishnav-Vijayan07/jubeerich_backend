@@ -41,15 +41,23 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(255),
       allowNull: true,
     },
+    has_min_6_months_backup: { 
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+    },
+    source_of_funds: { 
+      type: Sequelize.TEXT,
+      allowNull: true, 
+    },
     updated_at: {
       type: Sequelize.DATE,
-      defaultValue: Sequelize.NOW, // Default to current timestamp
+      defaultValue: Sequelize.NOW,
       allowNull: true,
     },
     updated_by: {
       type: Sequelize.INTEGER,
       references: {
-        model: "admin_users", // References the adminUsers table
+        model: "admin_users",
         key: "id",
       },
       allowNull: true,

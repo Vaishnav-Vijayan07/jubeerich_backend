@@ -1,0 +1,117 @@
+const { validationResult } = require('express-validator');
+const db = require('../models');
+const FamilyInformation = db.familyInformation; // Adjust the import path as necessary
+
+// Add or Update Family Information
+exports.addOrUpdateFamilyInformation = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            status: false,
+            message: "Validation failed",
+            errors: errors.array(),
+        });
+    }
+
+    const {
+        user_id,
+        parent_details,
+        num_of_siblings,
+        siblings_info,
+        children_info,
+        spouse_info,
+        accompanying_spouse,
+        num_of_children,
+        accompanying_child,
+        relatives_info
+    } = req.body;
+
+    try {
+        // Check if family information already exists for the user
+        let familyInfo = await FamilyInformation.findOne({ where: { user_id } });
+
+        if (familyInfo) {
+            // If it exists, update the existing record
+            familyInfo = await familyInfo.update({
+                parent_details,
+                num_of_siblings,
+                siblings_info,
+                children_info,
+                spouse_info,
+                accompanying_spouse,
+                relatives_info,
+                num_of_children,
+                accompanying_child,
+            });
+            return res.status(200).json({
+                status: true,
+                message: "Family information updated successfully",
+                data: familyInfo,
+            });
+        } else {
+            // If it doesn't exist, create a new record
+            const newFamilyInfo = await FamilyInformation.create({
+                user_id,
+                parent_details,
+                num_of_siblings,
+                siblings_info,
+                children_info,
+                spouse_info,
+                accompanying_spouse,
+                relatives_info,
+                num_of_children,
+                accompanying_child,
+            });
+
+            return res.status(201).json({
+                status: true,
+                message: "Family information created successfully",
+                data: newFamilyInfo,
+            });
+        }
+    } catch (error) {
+        console.error(`Error adding or updating family information: ${error}`);
+        res.status(500).json({ status: false, message: "Internal server error" });
+    }
+};
+
+// Get Family Information by User ID
+exports.getFamilyInformationByUserId = async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+
+    try {
+        const familyInfo = await FamilyInformation.findOne({ where: { user_id: userId } });
+        if (!familyInfo) {
+            return res.status(404).json({ status: false, message: "Family information not found" });
+        }
+
+        res.status(200).json({
+            status: true,
+            data: familyInfo,
+        });
+    } catch (error) {
+        console.error(`Error fetching family information: ${error}`);
+        res.status(500).json({ status: false, message: "Internal server error" });
+    }
+};
+
+// Delete Family Information
+exports.deleteFamilyInformation = async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+
+    try {
+        const familyInfo = await FamilyInformation.findByPk(id);
+        if (!familyInfo) {
+            return res.status(404).json({ status: false, message: "Family information not found" });
+        }
+
+        await familyInfo.destroy();
+        res.status(200).json({
+            status: true,
+            message: "Family information deleted successfully",
+        });
+    } catch (error) {
+        console.error(`Error deleting family information: ${error}`);
+        res.status(500).json({ status: false, message: "Internal server error" });
+    }
+};

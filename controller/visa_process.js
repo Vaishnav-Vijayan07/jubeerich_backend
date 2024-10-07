@@ -1,17 +1,28 @@
 const { where } = require("sequelize");
 const db = require("../models");
+const fs = require('fs');
+const path = require('path');
 const { addOrUpdateVisaDecline, addOrUpdateVisaApprove, addOrUpdateTravelHistory, getVisaData } = require("../utils/visa_process_helper");
 const sequelize = db.sequelize;
 
 exports.saveVisaDeclineProcess = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
-    const { visaDecline, userId } = req.body;
-    const transaction = await sequelize.transaction();
+    let { visaDecline, userId } = req.body;
+
+    visaDecline = visaDecline ? JSON.parse(visaDecline) : null;
+    userId = userId ? JSON.parse(userId) : null;
+
+    let declinedDocs = req?.files ?? null
+
+    console.log('declinedDocs', declinedDocs);
+
 
     const saveVisaDecline = await addOrUpdateVisaDecline(
       visaDecline,
       userId,
-      transaction
+      transaction,
+      declinedDocs
     )
 
     if (saveVisaDecline.success) {
@@ -35,14 +46,20 @@ exports.saveVisaDeclineProcess = async (req, res, next) => {
 }
 
 exports.saveVisaApproveProcess = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
-    const { visaApproved, userId } = req.body;
-    const transaction = await sequelize.transaction();
+    let { visaApproved, userId } = req.body;
+
+    visaApproved = visaApproved ? JSON.parse(visaApproved) : null
+    userId = userId ? JSON.parse(userId) : null
+
+    let approvedDocs = req?.files ?? null
 
     const saveVisaApprove = await addOrUpdateVisaApprove(
       visaApproved,
       userId,
-      transaction
+      transaction,
+      approvedDocs
     )
 
     if (saveVisaApprove.success) {
@@ -66,9 +83,9 @@ exports.saveVisaApproveProcess = async (req, res, next) => {
 }
 
 exports.saveTravelHistory = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
     const { travelHistory, userId } = req.body;
-    const transaction = await sequelize.transaction();
 
     const saveTravelHistory = await addOrUpdateTravelHistory(
       travelHistory,
@@ -132,6 +149,7 @@ exports.getAllVisaProcess = async (req, res, next) => {
             country_name: data.approved_country.country_name,
             course_name: data.approved_course.course_name,
             university_name: data.approved_university_applied.university_name,
+            approve_letter: data?.approved_letter
           }
         }),
         previousVisaDeclineData: previousVisaDeclineData.map((data) => {
@@ -149,6 +167,7 @@ exports.getAllVisaProcess = async (req, res, next) => {
             country_name: data.declined_country.country_name,
             course_name: data.declined_course.course_name,
             university_name: data.declined_university_applied.university_name,
+            decline_letter: data?.declined_letter
           }
         }),
         travelHistory: travelHistory.map((data) => {
@@ -176,21 +195,26 @@ exports.getAllVisaProcess = async (req, res, next) => {
   }
 }
 
-exports.deleteVisaProcessItem = async(req,res,next) => {
+exports.deleteVisaProcessItem = async (req, res, next) => {
+
+  const uploadsPath = path.join(__dirname, '../uploads');
+  const transaction = await sequelize.transaction();
+
   try {
     const { id, formName } = req.params;
     let visaData;
+    let existFile;
     let message;
-
-    const transaction = await sequelize.transaction();
 
     switch (formName) {
       case "visa_approve":
         visaData = await db.previousVisaApprove.findByPk(id);
+        existFile = await visaData.approved_letter
         message = "Visa Approve";
         break;
       case "visa_decline":
         visaData = await db.previousVisaDecline.findByPk(id);
+        existFile = await visaData.declined_letter
         message = "Visa Decline";
         break;
       case "travel_history":
@@ -200,6 +224,8 @@ exports.deleteVisaProcessItem = async(req,res,next) => {
       default:
         throw new Error("Invalid type specified");
     }
+    console.log('visaData', visaData);
+    console.log('existFile', existFile);
 
     if (!visaData) {
       await transaction.rollback();
@@ -208,8 +234,18 @@ exports.deleteVisaProcessItem = async(req,res,next) => {
 
     await visaData.destroy({ transaction });
 
+    const filePath = path.join(uploadsPath, existFile);
+
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(`Error deleting file ${existFile}: ${err.message}`);
+      } else {
+        console.log(`Deleted file: ${existFile}`);
+      }
+    });
+
     await transaction.commit();
-    
+
     return res.status(200).json({
       status: true,
       message: `${message} successfully deleted`,

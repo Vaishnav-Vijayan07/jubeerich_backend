@@ -41,6 +41,10 @@ module.exports = (sequelize, Sequelize) => {
                 key: "id"
             }
         },
+        approved_letter: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
         updated_by: {
             type: Sequelize.INTEGER,
             allowNull: false,
