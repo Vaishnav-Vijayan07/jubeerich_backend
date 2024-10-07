@@ -20,6 +20,12 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
+
+      number_of_passports: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+
       missing_passport_reason: {
         type: Sequelize.TEXT,
         allowNull: true,
