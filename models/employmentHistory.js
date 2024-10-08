@@ -5,6 +5,14 @@ module.exports = (sequelize, Sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      student_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "user_primary_info",
+          key: "id",
+        },
+        allowNull: false,
+      },
       served_notice_period: {
         type: Sequelize.BOOLEAN,
         allowNull: false,

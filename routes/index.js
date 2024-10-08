@@ -54,6 +54,7 @@ const visaProcessController = require("../controller/visa_process");
 const studentAdditionalController = require("../controller/studentAdditionalDocs");
 const { getStudentFundPlanDetails, saveStudentPlanDetails } = require("../controller/fund_paln_controller");
 const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_controller");
+const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 
 const router = express.Router();
 
@@ -421,5 +422,8 @@ router.delete("/passport_details/:id", [authMiddleware.checkUserAuth], PassportD
 
 router.post('/family_information', familyInformationController.addOrUpdateFamilyInformation);
 router.get('/family_information/:userId', familyInformationController.getFamilyInformationByUserId);
+
+router.post('/employment_history/:id', [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
+router.get('/employment_history/:id', [authMiddleware.checkUserAuth], getEmploymentHistory);
 
 module.exports = router;
