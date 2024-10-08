@@ -13,6 +13,9 @@ exports.saveAdditionalDocs = async (req, res, next) => {
     const updatedCv = req?.files?.updated_cv?.[0] ?? null;
     const profileAssessmentDoc = req?.files?.profile_assessment_doc?.[0] ?? null;
     const pteCred = req?.files?.pte_cred?.[0] ?? null;
+    const lorDoc = req?.files?.lor?.[0] ?? null;
+    const sopDoc = req?.files?.sop?.[0] ?? null;
+    const gteForm = req?.files?.gte_form?.[0] ?? null;
 
     const transaction = await sequelize.transaction();
 
@@ -31,7 +34,10 @@ exports.saveAdditionalDocs = async (req, res, next) => {
                 passport_doc: passportDoc?.filename,
                 updated_cv: updatedCv?.filename,
                 profile_assessment_doc: profileAssessmentDoc?.filename,
-                pte_cred: pteCred?.filename
+                pte_cred: pteCred?.filename,
+                lor: lorDoc?.filename,
+                sop: sopDoc?.filename,
+                gte_form: gteForm?.filename
             }, { transaction: transaction })
         } else {
 
@@ -40,6 +46,9 @@ exports.saveAdditionalDocs = async (req, res, next) => {
                 { newDoc: updatedCv, oldDoc: existDocs.updated_cv },
                 { newDoc: profileAssessmentDoc, oldDoc: existDocs.profile_assessment_doc },
                 { newDoc: pteCred, oldDoc: existDocs.pte_cred },
+                { newDoc: lorDoc, oldDoc: existDocs.lor },
+                { newDoc: sopDoc, oldDoc: existDocs.sop },
+                { newDoc: gteForm, oldDoc: existDocs.gte_form },
             ];
 
             for (const { newDoc, oldDoc } of docsToCheck) {
@@ -52,7 +61,10 @@ exports.saveAdditionalDocs = async (req, res, next) => {
                 passport_doc: passportDoc ? passportDoc?.filename : existDocs?.passport_doc,
                 updated_cv: updatedCv ? updatedCv?.filename : existDocs?.updated_cv,
                 profile_assessment_doc: profileAssessmentDoc ? profileAssessmentDoc?.filename : existDocs?.profileAssessmentDoc,
-                pte_cred: pteCred ? pteCred?.filename : existDocs.pte_cred
+                pte_cred: pteCred ? pteCred?.filename : existDocs.pte_cred,
+                lor: lorDoc ? lorDoc?.filename : existDocs.lor,
+                sop: sopDoc ? sopDoc?.filename : existDocs.sop,
+                gte_form: gteForm ? gteForm?.filename : existDocs.gte_form,
               }, {
                 where: { student_id: id },
                 transaction: transaction

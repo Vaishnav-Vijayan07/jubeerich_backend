@@ -20,6 +20,9 @@ const multerStorage = multer.diskStorage({
       updated_cv: "uploads/studentAdditionalDocs",
       profile_assessment_doc: "uploads/studentAdditionalDocs",
       pte_cred: "uploads/studentAdditionalDocs",
+      lor: "uploads/studentAdditionalDocs",
+      sop: "uploads/studentAdditionalDocs",
+      gte_form: "uploads/studentAdditionalDocs",
     };
 
     // Default to 'uploads/' if the field name is not explicitly mapped
@@ -51,6 +54,9 @@ const uploadMultiple = multer({
   { name: "updated_cv", maxCount: 1 }, // Add field for updated CV
   { name: "profile_assessment_doc", maxCount: 1 }, // Add field for profile assessment
   { name: "pte_cred", maxCount: 1 }, // Add field for PTE Document
+  { name: "lor", maxCount: 1 }, // Add field for PTE Document
+  { name: "sop", maxCount: 1 }, // Add field for PTE Document
+  { name: "gte_form", maxCount: 1 }, // Add field for PTE Document
   { name: "visaApprovedDocs", maxCount: 10 }, // Add field for PTE Document
   { name: "visaDeclinedDocs", maxCount: 10 }, // Add field for PTE Document
 ]);
