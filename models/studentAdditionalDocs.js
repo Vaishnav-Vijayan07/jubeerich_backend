@@ -29,6 +29,18 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: true,
         },
+        lor: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
+        sop: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
+        gte_form: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
     });
     return studentAdditionalDocs;
 };
