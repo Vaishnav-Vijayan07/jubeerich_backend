@@ -64,6 +64,7 @@ db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
 db.studentAdditionalDocs = require("./studentAdditionalDocs")(sequelize, Sequelize);
 db.passportDetails = require("./passportDetails")(sequelize, Sequelize);
 db.familyInformation = require("./familyInformation")(sequelize, Sequelize);
+db.EmploymentHistory = require("./employmentHistory")(sequelize, Sequelize);
 
 //Associations
 
@@ -477,6 +478,16 @@ db.course.belongsToMany(db.campus, {
   foreignKey: "course_id",
   otherKey: "campus_id",
   as: "campuses",
+});
+
+db.EmploymentHistory.belongsTo(db.adminUsers, {
+  foreignKey: "updated_by",
+  as: "employmentHistory",
+});
+
+db.adminUsers.hasMany(db.EmploymentHistory, {
+  foreignKey: "updated_by",
+  as: "employmentHistories",
 });
 
 module.exports = db;
