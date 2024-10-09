@@ -185,7 +185,7 @@ exports.assignCounselorTL = async (req, res) => {
 
         // Update assigned_counsellor for the user
         await db.userPrimaryInfo.update(
-          { assigned_counsellor_tl: counsellor_id, updated_by: userId, assign_type: "direct_assign" },
+          { assigned_counsellor_tl: counsellor_id, updated_by: userId, branch_id: branch_id, assign_type: "direct_assign" },
           { where: { id: user_id }, transaction }
         );
       })
