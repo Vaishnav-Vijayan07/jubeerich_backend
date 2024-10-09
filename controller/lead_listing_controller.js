@@ -326,11 +326,6 @@ exports.getAllLeads = async (req, res) => {
           foreignKey: "updated_by"
         },
         {
-          model: db.adminUsers,
-          as: "assigned_branch_counselor_name",
-          attributes: ["id", "name"],
-        },
-        {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
@@ -386,7 +381,6 @@ exports.getAllLeads = async (req, res) => {
         // region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : "Not Assigned",
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments
@@ -1088,11 +1082,6 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           attributes: ["id", "name"],
         },
         {
-          model: db.adminUsers,
-          as: "assigned_branch_counselor_name",
-          attributes: ["id", "name"],
-        },
-        {
           model: db.branches,
           as: "branch_name",
           attributes: ["branch_name"],
@@ -1157,7 +1146,6 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : "Not Assigned",
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
