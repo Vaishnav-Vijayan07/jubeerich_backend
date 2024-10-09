@@ -337,6 +337,8 @@ exports.createLead = async (req, res) => {
         }
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+      console.log("IT TEAM ID ==>", userRole?.role_id);
+      
       if (franchise_id) {
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
