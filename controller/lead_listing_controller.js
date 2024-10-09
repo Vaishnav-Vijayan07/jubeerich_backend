@@ -326,6 +326,11 @@ exports.getAllLeads = async (req, res) => {
           foreignKey: "updated_by"
         },
         {
+          model: db.adminUsers,
+          as: "assigned_branch_counselor_name",
+          attributes: ["id", "name"],
+        },
+        {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
@@ -381,6 +386,7 @@ exports.getAllLeads = async (req, res) => {
         // region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : "Not Assigned",
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments
