@@ -103,6 +103,11 @@ db.educationDetails.belongsTo(db.userPrimaryInfo, {
   as: "student", // This represents the user/student who owns this education detail
 });
 
+db.userPrimaryInfo.belongsTo(db.adminUsers, {
+  foreignKey: "assigned_branch_counselor",
+  as: "assigned_branch_counselor_name", // This represents the user/student who owns this education detail
+});
+
 db.userPrimaryInfo.hasMany(db.educationDetails, {
   foreignKey: "student_id",
   as: "educationDetails", // This will hold the user's multiple education records
