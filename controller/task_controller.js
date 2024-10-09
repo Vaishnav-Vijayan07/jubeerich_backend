@@ -1,5 +1,8 @@
 const { Sequelize, where, Op } = require("sequelize");
 const db = require("../models");
+const path = require("path");
+const fs = require("fs");
+const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 
 exports.getTasks = async (req, res) => {
   try {
@@ -375,7 +378,7 @@ exports.getBasicInfoById = async (req, res) => {
         "remarks",
         "branch_id",
         "franchise_id",
-        "region_id"
+        "region_id",
       ],
       include: [
         {
@@ -411,24 +414,115 @@ exports.saveBasicInfo = async (req, res) => {
   try {
     const { basicInfo, primaryInfo, student_id } = req.body;
 
+    const policeDocs = [];
+
+    // Fetch existing data from the database
     const existingPrimaryData = await db.userPrimaryInfo.findByPk(student_id);
     const existingBasicData = await db.userBasicInfo.findOne({
-      where: { user_id: student_id },
+      where: { user_id: Number(student_id) },
     });
 
+    // Loop through the documents received from the frontend
+    req.body.police_clearance_docs?.forEach(async (doc, index) => {
+      let certificatePath;
+      const certificateFile = req.files.find(
+        (file) =>
+          file.fieldname === `police_clearance_docs[${index}][certificate]`
+      );
+
+      // Check if there's a new file for this document
+      if (certificateFile) {
+        certificatePath = certificateFile.filename;
+
+        // Check if there was a previous file saved and delete it
+        const previousCertificatePath =
+          existingBasicData && existingBasicData.police_clearance_docs
+            ? existingBasicData.police_clearance_docs[index]?.certificate
+            : null;
+
+        if (previousCertificatePath) {
+          console.log(previousCertificatePath);
+
+          await deleteFile("policeClearenceDocuments", previousCertificatePath);
+        }
+      } else {
+        // No new file, get the existing path from the body
+        certificatePath =
+          req.body.police_clearance_docs[index].certificate_path;
+      }
+
+      policeDocs.push({
+        id: Number(doc.id),
+        certificate: certificatePath,
+        country_name: req.body.police_clearance_docs[index].country_name,
+      });
+    });
+
+    console.log(policeDocs);
+
+    const parsedPrimaryInfo = {
+      ...primaryInfo,
+      id: parseInt(primaryInfo.id, 10), // Convert ID to an integer
+      office_type: parseInt(primaryInfo.office_type, 10), // Convert office_type to an integer
+      branch_id:
+        primaryInfo.branch_id !== "null"
+          ? parseInt(primaryInfo.branch_id, 10)
+          : null, // Convert branch_id or set to null
+      franchise_id:
+        primaryInfo.franchise_id !== "null"
+          ? parseInt(primaryInfo.franchise_id, 10)
+          : null, // Convert franchise_id or set to null
+      region_id:
+        primaryInfo.region_id !== "null"
+          ? parseInt(primaryInfo.region_id, 10)
+          : null, // Convert region_id or set to null
+    };
+
+    const parsedBasicInfo = {
+      passport_no: basicInfo.passport_no,
+      dob: basicInfo.dob !== "null" ? new Date(basicInfo.dob) : null, // Convert to Date or null
+      gender: basicInfo.gender, // Assuming gender is already correct
+      marital_status:
+        basicInfo.marital_status !== "null"
+          ? parseInt(basicInfo.marital_status, 10)
+          : null, // Convert to integer or null
+      nationality: basicInfo.nationality,
+      secondary_number: basicInfo.secondary_number,
+      state: basicInfo.state,
+      country: basicInfo.country,
+      address: basicInfo.address,
+      emergency_contact_name: basicInfo.emergency_contact_name,
+      emergency_contact_relationship: basicInfo.emergency_contact_relationship,
+      emergency_contact_phone: basicInfo.emergency_contact_phone,
+      concern_on_medical_condition:
+        basicInfo.concern_on_medical_condition === "true", // Convert string to boolean
+      concern_on_medical_condition_details:
+        basicInfo.concern_on_medical_condition_details,
+      criminal_offence: basicInfo.criminal_offence === "true", // Convert string to boolean
+      criminal_offence_details: basicInfo.criminal_offence_details,
+      police_clearance_docs: [], // Initialize as an empty array
+    };
+
+    // Update or create primary information
+
     if (existingPrimaryData) {
-      await existingPrimaryData.update(primaryInfo);
+      await existingPrimaryData.update(parsedPrimaryInfo);
     } else {
-      return res.status(404).json({
-        status: false,
-        message: "Primary information not found",
+      await db.userPrimaryInfo.create({
+        ...parsedPrimaryInfo,
+        user_id: Number(student_id),
       });
     }
 
+    // Update or create basic information
+    parsedBasicInfo.police_clearance_docs = policeDocs;
     if (existingBasicData) {
-      await existingBasicData.update(basicInfo);
+      await existingBasicData.update(parsedBasicInfo);
     } else {
-      await db.userBasicInfo.create({ user_id: student_id, ...basicInfo });
+      await db.userBasicInfo.create({
+        user_id: Number(student_id),
+        ...parsedBasicInfo,
+      });
     }
 
     // Send a success response
@@ -438,6 +532,47 @@ exports.saveBasicInfo = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error saving basic info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.deletePoliceClearenceDocuments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { itemId } = req.body;
+
+    console.log(id);
+    console.log(itemId);
+
+    const basicInfo = await db.userBasicInfo.findByPk(id);
+
+    if (!basicInfo) {
+      return res.status(404).json({
+        status: false,
+        message: "Info not found",
+      });
+    }
+
+    const policeDocs = basicInfo.police_clearance_docs;
+
+    const itemToDelete = policeDocs.find((item) => item.id === itemId);
+
+    const certificatePath = itemToDelete.certificate;
+
+    await deleteFile("policeClearenceDocuments", certificatePath);
+
+    const updatedDocs = policeDocs.filter((item) => item.id !== itemId);
+
+    await basicInfo.update({ police_clearance_docs: updatedDocs });
+    res.status(200).json({
+      status: true,
+      message: "Info deleted successfully",
+    });
+  } catch (error) {
+    console.error(`Error fetching student info: ${error}`);
     res.status(500).json({
       status: false,
       message: "Internal server error",
@@ -555,7 +690,7 @@ exports.getStudentWorkInfoById = async (req, res) => {
         job_offer_document: work?.job_offer_document || null,
         appointment_document: work?.appointment_document || null,
         payslip_document: work?.payslip_document || null,
-        experience_certificate : work?.experience_certificate || null
+        experience_certificate: work?.experience_certificate || null,
       };
     });
 

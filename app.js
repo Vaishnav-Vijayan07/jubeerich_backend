@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const cors = require('cors');
+const cors = require("cors");
 
 const app = express();
 
@@ -21,8 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // app.use(express.static(path.join(__dirname, "uploads")));
 
 // Serve static files from the 'uploads' directory
-app.use('/uploads', express.static(path.join('uploads')));
-
+app.use("/uploads", express.static(path.join("uploads")));
 
 // CORS headers are already handled by the cors() middleware
 
@@ -45,3 +44,7 @@ db.sequelize
   .catch((err) => {
     console.log(err.toString());
   });
+
+// app.listen(port, () => {
+//   console.log(`Backend listens to ${port}`);
+// });
