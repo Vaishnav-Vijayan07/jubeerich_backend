@@ -298,7 +298,7 @@ exports.assignBranchCounselors = async (req, res) => {
 
         // Update assigned_cre for the user
         await db.userPrimaryInfo.update(
-          { assigned_branch_counselor: counselor_id, updated_by: userId, assign_type: "direct_assign" },
+          { assigned_branch_counselor: counselor_id, counsiler_id: counselor_id, updated_by: userId, assign_type: "direct_assign" },
           { where: { id: user_id }, transaction }
         );
       })
