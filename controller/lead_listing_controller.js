@@ -55,6 +55,12 @@ exports.getLeads = async (req, res) => {
           required: false, 
         },
         {
+          model: db.adminUsers,
+          as: "assigned_branch_counselor_name",
+          attributes: ["name"],
+          required: false, 
+        },
+        {
           model: db.branches,
           as: "branch_name",
           attributes: ["branch_name"],
@@ -99,6 +105,7 @@ exports.getLeads = async (req, res) => {
         counsiler_name: info.counsiler_name?.name || null,
         status: info.status?.status_name || null,
         branch_name: info.branch_name?.branch_name || null,
+        assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
       };
     });
@@ -308,6 +315,12 @@ exports.getAllLeads = async (req, res) => {
         },
         {
           model: db.adminUsers,
+          as: "assigned_branch_counselor_name",
+          attributes: ["name"],
+          required: false, 
+        },
+        {
+          model: db.adminUsers,
           as: "counselors", // Use the alias defined in associations
           attributes: ["name", "id"], // Include the ID attribute
           through: { attributes: [] }, // Exclude attributes from join table
@@ -375,6 +388,7 @@ exports.getAllLeads = async (req, res) => {
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
         counselors: counsellorNames,
+        
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,
@@ -383,6 +397,7 @@ exports.getAllLeads = async (req, res) => {
         updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
+        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments
       };
     });
