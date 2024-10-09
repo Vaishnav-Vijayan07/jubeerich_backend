@@ -60,10 +60,7 @@ exports.createLead = async (req, res) => {
     }); // Find the user_id of cre_tl
 
     // Check if referenced IDs exist in their respective tables
-    const leadTypeExists = await checkIfEntityExists(
-      "lead_type",
-      lead_type_id
-    );
+    const leadTypeExists = await checkIfEntityExists("lead_type", lead_type_id);
     if (!leadTypeExists) {
       await transaction.rollback(); // Rollback the transaction if category ID is invalid
       return res.status(400).json({
@@ -121,10 +118,7 @@ exports.createLead = async (req, res) => {
     }
 
     if (counsiler_id !== "null") {
-      const counsilerExists = await checkIfEntityExists(
-        "admin_user",
-        counsiler_id
-      );
+      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -148,10 +142,7 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists(
-        "admin_user",
-        updated_by
-      );
+      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -209,18 +200,10 @@ exports.createLead = async (req, res) => {
         ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl:
-          userRole?.role_id === process.env.IT_TEAM_ID &&
-          office_type === process.env.CORPORATE_OFFICE_ID &&
-          creTl
-            ? creTl.id
-            : null,
+          userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID ? creTl?.id : null,
         created_by: userId,
-        assign_type:
-          userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        regional_manager_id:
-          userRole?.role_id == process.env.IT_TEAM_ID
-            ? regionalManagerId
-            : null,
+        assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
+        regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
       },
       { transaction }
     );
@@ -267,7 +250,7 @@ exports.createLead = async (req, res) => {
             writing_score: exam.writing_score,
             // overall_score: exam.marks,
             overall_score: exam.overall_score,
-            updated_by: updated_by
+            updated_by: updated_by,
           },
           { transaction }
         );
@@ -305,9 +288,7 @@ exports.createLead = async (req, res) => {
       for (const countryId of preferred_country) {
         const users = await getLeastAssignedUsers(countryId);
         if (users?.leastAssignedUserId) {
-          leastAssignedUsers = leastAssignedUsers.concat(
-            users.leastAssignedUserId
-          );
+          leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
         }
       }
 
@@ -337,9 +318,7 @@ exports.createLead = async (req, res) => {
           });
 
           if (countries) {
-            countryName = countries
-              .map((country) => country.country_name)
-              .join(", ");
+            countryName = countries.map((country) => country.country_name).join(", ");
           }
         }
 
@@ -361,14 +340,9 @@ exports.createLead = async (req, res) => {
       if (franchise_id) {
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
-          const users = await getLeastAssignedCounsellor(
-            countryId,
-            franchise_id
-          );
+          const users = await getLeastAssignedCounsellor(countryId, franchise_id);
           if (users?.leastAssignedUserId) {
-            leastAssignedUsers = leastAssignedUsers.concat(
-              users.leastAssignedUserId
-            );
+            leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
           }
         }
 
@@ -398,9 +372,7 @@ exports.createLead = async (req, res) => {
             });
 
             if (countries) {
-              countryName = countries
-                .map((country) => country.country_name)
-                .join(", ");
+              countryName = countries.map((country) => country.country_name).join(", ");
             }
           }
 
@@ -515,20 +487,14 @@ exports.updateLead = async (req, res) => {
     ];
 
     for (const entity of entities) {
-      if (
-        entity.id !== null &&
-        !(await checkIfEntityExists(entity.model, entity.id))
-      ) {
+      if (entity.id !== null && !(await checkIfEntityExists(entity.model, entity.id))) {
         await transaction.rollback();
         return res.status(400).json({
           status: false,
           message: `Invalid ${entity.model.replace("_", " ")} ID provided`,
           errors: [
             {
-              msg: `Please provide a valid ${entity.model.replace(
-                "_",
-                " "
-              )} ID`,
+              msg: `Please provide a valid ${entity.model.replace("_", " ")} ID`,
             },
           ],
         });
@@ -598,14 +564,9 @@ exports.updateLead = async (req, res) => {
 
     // Check if preferred countries are changed
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      const currentCountryIds = currentPreferredCountries.map(
-        (country) => country.id
-      );
+      const currentCountryIds = currentPreferredCountries.map((country) => country.id);
 
-      if (
-        JSON.stringify(currentCountryIds.sort()) !==
-        JSON.stringify(preferred_country.sort())
-      ) {
+      if (JSON.stringify(currentCountryIds.sort()) !== JSON.stringify(preferred_country.sort())) {
         // Remove current assignments
         await lead.setPreferredCountries([], { transaction });
 
@@ -628,14 +589,14 @@ exports.updateLead = async (req, res) => {
           writing_score: exam.writing_score,
           // overall_score: exam.marks,
           overall_score: exam.overall_score,
-          updated_by: updated_by
-        }
+          updated_by: updated_by,
+        };
 
         if (examDocument && examDocument.size !== 0) {
           updateData.score_card = examDocument.filename;
         }
-        console.log('exam.exam_type',exam.exam_type);
-        
+        console.log("exam.exam_type", exam.exam_type);
+
         if (exam.id) {
           return db.userExams.update(updateData, {
             where: {
@@ -646,24 +607,27 @@ exports.updateLead = async (req, res) => {
             transaction,
           });
         } else {
-          return db.userExams.create({
-            student_id: id,
-            exam_type: exam.exam_type,
-            exam_date: exam.exam_date,
-            listening_score: exam.listening_score,
-            speaking_score: exam.speaking_score,
-            reading_score: exam.reading_score,
-            writing_score: exam.writing_score,
-            // overall_score: exam.marks,
-            overall_score: exam.overall_score,
-            updated_by: updated_by,
-            score_card: examDocument ? examDocument.filename : null,
-          }, { transaction });
+          return db.userExams.create(
+            {
+              student_id: id,
+              exam_type: exam.exam_type,
+              exam_date: exam.exam_date,
+              listening_score: exam.listening_score,
+              speaking_score: exam.speaking_score,
+              reading_score: exam.reading_score,
+              writing_score: exam.writing_score,
+              // overall_score: exam.marks,
+              overall_score: exam.overall_score,
+              updated_by: updated_by,
+              score_card: examDocument ? examDocument.filename : null,
+            },
+            { transaction }
+          );
         }
       });
 
       await Promise.all(examDetailsPromises);
-    } 
+    }
 
     await transaction.commit();
 
