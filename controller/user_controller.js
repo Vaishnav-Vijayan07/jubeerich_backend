@@ -209,8 +209,8 @@ exports.createLead = async (req, res) => {
         ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl:
-          userRole?.role_id === process.env.IT_TEAM_ID &&
-          office_type === process.env.CORPORATE_OFFICE_ID &&
+          userRole?.role_id == process.env.IT_TEAM_ID &&
+          office_type == process.env.CORPORATE_OFFICE_ID &&
           creTl
             ? creTl.id
             : null,
