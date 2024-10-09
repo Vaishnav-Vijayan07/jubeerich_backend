@@ -1024,6 +1024,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
             [db.Sequelize.Op.or]: [
               { assigned_counsellor_tl: userId },
               { created_by: userId },
+              { assigned_counsellor_tl: userId },
             ],
           },
           {
