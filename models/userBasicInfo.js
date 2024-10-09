@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       dob: {
         type: Sequelize.DATE,
-        allowNull: false,
+        allowNull: true,
       },
       gender: {
         type: Sequelize.ENUM("Male", "Female", "Other"),
@@ -67,6 +67,28 @@ module.exports = (sequelize, Sequelize) => {
       },
       emergency_contact_phone: {
         type: Sequelize.STRING(20),
+        allowNull: true,
+      },
+      concern_on_medical_condition: {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      criminal_offence: {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      criminal_offence_details: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      concern_on_medical_condition_details: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      police_clearance_docs: {
+        type: Sequelize.JSONB,
         allowNull: true,
       },
     },

@@ -1,5 +1,7 @@
 const path = require("path");
 const fs = require("fs");
+// fileHelper.js
+const fspromises = require("fs").promises; // Use promises for async/await
 
 const batchUpsertData = async (
   model,
@@ -134,4 +136,40 @@ const handleFileDeletions = async (type, record) => {
   });
 };
 
-module.exports = { batchUpsertData, deleteFile, handleFileDeletions };
+const deleteUnwantedFiles = async (dirPath, filesToKeep) => {
+  try {
+    // Use a Set for faster lookup
+    const filesToKeepSet = new Set(filesToKeep);
+
+    // Read all files in the specified directory
+    const files = await fspromises.readdir(dirPath);
+
+    // Prepare deletion promises
+    const deletePromises = files
+      .filter((file) => !filesToKeepSet.has(file)) // Filter files not in the Set
+      .map(async (file) => {
+        const filePath = path.join(dirPath, file);
+        try {
+          await fspromises.unlink(filePath); // Delete the file
+          return console.log(`Deleted file: ${filePath}`);
+        } catch (err) {
+          return console.error(
+            `Failed to delete file: ${filePath} - ${err.message}`
+          );
+        }
+      });
+
+    // Wait for all deletions to complete
+    await Promise.all(deletePromises);
+    console.log("All unwanted files deleted successfully.");
+  } catch (err) {
+    console.error(`Error processing the directory: ${err.message}`);
+  }
+};
+
+module.exports = {
+  batchUpsertData,
+  deleteFile,
+  handleFileDeletions,
+  deleteUnwantedFiles,
+};
