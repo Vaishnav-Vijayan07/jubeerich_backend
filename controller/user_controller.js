@@ -872,7 +872,7 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
       LIMIT 1;
     `,
       {
-        replacements: { roleId, countryId },
+        replacements: { roleId, countryId, franchiseId },
         type: db.Sequelize.QueryTypes.SELECT,
       }
     );
