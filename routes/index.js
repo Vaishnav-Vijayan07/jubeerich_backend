@@ -539,6 +539,18 @@ router.delete(
   FranchiseController.deleteFranchise
 );
 
+router.get(
+  "/get_all_franchise_counsellors/:id",
+  [authMiddleware.checkUserAuth],
+  FranchiseController.getAllCounsellorsByFranchise
+);
+
+router.get(
+  "/get_all_franchise_counsellors_tl/:id",
+  [authMiddleware.checkUserAuth],
+  FranchiseController.getAllCounsellorsTLByFranchise
+);
+
 // Statuses routes
 router.get(
   "/status",
