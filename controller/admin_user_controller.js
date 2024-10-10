@@ -341,8 +341,25 @@ exports.addAdminUsers = async (req, res) => {
       });
     }
 
-
     let existTL;
+    let existFranchiseTL
+    if(role_id == process.env.FRANCHISE_MANAGER_ID){
+      existFranchiseTL = await db.adminUsers.findOne({
+        where: {
+          [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
+        },
+      });
+
+      console.log('existFranchiseTL',existFranchiseTL);
+    }
+
+    if(existFranchiseTL){
+      return res.status(409).json({
+        status: false,
+        message: `Franchise Manager already exists in the Franchise`,
+      });
+    }
+
     if(role_id == process.env.COUNSELLOR_TL_ID){
       existTL = await db.adminUsers.findOne({
         where: {
