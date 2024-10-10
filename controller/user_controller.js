@@ -449,6 +449,16 @@ exports.updateLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+
+  console.log(branch_id);
+  console.log(counsiler_id);
+  console.log(region_id);
+  console.log(office_type);
+
+  
+  
+  
+
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;

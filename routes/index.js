@@ -594,6 +594,11 @@ router.get(
   LeadListingController.geLeadsForCreTl
 );
 router.get(
+  "/assigned_leads_regional_managers",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.getAllAssignedLeadsRegionalMangers
+);
+router.get(
   "/leads_counsellor_tl",
   [authMiddleware.checkUserAuth],
   LeadListingController.geLeadsForCounsellorTL
