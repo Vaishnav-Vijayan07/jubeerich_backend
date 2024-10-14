@@ -32,6 +32,7 @@ exports.createLead = async (req, res) => {
     preferred_country, // This should be an array of country IDs
     office_type,
     region_id,
+    flag_id,
     counsiler_id,
     branch_id,
     updated_by,
@@ -192,6 +193,7 @@ exports.createLead = async (req, res) => {
         channel_id,
         zipcode,
         region_id: region_id != "null" ? region_id : null,
+        flag_id: flag_id != "null" ? flag_id : null,
         franchise_id: franchise_id != "null" ? franchise_id : null,
         counsiler_id: counsiler_id != "null" ? counsiler_id : null,
         branch_id: branch_id != "null" ? branch_id : null,
@@ -441,6 +443,7 @@ exports.updateLead = async (req, res) => {
     office_type,
     ielts,
     region_id,
+    flag_id,
     counsiler_id,
     branch_id,
     updated_by,
@@ -450,16 +453,6 @@ exports.updateLead = async (req, res) => {
     franchise_id,
     exam_details,
   } = req.body;
-
-
-  console.log(branch_id);
-  console.log(counsiler_id);
-  console.log(region_id);
-  console.log(office_type);
-
-  
-  
-  
 
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
@@ -558,6 +551,7 @@ exports.updateLead = async (req, res) => {
         source_id,
         channel_id,
         region_id: region_id !== "null" ? region_id : null,
+        flag_id: flag_id !== "null" ? flag_id : null,
         franchise_id: franchise_id != "null" ? franchise_id : null,
         counsiler_id: counsiler_id !== "null" ? counsiler_id : null,
         branch_id: branch_id !== "null" ? branch_id : null,

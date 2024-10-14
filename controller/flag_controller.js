@@ -64,13 +64,14 @@ exports.addFlag = [
       });
     }
 
-    const { flag_name, flag_description, updated_by } = req.body;
+    const { flag_name, flag_description, updated_by, color } = req.body;
 
     try {
       const newFlag = await Flag.create({
         flag_name,
         flag_description,
         updated_by,
+        color
       });
       res.status(201).json({
         status: true,
@@ -115,6 +116,7 @@ exports.updateFlag = [
       const updatedFlag = await flag.update({
         flag_name: req.body.flag_name ?? flag.flag_name,
         flag_description: req.body.flag_description ?? flag.flag_description,
+        color: req.body.color ?? flag.color,
         updated_by: req.body.updated_by ?? flag.updated_by,
       });
 

@@ -13,6 +13,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      color: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
       updated_by: {
         type: Sequelize.INTEGER,
       },
