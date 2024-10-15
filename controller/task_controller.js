@@ -347,8 +347,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
       nest: true,
     });
 
-    console.log('primaryInfo ===> ',primaryInfo.user_primary_flags.flag_name);
-    
 
     // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
