@@ -266,7 +266,7 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (userRole?.role_id == process.env.CRE_ID) {
+    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 

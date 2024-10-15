@@ -13,11 +13,13 @@ exports.getTasks = async (req, res) => {
           model: db.userPrimaryInfo,
           as: "student_name",
           attributes: ["flag_id"],
+          required: false,
           include: [
             {
               model: db.flag,
               as: "user_primary_flags",
-              attributes: ["flag_name"]
+              attributes: ["flag_name","color"],
+              required: false
             }
           ]
         }
