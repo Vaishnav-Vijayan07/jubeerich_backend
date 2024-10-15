@@ -212,7 +212,7 @@ exports.assignNewCountry = async (req, res) => {
       });
 
       if (existingCountry) {
-        return res.status(204).json({
+        return res.status(404).json({
           status: false,
           message: "The country is already assigned to the student.",
         });
