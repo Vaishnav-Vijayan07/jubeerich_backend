@@ -8,8 +8,24 @@ exports.getTasks = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     const tasks = await db.tasks.findAll({
+      include: [
+        {
+          model: db.userPrimaryInfo,
+          as: "student_name",
+          attributes: ["flag_id"],
+          include: [
+            {
+              model: db.flag,
+              as: "user_primary_flags",
+              attributes: ["flag_name"]
+            }
+          ]
+        }
+      ],
       where: { userId: userId },
     });
+
+    console.log('tasks ===>',tasks);
 
     res.status(200).json({
       status: true,
@@ -316,12 +332,21 @@ exports.getStudentBasicInfoById = async (req, res) => {
           as: "userAcademicInfos", // The alias you defined in the association
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.workInfos,
           as: "userWorkInfos", // The alias you defined in the association
         },
       ],
       nest: true,
     });
+
+    console.log('primaryInfo ===> ',primaryInfo.user_primary_flags.flag_name);
+    
 
     // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
@@ -338,6 +363,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         ) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
+      flag_name:primaryInfo?.user_primary_flags?.flag_name,
       ...basicInfoData,
     };
 

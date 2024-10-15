@@ -25,16 +25,16 @@ exports.getLeads = async (req, res) => {
         },
         {
           model: db.country,
-          as: "preferredCountries", 
-          attributes: ["country_name", "id"], 
-          through: { attributes: [] }, 
+          as: "preferredCountries",
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
           required: false,
         },
         {
           model: db.adminUsers,
-          as: "counselors", 
-          attributes: ["name", "id"], 
-          through: { attributes: [] }, 
+          as: "counselors",
+          attributes: ["name", "id"],
+          through: { attributes: [] },
           required: false,
         },
         {
@@ -46,19 +46,19 @@ exports.getLeads = async (req, res) => {
           model: db.region,
           as: "region_name",
           attributes: ["region_name"],
-          required: false, 
+          required: false,
         },
         {
           model: db.adminUsers,
           as: "counsiler_name",
           attributes: ["name"],
-          required: false, 
+          required: false,
         },
         {
           model: db.adminUsers,
           as: "assigned_branch_counselor_name",
           attributes: ["name"],
-          required: false, 
+          required: false,
         },
         {
           model: db.branches,
@@ -73,12 +73,18 @@ exports.getLeads = async (req, res) => {
           required: false,
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.adminUsers,
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
-        }
+          foreignKey: "updated_by",
+        },
       ],
     });
 
@@ -105,7 +111,8 @@ exports.getLeads = async (req, res) => {
         counsiler_name: info.counsiler_name?.name || null,
         status: info.status?.status_name || null,
         branch_name: info.branch_name?.branch_name || null,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
+        assigned_branch_counselor_name:
+          info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
       };
     });
@@ -123,7 +130,6 @@ exports.getLeads = async (req, res) => {
     });
   }
 };
-
 
 // exports.getLeads = async (req, res) => {
 //   try {
@@ -198,7 +204,6 @@ exports.getLeads = async (req, res) => {
 //       ],
 //     });
 
-
 //     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
 //       const preferredCountries = info.preferredCountries.map((country) => ({
 //         country_name: country.country_name,
@@ -265,8 +270,8 @@ exports.getAllLeads = async (req, res) => {
                   SELECT 1 FROM "user_counselors" 
                   WHERE "user_counselors"."user_id" = "user_primary_info"."id"
                   AND "user_counselors"."counselor_id" = ${cre_id}
-                )`)
-            ]
+                )`),
+            ],
           },
           {
             [db.Sequelize.Op.and]: [
@@ -274,9 +279,9 @@ exports.getAllLeads = async (req, res) => {
                 SELECT 1 FROM "admin_users"
                 WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
                 AND "admin_users"."id" = ${cre_id}
-              )`)
-            ]
-          }
+              )`),
+            ],
+          },
         ],
         is_deleted: false,
       },
@@ -317,7 +322,7 @@ exports.getAllLeads = async (req, res) => {
           model: db.adminUsers,
           as: "assigned_branch_counselor_name",
           attributes: ["name"],
-          required: false, 
+          required: false,
         },
         {
           model: db.adminUsers,
@@ -336,12 +341,18 @@ exports.getAllLeads = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -359,7 +370,7 @@ exports.getAllLeads = async (req, res) => {
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam)=> ({
+      const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         exam_date: exam.exam_date,
         marks: exam.overall_score,
@@ -367,38 +378,222 @@ exports.getAllLeads = async (req, res) => {
         speaking_score: exam.speaking_score,
         reading_score: exam.reading_score,
         writing_score: exam.writing_score,
-        updated_by: exam.updated_by
-      }))
-      
-      const examDocuments = info.exams.map((exam)=> ({
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
         exam_documents: exam.score_card,
-      }))
+      }));
 
       const counsellorNames = info.counselors?.map((counselor) => ({
         counselor_name: counselor.name,
         id: counselor.id,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
-        type_name: info.type_name
-          ? info.type_name.name
-          : null,
+        type_name: info.type_name ? info.type_name.name : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
         counselors: counsellorNames,
-        
+
         office_type_name: info.office_type_name
           ? info.office_type_name.office_type_name
           : null,
         // region_name: info.region_name ? info.region_name.region_name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
-        exam_documents: examDocuments
+        assigned_branch_counselor_name: info.assigned_branch_counselor_name
+          ? info.assigned_branch_counselor_name.name
+          : null,
+        exam_documents: examDocuments,
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "User primary info retrieved successfully",
+      formattedUserPrimaryInfos,
+    });
+  } catch (error) {
+    console.error(`Error fetching user primary info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
+  const cre_id = req.userDecodeId;
+
+  try {
+    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { assigned_cre_tl: cre_id },
+          { created_by: cre_id },
+          { assigned_cre: cre_id },
+          { assigned_regional_manager: cre_id },
+          { assigned_counsellor_tl: cre_id },
+          { assigned_branch_counselor: cre_id },
+          {
+            [db.Sequelize.Op.and]: [
+              db.Sequelize.literal(`EXISTS (
+                  SELECT 1 FROM "user_counselors" 
+                  WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                  AND "user_counselors"."counselor_id" = ${cre_id}
+                )`),
+            ],
+          },
+          {
+            [db.Sequelize.Op.and]: [
+              db.Sequelize.literal(`EXISTS (
+                SELECT 1 FROM "admin_users"
+                WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
+                AND "admin_users"."id" = ${cre_id}
+              )`),
+            ],
+          },
+        ],
+        branch_id: {
+          // Add this condition to only get results where branch_id is not null
+          [db.Sequelize.Op.ne]: null,
+        },
+        is_deleted: false,
+      },
+      include: [
+        {
+          model: db.leadType,
+          as: "type_name",
+          attributes: ["name"],
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.leadChannel,
+          as: "channel_name",
+          attributes: ["channel_name"],
+        },
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }, // Exclude join table attributes
+        },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.region,
+          as: "region_name",
+          attributes: ["region_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "assigned_branch_counselor_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "counselors", // Use the alias defined in associations
+          attributes: ["name", "id"], // Include the ID attribute
+          through: { attributes: [] }, // Exclude attributes from join table
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by",
+        },
+        {
+          model: db.status,
+          as: "status",
+          attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
+          model: db.userExams,
+          as: "exams",
+          // attributes: ["exam_name","marks", "document"],
+          required: false,
+        },
+      ],
+    });
+
+    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+      const preferredCountries = info.preferredCountries.map((country) => ({
+        country_name: country.country_name,
+        id: country.id,
+      }));
+
+      const examDetails = info.exams.map((exam) => ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
+        exam_documents: exam.score_card,
+      }));
+
+      const counsellorNames = info.counselors?.map((counselor) => ({
+        counselor_name: counselor.name,
+        id: counselor.id,
+      }));
+
+      return {
+        ...info.toJSON(),
+        type_name: info.type_name ? info.type_name.name : null,
+        source_name: info.source_name ? info.source_name.source_name : null,
+        channel_name: info.channel_name ? info.channel_name.channel_name : null,
+        preferredCountries: preferredCountries,
+        counselors: counsellorNames,
+
+        office_type_name: info.office_type_name
+          ? info.office_type_name.office_type_name
+          : null,
+        // region_name: info.region_name ? info.region_name.region_name : null,
+        branch_name: info.branch_name ? info.branch_name.branch_name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
+        status: info.status ? info.status.status_name : null,
+        exam_details: examDetails,
+        assigned_branch_counselor_name: info.assigned_branch_counselor_name
+          ? info.assigned_branch_counselor_name.name
+          : null,
+        exam_documents: examDocuments,
       };
     });
 
@@ -477,12 +672,23 @@ exports.getLeadsByCreatedUser = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
+          model: db.userExams,
+          as: "exams",
           required: false,
         },
       ],
@@ -497,7 +703,18 @@ exports.getLeadsByCreatedUser = async (req, res) => {
       const counsellorNames = info.counselors?.map((counselor) => ({
         counselor_name: counselor.name,
         id: counselor.id,
-      }))
+      }));
+
+      const examDetails = info.exams.map((exam) => ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by,
+      }));
 
       return {
         ...info.toJSON(),
@@ -514,8 +731,12 @@ exports.getLeadsByCreatedUser = async (req, res) => {
         region_name: info.region_name ? info.region_name.region_name : null,
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
+        exam_details: examDetails,
+        exam_documents: examDocuments,
       };
     });
 
@@ -616,12 +837,18 @@ exports.geLeadsForCreTl = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -644,7 +871,7 @@ exports.geLeadsForCreTl = async (req, res) => {
       //   marks: exam.marks,
       // }))
 
-      const examDetails = info.exams.map((exam)=> ({
+      const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         exam_date: exam.exam_date,
         marks: exam.overall_score,
@@ -652,12 +879,12 @@ exports.geLeadsForCreTl = async (req, res) => {
         speaking_score: exam.speaking_score,
         reading_score: exam.reading_score,
         writing_score: exam.writing_score,
-        updated_by: exam.updated_by
-      }))
-      
-      const examDocuments = info.exams.map((exam)=> ({
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
         exam_documents: exam.score_card,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
@@ -675,10 +902,12 @@ exports.geLeadsForCreTl = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
-        exam_documents: examDocuments
+        exam_documents: examDocuments,
       };
     });
 
@@ -780,12 +1009,18 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -798,8 +1033,8 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
     });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
-      console.log('INFO', info);
-      
+      console.log("INFO", info);
+
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -810,7 +1045,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       //   marks: exam.marks,
       // }))
 
-      const examDetails = info.exams.map((exam)=> ({
+      const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
         exam_date: exam.exam_date,
@@ -819,12 +1054,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         speaking_score: exam.speaking_score,
         reading_score: exam.reading_score,
         writing_score: exam.writing_score,
-        updated_by: exam.updated_by
-      }))
-      
-      const examDocuments = info.exams.map((exam)=> ({
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
         exam_documents: exam.score_card,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
@@ -842,10 +1077,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
-        exam_documents: examDocuments
+        exam_documents: examDocuments,
       };
     });
 
@@ -946,12 +1183,18 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -964,14 +1207,14 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
     });
 
     const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
-      console.log('INFO', info);
-      
+      console.log("INFO", info);
+
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam)=> ({
+      const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         exam_date: exam.exam_date,
         marks: exam.overall_score,
@@ -979,12 +1222,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         speaking_score: exam.speaking_score,
         reading_score: exam.reading_score,
         writing_score: exam.writing_score,
-        updated_by: exam.updated_by
-      }))
-      
-      const examDocuments = info.exams.map((exam)=> ({
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
         exam_documents: exam.score_card,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
@@ -1002,10 +1245,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
-        exam_documents: examDocuments
+        exam_documents: examDocuments,
       };
     });
 
@@ -1107,12 +1352,18 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           as: "updated_by_user",
           attributes: ["name"],
           required: false,
-          foreignKey: "updated_by"
+          foreignKey: "updated_by",
         },
         {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -1130,7 +1381,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         id: country.id,
       }));
 
-      const examDetails = info.exams.map((exam)=> ({
+      const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         exam_date: exam.exam_date,
         marks: exam.overall_score,
@@ -1138,12 +1389,12 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         speaking_score: exam.speaking_score,
         reading_score: exam.reading_score,
         writing_score: exam.writing_score,
-        updated_by: exam.updated_by
-      }))
-      
-      const examDocuments = info.exams.map((exam)=> ({
+        updated_by: exam.updated_by,
+      }));
+
+      const examDocuments = info.exams.map((exam) => ({
         exam_documents: exam.score_card,
-      }))
+      }));
 
       return {
         ...info.toJSON(),
@@ -1161,10 +1412,12 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
         branch_name: info.branch_name ? info.branch_name.branch_name : null,
         cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+        updated_by_user: info.updated_by_user
+          ? info.updated_by_user.name
+          : null,
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
-        exam_documents: examDocuments
+        exam_documents: examDocuments,
       };
     });
 
