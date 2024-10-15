@@ -218,9 +218,8 @@ exports.assignNewCountry = async (req, res) => {
           status: false,
           message: "The country is already assigned to the student.",
         });
-      }
+      }      
 
-      // Find the least assigned user for the new country
       const users = await getLeastAssignedUsers(newCountryId);
       if (users?.leastAssignedUserId) {
         const leastAssignedUserId = users.leastAssignedUserId;
