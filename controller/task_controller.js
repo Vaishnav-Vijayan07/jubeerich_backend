@@ -214,11 +214,11 @@ exports.assignNewCountry = async (req, res) => {
       });
 
       if (existingCountry) {
-        return res.status(403).json({
+        return res.status(404).json({
           status: false,
           message: "The country is already assigned to the student.",
         });
-      }      
+      }
 
       const users = await getLeastAssignedUsers(newCountryId);
       if (users?.leastAssignedUserId) {
