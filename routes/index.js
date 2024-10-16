@@ -714,6 +714,30 @@ router.put(
   UserController.updateUserStatus
 );
 
+router.get(
+  "/followup_remark/:id",
+  [authMiddleware.checkUserAuth],
+  UserController.getRemarkDetails
+);
+
+router.post(
+  "/followup_remark/",
+  [authMiddleware.checkUserAuth],
+  UserController.createRemarkDetails
+);
+
+router.put(
+  "/followup_remark/:id",
+  [authMiddleware.checkUserAuth],
+  UserController.updateRemarkDetails
+);
+
+router.put(
+  "/update_flag_status/:id",
+  [authMiddleware.checkUserAuth],
+  UserController.updateFlagStatus
+);
+
 // Excel Import route
 router.post(
   "/excel_import",

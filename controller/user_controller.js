@@ -1018,3 +1018,200 @@ exports.deleteExams = async (req, res) => {
     });
   }
 };
+
+exports.getRemarkDetails = async (req, res) => {
+  const { id } = req.params;
+
+  console.log('id',id);
+
+  try {
+
+    const existLead = await UserPrimaryInfo.findByPk(id);
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      data: existLead?.remark_details || [],
+      message: "Remark Fetched successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Fetching Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+exports.createRemarkDetails = async (req, res) => {
+  const { remark, followup_date, status_id, lead_id } = req.body;
+  const userId = req.userDecodeId;
+
+  try {
+
+    const existLead = await UserPrimaryInfo.findByPk(lead_id);
+
+    const remarkLength = existLead?.remark_details?.length || 0
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    const status = await db.status.findByPk(status_id, {
+      attributes: ['status_name', 'color']
+    });
+
+    const user = await db.adminUsers.findByPk(userId, {
+      attributes: ['name']
+    });
+
+    const formattedRemark = JSON.stringify({
+        id: remarkLength + 1,
+        followup_date: followup_date,
+        remark: remark,
+        status: status?.status_name,
+        created_by_name: user?.name,
+        color: status?.color
+    });
+
+    const updateRemark = await UserPrimaryInfo.update(
+      {
+        remark_details: db.Sequelize.literal(`jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`)
+      },
+      { where: { id: lead_id } },
+    )
+
+    if(!updateRemark){
+      return res.status(404).json({
+        status: false,
+        message: "Remark not saved",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Remark Created successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.updateRemarkDetails = async (req, res) => {
+  const { id } = req.params;
+  const { remark, followup_date, status_id, remark_id } = req.body;
+  const userId = req.userDecodeId;
+
+  try {
+    const existLead = await UserPrimaryInfo.findByPk(id);
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    const status = await db.status.findByPk(status_id, {
+      attributes: ['status_name', 'color']
+    });
+
+    const user = await db.adminUsers.findByPk(userId, {
+      attributes: ['name']
+    });
+
+    const formattedOneRemark = {
+        id: remark_id,
+        followup_date: followup_date,
+        remark: remark,
+        status: status?.status_name,
+        created_by_name: user?.name,
+        color: status?.color
+    };
+
+    const remarkIndex = existLead?.remark_details.findIndex((data => data.id == remark_id))
+    const remarkArray = (existLead.remark_details);
+    
+    console.log('index', remarkIndex);
+    
+    remarkArray.splice(remarkIndex, 1, formattedOneRemark);
+
+    console.log('remarkArray',remarkArray);
+    console.log('remarkArray', typeof remarkArray);
+
+    const updateRemark = await UserPrimaryInfo.update(
+      {
+        // comment_details: db.Sequelize.literal(`jsonb_build_array('${formattedComment}'::jsonb) || COALESCE(comment_details, '[]'::jsonb)`)
+        remark_details: remarkArray
+      },
+      { where: { id: id } },
+    )
+
+    if(!updateRemark){
+      return res.status(404).json({
+        status: false,
+        message: "Remark not updated",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Remark Updated successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+exports.updateFlagStatus = async (req, res) => {  
+  try {
+    const { id } = req.params;
+    const { flag_id } = req.body;
+
+    const updateFlag = await db.userPrimaryInfo.update(
+      { flag_id: flag_id },
+      { where: { id: id } }
+    );
+
+    if (!updateFlag) {
+      return res.status(404).json({
+        status: false,
+        message: "Comment not updated",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Flag Updated successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Comment : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
