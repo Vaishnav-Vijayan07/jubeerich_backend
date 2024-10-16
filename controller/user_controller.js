@@ -48,7 +48,6 @@ exports.createLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country insertion ==>", preferred_country);
-  
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -61,6 +60,12 @@ exports.createLead = async (req, res) => {
 
     const creTl = await AdminUsers.findOne({
       where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
     }); // Find the user_id of cre_tl
 
     // Check if referenced IDs exist in their respective tables
@@ -105,6 +110,7 @@ exports.createLead = async (req, res) => {
     }
 
     let regionalManagerId = null;
+    let regionMangerRoleName = null;
     if (region_id !== "null") {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
@@ -117,8 +123,31 @@ exports.createLead = async (req, res) => {
       }
 
       // Fetch the regional manager for the region
-      const region = await db.region.findOne({ where: { id: region_id } });
+      const region = await db.region.findOne({
+        where: { id: region_id },
+        attributes: ["regional_manager_id"], // Fetch regional_manager_id from the region table
+        include: [
+          {
+            model: db.adminUsers, // Include associated adminUsers
+            attributes: ["id", "full_name"], // Select these attributes from adminUsers
+            required: false, // This ensures it's a LEFT JOIN, allowing null adminUsers
+            include: [
+              {
+                model: db.accessRoles, // Include the role associated with adminUsers
+                attributes: ["role_name"], // Select the role_name from accessRoles
+                required: false, // This ensures it's a LEFT JOIN for accessRoles as well
+              },
+            ],
+          },
+        ],
+      });
+
+      // Set the regionalManagerId only if the region exists
       regionalManagerId = region ? region.regional_manager_id : null;
+      regionMangerRoleName =
+        region?.adminUsers?.accessRoles?.role_name || "Region Manager";
+
+      console.log(regionalManagerId, region?.adminUsers);
     }
 
     if (counsiler_id !== "null") {
@@ -238,6 +267,25 @@ exports.createLead = async (req, res) => {
       );
     }
 
+    if (
+      userRole?.role_id == process.env.IT_TEAM_ID &&
+      office_type == process.env.CORPORATE_OFFICE_ID
+    ) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${creTl?.access_role.role_name}`,
+        userId,
+        transaction
+      );
+    } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${regionMangerRoleName}`,
+        userId,
+        transaction
+      );
+    }
+
     if (preferred_country.length > 0) {
       const studyPreferences = await Promise.all(
         preferred_country.map(async (countryId) => {
@@ -288,7 +336,10 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ) {
+    if (
+      userRole?.role_id == process.env.CRE_ID ||
+      userRole?.role_id == process.env.COUNSELLOR_ROLE_ID
+    ) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -308,6 +359,12 @@ exports.createLead = async (req, res) => {
           updatedBy: userId,
         },
         { transaction }
+      );
+      await addLeadHistory(
+        userPrimaryInfo.id,
+        `Task created for ${role}`,
+        userId,
+        transaction
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
       let leastAssignedUsers = [];
@@ -332,6 +389,13 @@ exports.createLead = async (req, res) => {
           user_id: userPrimaryInfo.id,
           counselor_id: userId,
         }));
+
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Lead assigned to Counsellors`,
+          userId,
+          transaction
+        );
 
         await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -366,6 +430,13 @@ exports.createLead = async (req, res) => {
             { transaction }
           );
         }
+
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Task assigned to Counsellors`,
+          userId,
+          transaction
+        );
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
       console.log("IT TEAM ID ==>", userRole?.role_id);
@@ -395,6 +466,13 @@ exports.createLead = async (req, res) => {
             user_id: userPrimaryInfo.id,
             counselor_id: userId,
           }));
+
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Lead assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
 
           await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -429,6 +507,13 @@ exports.createLead = async (req, res) => {
               { transaction }
             );
           }
+
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Task assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
         }
       }
     }
@@ -500,7 +585,6 @@ exports.updateLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country ====>", preferred_country);
-  
 
   console.log("Controller Files", req.files);
   console.log("body =========>", req.body);
@@ -619,22 +703,22 @@ exports.updateLead = async (req, res) => {
     const currentPreferredCountries = await lead.getPreferredCountries();
 
     // Check if preferred countries are changed
-    // if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-    //   const currentCountryIds = currentPreferredCountries.map(
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      const currentCountryIds = currentPreferredCountries.map(
         (country) => country.id
       );
 
-    //   if (
+      if (
         JSON.stringify(currentCountryIds.sort()) !==
         JSON.stringify(preferred_country.sort())
       ) {
-    //     // Remove current assignments
-    //     await lead.setPreferredCountries([], { transaction });
+        // Remove current assignments
+        await lead.setPreferredCountries([], { transaction });
 
-    //     // Add new assignments
-    //     await lead.setPreferredCountries(preferred_country, { transaction });
-    //   }
-    // }
+        // Add new assignments
+        await lead.setPreferredCountries(preferred_country, { transaction });
+      }
+    }
 
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
       await lead.setPreferredCountries(preferred_country, {

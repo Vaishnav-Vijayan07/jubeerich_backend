@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const { raw } = require("body-parser");
 
 exports.getTasks = async (req, res) => {
   try {
@@ -19,16 +20,16 @@ exports.getTasks = async (req, res) => {
             {
               model: db.flag,
               as: "user_primary_flags",
-              attributes: ["flag_name","color"],
-              required: false
-            }
-          ]
-        }
+              attributes: ["flag_name", "color"],
+              required: false,
+            },
+          ],
+        },
       ],
       where: { userId: userId },
     });
 
-    console.log('tasks ===>',tasks);
+    console.log("tasks ===>", tasks);
 
     res.status(200).json({
       status: true,
@@ -135,6 +136,13 @@ exports.finishTask = async (req, res) => {
         counselor_id: userId,
       }));
 
+      await addLeadHistory(
+        student.id,
+        `Lead assigned to Counsellors`,
+        userId,
+        transaction
+      );
+
       await db.userCounselors.bulkCreate(userCounselorsData);
 
       if (isCompleted) {
@@ -206,6 +214,8 @@ exports.assignNewCountry = async (req, res) => {
   try {
     const { id, newCountryId } = req.body;
 
+    const { role_name, userDecodeId: userId } = req;
+
     // Find task by primary key
     const task = await db.tasks.findByPk(id);
     if (!task) {
@@ -224,6 +234,14 @@ exports.assignNewCountry = async (req, res) => {
         message: "Student not found.",
       });
     }
+
+    const { country_name } = await db.country.findByPk(newCountryId, {
+      attributes: ["country_name"],
+      raw: true,
+      transaction,
+    });
+
+    console.log(country_name);
 
     if (newCountryId) {
       // Check if the new country is already assigned to the student
@@ -291,6 +309,12 @@ exports.assignNewCountry = async (req, res) => {
         );
       }
     }
+    await addLeadHistory(
+      studentId,
+      `New country ${country_name} added by ${role_name} and tasks assigned to counsellors`,
+      userId,
+      transaction
+    );
 
     // Commit transaction after successful operations
     await transaction.commit();
@@ -388,7 +412,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
       nest: true,
     });
 
-
     // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
     const primaryInfoData = primaryInfo ? primaryInfo.dataValues : {};
@@ -404,7 +427,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         ) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
-      flag_name:primaryInfo?.user_primary_flags?.flag_name,
+      flag_name: primaryInfo?.user_primary_flags?.flag_name,
       ...basicInfoData,
     };
 
