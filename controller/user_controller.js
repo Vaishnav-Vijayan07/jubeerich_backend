@@ -304,6 +304,7 @@ exports.createLead = async (req, res) => {
           studentId: userPrimaryInfo.id,
           userId: userId,
           title: `${full_name} - ${countryNames} - ${phone}`,
+          description: `${full_name} from ${city}, has applied for admission in ${countryNames}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
