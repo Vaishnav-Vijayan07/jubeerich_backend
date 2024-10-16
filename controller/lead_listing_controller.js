@@ -73,6 +73,12 @@ exports.getLeads = async (req, res) => {
           required: false,
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.adminUsers,
           as: "updated_by_user",
           attributes: ["name"],
@@ -344,6 +350,12 @@ exports.getAllLeads = async (req, res) => {
           required: false,
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.userExams,
           as: "exams",
           // attributes: ["exam_name","marks", "document"],
@@ -520,6 +532,12 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           required: false,
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.userExams,
           as: "exams",
           // attributes: ["exam_name","marks", "document"],
@@ -662,6 +680,17 @@ exports.getLeadsByCreatedUser = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
+          model: db.userExams,
+          as: "exams",
+          required: false,
+        },
       ],
     });
 
@@ -674,6 +703,17 @@ exports.getLeadsByCreatedUser = async (req, res) => {
       const counsellorNames = info.counselors?.map((counselor) => ({
         counselor_name: counselor.name,
         id: counselor.id,
+      }));
+
+      const examDetails = info.exams.map((exam) => ({
+        exam_type: exam.exam_type,
+        exam_date: exam.exam_date,
+        marks: exam.overall_score,
+        listening_score: exam.listening_score,
+        speaking_score: exam.speaking_score,
+        reading_score: exam.reading_score,
+        writing_score: exam.writing_score,
+        updated_by: exam.updated_by,
       }));
 
       return {
@@ -695,6 +735,8 @@ exports.getLeadsByCreatedUser = async (req, res) => {
           ? info.updated_by_user.name
           : null,
         status: info.status ? info.status.status_name : null,
+        exam_details: examDetails,
+        exam_documents: examDocuments,
       };
     });
 
@@ -801,6 +843,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -967,6 +1015,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {
@@ -1138,6 +1192,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           required: false,
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.userExams,
           as: "exams",
           // attributes: ["exam_name","marks", "document"],
@@ -1298,6 +1358,12 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           model: db.status,
           as: "status",
           attributes: ["status_name"],
+          required: false,
+        },
+        {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
           required: false,
         },
         {

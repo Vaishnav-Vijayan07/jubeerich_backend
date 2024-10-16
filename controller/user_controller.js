@@ -31,6 +31,7 @@ exports.createLead = async (req, res) => {
     preferred_country, // This should be an array of country IDs
     office_type,
     region_id,
+    flag_id,
     counsiler_id,
     branch_id,
     updated_by,
@@ -45,6 +46,9 @@ exports.createLead = async (req, res) => {
 
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
+
+  console.log("preferred_country insertion ==>", preferred_country);
+  
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -198,6 +202,7 @@ exports.createLead = async (req, res) => {
         channel_id,
         zipcode,
         region_id: region_id != "null" ? region_id : null,
+        flag_id: flag_id != "null" ? flag_id : null,
         franchise_id: franchise_id != "null" ? franchise_id : null,
         counsiler_id: counsiler_id != "null" ? counsiler_id : null,
         branch_id: branch_id != "null" ? branch_id : null,
@@ -283,7 +288,7 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (userRole?.role_id == process.env.CRE_ID) {
+    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -474,6 +479,7 @@ exports.updateLead = async (req, res) => {
     office_type,
     ielts,
     region_id,
+    flag_id,
     counsiler_id,
     branch_id,
     updated_by,
@@ -492,6 +498,9 @@ exports.updateLead = async (req, res) => {
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
+
+  console.log("preferred_country ====>", preferred_country);
+  
 
   console.log("Controller Files", req.files);
   console.log("body =========>", req.body);
@@ -592,6 +601,7 @@ exports.updateLead = async (req, res) => {
         source_id,
         channel_id,
         region_id: region_id !== "null" ? region_id : null,
+        flag_id: flag_id !== "null" ? flag_id : null,
         franchise_id: franchise_id != "null" ? franchise_id : null,
         counsiler_id: counsiler_id !== "null" ? counsiler_id : null,
         branch_id: branch_id !== "null" ? branch_id : null,
@@ -609,21 +619,27 @@ exports.updateLead = async (req, res) => {
     const currentPreferredCountries = await lead.getPreferredCountries();
 
     // Check if preferred countries are changed
-    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      const currentCountryIds = currentPreferredCountries.map(
+    // if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+    //   const currentCountryIds = currentPreferredCountries.map(
         (country) => country.id
       );
 
-      if (
+    //   if (
         JSON.stringify(currentCountryIds.sort()) !==
         JSON.stringify(preferred_country.sort())
       ) {
-        // Remove current assignments
-        await lead.setPreferredCountries([], { transaction });
+    //     // Remove current assignments
+    //     await lead.setPreferredCountries([], { transaction });
 
-        // Add new assignments
-        await lead.setPreferredCountries(preferred_country, { transaction });
-      }
+    //     // Add new assignments
+    //     await lead.setPreferredCountries(preferred_country, { transaction });
+    //   }
+    // }
+
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      await lead.setPreferredCountries(preferred_country, {
+        transaction,
+      });
     }
 
     // Handle exam details

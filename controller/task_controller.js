@@ -9,8 +9,26 @@ exports.getTasks = async (req, res) => {
   try {
     const userId = req.userDecodeId;
     const tasks = await db.tasks.findAll({
+      include: [
+        {
+          model: db.userPrimaryInfo,
+          as: "student_name",
+          attributes: ["flag_id"],
+          required: false,
+          include: [
+            {
+              model: db.flag,
+              as: "user_primary_flags",
+              attributes: ["flag_name","color"],
+              required: false
+            }
+          ]
+        }
+      ],
       where: { userId: userId },
     });
+
+    console.log('tasks ===>',tasks);
 
     res.status(200).json({
       status: true,
@@ -218,7 +236,7 @@ exports.assignNewCountry = async (req, res) => {
       });
 
       if (existingCountry) {
-        return res.status(400).json({
+        return res.status(404).json({
           status: false,
           message: "The country is already assigned to the student.",
         });
@@ -236,7 +254,6 @@ exports.assignNewCountry = async (req, res) => {
         { transaction }
       );
 
-      // Find the least assigned user for the new country
       const users = await getLeastAssignedUsers(newCountryId);
       if (users?.leastAssignedUserId) {
         const leastAssignedUserId = users.leastAssignedUserId;
@@ -358,12 +375,19 @@ exports.getStudentBasicInfoById = async (req, res) => {
           as: "userAcademicInfos", // The alias you defined in the association
         },
         {
+          model: db.flag,
+          as: "user_primary_flags",
+          attributes: ["flag_name"],
+          required: false,
+        },
+        {
           model: db.workInfos,
           as: "userWorkInfos", // The alias you defined in the association
         },
       ],
       nest: true,
     });
+
 
     // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
@@ -380,6 +404,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         ) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
+      flag_name:primaryInfo?.user_primary_flags?.flag_name,
       ...basicInfoData,
     };
 

@@ -73,6 +73,14 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      flag_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "flags",
+          key: "id",
+        },
+      },
       region_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
