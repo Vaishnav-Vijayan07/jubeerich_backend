@@ -329,6 +329,23 @@ const addOrUpdateExamData = async (examRecords, transaction) => {
   }
 };
 
+const addLeadHistory = async (student_id, action, updated_by, transaction) => {
+  try {
+    const history = await db.userHistory.create(
+      {
+        student_id,
+        action,
+        updated_by,
+      },
+      { transaction }
+    );
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Lead History Update Failed: ${error.message}`);
+  }
+};
+
 module.exports = {
   addOrUpdateAcademic,
   addOrUpdateWork,
@@ -338,4 +355,5 @@ module.exports = {
   addOrUpdateFundData,
   addOrUpdateGapReasonData,
   addOrUpdateExamData,
+  addLeadHistory,
 };

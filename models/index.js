@@ -65,8 +65,19 @@ db.studentAdditionalDocs = require("./studentAdditionalDocs")(sequelize, Sequeli
 db.passportDetails = require("./passportDetails")(sequelize, Sequelize);
 db.familyInformation = require("./familyInformation")(sequelize, Sequelize);
 db.EmploymentHistory = require("./employmentHistory")(sequelize, Sequelize);
+db.userHistory = require("./history")(sequelize, Sequelize);
 
 //Associations
+
+db.userPrimaryInfo.hasMany(db.userHistory, {
+  foreignKey: "student_id",
+  as: "userHistories",
+});
+
+db.userHistory.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "student_id",
+  as: "user",
+});
 
 db.userPrimaryInfo.hasMany(db.gapReason, {
   foreignKey: "student_id",

@@ -1,14 +1,13 @@
 const { validationResult, check } = require("express-validator");
 const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
+const { addLeadHistory } = require("../utils/academic_query_helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const Status = db.status;
 const StatusAccessRole = db.statusAccessRoles;
 const AccessRole = db.accessRoles;
 const AdminUsers = db.adminUsers;
 const sequelize = db.sequelize;
-const { Op, Sequelize, where } = require("sequelize");
-// const userExams = require("../models/userExams");
 
 exports.createLead = async (req, res) => {
   // Validate the request
@@ -49,7 +48,6 @@ exports.createLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country insertion ==>", preferred_country);
-  
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -58,9 +56,16 @@ exports.createLead = async (req, res) => {
 
   try {
     const userId = req.userDecodeId;
-    console.log("userId===>", userId);
+    const role = req.role_name;
+
     const creTl = await AdminUsers.findOne({
       where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
     }); // Find the user_id of cre_tl
 
     // Check if referenced IDs exist in their respective tables
@@ -105,6 +110,7 @@ exports.createLead = async (req, res) => {
     }
 
     let regionalManagerId = null;
+    let regionMangerRoleName = null;
     if (region_id !== "null") {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
@@ -117,12 +123,38 @@ exports.createLead = async (req, res) => {
       }
 
       // Fetch the regional manager for the region
-      const region = await db.region.findOne({ where: { id: region_id } });
+      const region = await db.region.findOne({
+        where: { id: region_id },
+        attributes: ["regional_manager_id"], // Fetch regional_manager_id from the region table
+        include: [
+          {
+            model: db.adminUsers, // Include associated adminUsers
+            attributes: ["id", "full_name"], // Select these attributes from adminUsers
+            required: false, // This ensures it's a LEFT JOIN, allowing null adminUsers
+            include: [
+              {
+                model: db.accessRoles, // Include the role associated with adminUsers
+                attributes: ["role_name"], // Select the role_name from accessRoles
+                required: false, // This ensures it's a LEFT JOIN for accessRoles as well
+              },
+            ],
+          },
+        ],
+      });
+
+      // Set the regionalManagerId only if the region exists
       regionalManagerId = region ? region.regional_manager_id : null;
+      regionMangerRoleName =
+        region?.adminUsers?.accessRoles?.role_name || "Region Manager";
+
+      console.log(regionalManagerId, region?.adminUsers);
     }
 
     if (counsiler_id !== "null") {
-      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
+      const counsilerExists = await checkIfEntityExists(
+        "admin_user",
+        counsiler_id
+      );
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -146,7 +178,10 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
+      const updatedByExists = await checkIfEntityExists(
+        "admin_user",
+        updated_by
+      );
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -205,16 +240,51 @@ exports.createLead = async (req, res) => {
         ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl:
-          userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID ? creTl?.id : null,
+          userRole?.role_id == process.env.IT_TEAM_ID &&
+          office_type == process.env.CORPORATE_OFFICE_ID
+            ? creTl?.id
+            : null,
         created_by: userId,
-        assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
+        assign_type:
+          userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
+        regional_manager_id:
+          userRole?.role_id == process.env.IT_TEAM_ID
+            ? regionalManagerId
+            : null,
       },
       { transaction }
     );
 
     const userPrimaryId = userPrimaryInfo?.id;
     console.log("USER ID", userPrimaryId);
+
+    if (userPrimaryId) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead created by ${role}`,
+        userId,
+        transaction
+      );
+    }
+
+    if (
+      userRole?.role_id == process.env.IT_TEAM_ID &&
+      office_type == process.env.CORPORATE_OFFICE_ID
+    ) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${creTl?.access_role.role_name}`,
+        userId,
+        transaction
+      );
+    } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${regionMangerRoleName}`,
+        userId,
+        transaction
+      );
+    }
 
     if (preferred_country.length > 0) {
       const studyPreferences = await Promise.all(
@@ -266,7 +336,10 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ) {
+    if (
+      userRole?.role_id == process.env.CRE_ID ||
+      userRole?.role_id == process.env.COUNSELLOR_ROLE_ID
+    ) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -282,10 +355,17 @@ exports.createLead = async (req, res) => {
           studentId: userPrimaryInfo.id,
           userId: userId,
           title: `${full_name} - ${countryNames} - ${phone}`,
+          description: `${full_name} from ${city}, has applied for admission in ${countryNames}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
         { transaction }
+      );
+      await addLeadHistory(
+        userPrimaryInfo.id,
+        `Task created for ${role}`,
+        userId,
+        transaction
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
       let leastAssignedUsers = [];
@@ -293,7 +373,9 @@ exports.createLead = async (req, res) => {
       for (const countryId of preferred_country) {
         const users = await getLeastAssignedUsers(countryId);
         if (users?.leastAssignedUserId) {
-          leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+          leastAssignedUsers = leastAssignedUsers.concat(
+            users.leastAssignedUserId
+          );
         }
       }
 
@@ -309,6 +391,13 @@ exports.createLead = async (req, res) => {
           counselor_id: userId,
         }));
 
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Lead assigned to Counsellors`,
+          userId,
+          transaction
+        );
+
         await db.userCounselors.bulkCreate(userCounselorsData);
 
         const dueDate = new Date();
@@ -323,7 +412,9 @@ exports.createLead = async (req, res) => {
           });
 
           if (countries) {
-            countryName = countries.map((country) => country.country_name).join(", ");
+            countryName = countries
+              .map((country) => country.country_name)
+              .join(", ");
           }
         }
 
@@ -334,12 +425,20 @@ exports.createLead = async (req, res) => {
               studentId: userPrimaryInfo.id,
               userId: leastUserId,
               title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
+              description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
               dueDate: dueDate,
               updatedBy: userId,
             },
             { transaction }
           );
         }
+
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Task assigned to Counsellors`,
+          userId,
+          transaction
+        );
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
       console.log("IT TEAM ID ==>", userRole?.role_id);
@@ -347,9 +446,14 @@ exports.createLead = async (req, res) => {
       if (franchise_id) {
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
-          const users = await getLeastAssignedCounsellor(countryId, franchise_id);
+          const users = await getLeastAssignedCounsellor(
+            countryId,
+            franchise_id
+          );
           if (users?.leastAssignedUserId) {
-            leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
+            leastAssignedUsers = leastAssignedUsers.concat(
+              users.leastAssignedUserId
+            );
           }
         }
 
@@ -365,6 +469,13 @@ exports.createLead = async (req, res) => {
             counselor_id: userId,
           }));
 
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Lead assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
+
           await db.userCounselors.bulkCreate(userCounselorsData);
 
           const dueDate = new Date();
@@ -379,7 +490,9 @@ exports.createLead = async (req, res) => {
             });
 
             if (countries) {
-              countryName = countries.map((country) => country.country_name).join(", ");
+              countryName = countries
+                .map((country) => country.country_name)
+                .join(", ");
             }
           }
 
@@ -390,12 +503,20 @@ exports.createLead = async (req, res) => {
                 studentId: userPrimaryInfo.id,
                 userId: leastUserId,
                 title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
+                description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
                 dueDate: dueDate,
                 updatedBy: userId,
               },
               { transaction }
             );
           }
+
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Task assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
         }
       }
     }
@@ -457,12 +578,16 @@ exports.updateLead = async (req, res) => {
     exam_details,
   } = req.body;
 
+  console.log(branch_id);
+  console.log(counsiler_id);
+  console.log(region_id);
+  console.log(office_type);
+
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country ====>", preferred_country);
-  
 
   console.log("Controller Files", req.files);
   console.log("body =========>", req.body);
@@ -498,14 +623,20 @@ exports.updateLead = async (req, res) => {
     ];
 
     for (const entity of entities) {
-      if (entity.id !== null && !(await checkIfEntityExists(entity.model, entity.id))) {
+      if (
+        entity.id !== null &&
+        !(await checkIfEntityExists(entity.model, entity.id))
+      ) {
         await transaction.rollback();
         return res.status(400).json({
           status: false,
           message: `Invalid ${entity.model.replace("_", " ")} ID provided`,
           errors: [
             {
-              msg: `Please provide a valid ${entity.model.replace("_", " ")} ID`,
+              msg: `Please provide a valid ${entity.model.replace(
+                "_",
+                " "
+              )} ID`,
             },
           ],
         });
@@ -575,17 +706,22 @@ exports.updateLead = async (req, res) => {
     const currentPreferredCountries = await lead.getPreferredCountries();
 
     // Check if preferred countries are changed
-    // if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-    //   const currentCountryIds = currentPreferredCountries.map((country) => country.id);
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      const currentCountryIds = currentPreferredCountries.map(
+        (country) => country.id
+      );
 
-    //   if (JSON.stringify(currentCountryIds.sort()) !== JSON.stringify(preferred_country.sort())) {
-    //     // Remove current assignments
-    //     await lead.setPreferredCountries([], { transaction });
+      if (
+        JSON.stringify(currentCountryIds.sort()) !==
+        JSON.stringify(preferred_country.sort())
+      ) {
+        // Remove current assignments
+        await lead.setPreferredCountries([], { transaction });
 
-    //     // Add new assignments
-    //     await lead.setPreferredCountries(preferred_country, { transaction });
-    //   }
-    // }
+        // Add new assignments
+        await lead.setPreferredCountries(preferred_country, { transaction });
+      }
+    }
 
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
       await lead.setPreferredCountries(preferred_country, {
@@ -757,8 +893,15 @@ exports.updateUserStatus = async (req, res) => {
         message: "User does not have access to this status",
       });
     }
+    const statusName = statusExists.status_name;
     // Update user status
     await leadExists.update({ status_id, followup_date }, { transaction });
+    await addLeadHistory(
+      lead_id,
+      `Status changed to ${statusName}`,
+      userId,
+      transaction
+    );
 
     await transaction.commit();
     return res.status(200).json({
@@ -923,70 +1066,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
     };
   }
 };
-
-// const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
-//   const roleId = process.env.FRANCHISE_COUNSELLOR_ID;
-
-//   console.log("countryId ==>", countryId);
-//   console.log("franchiseId ==>", franchiseId);
-//   console.log("roleId ==>", roleId);
-
-//   try {
-//     // Use raw SQL to execute the query
-//     const [results] = await db.sequelize.query(
-//       `
-//       WITH user_assignments AS (
-//         SELECT
-//           "admin_users"."id" AS "user_id",
-//           COUNT("user_counselors"."counselor_id") AS "assignment_count"
-//         FROM "admin_users"
-//         LEFT JOIN "user_counselors"
-//           ON "admin_users"."id" = "user_counselors"."counselor_id"
-//         WHERE "admin_users"."role_id" = :roleId
-//           AND "admin_users"."country_id" = :countryId
-//           AND "admin_users"."franchise_id" = :franchiseId
-//         GROUP BY "admin_users"."id"
-//       )
-//       SELECT "user_id"
-//       FROM user_assignments
-//       ORDER BY "assignment_count" ASC, "user_id" ASC
-//       LIMIT 1;
-//     `,
-//       {
-//         replacements: { roleId, countryId, franchiseId },
-//         type: db.Sequelize.QueryTypes.SELECT,
-//       }
-//     );
-
-//     console.log("results ===>", results);
-
-//     // Check if results is defined and not null
-//     if (!results || Object.keys(results).length === 0) {
-//       return {
-//         leastAssignedUserId: null,
-//       };
-//     }
-
-//     // Extract user_id if results has user_id
-//     const leastAssignedUserId = results.user_id;
-
-//     // If user_id is undefined, return an error response
-//     if (leastAssignedUserId === undefined) {
-//       return {
-//         leastAssignedUserId: null,
-//       };
-//     }
-
-//     return {
-//       leastAssignedUserId,
-//     };
-//   } catch (error) {
-//     console.error(`Error finding least assigned users: ${error}`);
-//     return {
-//       leastAssignedUserId: null,
-//     };
-//   }
-// };
 
 exports.deleteExams = async (req, res) => {
   const { exam_type, id } = req.body;

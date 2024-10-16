@@ -2,6 +2,7 @@ const db = require("../models");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
+const { addLeadHistory } = require("../utils/academic_query_helper");
 
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
@@ -37,6 +38,22 @@ exports.assignCres = async (req, res) => {
       }
     }
 
+    const { "access_role.role_name": role_name } = await db.adminUsers.findByPk(
+      cre_id,
+      {
+        include: [
+          {
+            model: db.accessRoles,
+            attributes: ["role_name"],
+          },
+        ],
+        attributes: [],
+        raw: true, // Ensure it returns plain data, not a Sequelize instance
+      }
+    );
+
+    console.log(cre_id, role_name);
+
     // Process each user_id
     await Promise.all(
       user_ids.map(async (user_id) => {
@@ -55,7 +72,9 @@ exports.assignCres = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        const countries =
+          userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
+          "Unknown Country";
 
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
@@ -69,10 +88,19 @@ exports.assignCres = async (req, res) => {
             {
               userId: cre_id,
               title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
             { transaction }
+          );
+
+          // add the details to lead history
+          await addLeadHistory(
+            user_id,
+            `Task assigned to ${role_name}`,
+            userId,
+            transaction
           );
         } else {
           // Create new task
@@ -81,16 +109,28 @@ exports.assignCres = async (req, res) => {
               studentId: user_id,
               userId: cre_id,
               title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
             { transaction }
           );
+
+          await addLeadHistory(
+            user_id,
+            `Task assigned to ${role_name}`,
+            userId,
+            transaction
+          );
         }
 
         // Update assigned_cre for the user
         await db.userPrimaryInfo.update(
-          { assigned_cre: cre_id, updated_by: userId, assign_type: "direct_assign" },
+          {
+            assigned_cre: cre_id,
+            updated_by: userId,
+            assign_type: "direct_assign",
+          },
           { where: { id: user_id }, transaction }
         );
       })
@@ -185,7 +225,12 @@ exports.assignCounselorTL = async (req, res) => {
 
         // Update assigned_counsellor for the user
         await db.userPrimaryInfo.update(
-          { assigned_counsellor_tl: counsellor_id, updated_by: userId, branch_id: branch_id, assign_type: "direct_assign" },
+          {
+            assigned_counsellor_tl: counsellor_id,
+            updated_by: userId,
+            branch_id: branch_id,
+            assign_type: "direct_assign",
+          },
           { where: { id: user_id }, transaction }
         );
       })
@@ -208,7 +253,6 @@ exports.assignCounselorTL = async (req, res) => {
     });
   }
 };
-
 
 exports.assignBranchCounselors = async (req, res) => {
   const { counselor_id, user_ids } = req.body;
@@ -262,7 +306,9 @@ exports.assignBranchCounselors = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        const countries =
+          userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
+          "Unknown Country";
 
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
@@ -298,7 +344,12 @@ exports.assignBranchCounselors = async (req, res) => {
 
         // Update assigned_cre for the user
         await db.userPrimaryInfo.update(
-          { assigned_branch_counselor: counselor_id, counsiler_id: counselor_id, updated_by: userId, assign_type: "direct_assign" },
+          {
+            assigned_branch_counselor: counselor_id,
+            counsiler_id: counselor_id,
+            updated_by: userId,
+            assign_type: "direct_assign",
+          },
           { where: { id: user_id }, transaction }
         );
       })
@@ -361,8 +412,11 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           as: "preferredCountries",
         },
       });
-      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
-      const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
+      const countries =
+        userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
+        "Unknown Country";
+      const currentCounselor =
+        leastCounselor[index % leastCounselor.length].user_id;
 
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
@@ -372,13 +426,17 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           studentId: id,
           userId: currentCounselor,
           title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+          description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
         { transaction }
       );
       return UserPrimaryInfo.update(
-        { assigned_branch_counselor: currentCounselor, assign_type: "auto_assign" },
+        {
+          assigned_branch_counselor: currentCounselor,
+          assign_type: "auto_assign",
+        },
         { where: { id }, transaction }
       );
     });
@@ -440,10 +498,10 @@ exports.listBranches = async (req, res) => {
       });
     }
 
-    const modifiedBranches = branch.map(branch => ({
+    const modifiedBranches = branch.map((branch) => ({
       label: branch.branch_name,
       value: branch.id,
-      region_id: branch.region_id
+      region_id: branch.region_id,
     }));
 
     // Commit transaction
@@ -504,7 +562,9 @@ exports.autoAssign = async (req, res) => {
           as: "preferredCountries",
         },
       });
-      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const countries =
+        userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
+        "Unknown Country";
       const currentCre = leastCre[index % leastCre.length].user_id;
 
       const dueDate = new Date();
@@ -515,12 +575,16 @@ exports.autoAssign = async (req, res) => {
           studentId: id,
           userId: currentCre,
           title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+          description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
           dueDate: dueDate,
           updatedBy: userId,
         },
         { transaction }
       );
-      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign" }, { where: { id }, transaction });
+      return UserPrimaryInfo.update(
+        { assigned_cre: currentCre, assign_type: "auto_assign" },
+        { where: { id }, transaction }
+      );
     });
 
     // Perform bulk update
@@ -562,7 +626,10 @@ const getLeastAssignedCre = async () => {
         ],
       ],
       where: {
-        [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+        [Sequelize.Op.or]: [
+          { role_id: process.env.CRE_ID },
+          { role_id: process.env.CRE_TL_ID },
+        ],
       },
       order: [[Sequelize.literal("assignment_count"), "ASC"]],
     });

@@ -68,8 +68,23 @@ const {
   handleMulterError,
   uploadPoliceClearenceDocs,
 } = require("../middleware/multer_error_handler");
+const {
+  getLeadHistory,
+  addLeadHistory,
+} = require("../controller/lead_history_controller");
 
 const router = express.Router();
+
+//Lead histoy routes
+
+router.get(
+  "/lead_history/:id",
+  [authMiddleware.checkUserAuth],
+  getLeadHistory
+);
+
+//post route for creating user history
+router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 
 // Auth routes
 router.post("/login", authController.login);

@@ -20,6 +20,10 @@ exports.checkUserAuth = (req, res, next) => {
       });
     }
 
+
+    console.log(decoded);
+    
+
     if (!decoded) {
       return res.status(401).send({
         authentication: false,
@@ -28,6 +32,8 @@ exports.checkUserAuth = (req, res, next) => {
     }
 
     req.userDecodeId = decoded.userId;
+    req.role_name = decoded.role_name;
+    req.role_id = decoded.role_id;
     req.token = token;
     next();
   });
