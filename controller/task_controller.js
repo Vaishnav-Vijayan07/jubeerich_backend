@@ -170,6 +170,7 @@ exports.finishTask = async (req, res) => {
             studentId: student.id,
             userId: userId,
             title: `${student.full_name} - ${countryName} - ${student.phone}`,
+            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           });
@@ -302,6 +303,7 @@ exports.assignNewCountry = async (req, res) => {
             studentId: student.id,
             userId: leastAssignedUserId,
             title: `${student.full_name} - ${countryName} - ${student.phone}`,
+            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           },
