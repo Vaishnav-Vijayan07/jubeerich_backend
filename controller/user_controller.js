@@ -360,6 +360,7 @@ exports.createLead = async (req, res) => {
               studentId: userPrimaryInfo.id,
               userId: leastUserId,
               title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
+              description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
               dueDate: dueDate,
               updatedBy: userId,
             },
@@ -423,6 +424,7 @@ exports.createLead = async (req, res) => {
                 studentId: userPrimaryInfo.id,
                 userId: leastUserId,
                 title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
+                description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
                 dueDate: dueDate,
                 updatedBy: userId,
               },
@@ -617,24 +619,6 @@ exports.updateLead = async (req, res) => {
 
     // Handle preferred country assignments
     const currentPreferredCountries = await lead.getPreferredCountries();
-
-    // Check if preferred countries are changed
-    // if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-    //   const currentCountryIds = currentPreferredCountries.map(
-        (country) => country.id
-      );
-
-    //   if (
-        JSON.stringify(currentCountryIds.sort()) !==
-        JSON.stringify(preferred_country.sort())
-      ) {
-    //     // Remove current assignments
-    //     await lead.setPreferredCountries([], { transaction });
-
-    //     // Add new assignments
-    //     await lead.setPreferredCountries(preferred_country, { transaction });
-    //   }
-    // }
 
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
       await lead.setPreferredCountries(preferred_country, {
@@ -979,70 +963,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
     };
   }
 };
-
-// const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
-//   const roleId = process.env.FRANCHISE_COUNSELLOR_ID;
-
-//   console.log("countryId ==>", countryId);
-//   console.log("franchiseId ==>", franchiseId);
-//   console.log("roleId ==>", roleId);
-
-//   try {
-//     // Use raw SQL to execute the query
-//     const [results] = await db.sequelize.query(
-//       `
-//       WITH user_assignments AS (
-//         SELECT
-//           "admin_users"."id" AS "user_id",
-//           COUNT("user_counselors"."counselor_id") AS "assignment_count"
-//         FROM "admin_users"
-//         LEFT JOIN "user_counselors"
-//           ON "admin_users"."id" = "user_counselors"."counselor_id"
-//         WHERE "admin_users"."role_id" = :roleId
-//           AND "admin_users"."country_id" = :countryId
-//           AND "admin_users"."franchise_id" = :franchiseId
-//         GROUP BY "admin_users"."id"
-//       )
-//       SELECT "user_id"
-//       FROM user_assignments
-//       ORDER BY "assignment_count" ASC, "user_id" ASC
-//       LIMIT 1;
-//     `,
-//       {
-//         replacements: { roleId, countryId, franchiseId },
-//         type: db.Sequelize.QueryTypes.SELECT,
-//       }
-//     );
-
-//     console.log("results ===>", results);
-
-//     // Check if results is defined and not null
-//     if (!results || Object.keys(results).length === 0) {
-//       return {
-//         leastAssignedUserId: null,
-//       };
-//     }
-
-//     // Extract user_id if results has user_id
-//     const leastAssignedUserId = results.user_id;
-
-//     // If user_id is undefined, return an error response
-//     if (leastAssignedUserId === undefined) {
-//       return {
-//         leastAssignedUserId: null,
-//       };
-//     }
-
-//     return {
-//       leastAssignedUserId,
-//     };
-//   } catch (error) {
-//     console.error(`Error finding least assigned users: ${error}`);
-//     return {
-//       leastAssignedUserId: null,
-//     };
-//   }
-// };
 
 exports.deleteExams = async (req, res) => {
   const { exam_type, id } = req.body;

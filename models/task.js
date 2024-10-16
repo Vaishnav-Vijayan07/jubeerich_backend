@@ -27,6 +27,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
+      description: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
       sortOrder: {
         type: Sequelize.INTEGER,
         allowNull: true,
