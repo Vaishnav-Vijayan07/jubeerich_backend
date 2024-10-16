@@ -14,12 +14,9 @@ exports.login = async (req, res) => {
     const secret = process.env.SECRET;
 
     const user = await AdminUsers.findOne({
-      where: { 
-        [Op.or]: [
-          { username: username },
-          { email: username }
-        ]
-       },
+      where: {
+        [Op.or]: [{ username: username }, { email: username }],
+      },
       include: [
         {
           model: AccessRoles,
@@ -48,7 +45,9 @@ exports.login = async (req, res) => {
     }
 
     // Ensure power_ids is always an array of numbers
-    const powerIds = user?.access_role?.power_ids ? user?.access_role?.power_ids?.split(",").map(Number) : [];
+    const powerIds = user?.access_role?.power_ids
+      ? user?.access_role?.power_ids?.split(",").map(Number)
+      : [];
 
     const powers = await AccessPowers.findAll({
       where: { id: powerIds },
@@ -57,7 +56,15 @@ exports.login = async (req, res) => {
 
     const powerNames = powers?.map((power) => power?.power_name);
 
-    const token = jwt.sign({ userId: user.id }, secret || "mysecretkey", { expiresIn: "24h" });
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        role_name: user?.access_role?.role_name,
+        role_id: user?.role_id,
+      },
+      secret || "mysecretkey",
+      { expiresIn: "24h" }
+    );
     console.log("token", token);
 
     res.status(200).json({

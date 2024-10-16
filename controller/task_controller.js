@@ -3,6 +3,7 @@ const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
+const { addLeadHistory } = require("../utils/academic_query_helper");
 
 exports.getTasks = async (req, res) => {
   try {
@@ -57,27 +58,33 @@ exports.getTaskById = async (req, res) => {
 };
 
 exports.finishTask = async (req, res) => {
+  const { isCompleted, id } = req.body;
+
+  const { role_name, userDecodeId: userId } = req;
+
+  const task = await db.tasks.findByPk(id);
+
+  if (!task) {
+    return res.status(404).json({
+      status: false,
+      message: "Task not found.",
+    });
+  }
+
+  const studentId = task.studentId;
+  const student = await db.userPrimaryInfo.findByPk(studentId);
+
+  if (!student) {
+    return res.status(404).json({
+      status: false,
+      message: "Student not found.",
+    });
+  }
+
+  // start the transaction
+  const transaction = await db.sequelize.transaction();
+
   try {
-    const { isCompleted, id } = req.body;
-    const task = await db.tasks.findByPk(id);
-
-    if (!task) {
-      return res.status(404).json({
-        status: false,
-        message: "Task not found.",
-      });
-    }
-
-    const studentId = task.studentId;
-    const student = await db.userPrimaryInfo.findByPk(studentId);
-
-    if (!student) {
-      return res.status(404).json({
-        status: false,
-        message: "Student not found.",
-      });
-    }
-
     // Fetch preferred countries from the join table
     const preferredCountries = await db.userContries.findAll({
       where: { user_primary_info_id: studentId },
@@ -148,6 +155,16 @@ exports.finishTask = async (req, res) => {
     task.isCompleted = isCompleted;
     await task.save();
 
+    await addLeadHistory(
+      studentId,
+      `Task finished by ${role_name}`,
+      userId,
+      transaction
+    );
+
+    //commit the transaction
+    await transaction.commit();
+
     // Send success response
     return res.status(200).json({
       status: true,
@@ -157,6 +174,8 @@ exports.finishTask = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
+    //rollback the transaction
+    await transaction.rollback();
     return res.status(500).json({
       status: false,
       message: "Internal server error",
@@ -165,10 +184,12 @@ exports.finishTask = async (req, res) => {
 };
 
 exports.assignNewCountry = async (req, res) => {
+  const transaction = await db.sequelize.transaction();
   try {
     const { id, newCountryId } = req.body;
-    const task = await db.tasks.findByPk(id);
 
+    // Find task by primary key
+    const task = await db.tasks.findByPk(id);
     if (!task) {
       return res.status(404).json({
         status: false,
@@ -177,8 +198,8 @@ exports.assignNewCountry = async (req, res) => {
     }
 
     const studentId = task.studentId;
+    // Find student by primary key
     const student = await db.userPrimaryInfo.findByPk(studentId);
-
     if (!student) {
       return res.status(404).json({
         status: false,
@@ -193,6 +214,7 @@ exports.assignNewCountry = async (req, res) => {
           user_primary_info_id: studentId,
           country_id: newCountryId,
         },
+        transaction,
       });
 
       if (existingCountry) {
@@ -202,42 +224,59 @@ exports.assignNewCountry = async (req, res) => {
         });
       }
 
+      // Assign the new country to student's preferred countries
+      await student.addPreferredCountry(newCountryId, { transaction });
+
+      // Create study preference for the student
+      await db.studyPreference.create(
+        {
+          userPrimaryInfoId: studentId,
+          countryId: newCountryId,
+        },
+        { transaction }
+      );
+
       // Find the least assigned user for the new country
       const users = await getLeastAssignedUsers(newCountryId);
       if (users?.leastAssignedUserId) {
         const leastAssignedUserId = users.leastAssignedUserId;
 
         // Assign the new counselor to the student
-        await db.userCounselors.create({
-          user_id: studentId,
-          counselor_id: leastAssignedUserId,
-        });
+        await db.userCounselors.create(
+          {
+            user_id: studentId,
+            counselor_id: leastAssignedUserId,
+          },
+          { transaction }
+        );
 
-        // Add the new country to the student's preferred countries
-        await db.userContries.create({
-          user_primary_info_id: studentId,
-          country_id: newCountryId,
-        });
-
-        // Create a task for the least assigned user
+        // Prepare due date and task creation details
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
+        // Fetch country name for the task title
         const country = await db.country.findByPk(newCountryId, {
           attributes: ["country_name"],
+          transaction,
         });
-
         const countryName = country ? country.country_name : "Unknown";
 
-        await db.tasks.create({
-          studentId: student.id,
-          userId: leastAssignedUserId,
-          title: `${student.full_name} - ${countryName} - ${student.phone}`,
-          dueDate: dueDate,
-          updatedBy: req.userDecodeId,
-        });
+        // Create task for the least assigned user
+        await db.tasks.create(
+          {
+            studentId: student.id,
+            userId: leastAssignedUserId,
+            title: `${student.full_name} - ${countryName} - ${student.phone}`,
+            dueDate: dueDate,
+            updatedBy: req.userDecodeId,
+          },
+          { transaction }
+        );
       }
     }
+
+    // Commit transaction after successful operations
+    await transaction.commit();
 
     // Send success response
     return res.status(200).json({
@@ -246,7 +285,10 @@ exports.assignNewCountry = async (req, res) => {
       task,
     });
   } catch (error) {
-    console.error(`Error finishing task: ${error}`);
+    // Rollback transaction in case of errors
+    if (transaction) await transaction.rollback();
+
+    console.error(`Error assigning new country: ${error.message}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",

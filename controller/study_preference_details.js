@@ -74,11 +74,32 @@ exports.createStudyPreferenceDetails = async (req, res) => {
 exports.getStudyPreferenceDetails = async (req, res) => {
   try {
     const userPrimaryInfoId = parseInt(req.params.id);
+    const { userDecodeId, role_name, role_id } = req;
+
+    const { country } =
+      (await db.adminUsers.findByPk(userDecodeId, {
+        include: [
+          {
+            model: db.country,
+            as: "country", // alias used in association
+            attributes: ["id", "country_name"], // Only fetch these attributes
+          },
+        ],
+      })) || {};
+
+    let where = {
+      userPrimaryInfoId, // Fetch study preferences by studentId
+    };
+
+    // Check if the role is a counsellor and set the countryId accordingly
+    if (role_id === process.env.COUNSELLOR_ROLE_ID) {
+      if (country?.id) {
+        where.countryId = country.id; // Set countryId only if it exists
+      }
+    }
 
     const studyPreferences = await db.studyPreference.findAll({
-      where: {
-        userPrimaryInfoId, // Fetch study preferences by studentId
-      },
+      where, // Use the defined where object directly
       include: [
         {
           model: db.studyPreferenceDetails, // Include associated study preference details
@@ -87,7 +108,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
         {
           model: db.country, // Include the country model
           as: "country", // Alias for the country association
-          attributes: ["country_name"], // Only fetch the countryName field
+          attributes: ["country_name", "id"], // Only fetch the countryName and id fields
         },
       ],
     });
@@ -97,9 +118,23 @@ exports.getStudyPreferenceDetails = async (req, res) => {
         .status(404)
         .json({ message: "No study preferences found for this student" });
     }
-    
 
-    res.status(200).json({ data: studyPreferences[0] });
+    console.log(role_id == process.env.COUNSELLOR_ROLE_ID);
+    console.log(role_id);
+    console.log(process.env.COUNSELLOR_ROLE_ID);
+
+    const modifiedResponse = studyPreferences.map((preference) => ({
+      studyPreferenceId: preference.id,
+      studyDetails: preference.studyPreferenceDetails,
+      country_name: preference.country.country_name,
+      country_id: preference.country.id,
+      isEditable:
+        role_id == process.env.COUNSELLOR_ROLE_ID
+          ? preference.country.id == country?.id
+          : true,
+    }));
+
+    res.status(200).json({ data: modifiedResponse });
   } catch (error) {
     console.error(`Error getting study preference details: ${error}`);
     res.status(500).json({

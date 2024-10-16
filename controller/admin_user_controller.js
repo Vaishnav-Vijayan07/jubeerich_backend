@@ -12,8 +12,15 @@ exports.getAllAdminUsers = async (req, res, next) => {
           as: "access_role",
           attributes: ["role_name"],
         },
+        {
+          model: db.country,
+          attributes: ["country_name"],
+          required: false, // This makes it a LEFT JOIN (optional relation)
+        },
       ],
     });
+
+    console.log(JSON.stringify(users, null, 2));
 
     if (!users || users.length === 0) {
       return res.status(204).json({
@@ -32,11 +39,12 @@ exports.getAllAdminUsers = async (req, res, next) => {
         // : [], // List of country names
         countries: userJson.countries
           ? userJson.countries.map((country) => {
-            return {
-              value: country?.id,
-              label: country?.country_name
-            }
-          }) : [],
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
       };
     });
@@ -53,7 +61,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
     });
   }
 };
-
 
 exports.getAllCounsellors = async (req, res, next) => {
   try {
@@ -75,13 +82,13 @@ exports.getAllCounsellors = async (req, res, next) => {
       ],
     });
 
-    console.log('users',users);
+    console.log("users", users);
 
     if (!users || users.length === 0) {
       return res.status(204).json({
         status: false,
         message: "Admin users not found",
-        data: []
+        data: [],
       });
     }
 
@@ -125,7 +132,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
           [Op.in]: [process.env.BRANCH_COUNSELLOR_ID],
         },
         branch_id: id,
-      },      
+      },
       include: [
         {
           model: db.accessRoles,
@@ -144,7 +151,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found !",
-        data: []
+        data: [],
       });
     }
 
@@ -180,7 +187,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     const users = await db.adminUsers.findAll({
       where: {
         role_id: process.env.COUNSELLOR_TL_ID,
-        branch_id: id
+        branch_id: id,
       },
       include: [
         {
@@ -200,7 +207,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found !",
-        data: []
+        data: [],
       });
     }
 
@@ -254,7 +261,7 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found",
-        data: []
+        data: [],
       });
     }
 
@@ -311,7 +318,7 @@ exports.addAdminUsers = async (req, res) => {
     branch_id,
     region_id,
     country_id,
-    franchise_id
+    franchise_id,
   } = req.body;
 
   try {
@@ -342,35 +349,38 @@ exports.addAdminUsers = async (req, res) => {
     }
 
     let existTL;
-    let existFranchiseTL
-    if(role_id == process.env.FRANCHISE_MANAGER_ID){
+    let existFranchiseTL;
+    if (role_id == process.env.FRANCHISE_MANAGER_ID) {
       existFranchiseTL = await db.adminUsers.findOne({
         where: {
-          [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
+          [Op.and]: [
+            { role_id: process.env.FRANCHISE_MANAGER_ID },
+            { franchise_id },
+          ],
         },
       });
 
-      console.log('existFranchiseTL',existFranchiseTL);
+      console.log("existFranchiseTL", existFranchiseTL);
     }
 
-    if(existFranchiseTL){
+    if (existFranchiseTL) {
       return res.status(409).json({
         status: false,
         message: `Franchise Manager already exists in the Franchise`,
       });
     }
 
-    if(role_id == process.env.COUNSELLOR_TL_ID){
+    if (role_id == process.env.COUNSELLOR_TL_ID) {
       existTL = await db.adminUsers.findOne({
         where: {
           [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
         },
       });
 
-      console.log('existTL',existTL);
+      console.log("existTL", existTL);
     }
 
-    if(existTL){
+    if (existTL) {
       return res.status(409).json({
         status: false,
         message: `TL already exists in the branch`,
@@ -424,7 +434,7 @@ exports.updateAdminUsers = async (req, res) => {
     region_id,
     country_id,
     franchise_id,
-    password // Include the password field in the request body
+    password, // Include the password field in the request body
   } = req.body;
 
   try {
