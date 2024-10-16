@@ -588,7 +588,7 @@ exports.updateLead = async (req, res) => {
     // }
 
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await userPrimaryInfo.setPreferredCountries(preferred_country, {
+      await lead.setPreferredCountries(preferred_country, {
         transaction,
       });
     }
