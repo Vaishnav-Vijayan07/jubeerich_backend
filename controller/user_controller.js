@@ -48,7 +48,6 @@ exports.createLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country insertion ==>", preferred_country);
-  
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -61,6 +60,12 @@ exports.createLead = async (req, res) => {
 
     const creTl = await AdminUsers.findOne({
       where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
     }); // Find the user_id of cre_tl
 
     // Check if referenced IDs exist in their respective tables
@@ -105,6 +110,7 @@ exports.createLead = async (req, res) => {
     }
 
     let regionalManagerId = null;
+    let regionMangerRoleName = null;
     if (region_id !== "null") {
       const regionExists = await checkIfEntityExists("region", region_id);
       if (!regionExists) {
@@ -117,8 +123,31 @@ exports.createLead = async (req, res) => {
       }
 
       // Fetch the regional manager for the region
-      const region = await db.region.findOne({ where: { id: region_id } });
+      const region = await db.region.findOne({
+        where: { id: region_id },
+        attributes: ["regional_manager_id"], // Fetch regional_manager_id from the region table
+        include: [
+          {
+            model: db.adminUsers, // Include associated adminUsers
+            attributes: ["id", "full_name"], // Select these attributes from adminUsers
+            required: false, // This ensures it's a LEFT JOIN, allowing null adminUsers
+            include: [
+              {
+                model: db.accessRoles, // Include the role associated with adminUsers
+                attributes: ["role_name"], // Select the role_name from accessRoles
+                required: false, // This ensures it's a LEFT JOIN for accessRoles as well
+              },
+            ],
+          },
+        ],
+      });
+
+      // Set the regionalManagerId only if the region exists
       regionalManagerId = region ? region.regional_manager_id : null;
+      regionMangerRoleName =
+        region?.adminUsers?.accessRoles?.role_name || "Region Manager";
+
+      console.log(regionalManagerId, region?.adminUsers);
     }
 
     if (counsiler_id !== "null") {
@@ -238,6 +267,25 @@ exports.createLead = async (req, res) => {
       );
     }
 
+    if (
+      userRole?.role_id == process.env.IT_TEAM_ID &&
+      office_type == process.env.CORPORATE_OFFICE_ID
+    ) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${creTl?.access_role.role_name}`,
+        userId,
+        transaction
+      );
+    } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+      await addLeadHistory(
+        userPrimaryId,
+        `Lead assigned to ${regionMangerRoleName}`,
+        userId,
+        transaction
+      );
+    }
+
     if (preferred_country.length > 0) {
       const studyPreferences = await Promise.all(
         preferred_country.map(async (countryId) => {
@@ -288,7 +336,10 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ) {
+    if (
+      userRole?.role_id == process.env.CRE_ID ||
+      userRole?.role_id == process.env.COUNSELLOR_ROLE_ID
+    ) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -309,6 +360,12 @@ exports.createLead = async (req, res) => {
           updatedBy: userId,
         },
         { transaction }
+      );
+      await addLeadHistory(
+        userPrimaryInfo.id,
+        `Task created for ${role}`,
+        userId,
+        transaction
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
       let leastAssignedUsers = [];
@@ -333,6 +390,13 @@ exports.createLead = async (req, res) => {
           user_id: userPrimaryInfo.id,
           counselor_id: userId,
         }));
+
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Lead assigned to Counsellors`,
+          userId,
+          transaction
+        );
 
         await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -368,6 +432,13 @@ exports.createLead = async (req, res) => {
             { transaction }
           );
         }
+
+        await addLeadHistory(
+          userPrimaryInfo.id,
+          `Task assigned to Counsellors`,
+          userId,
+          transaction
+        );
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
       console.log("IT TEAM ID ==>", userRole?.role_id);
@@ -397,6 +468,13 @@ exports.createLead = async (req, res) => {
             user_id: userPrimaryInfo.id,
             counselor_id: userId,
           }));
+
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Lead assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
 
           await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -432,6 +510,13 @@ exports.createLead = async (req, res) => {
               { transaction }
             );
           }
+
+          await addLeadHistory(
+            userPrimaryInfo.id,
+            `Task assigned to Franchise Counsellor`,
+            userId,
+            transaction
+          );
         }
       }
     }
@@ -503,7 +588,6 @@ exports.updateLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
 
   console.log("preferred_country ====>", preferred_country);
-  
 
   console.log("Controller Files", req.files);
   console.log("body =========>", req.body);
@@ -620,6 +704,24 @@ exports.updateLead = async (req, res) => {
 
     // Handle preferred country assignments
     const currentPreferredCountries = await lead.getPreferredCountries();
+
+    // Check if preferred countries are changed
+    if (Array.isArray(preferred_country) && preferred_country.length > 0) {
+      const currentCountryIds = currentPreferredCountries.map(
+        (country) => country.id
+      );
+
+      if (
+        JSON.stringify(currentCountryIds.sort()) !==
+        JSON.stringify(preferred_country.sort())
+      ) {
+        // Remove current assignments
+        await lead.setPreferredCountries([], { transaction });
+
+        // Add new assignments
+        await lead.setPreferredCountries(preferred_country, { transaction });
+      }
+    }
 
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
       await lead.setPreferredCountries(preferred_country, {
@@ -989,6 +1091,203 @@ exports.deleteExams = async (req, res) => {
     }
   } catch (error) {
     console.error(`Error deleting Exam: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getRemarkDetails = async (req, res) => {
+  const { id } = req.params;
+
+  console.log('id',id);
+
+  try {
+
+    const existLead = await UserPrimaryInfo.findByPk(id);
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      data: existLead?.remark_details || [],
+      message: "Remark Fetched successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Fetching Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+exports.createRemarkDetails = async (req, res) => {
+  const { remark, followup_date, status_id, lead_id } = req.body;
+  const userId = req.userDecodeId;
+
+  try {
+
+    const existLead = await UserPrimaryInfo.findByPk(lead_id);
+
+    const remarkLength = existLead?.remark_details?.length || 0
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    const status = await db.status.findByPk(status_id, {
+      attributes: ['status_name', 'color']
+    });
+
+    const user = await db.adminUsers.findByPk(userId, {
+      attributes: ['name']
+    });
+
+    const formattedRemark = JSON.stringify({
+        id: remarkLength + 1,
+        followup_date: followup_date,
+        remark: remark,
+        status: status?.status_name,
+        created_by_name: user?.name,
+        color: status?.color
+    });
+
+    const updateRemark = await UserPrimaryInfo.update(
+      {
+        remark_details: db.Sequelize.literal(`jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`)
+      },
+      { where: { id: lead_id } },
+    )
+
+    if(!updateRemark){
+      return res.status(404).json({
+        status: false,
+        message: "Remark not saved",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Remark Created successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.updateRemarkDetails = async (req, res) => {
+  const { id } = req.params;
+  const { remark, followup_date, status_id, remark_id } = req.body;
+  const userId = req.userDecodeId;
+
+  try {
+    const existLead = await UserPrimaryInfo.findByPk(id);
+
+    if(!existLead){
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+
+    const status = await db.status.findByPk(status_id, {
+      attributes: ['status_name', 'color']
+    });
+
+    const user = await db.adminUsers.findByPk(userId, {
+      attributes: ['name']
+    });
+
+    const formattedOneRemark = {
+        id: remark_id,
+        followup_date: followup_date,
+        remark: remark,
+        status: status?.status_name,
+        created_by_name: user?.name,
+        color: status?.color
+    };
+
+    const remarkIndex = existLead?.remark_details.findIndex((data => data.id == remark_id))
+    const remarkArray = (existLead.remark_details);
+    
+    console.log('index', remarkIndex);
+    
+    remarkArray.splice(remarkIndex, 1, formattedOneRemark);
+
+    console.log('remarkArray',remarkArray);
+    console.log('remarkArray', typeof remarkArray);
+
+    const updateRemark = await UserPrimaryInfo.update(
+      {
+        // comment_details: db.Sequelize.literal(`jsonb_build_array('${formattedComment}'::jsonb) || COALESCE(comment_details, '[]'::jsonb)`)
+        remark_details: remarkArray
+      },
+      { where: { id: id } },
+    )
+
+    if(!updateRemark){
+      return res.status(404).json({
+        status: false,
+        message: "Remark not updated",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Remark Updated successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Remark : ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+exports.updateFlagStatus = async (req, res) => {  
+  try {
+    const { id } = req.params;
+    const { flag_id } = req.body;
+
+    const updateFlag = await db.userPrimaryInfo.update(
+      { flag_id: flag_id },
+      { where: { id: id } }
+    );
+
+    if (!updateFlag) {
+      return res.status(404).json({
+        status: false,
+        message: "Comment not updated",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Flag Updated successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error Saving Comment : ${error}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",

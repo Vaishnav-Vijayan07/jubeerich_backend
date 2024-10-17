@@ -195,6 +195,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.ENUM('direct_assign', 'auto_assign'),
         allowNull: true,
       },
+      remark_details: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
     },
     {
       underscored: true,
