@@ -161,6 +161,16 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("flags")) {
+      promises.push(
+        db.flag.findAll({ attributes: ["id", "flag_name"] })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+
+
     const [
       universityDetails,
       maritalStatusDetails,
@@ -182,6 +192,7 @@ const getDropdownData = async (req, res) => {
       accessPowerDetails,
       branchDetails,
       accessRoleDetails,
+      flagDetails
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -219,6 +230,7 @@ const getDropdownData = async (req, res) => {
         accessPowers: formatData(accessPowerDetails, "power_name"),
         branches: formatData(branchDetails, "branch_name"),
         accessRoles: formatData(accessRoleDetails, "role_name"),
+        flags : formatData(flagDetails, "flag_name")
       },
     });
   } catch (error) {
