@@ -842,7 +842,7 @@ exports.deleteLead = async (req, res) => {
 
 exports.updateUserStatus = async (req, res) => {
   const { status_id, lead_id, followup_date } = req.body;
-  const userId = req.userDecodeId;
+  const { userDecodeId: userId, role_name, role_id } = req;
 
   // Start a transaction
   const transaction = await sequelize.transaction();
@@ -886,6 +886,7 @@ exports.updateUserStatus = async (req, res) => {
     }
 
     const userRoleId = userExists.role_id;
+    const countryId = userExists?.country_id;
 
     // Check if the status_id and userRoleId have a valid match in status_access_roles
     const accessRoleExists = await StatusAccessRole.findOne({
@@ -902,12 +903,23 @@ exports.updateUserStatus = async (req, res) => {
     const statusName = statusExists.status_name;
     // Update user status
     await leadExists.update({ status_id, followup_date }, { transaction });
-    await addLeadHistory(
-      lead_id,
-      `Status changed to ${statusName}`,
-      userId,
-      transaction
-    );
+
+    if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+      await addLeadHistory(
+        lead_id,
+        `Status changed to ${statusName}`,
+        userId,
+        countryId,
+        transaction
+      );
+    } else {
+      await addLeadHistory(
+        lead_id,
+        `Status changed to ${statusName}`,
+        userId,
+        transaction
+      );
+    }
 
     await transaction.commit();
     return res.status(200).json({
@@ -1268,21 +1280,57 @@ exports.updateRemarkDetails = async (req, res) => {
 };
 
 exports.updateFlagStatus = async (req, res) => {
+  const { id } = req.params;
+  const { flag_id } = req.body;
+
+  const { role_name, userDecodeId, role_id } = req;
+  const transaction = await db.sequelize.transaction();
+
   try {
-    const { id } = req.params;
-    const { flag_id } = req.body;
+    const flag = await db.flag.findByPk(flag_id, {
+      attributes: ["flag_name"],
+    });
 
-    const updateFlag = await db.userPrimaryInfo.update(
-      { flag_id: flag_id },
-      { where: { id: id } }
-    );
-
-    if (!updateFlag) {
+    if (!flag) {
       return res.status(404).json({
         status: false,
-        message: "Comment not updated",
+        message: "Flag not found",
       });
     }
+
+    const [affectedRows] = await db.userPrimaryInfo.update(
+      { flag_id: flag_id },
+      { where: { id: id }, transaction }
+    );
+
+    if (affectedRows === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Flag not updated",
+      });
+    }
+
+    if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+      const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+      await addLeadHistory(
+        id,
+        `Flag updated to ${flag.flag_name} by ${role_name}`,
+        userDecodeId,
+        country_id,
+        transaction
+      );
+    } else {
+      await addLeadHistory(
+        id,
+        `Flag updated to ${flag.flag_name} by ${role_name}`,
+        userDecodeId,
+        transaction
+      );
+    }
+
+    // commit the transaction
+    await transaction.commit();
 
     return res.status(200).json({
       status: true,
@@ -1290,6 +1338,8 @@ exports.updateFlagStatus = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error Saving Comment : ${error}`);
+    // rollback transaction
+    await transaction.rollback();
     return res.status(500).json({
       status: false,
       message: "Internal server error",

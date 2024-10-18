@@ -329,13 +329,20 @@ const addOrUpdateExamData = async (examRecords, transaction) => {
   }
 };
 
-const addLeadHistory = async (student_id, action, updated_by, transaction) => {
+const addLeadHistory = async (
+  student_id,
+  action,
+  updated_by,
+  country_id = null, // Default to null if not provided
+  transaction
+) => {
   try {
     const history = await db.userHistory.create(
       {
         student_id,
         action,
         updated_by,
+        country_id,
       },
       { transaction }
     );

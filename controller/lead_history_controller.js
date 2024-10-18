@@ -12,9 +12,16 @@ exports.getLeadHistory = async (req, res) => {
       });
     }
 
-    // Use the magic method to get the associated histories
     const leadHistory = await lead.getUserHistories({
       order: [["updated_on", "DESC"]], // Order the results by updated_on in descending order
+      include: [
+        {
+          model: db.country, // Include the associated country model
+          as: "country", // Alias used in the association
+          attributes: ["country_name"], // Specify the country attributes you want to fetch
+          requied : false, // Set to false to perform a LEFT JOIN
+        },
+      ],
     });
 
     // Send the response
@@ -66,8 +73,6 @@ exports.addLeadHistory = async (req, res) => {
 
     // here i need to perform some complex tasks
     // For example, you can do something like this:
-    
-
   } catch (err) {
     console.log(err);
     res.status(500).json({

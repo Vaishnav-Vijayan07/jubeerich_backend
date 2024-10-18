@@ -90,6 +90,16 @@ db.country.hasMany(db.comments, {
 
 db.comments.belongsTo(db.country, { foreignKey: "country_id", as: "country" });
 
+db.userHistory.belongsTo(db.country, {
+  foreignKey: "country_id",
+  as: "country",
+});
+
+db.country.hasMany(db.userHistory, {
+  foreignKey: "country_id",
+  as: "userHistories",
+});
+
 db.userPrimaryInfo.hasMany(db.userHistory, {
   foreignKey: "student_id",
   as: "userHistories",
