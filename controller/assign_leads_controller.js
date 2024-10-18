@@ -233,6 +233,12 @@ exports.assignCounselorTL = async (req, res) => {
           },
           { where: { id: user_id }, transaction }
         );
+        await addLeadHistory(
+          user_id,
+          `Lead assigned to Branch counsellor TL`,
+          userId,
+          transaction
+        );
       })
     );
 

@@ -129,7 +129,8 @@ exports.createLead = async (req, res) => {
         include: [
           {
             model: db.adminUsers, // Include associated adminUsers
-            attributes: ["id", "full_name"], // Select these attributes from adminUsers
+            attributes: ["id"], // Select these attributes from adminUsers
+            as: "regional_manager",
             required: false, // This ensures it's a LEFT JOIN, allowing null adminUsers
             include: [
               {
@@ -277,7 +278,10 @@ exports.createLead = async (req, res) => {
         userId,
         transaction
       );
-    } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
+    } else if (
+      userRole?.role_id == process.env.IT_TEAM_ID &&
+      regionalManagerId
+    ) {
       await addLeadHistory(
         userPrimaryId,
         `Lead assigned to ${regionMangerRoleName}`,
@@ -520,6 +524,8 @@ exports.createLead = async (req, res) => {
         }
       }
     }
+
+    // get the count of items in that history table
 
     // Commit the transaction
     await transaction.commit();
@@ -1101,13 +1107,12 @@ exports.deleteExams = async (req, res) => {
 exports.getRemarkDetails = async (req, res) => {
   const { id } = req.params;
 
-  console.log('id',id);
+  console.log("id", id);
 
   try {
-
     const existLead = await UserPrimaryInfo.findByPk(id);
 
-    if(!existLead){
+    if (!existLead) {
       return res.status(404).json({
         status: false,
         message: "User Primary Info not found",
@@ -1119,7 +1124,6 @@ exports.getRemarkDetails = async (req, res) => {
       data: existLead?.remark_details || [],
       message: "Remark Fetched successfully",
     });
-
   } catch (error) {
     console.error(`Error Fetching Remark : ${error}`);
     return res.status(500).json({
@@ -1129,18 +1133,16 @@ exports.getRemarkDetails = async (req, res) => {
   }
 };
 
-
 exports.createRemarkDetails = async (req, res) => {
   const { remark, followup_date, status_id, lead_id } = req.body;
   const userId = req.userDecodeId;
 
   try {
-
     const existLead = await UserPrimaryInfo.findByPk(lead_id);
 
-    const remarkLength = existLead?.remark_details?.length || 0
+    const remarkLength = existLead?.remark_details?.length || 0;
 
-    if(!existLead){
+    if (!existLead) {
       return res.status(404).json({
         status: false,
         message: "User Primary Info not found",
@@ -1148,30 +1150,32 @@ exports.createRemarkDetails = async (req, res) => {
     }
 
     const status = await db.status.findByPk(status_id, {
-      attributes: ['status_name', 'color']
+      attributes: ["status_name", "color"],
     });
 
     const user = await db.adminUsers.findByPk(userId, {
-      attributes: ['name']
+      attributes: ["name"],
     });
 
     const formattedRemark = JSON.stringify({
-        id: remarkLength + 1,
-        followup_date: followup_date,
-        remark: remark,
-        status: status?.status_name,
-        created_by_name: user?.name,
-        color: status?.color
+      id: remarkLength + 1,
+      followup_date: followup_date,
+      remark: remark,
+      status: status?.status_name,
+      created_by_name: user?.name,
+      color: status?.color,
     });
 
     const updateRemark = await UserPrimaryInfo.update(
       {
-        remark_details: db.Sequelize.literal(`jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`)
+        remark_details: db.Sequelize.literal(
+          `jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`
+        ),
       },
-      { where: { id: lead_id } },
-    )
+      { where: { id: lead_id } }
+    );
 
-    if(!updateRemark){
+    if (!updateRemark) {
       return res.status(404).json({
         status: false,
         message: "Remark not saved",
@@ -1182,7 +1186,6 @@ exports.createRemarkDetails = async (req, res) => {
       status: true,
       message: "Remark Created successfully",
     });
-
   } catch (error) {
     console.error(`Error Saving Remark : ${error}`);
     return res.status(500).json({
@@ -1200,7 +1203,7 @@ exports.updateRemarkDetails = async (req, res) => {
   try {
     const existLead = await UserPrimaryInfo.findByPk(id);
 
-    if(!existLead){
+    if (!existLead) {
       return res.status(404).json({
         status: false,
         message: "User Primary Info not found",
@@ -1208,41 +1211,43 @@ exports.updateRemarkDetails = async (req, res) => {
     }
 
     const status = await db.status.findByPk(status_id, {
-      attributes: ['status_name', 'color']
+      attributes: ["status_name", "color"],
     });
 
     const user = await db.adminUsers.findByPk(userId, {
-      attributes: ['name']
+      attributes: ["name"],
     });
 
     const formattedOneRemark = {
-        id: remark_id,
-        followup_date: followup_date,
-        remark: remark,
-        status: status?.status_name,
-        created_by_name: user?.name,
-        color: status?.color
+      id: remark_id,
+      followup_date: followup_date,
+      remark: remark,
+      status: status?.status_name,
+      created_by_name: user?.name,
+      color: status?.color,
     };
 
-    const remarkIndex = existLead?.remark_details.findIndex((data => data.id == remark_id))
-    const remarkArray = (existLead.remark_details);
-    
-    console.log('index', remarkIndex);
-    
+    const remarkIndex = existLead?.remark_details.findIndex(
+      (data) => data.id == remark_id
+    );
+    const remarkArray = existLead.remark_details;
+
+    console.log("index", remarkIndex);
+
     remarkArray.splice(remarkIndex, 1, formattedOneRemark);
 
-    console.log('remarkArray',remarkArray);
-    console.log('remarkArray', typeof remarkArray);
+    console.log("remarkArray", remarkArray);
+    console.log("remarkArray", typeof remarkArray);
 
     const updateRemark = await UserPrimaryInfo.update(
       {
         // comment_details: db.Sequelize.literal(`jsonb_build_array('${formattedComment}'::jsonb) || COALESCE(comment_details, '[]'::jsonb)`)
-        remark_details: remarkArray
+        remark_details: remarkArray,
       },
-      { where: { id: id } },
-    )
+      { where: { id: id } }
+    );
 
-    if(!updateRemark){
+    if (!updateRemark) {
       return res.status(404).json({
         status: false,
         message: "Remark not updated",
@@ -1253,7 +1258,6 @@ exports.updateRemarkDetails = async (req, res) => {
       status: true,
       message: "Remark Updated successfully",
     });
-
   } catch (error) {
     console.error(`Error Saving Remark : ${error}`);
     return res.status(500).json({
@@ -1263,8 +1267,7 @@ exports.updateRemarkDetails = async (req, res) => {
   }
 };
 
-
-exports.updateFlagStatus = async (req, res) => {  
+exports.updateFlagStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { flag_id } = req.body;
@@ -1285,7 +1288,6 @@ exports.updateFlagStatus = async (req, res) => {
       status: true,
       message: "Flag Updated successfully",
     });
-
   } catch (error) {
     console.error(`Error Saving Comment : ${error}`);
     return res.status(500).json({

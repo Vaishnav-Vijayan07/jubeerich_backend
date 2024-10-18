@@ -430,7 +430,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
-      flag_color:primaryInfo?.user_primary_flags?.color,
+      flag_color: primaryInfo?.user_primary_flags?.color,
       ...basicInfoData,
     };
 
