@@ -264,6 +264,7 @@ exports.createLead = async (req, res) => {
         userPrimaryId,
         `Lead created by ${role}`,
         userId,
+        null,
         transaction
       );
     }
@@ -276,6 +277,7 @@ exports.createLead = async (req, res) => {
         userPrimaryId,
         `Lead assigned to ${creTl?.access_role.role_name}`,
         userId,
+        null,
         transaction
       );
     } else if (
@@ -286,6 +288,7 @@ exports.createLead = async (req, res) => {
         userPrimaryId,
         `Lead assigned to ${regionMangerRoleName}`,
         userId,
+        null,
         transaction
       );
     }
@@ -369,6 +372,7 @@ exports.createLead = async (req, res) => {
         userPrimaryInfo.id,
         `Task created for ${role}`,
         userId,
+        null,
         transaction
       );
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
@@ -399,6 +403,7 @@ exports.createLead = async (req, res) => {
           userPrimaryInfo.id,
           `Lead assigned to Counsellors`,
           userId,
+          null,
           transaction
         );
 
@@ -441,6 +446,7 @@ exports.createLead = async (req, res) => {
           userPrimaryInfo.id,
           `Task assigned to Counsellors`,
           userId,
+          null,
           transaction
         );
       }
@@ -477,6 +483,7 @@ exports.createLead = async (req, res) => {
             userPrimaryInfo.id,
             `Lead assigned to Franchise Counsellor`,
             userId,
+            null,
             transaction
           );
 
@@ -519,6 +526,7 @@ exports.createLead = async (req, res) => {
             userPrimaryInfo.id,
             `Task assigned to Franchise Counsellor`,
             userId,
+            null,
             transaction
           );
         }
@@ -917,6 +925,7 @@ exports.updateUserStatus = async (req, res) => {
         lead_id,
         `Status changed to ${statusName}`,
         userId,
+        null,
         transaction
       );
     }
@@ -1325,6 +1334,7 @@ exports.updateFlagStatus = async (req, res) => {
         id,
         `Flag updated to ${flag.flag_name} by ${role_name}`,
         userDecodeId,
+        null,
         transaction
       );
     }

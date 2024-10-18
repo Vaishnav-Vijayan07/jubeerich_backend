@@ -177,7 +177,7 @@ exports.finishTask = async (req, res) => {
     task.isCompleted = isCompleted;
     await task.save();
 
-    await addLeadHistory(studentId, `Task finished by ${role_name}`, userId, transaction);
+    await addLeadHistory(studentId, `Task finished by ${role_name}`, userId,null, transaction);
 
     //commit the transaction
     await transaction.commit();

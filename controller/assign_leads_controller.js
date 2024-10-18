@@ -100,6 +100,7 @@ exports.assignCres = async (req, res) => {
             user_id,
             `Task assigned to ${role_name}`,
             userId,
+            null,
             transaction
           );
         } else {
@@ -120,6 +121,7 @@ exports.assignCres = async (req, res) => {
             user_id,
             `Task assigned to ${role_name}`,
             userId,
+            null,
             transaction
           );
         }
@@ -237,6 +239,7 @@ exports.assignCounselorTL = async (req, res) => {
           user_id,
           `Lead assigned to Branch counsellor TL`,
           userId,
+          null,
           transaction
         );
       })
