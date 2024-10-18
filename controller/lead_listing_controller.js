@@ -716,6 +716,10 @@ exports.getLeadsByCreatedUser = async (req, res) => {
         updated_by: exam.updated_by,
       }));
 
+      const examDocuments = info.exams.map((exam) => ({
+        exam_documents: exam.score_card,
+      }));
+
       return {
         ...info.toJSON(),
         category_name: info.category_name
