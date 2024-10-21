@@ -25,14 +25,6 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
         unique: true,
       },
-      category_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "lead_categories",
-          key: "id",
-        },
-        allowNull: true,
-      },
       lead_type_id: {
         type: Sequelize.INTEGER,
         references: {
