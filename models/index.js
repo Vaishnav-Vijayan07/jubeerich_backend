@@ -548,4 +548,44 @@ db.adminUsers.hasMany(db.EmploymentHistory, {
   as: "employmentHistories",
 });
 
+db.passportDetails.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "user_id",
+  as: "passport_name",
+})
+
+db.userPrimaryInfo.hasMany(db.passportDetails, {
+  foreignKey: 'user_id',
+  as: "passportDetails"
+})
+
+db.familyInformation.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "user_id",
+  as: "user_family",
+})
+
+db.userPrimaryInfo.hasMany(db.familyInformation, {
+  foreignKey: 'user_id',
+  as: "familyDetails"
+})
+
+db.userBasicInfo.belongsTo(db.userPrimaryInfo, {
+  foreignKey: "user_id",
+  as: "student_basic_info",
+})
+
+db.userPrimaryInfo.hasOne(db.userBasicInfo, {
+  foreignKey: 'user_id',
+  as: "basic_info_details"
+})
+
+db.maritalStatus.hasMany(db.userBasicInfo, {
+  foreignKey: "marital_status", 
+  as: "students_maritals" 
+});
+
+db.userBasicInfo.belongsTo(db.maritalStatus, {
+  foreignKey: "marital_status",
+  as: "marital_status_details"
+});
+
 module.exports = db;

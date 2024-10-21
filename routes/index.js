@@ -72,6 +72,7 @@ const {
   getLeadHistory,
   addLeadHistory,
 } = require("../controller/lead_history_controller");
+const { getKycDetails } = require("../controller/kyc_controller");
 
 const router = express.Router();
 
@@ -1141,6 +1142,12 @@ router.get(
   "/employment_history/:id",
   [authMiddleware.checkUserAuth],
   getEmploymentHistory
+);
+
+router.get(
+  "/kyc_details/:id",
+  [authMiddleware.checkUserAuth],
+  getKycDetails
 );
 
 module.exports = router;
