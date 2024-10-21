@@ -31,6 +31,8 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_types",
           key: "id",
         },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
         allowNull: true,
       },
       source_id: {
@@ -39,6 +41,8 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_sources",
           key: "id",
         },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
         allowNull: true,
       },
       channel_id: {
@@ -47,6 +51,8 @@ module.exports = (sequelize, Sequelize) => {
           model: "lead_channels",
           key: "id",
         },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
         allowNull: true,
       },
       city: {
@@ -67,35 +73,39 @@ module.exports = (sequelize, Sequelize) => {
       },
       flag_id: {
         type: Sequelize.INTEGER,
-        allowNull: true,
         references: {
           model: "flags",
           key: "id",
         },
+        allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       region_id: {
         type: Sequelize.INTEGER,
-        allowNull: true,
         references: {
           model: "regions",
           key: "id",
         },
+        allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       updated_by: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: {
-          model: "admin_users",
-          key: "id",
-        },
+        // references: {
+        //   model: "admin_users",
+        //   key: "id",
+        // },
       },
       created_by: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: {
-          model: "admin_users",
-          key: "id",
-        },
+        // references: {
+        //   model: "admin_users",
+        //   key: "id",
+        // },
       },
       assigned_cre_tl: {
         type: Sequelize.INTEGER,
@@ -104,6 +114,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       assigned_counsellor_tl: {
         type: Sequelize.INTEGER,
@@ -112,6 +124,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       assigned_branch_counselor: {
         type: Sequelize.INTEGER,
@@ -120,6 +134,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       assigned_regional_manager: {
         type: Sequelize.INTEGER,
@@ -128,6 +144,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       franchise_id: {
         type: Sequelize.INTEGER,
@@ -136,6 +154,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       assigned_cre: {
         type: Sequelize.INTEGER,
@@ -144,6 +164,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       branch_id: {
         type: Sequelize.INTEGER,
@@ -152,6 +174,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       status_id: {
         type: Sequelize.INTEGER,
@@ -160,6 +184,8 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       is_deleted: {
         type: Sequelize.BOOLEAN,
@@ -167,7 +193,7 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
       ielts: {
-        type: Sequelize.STRING,
+        type: Sequelize.BOOLEAN,
         defaultValue: false,
         allowNull: true,
       },
@@ -205,6 +231,26 @@ module.exports = (sequelize, Sequelize) => {
           name: "phone_unique",
           unique: true,
           fields: ["phone"],
+        },
+        {
+          name: "idx_lead_type_id",
+          fields: ["lead_type_id"],
+        },
+        {
+          name: "idx_source_id",
+          fields: ["source_id"],
+        },
+        {
+          name: "idx_channel_id",
+          fields: ["channel_id"],
+        },
+        {
+          name: "idx_flag_id",
+          fields: ["flag_id"],
+        },
+        {
+          name: "idx_region_id",
+          fields: ["region_id"],
         },
       ],
     }
