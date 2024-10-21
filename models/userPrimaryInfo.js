@@ -94,18 +94,10 @@ module.exports = (sequelize, Sequelize) => {
       updated_by: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        // references: {
-        //   model: "admin_users",
-        //   key: "id",
-        // },
       },
       created_by: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        // references: {
-        //   model: "admin_users",
-        //   key: "id",
-        // },
       },
       assigned_cre_tl: {
         type: Sequelize.INTEGER,
@@ -210,7 +202,7 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
       },
       assign_type: {
-        type: Sequelize.ENUM('direct_assign', 'auto_assign'),
+        type: Sequelize.ENUM("direct_assign", "auto_assign"),
         allowNull: true,
       },
       remark_details: {

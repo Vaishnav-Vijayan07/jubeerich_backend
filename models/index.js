@@ -221,12 +221,6 @@ db.leadChannel.belongsTo(db.leadSource, {
   as: "source",
 });
 
-//lead associations
-db.userPrimaryInfo.belongsTo(db.leadCategory, {
-  as: "category_name",
-  foreignKey: "category_id",
-});
-
 db.userPrimaryInfo.belongsTo(db.leadType, {
   as: "type_name",
   foreignKey: "lead_type_id",
