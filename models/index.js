@@ -165,22 +165,22 @@ db.studyPreferenceDetails.belongsTo(db.studyPreference, {
   as: "studyPreference",
 });
 
-db.studyPreferenceDetails.hasMany(db.course, {
+db.studyPreferenceDetails.belongsTo(db.course, {
   foreignKey: "courseId",
   as: "preferred_courses",
 });
 
-db.course.belongsTo(db.studyPreferenceDetails, {
+db.course.hasMany(db.studyPreferenceDetails, {
   foreignKey: "courseId",
   as: "course_preferred",
 });
 
-db.studyPreferenceDetails.hasMany(db.campus, {
+db.studyPreferenceDetails.belongsTo(db.campus, {
   foreignKey: "campusId",
   as: "preferred_campus",
 });
 
-db.campus.belongsTo(db.studyPreferenceDetails, {
+db.campus.hasMany(db.studyPreferenceDetails, {
   foreignKey: "campusId",
   as: "campus_preferred",
 });
