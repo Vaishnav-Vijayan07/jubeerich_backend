@@ -787,11 +787,11 @@ exports.geLeadsForCreTl = async (req, res) => {
         ],
       },
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
+        // {
+        //   model: db.leadCategory,
+        //   as: "category_name",
+        //   attributes: ["category_name"],
+        // },
         {
           model: db.leadSource,
           as: "source_name",
@@ -892,9 +892,9 @@ exports.geLeadsForCreTl = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
+        // category_name: info.category_name
+        //   ? info.category_name.category_name
+        //   : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
