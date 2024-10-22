@@ -617,11 +617,11 @@ exports.getLeadsByCreatedUser = async (req, res) => {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: { is_deleted: false, created_by: userId },
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
+        // {
+        //   model: db.leadCategory,
+        //   as: "category_name",
+        //   attributes: ["category_name"],
+        // },
         {
           model: db.leadSource,
           as: "source_name",
@@ -959,11 +959,11 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         ],
       },
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
+        // {
+        //   model: db.leadCategory,
+        //   as: "category_name",
+        //   attributes: ["category_name"],
+        // },
         {
           model: db.leadSource,
           as: "source_name",
@@ -1133,11 +1133,11 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         ],
       },
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
+        // {
+        //   model: db.leadCategory,
+        //   as: "category_name",
+        //   attributes: ["category_name"],
+        // },
         {
           model: db.leadSource,
           as: "source_name",
@@ -1302,11 +1302,11 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         ],
       },
       include: [
-        {
-          model: db.leadCategory,
-          as: "category_name",
-          attributes: ["category_name"],
-        },
+        // {
+        //   model: db.leadCategory,
+        //   as: "category_name",
+        //   attributes: ["category_name"],
+        // },
         {
           model: db.leadSource,
           as: "source_name",
