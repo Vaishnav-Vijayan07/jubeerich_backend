@@ -722,9 +722,9 @@ exports.getLeadsByCreatedUser = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
+        // category_name: info.category_name
+        //   ? info.category_name.category_name
+        //   : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
@@ -1067,9 +1067,9 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
+        // category_name: info.category_name
+        //   ? info.category_name.category_name
+        //   : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
@@ -1235,9 +1235,9 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
+        // category_name: info.category_name
+        //   ? info.category_name.category_name
+        //   : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
@@ -1402,9 +1402,9 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
 
       return {
         ...info.toJSON(),
-        category_name: info.category_name
-          ? info.category_name.category_name
-          : null,
+        // category_name: info.category_name
+        //   ? info.category_name.category_name
+        //   : null,
         source_name: info.source_name ? info.source_name.source_name : null,
         channel_name: info.channel_name ? info.channel_name.channel_name : null,
         preferredCountries: preferredCountries,
