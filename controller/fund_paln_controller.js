@@ -20,6 +20,7 @@ exports.getStudentFundPlanDetails = async (req, res) => {
       return {
         id: plan.id,
         type: plan.type,
+        fund_origin: plan.fund_origin,
         sponsor_name: plan.sponsor_name,
         approx_annual_income: plan.approx_annual_income,
         itr_status: plan.itr_status ? "yes" : "no",
@@ -29,6 +30,8 @@ exports.getStudentFundPlanDetails = async (req, res) => {
         supporting_document: plan.supporting_document
           ? plan.supporting_document
           : null,
+        has_min_6_months_backup: plan.has_min_6_months_backup ? "yes" : "no",
+        source_of_funds: plan.source_of_funds,
       };
     });
 
@@ -64,6 +67,7 @@ exports.saveStudentPlanDetails = async (req, res) => {
     const itemData = {
       id: item.id,
       type: item.type,
+      fund_origin: item.fund_origin,
       sponsor_name: item.sponsor_name,
       approx_annual_income: Number(item.approx_annual_income),
       itr_status: item.itr_status == "yes" ? true : false,
@@ -71,7 +75,8 @@ exports.saveStudentPlanDetails = async (req, res) => {
       relation_with_sponsor: item.relation_with_sponsor,
       name_of_bank: item.name_of_bank,
       student_id: Number(student_id),
-      has_min_6_months_backup: item.has_min_6_months_backup,
+      has_min_6_months_backup:
+        item.has_min_6_months_backup == "yes" ? true : false,
       source_of_funds: item.source_of_funds,
     };
 
