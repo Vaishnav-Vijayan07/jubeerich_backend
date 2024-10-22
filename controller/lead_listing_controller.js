@@ -1439,3 +1439,95 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
     });
   }
 };
+
+exports.getAllUserDocuments = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    console.log('id',id);
+    
+
+    const AllDocs = await db.userPrimaryInfo.findAll({
+      where: { id: id },
+      attributes: ["id", "full_name"],
+      include: [
+        {
+          model: db.studentAdditionalDocs,
+          as: "additional_docs",
+          where: { student_id: id },
+          require: false,
+          attributes: ["passport_doc", "updated_cv","profile_assessment_doc", "pte_cred", "lor", "sop", "gte_form"]
+        },
+        {
+          model: db.previousVisaDecline,
+          as: "previousVisaDeclines",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "visa_type", "declined_letter"]
+        },
+        {
+          model: db.previousVisaApprove,
+          as: "previousVisaApprovals",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "visa_type", "approved_letter"]
+        },
+        {
+          model: db.fundPlan,
+          as: "fundPlan",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "type", "supporting_document"]
+        },
+        {
+          model: db.educationDetails,
+          as: "educationDetails",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "qualification", "percentage", "board_name","school_name", "mark_sheet", "admit_card", "certificate"]
+        },
+        {
+          model: db.workInfos,
+          as: "userWorkInfos",
+          where: { user_id: id },
+          require: false,
+          attributes: ["id", "company", "designation","bank_statement", "job_offer_document", "experience_certificate", "appointment_document", "payslip_document"]
+        },
+        {
+          model: db.userExams,
+          as: "exams",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "exam_type", "score_card","overall_score"]
+        },
+        {
+          model: db.userBasicInfo,
+          as: "basic_info_details",
+          where: { user_id: id },
+          require: false,
+          attributes: ["id", "police_clearance_docs"]
+        },
+        {
+          model: db.EmploymentHistory,
+          as: "userEmploymentHistories",
+          where: { student_id: id },
+          require: false,
+          attributes: ["id", "visa_page", "permit_card", "salary_account_statement", "supporting_documents"]
+        },
+      ]
+    })
+
+    res.status(200).json({
+      status: true,
+      message: "User documents retrieved successfully",
+      data: AllDocs[0],
+    });
+  } catch (error) {
+    console.error(`Error fetching user documents: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
