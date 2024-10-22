@@ -9,6 +9,7 @@ exports.getKycDetails = async (req, res, next) => {
 
         const personalDetails = await db.userPrimaryInfo.findOne({
             where: { id: id },
+            attributes: ["id", "full_name", "email", "phone", "source_id"],
             include: [
                 {
                     model: db.leadSource,
@@ -17,34 +18,21 @@ exports.getKycDetails = async (req, res, next) => {
                     required: false,
                 },
                 {
-                    model: db.leadChannel,
-                    as: "channel_name",
-                    attributes: ["channel_name"],
+                    model: db.branches,
+                    as: "branch_name",
+                    attributes: ["branch_name"],
                     required: false,
                 },
                 {
-                    model: db.leadType,
-                    as: "type_name",
+                    model: db.adminUsers,
+                    as: "assigned_branch_counselor_name",
                     attributes: ["name"],
                     required: false,
                 },
                 {
-                    model: db.officeType,
-                    as: "office_type_name",
-                    attributes: ["office_type_name"],
-                    required: false,
-
-                },
-                {
-                    model: db.flag,
-                    as: "user_primary_flags",
-                    attributes: ["flag_name"],
-                    required: false,
-                },
-                {
-                    model: db.country,
-                    as: "preferredCountries",
-                    attributes: ["country_name"],
+                    model: db.adminUsers,
+                    as: "cre_name",
+                    attributes: ["name"],
                     required: false,
                 },
                 {
@@ -52,31 +40,57 @@ exports.getKycDetails = async (req, res, next) => {
                     as: "educationDetails",
                     where: { student_id: id },
                     required: false,
+                    attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
+                },
+                {
+                    model: db.studyPreference,
+                    as: "studyPreferences",
+                    require: false,
+                    include: [
+                        {
+                            model: db.studyPreferenceDetails,
+                            as: "studyPreferenceDetails",
+                            required: false,
+                            include: [
+                                {
+                                    model: db.course,
+                                    as: "preferred_courses",
+                                    required: false,
+                                },
+                                {
+                                    model: db.campus,
+                                    as: "preferred_campus",
+                                    required: false,
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     model: db.previousVisaDecline,
                     as: "previousVisaDeclines",
                     where: { student_id: id },
                     required: false,
+                    attributes: ["id", "country_id", "visa_type", "course_applied", "university_applied", "rejection_reason"],
                     include: [
-                        { 
+                        {
                             model: db.country,
                             as: "declined_country",
                             required: false,
                             attributes: ["country_name", "country_code"]
                         },
-                        { 
+                        {
                             model: db.course,
                             as: "declined_course",
                             required: false,
-                            attributes: ["course_name"]
+                            attributes: ["course_name"],
                         },
-                        { 
+                        {
                             model: db.university,
                             as: "declined_university_applied",
                             required: false,
-                            attributes: ["university_name"]
-                        }
+                            // attributes: ["id","university_name", "location"],
+                        },
                     ]
                 },
                 {
@@ -84,24 +98,25 @@ exports.getKycDetails = async (req, res, next) => {
                     as: "previousVisaApprovals",
                     where: { student_id: id },
                     required: false,
+                    attributes: ["id", "country_id", "visa_type", "course_applied", "university_applied"],
                     include: [
-                        { 
+                        {
                             model: db.country,
                             as: "approved_country",
                             required: false,
                             attributes: ["country_name", "country_code"]
                         },
-                        { 
+                        {
                             model: db.course,
                             as: "approved_course",
                             required: false,
                             attributes: ["course_name"]
                         },
-                        { 
+                        {
                             model: db.university,
                             as: "approved_university_applied",
                             required: false,
-                            attributes: ["university_name"]
+                            // attributes: ["university_name"]
                         }
                     ]
                 },
@@ -110,8 +125,9 @@ exports.getKycDetails = async (req, res, next) => {
                     as: "travelHistories",
                     where: { student_id: id },
                     required: false,
+                    attributes: ["id", "country_id", "start_date", "end_date", "purpose_of_travel"],
                     include: [
-                        { 
+                        {
                             model: db.country,
                             as: "travelHistoryCountry",
                             required: false,
@@ -124,6 +140,7 @@ exports.getKycDetails = async (req, res, next) => {
                     as: "basic_info_details",
                     where: { user_id: id },
                     required: false,
+                    attributes: ["id", "dob", "marital_status", "address", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_phone"],
                     include: [
                         {
                             model: db.maritalStatus,
