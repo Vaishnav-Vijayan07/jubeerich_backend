@@ -52,37 +52,18 @@ const studyPreferencesByUserPrimaryInfoController = require("../controller/study
 const studyPreferencesDetailsController = require("../controller/study_preference_details");
 const visaProcessController = require("../controller/visa_process");
 const studentAdditionalController = require("../controller/studentAdditionalDocs");
-const {
-  getStudentFundPlanDetails,
-  saveStudentPlanDetails,
-} = require("../controller/fund_paln_controller");
-const {
-  saveGapReason,
-  getAllGapReasons,
-} = require("../controller/gap_reason_controller");
-const {
-  saveEmploymentHistory,
-  getEmploymentHistory,
-} = require("../controller/employment_history_controller");
-const {
-  handleMulterError,
-  uploadPoliceClearenceDocs,
-} = require("../middleware/multer_error_handler");
-const {
-  getLeadHistory,
-  addLeadHistory,
-} = require("../controller/lead_history_controller");
-const { getKycDetails } = require("../controller/kyc_controller");
+const { getStudentFundPlanDetails, saveStudentPlanDetails } = require("../controller/fund_paln_controller");
+const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_controller");
+const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
+const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
+const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
+const { getKycDetails, proceedToKyc, kycPendingDetails } = require("../controller/kyc_controller");
 
 const router = express.Router();
 
 //Lead histoy routes
 
-router.get(
-  "/lead_history/:id",
-  [authMiddleware.checkUserAuth],
-  getLeadHistory
-);
+router.get("/lead_history/:id", [authMiddleware.checkUserAuth], getLeadHistory);
 
 //post route for creating user history
 router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
@@ -91,813 +72,222 @@ router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 router.post("/login", authController.login);
 
 // Admin Users routes
-router.get(
-  "/admin_users",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.getAllAdminUsers
-);
-router.get(
-  "/admin_users/:id",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.getAdminUsersById
-);
+router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
+router.get("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.getAdminUsersById);
 router.post("/admin_users", AdminUserController.addAdminUsers);
-router.put(
-  "/admin_users/:id",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.updateAdminUsers
-);
-router.delete(
-  "/admin_users/:id",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.deleteAdminUsers
-);
+router.put("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.updateAdminUsers);
+router.delete("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.deleteAdminUsers);
 
 // Access Powers routes
-router.get(
-  "/access_powers",
-  [authMiddleware.checkUserAuth],
-  AccesPowerController.getAllAccessPowers
-);
-router.get(
-  "/access_powers/:id",
-  [authMiddleware.checkUserAuth],
-  AccesPowerController.getAccessPowerById
-);
+router.get("/access_powers", [authMiddleware.checkUserAuth], AccesPowerController.getAllAccessPowers);
+router.get("/access_powers/:id", [authMiddleware.checkUserAuth], AccesPowerController.getAccessPowerById);
 router.post("/access_powers", AccesPowerController.addAccessPower);
-router.put(
-  "/access_powers/:id",
-  [authMiddleware.checkUserAuth],
-  AccesPowerController.updateAccessPower
-);
-router.delete(
-  "/access_powers/:id",
-  [authMiddleware.checkUserAuth],
-  AccesPowerController.deleteAccessPower
-);
+router.put("/access_powers/:id", [authMiddleware.checkUserAuth], AccesPowerController.updateAccessPower);
+router.delete("/access_powers/:id", [authMiddleware.checkUserAuth], AccesPowerController.deleteAccessPower);
 
 // Access Roles routes
-router.get(
-  "/access_roles",
-  [authMiddleware.checkUserAuth],
-  AccessRolesController.getAllAccessRoles
-);
-router.get(
-  "/access_roles/:id",
-  [authMiddleware.checkUserAuth],
-  AccessRolesController.getAccessRoleById
-);
+router.get("/access_roles", [authMiddleware.checkUserAuth], AccessRolesController.getAllAccessRoles);
+router.get("/access_roles/:id", [authMiddleware.checkUserAuth], AccessRolesController.getAccessRoleById);
 router.post("/access_roles", AccessRolesController.createAccessRole);
-router.put(
-  "/access_roles/:id",
-  [authMiddleware.checkUserAuth],
-  AccessRolesController.updateAccessRole
-);
-router.delete(
-  "/access_roles/:id",
-  [authMiddleware.checkUserAuth],
-  AccessRolesController.deleteAccessRole
-);
+router.put("/access_roles/:id", [authMiddleware.checkUserAuth], AccessRolesController.updateAccessRole);
+router.delete("/access_roles/:id", [authMiddleware.checkUserAuth], AccessRolesController.deleteAccessRole);
 
 // Lead Categories routes
-router.get(
-  "/lead_category",
-  [authMiddleware.checkUserAuth],
-  LeadCategoryController.getAllCategories
-);
-router.get(
-  "/lead_category/:id",
-  [authMiddleware.checkUserAuth],
-  LeadCategoryController.getCategoryById
-);
-router.post(
-  "/lead_category",
-  [authMiddleware.checkUserAuth],
-  LeadCategoryController.addCategory
-);
-router.put(
-  "/lead_category/:id",
-  [authMiddleware.checkUserAuth],
-  LeadCategoryController.updateCategory
-);
-router.delete(
-  "/lead_category/:id",
-  [authMiddleware.checkUserAuth],
-  LeadCategoryController.deleteCategory
-);
+router.get("/lead_category", [authMiddleware.checkUserAuth], LeadCategoryController.getAllCategories);
+router.get("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryController.getCategoryById);
+router.post("/lead_category", [authMiddleware.checkUserAuth], LeadCategoryController.addCategory);
+router.put("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryController.updateCategory);
+router.delete("/lead_category/:id", [authMiddleware.checkUserAuth], LeadCategoryController.deleteCategory);
 
 // Lead Type routes
-router.get(
-  "/lead_type",
-  [authMiddleware.checkUserAuth],
-  LeadTypeController.getAllLeadTypes
-);
-router.get(
-  "/lead_type/:id",
-  [authMiddleware.checkUserAuth],
-  LeadTypeController.getLeadTypeById
-);
-router.post(
-  "/lead_type",
-  [authMiddleware.checkUserAuth],
-  LeadTypeController.addLeadType
-);
-router.put(
-  "/lead_type/:id",
-  [authMiddleware.checkUserAuth],
-  LeadTypeController.updateLeadType
-);
-router.delete(
-  "/lead_type/:id",
-  [authMiddleware.checkUserAuth],
-  LeadTypeController.deleteLeadType
-);
+router.get("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.getAllLeadTypes);
+router.get("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.getLeadTypeById);
+router.post("/lead_type", [authMiddleware.checkUserAuth], LeadTypeController.addLeadType);
+router.put("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.updateLeadType);
+router.delete("/lead_type/:id", [authMiddleware.checkUserAuth], LeadTypeController.deleteLeadType);
 
 // Lead Sources routes
-router.get(
-  "/lead_source",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.getAllSources
-);
-router.get(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.getSourceById
-);
-router.post(
-  "/lead_source",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.addSource
-);
-router.put(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.updateSource
-);
-router.delete(
-  "/lead_source/:id",
-  [authMiddleware.checkUserAuth],
-  LeadSourceController.deleteSource
-);
+router.get("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.getAllSources);
+router.get("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.getSourceById);
+router.post("/lead_source", [authMiddleware.checkUserAuth], LeadSourceController.addSource);
+router.put("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.updateSource);
+router.delete("/lead_source/:id", [authMiddleware.checkUserAuth], LeadSourceController.deleteSource);
 
 // Lead Channels routes
-router.get(
-  "/lead_channel",
-  [authMiddleware.checkUserAuth],
-  LeadChannelController.getAllChannels
-);
-router.get(
-  "/lead_channel/:id",
-  [authMiddleware.checkUserAuth],
-  LeadChannelController.getChannelById
-);
-router.post(
-  "/lead_channel",
-  [authMiddleware.checkUserAuth],
-  LeadChannelController.addChannel
-);
-router.put(
-  "/lead_channel/:id",
-  [authMiddleware.checkUserAuth],
-  LeadChannelController.updateChannel
-);
-router.delete(
-  "/lead_channel/:id",
-  [authMiddleware.checkUserAuth],
-  LeadChannelController.deleteChannel
-);
+router.get("/lead_channel", [authMiddleware.checkUserAuth], LeadChannelController.getAllChannels);
+router.get("/lead_channel/:id", [authMiddleware.checkUserAuth], LeadChannelController.getChannelById);
+router.post("/lead_channel", [authMiddleware.checkUserAuth], LeadChannelController.addChannel);
+router.put("/lead_channel/:id", [authMiddleware.checkUserAuth], LeadChannelController.updateChannel);
+router.delete("/lead_channel/:id", [authMiddleware.checkUserAuth], LeadChannelController.deleteChannel);
 
 // Office Types routes
-router.get(
-  "/office_type",
-  [authMiddleware.checkUserAuth],
-  OfficeTypeController.getAllOfficeTypes
-);
-router.get(
-  "/office_type/:id",
-  [authMiddleware.checkUserAuth],
-  OfficeTypeController.getOfficeTypeById
-);
-router.post(
-  "/office_type",
-  [authMiddleware.checkUserAuth],
-  OfficeTypeController.addOfficeType
-);
-router.put(
-  "/office_type/:id",
-  [authMiddleware.checkUserAuth],
-  OfficeTypeController.updateOfficeType
-);
-router.delete(
-  "/office_type/:id",
-  [authMiddleware.checkUserAuth],
-  OfficeTypeController.deleteOfficeType
-);
+router.get("/office_type", [authMiddleware.checkUserAuth], OfficeTypeController.getAllOfficeTypes);
+router.get("/office_type/:id", [authMiddleware.checkUserAuth], OfficeTypeController.getOfficeTypeById);
+router.post("/office_type", [authMiddleware.checkUserAuth], OfficeTypeController.addOfficeType);
+router.put("/office_type/:id", [authMiddleware.checkUserAuth], OfficeTypeController.updateOfficeType);
+router.delete("/office_type/:id", [authMiddleware.checkUserAuth], OfficeTypeController.deleteOfficeType);
 
 // Regions routes
-router.get(
-  "/region",
-  [authMiddleware.checkUserAuth],
-  RegionController.getAllRegions
-);
-router.get(
-  "/region/:id",
-  [authMiddleware.checkUserAuth],
-  RegionController.getRegionById
-);
-router.post(
-  "/region",
-  [authMiddleware.checkUserAuth],
-  RegionController.addRegion
-);
-router.put(
-  "/region/:id",
-  [authMiddleware.checkUserAuth],
-  RegionController.updateRegion
-);
-router.delete(
-  "/region/:id",
-  [authMiddleware.checkUserAuth],
-  RegionController.deleteRegion
-);
+router.get("/region", [authMiddleware.checkUserAuth], RegionController.getAllRegions);
+router.get("/region/:id", [authMiddleware.checkUserAuth], RegionController.getRegionById);
+router.post("/region", [authMiddleware.checkUserAuth], RegionController.addRegion);
+router.put("/region/:id", [authMiddleware.checkUserAuth], RegionController.updateRegion);
+router.delete("/region/:id", [authMiddleware.checkUserAuth], RegionController.deleteRegion);
 
 // Flags routes
-router.get(
-  "/flags",
-  [authMiddleware.checkUserAuth],
-  FlagController.getAllFlags
-);
-router.get(
-  "/flags/:id",
-  [authMiddleware.checkUserAuth],
-  FlagController.getFlagById
-);
+router.get("/flags", [authMiddleware.checkUserAuth], FlagController.getAllFlags);
+router.get("/flags/:id", [authMiddleware.checkUserAuth], FlagController.getFlagById);
 router.post("/flags", [authMiddleware.checkUserAuth], FlagController.addFlag);
-router.put(
-  "/flags/:id",
-  [authMiddleware.checkUserAuth],
-  FlagController.updateFlag
-);
-router.delete(
-  "/flags/:id",
-  [authMiddleware.checkUserAuth],
-  FlagController.deleteFlag
-);
+router.put("/flags/:id", [authMiddleware.checkUserAuth], FlagController.updateFlag);
+router.delete("/flags/:id", [authMiddleware.checkUserAuth], FlagController.deleteFlag);
 
 // Marital Statuses routes
-router.get(
-  "/marital_status",
-  [authMiddleware.checkUserAuth],
-  MaritalStatusController.getAllMaritalStatuses
-);
-router.get(
-  "/marital_status/:id",
-  [authMiddleware.checkUserAuth],
-  MaritalStatusController.getMaritalStatusById
-);
-router.post(
-  "/marital_status",
-  [authMiddleware.checkUserAuth],
-  MaritalStatusController.addMaritalStatus
-);
-router.put(
-  "/marital_status/:id",
-  [authMiddleware.checkUserAuth],
-  MaritalStatusController.updateMaritalStatus
-);
-router.delete(
-  "/marital_status/:id",
-  [authMiddleware.checkUserAuth],
-  MaritalStatusController.deleteMaritalStatus
-);
+router.get("/marital_status", [authMiddleware.checkUserAuth], MaritalStatusController.getAllMaritalStatuses);
+router.get("/marital_status/:id", [authMiddleware.checkUserAuth], MaritalStatusController.getMaritalStatusById);
+router.post("/marital_status", [authMiddleware.checkUserAuth], MaritalStatusController.addMaritalStatus);
+router.put("/marital_status/:id", [authMiddleware.checkUserAuth], MaritalStatusController.updateMaritalStatus);
+router.delete("/marital_status/:id", [authMiddleware.checkUserAuth], MaritalStatusController.deleteMaritalStatus);
 
 // Countries routes
-router.get(
-  "/country",
-  [authMiddleware.checkUserAuth],
-  CountryController.getAllCountries
-);
-router.get(
-  "/country/:id",
-  [authMiddleware.checkUserAuth],
-  CountryController.getCountryById
-);
-router.post(
-  "/country",
-  [authMiddleware.checkUserAuth],
-  CountryController.addCountry
-);
-router.put(
-  "/country/:id",
-  [authMiddleware.checkUserAuth],
-  CountryController.updateCountry
-);
-router.delete(
-  "/country/:id",
-  [authMiddleware.checkUserAuth],
-  CountryController.deleteCountry
-);
+router.get("/country", [authMiddleware.checkUserAuth], CountryController.getAllCountries);
+router.get("/country/:id", [authMiddleware.checkUserAuth], CountryController.getCountryById);
+router.post("/country", [authMiddleware.checkUserAuth], CountryController.addCountry);
+router.put("/country/:id", [authMiddleware.checkUserAuth], CountryController.updateCountry);
+router.delete("/country/:id", [authMiddleware.checkUserAuth], CountryController.deleteCountry);
 
 // Universities routes
-router.get(
-  "/university",
-  [authMiddleware.checkUserAuth],
-  UniversityController.getAllUniversities
-);
-router.get(
-  "/university/:id",
-  [authMiddleware.checkUserAuth],
-  UniversityController.getUniversityById
-);
-router.post(
-  "/university",
-  [authMiddleware.checkUserAuth],
-  UniversityController.addUniversity
-);
-router.put(
-  "/university/:id",
-  [authMiddleware.checkUserAuth],
-  UniversityController.updateUniversity
-);
-router.delete(
-  "/university/:id",
-  [authMiddleware.checkUserAuth],
-  UniversityController.deleteUniversity
-);
+router.get("/university", [authMiddleware.checkUserAuth], UniversityController.getAllUniversities);
+router.get("/university/:id", [authMiddleware.checkUserAuth], UniversityController.getUniversityById);
+router.post("/university", [authMiddleware.checkUserAuth], UniversityController.addUniversity);
+router.put("/university/:id", [authMiddleware.checkUserAuth], UniversityController.updateUniversity);
+router.delete("/university/:id", [authMiddleware.checkUserAuth], UniversityController.deleteUniversity);
 
 // Programs routes
-router.get(
-  "/programs",
-  [authMiddleware.checkUserAuth],
-  ProgramController.getAllPrograms
-);
-router.get(
-  "/programs/:id",
-  [authMiddleware.checkUserAuth],
-  ProgramController.getProgramById
-);
-router.post(
-  "/programs",
-  [authMiddleware.checkUserAuth],
-  ProgramController.addProgram
-);
-router.put(
-  "/programs/:id",
-  [authMiddleware.checkUserAuth],
-  ProgramController.updateProgram
-);
-router.delete(
-  "/programs/:id",
-  [authMiddleware.checkUserAuth],
-  ProgramController.deleteProgram
-);
+router.get("/programs", [authMiddleware.checkUserAuth], ProgramController.getAllPrograms);
+router.get("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.getProgramById);
+router.post("/programs", [authMiddleware.checkUserAuth], ProgramController.addProgram);
+router.put("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.updateProgram);
+router.delete("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.deleteProgram);
 
 // Tasks routes
-router.get(
-  "/ordinary_task",
-  [authMiddleware.checkUserAuth],
-  OrdinaryTaskController.getAllTasks
-);
-router.get(
-  "/ordinary_task/:id",
-  [authMiddleware.checkUserAuth],
-  OrdinaryTaskController.getTaskById
-);
-router.post(
-  "/ordinary_task",
-  [authMiddleware.checkUserAuth],
-  OrdinaryTaskController.addTask
-);
-router.put(
-  "/ordinary_task/:id",
-  [authMiddleware.checkUserAuth],
-  OrdinaryTaskController.updateTask
-);
-router.delete(
-  "/ordinary_task/:id",
-  [authMiddleware.checkUserAuth],
-  OrdinaryTaskController.deleteTask
-);
+router.get("/ordinary_task", [authMiddleware.checkUserAuth], OrdinaryTaskController.getAllTasks);
+router.get("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskController.getTaskById);
+router.post("/ordinary_task", [authMiddleware.checkUserAuth], OrdinaryTaskController.addTask);
+router.put("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskController.updateTask);
+router.delete("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskController.deleteTask);
 
 // Comments routes
-router.get(
-  "/comment/:leadId",
-  [authMiddleware.checkUserAuth],
-  CommentsController.getCommentsByLeadId
-);
-router.post(
-  "/comment",
-  [authMiddleware.checkUserAuth],
-  CommentsController.createComment
-);
-router.put(
-  "/comment/:id",
-  [authMiddleware.checkUserAuth],
-  CommentsController.updateComment
-);
-router.delete(
-  "/comment/:id",
-  [authMiddleware.checkUserAuth],
-  CommentsController.deleteComment
-);
+router.get("/comment/:leadId", [authMiddleware.checkUserAuth], CommentsController.getCommentsByLeadId);
+router.post("/comment", [authMiddleware.checkUserAuth], CommentsController.createComment);
+router.put("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.updateComment);
+router.delete("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.deleteComment);
 
 // Branches routes
-router.get(
-  "/branches",
-  [authMiddleware.checkUserAuth],
-  BranchController.getAllBranches
-);
-router.get(
-  "/branches/:id",
-  [authMiddleware.checkUserAuth],
-  BranchController.getBranchById
-);
-router.post(
-  "/branches",
-  [authMiddleware.checkUserAuth],
-  BranchController.addBranch
-);
-router.put(
-  "/branches/:id",
-  [authMiddleware.checkUserAuth],
-  BranchController.updateBranch
-);
-router.delete(
-  "/branches/:id",
-  [authMiddleware.checkUserAuth],
-  BranchController.deleteBranch
-);
+router.get("/branches", [authMiddleware.checkUserAuth], BranchController.getAllBranches);
+router.get("/branches/:id", [authMiddleware.checkUserAuth], BranchController.getBranchById);
+router.post("/branches", [authMiddleware.checkUserAuth], BranchController.addBranch);
+router.put("/branches/:id", [authMiddleware.checkUserAuth], BranchController.updateBranch);
+router.delete("/branches/:id", [authMiddleware.checkUserAuth], BranchController.deleteBranch);
 
 // Franchises routes
-router.get(
-  "/franchise",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getAllFranchises
-);
-router.get(
-  "/franchise/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getFranchiseById
-);
-router.post(
-  "/franchise",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.addFranchise
-);
-router.put(
-  "/franchise/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.updateFranchise
-);
-router.delete(
-  "/franchise/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.deleteFranchise
-);
+router.get("/franchise", [authMiddleware.checkUserAuth], FranchiseController.getAllFranchises);
+router.get("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.getFranchiseById);
+router.post("/franchise", [authMiddleware.checkUserAuth], FranchiseController.addFranchise);
+router.put("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.updateFranchise);
+router.delete("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.deleteFranchise);
 
-router.get(
-  "/get_all_franchise_counsellors/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getAllCounsellorsByFranchise
-);
+router.get("/get_all_franchise_counsellors/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsByFranchise);
 
-router.get(
-  "/get_all_franchise_counsellors_tl/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getAllCounsellorsTLByFranchise
-);
+router.get("/get_all_franchise_counsellors_tl/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsTLByFranchise);
 
 // Statuses routes
-router.get(
-  "/status",
-  [authMiddleware.checkUserAuth],
-  StatusController.getAllStatuses
-);
-router.get(
-  "/status/:id",
-  [authMiddleware.checkUserAuth],
-  StatusController.getStatusById
-);
-router.post(
-  "/status",
-  [authMiddleware.checkUserAuth],
-  StatusController.addStatus
-);
-router.put(
-  "/status/:id",
-  [authMiddleware.checkUserAuth],
-  StatusController.updateStatus
-);
-router.delete(
-  "/status/:id",
-  [authMiddleware.checkUserAuth],
-  StatusController.deleteStatus
-);
+router.get("/status", [authMiddleware.checkUserAuth], StatusController.getAllStatuses);
+router.get("/status/:id", [authMiddleware.checkUserAuth], StatusController.getStatusById);
+router.post("/status", [authMiddleware.checkUserAuth], StatusController.addStatus);
+router.put("/status/:id", [authMiddleware.checkUserAuth], StatusController.updateStatus);
+router.delete("/status/:id", [authMiddleware.checkUserAuth], StatusController.deleteStatus);
 
 // Leads routes
-router.post(
-  "/leads",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  UserController.createLead
-);
-router.get(
-  "/getAllleads",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getLeads
-);
-router.get(
-  "/leads",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAllLeads
-);
-router.get(
-  "/leads_by_user",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getLeadsByCreatedUser
-);
-router.get(
-  "/leads_cre_tl",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.geLeadsForCreTl
-);
-router.get(
-  "/assigned_leads_regional_managers",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAllAssignedLeadsRegionalMangers
-);
-router.get(
-  "/leads_counsellor_tl",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.geLeadsForCounsellorTL
-);
-router.get(
-  "/assigned_leads_cre_tl",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAssignedLeadsForCreTl
-);
-router.get(
-  "/assigned_leads_counsellor_tl",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAssignedLeadsForCounsellorTL
-);
-router.post(
-  "/assign_cres",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.assignCres
-);
-router.post(
-  "/auto_assign",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.autoAssign
-);
-router.post(
-  "/branch_auto_assign",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.autoAssignBranchCounselors
-);
-router.post(
-  "/assign_branch_counselor",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.assignBranchCounselors
-);
-router.post(
-  "/assign_counselor_tl",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.assignCounselorTL
-);
-router.get(
-  "/list_manager_branches",
-  [authMiddleware.checkUserAuth],
-  AssignLeadsController.listBranches
-);
-router.put(
-  "/leads/:id",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  UserController.updateLead
-);
-router.delete(
-  "/leads/:id",
-  [authMiddleware.checkUserAuth],
-  UserController.deleteLead
-);
-router.delete(
-  "/exams",
-  [authMiddleware.checkUserAuth],
-  UserController.deleteExams
-);
+router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
+router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController.getLeads);
+router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
+router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
+router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCreTl);
+router.get("/assigned_leads_regional_managers", [authMiddleware.checkUserAuth], LeadListingController.getAllAssignedLeadsRegionalMangers);
+router.get("/leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCounsellorTL);
+router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
+router.get("/assigned_leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCounsellorTL);
+router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
+router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
+router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
+router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignBranchCounselors);
+router.post("/assign_counselor_tl", [authMiddleware.checkUserAuth], AssignLeadsController.assignCounselorTL);
+router.get("/list_manager_branches", [authMiddleware.checkUserAuth], AssignLeadsController.listBranches);
+router.put("/leads/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.updateLead);
+router.delete("/leads/:id", [authMiddleware.checkUserAuth], UserController.deleteLead);
+router.delete("/exams", [authMiddleware.checkUserAuth], UserController.deleteExams);
 
 // Tasks routes
 router.get("/tasks", [authMiddleware.checkUserAuth], TaskController.getTasks);
-router.get(
-  "/tasks/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getTaskById
-);
-router.put(
-  "/finish_task",
-  [authMiddleware.checkUserAuth],
-  TaskController.finishTask
-);
-router.put(
-  "/assign_new_country",
-  [authMiddleware.checkUserAuth],
-  TaskController.assignNewCountry
-);
+router.get("/tasks/:id", [authMiddleware.checkUserAuth], TaskController.getTaskById);
+router.put("/finish_task", [authMiddleware.checkUserAuth], TaskController.finishTask);
+router.put("/assign_new_country", [authMiddleware.checkUserAuth], TaskController.assignNewCountry);
 
 // Status Config routes
-router.get(
-  "/status_config",
-  [authMiddleware.checkUserAuth],
-  StatusConfigController.listAllAccessRolesWithStatuses
-);
-router.put(
-  "/status_config",
-  [authMiddleware.checkUserAuth],
-  StatusConfigController.statusConfig
-);
+router.get("/status_config", [authMiddleware.checkUserAuth], StatusConfigController.listAllAccessRolesWithStatuses);
+router.put("/status_config", [authMiddleware.checkUserAuth], StatusConfigController.statusConfig);
 
 // Lead Status routes
-router.get(
-  "/lead_status",
-  [authMiddleware.checkUserAuth],
-  UserController.getStatusWithAccessPowers
-);
-router.put(
-  "/lead_status",
-  [authMiddleware.checkUserAuth],
-  UserController.updateUserStatus
-);
+router.get("/lead_status", [authMiddleware.checkUserAuth], UserController.getStatusWithAccessPowers);
+router.put("/lead_status", [authMiddleware.checkUserAuth], UserController.updateUserStatus);
 
-router.get(
-  "/followup_remark/:id",
-  [authMiddleware.checkUserAuth],
-  UserController.getRemarkDetails
-);
+router.get("/followup_remark/:id", [authMiddleware.checkUserAuth], UserController.getRemarkDetails);
 
-router.post(
-  "/followup_remark/",
-  [authMiddleware.checkUserAuth],
-  UserController.createRemarkDetails
-);
+router.post("/followup_remark/", [authMiddleware.checkUserAuth], UserController.createRemarkDetails);
 
-router.put(
-  "/followup_remark/:id",
-  [authMiddleware.checkUserAuth],
-  UserController.updateRemarkDetails
-);
+router.put("/followup_remark/:id", [authMiddleware.checkUserAuth], UserController.updateRemarkDetails);
 
-router.put(
-  "/update_flag_status/:id",
-  [authMiddleware.checkUserAuth],
-  UserController.updateFlagStatus
-);
+router.put("/update_flag_status/:id", [authMiddleware.checkUserAuth], UserController.updateFlagStatus);
 
 // Excel Import route
-router.post(
-  "/excel_import",
-  upload.single("file"),
-  [authMiddleware.checkUserAuth],
-  LeadImportController.bulkUpload
-);
+router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
 
 // Additional routes
-router.get(
-  "/regional_managers",
-  [authMiddleware.checkUserAuth],
-  RegionController.getAllRegionalManagers
-);
-router.get(
-  "/get_all_docs/:id",
-  [authMiddleware.checkUserAuth],
-  DocumentsListingController.getAllDocuments
-);
-router.get(
-  "/get_all_counsellors",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.getAllCounsellors
-);
+router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
+router.get("/get_all_docs/:id", [authMiddleware.checkUserAuth], DocumentsListingController.getAllDocuments);
+router.get("/get_all_counsellors", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellors);
 
-router.get(
-  "/get_all_counsellors/:id",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.getAllCounsellorsByBranch
-);
+router.get("/get_all_counsellors/:id", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellorsByBranch);
 
-router.get(
-  "/get_all_counsellors_tl/:id",
-  [authMiddleware.checkUserAuth],
-  AdminUserController.getAllCounsellorsTLByBranch
-);
+router.get("/get_all_counsellors_tl/:id", [authMiddleware.checkUserAuth], AdminUserController.getAllCounsellorsTLByBranch);
 
 // Campus routes
-router.get(
-  "/campuses",
-  [authMiddleware.checkUserAuth],
-  CampusController.getAllCampuses
-);
-router.get(
-  "/campuses/:id",
-  [authMiddleware.checkUserAuth],
-  CampusController.getCampusById
-);
-router.post(
-  "/campuses",
-  [authMiddleware.checkUserAuth],
-  CampusController.addCampus
-);
-router.put(
-  "/campuses/:id",
-  [authMiddleware.checkUserAuth],
-  CampusController.updateCampus
-);
-router.delete(
-  "/campuses/:id",
-  [authMiddleware.checkUserAuth],
-  CampusController.deleteCampus
-);
+router.get("/campuses", [authMiddleware.checkUserAuth], CampusController.getAllCampuses);
+router.get("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.getCampusById);
+router.post("/campuses", [authMiddleware.checkUserAuth], CampusController.addCampus);
+router.put("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.updateCampus);
+router.delete("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.deleteCampus);
 
 // Course routes
-router.get(
-  "/courses",
-  [authMiddleware.checkUserAuth],
-  CourseController.getAllCourses
-);
-router.get(
-  "/courses/:id",
-  [authMiddleware.checkUserAuth],
-  CourseController.getCourseById
-);
-router.post(
-  "/courses",
-  [authMiddleware.checkUserAuth],
-  CourseController.addCourse
-);
-router.put(
-  "/courses/:id",
-  [authMiddleware.checkUserAuth],
-  CourseController.updateCourse
-);
-router.delete(
-  "/courses/:id",
-  [authMiddleware.checkUserAuth],
-  CourseController.deleteCourse
-);
+router.get("/courses", [authMiddleware.checkUserAuth], CourseController.getAllCourses);
+router.get("/courses/:id", [authMiddleware.checkUserAuth], CourseController.getCourseById);
+router.post("/courses", [authMiddleware.checkUserAuth], CourseController.addCourse);
+router.put("/courses/:id", [authMiddleware.checkUserAuth], CourseController.updateCourse);
+router.delete("/courses/:id", [authMiddleware.checkUserAuth], CourseController.deleteCourse);
 
 // Course Type routes
-router.get(
-  "/course-types",
-  [authMiddleware.checkUserAuth],
-  CourseTypeController.getAllCourseTypes
-);
-router.get(
-  "/course-types/:id",
-  [authMiddleware.checkUserAuth],
-  CourseTypeController.getCourseTypeById
-);
-router.post(
-  "/course-types",
-  [authMiddleware.checkUserAuth],
-  CourseTypeController.addCourseType
-);
-router.put(
-  "/course-types/:id",
-  [authMiddleware.checkUserAuth],
-  CourseTypeController.updateCourseType
-);
-router.delete(
-  "/course-types/:id",
-  [authMiddleware.checkUserAuth],
-  CourseTypeController.deleteCourseType
-);
+router.get("/course-types", [authMiddleware.checkUserAuth], CourseTypeController.getAllCourseTypes);
+router.get("/course-types/:id", [authMiddleware.checkUserAuth], CourseTypeController.getCourseTypeById);
+router.post("/course-types", [authMiddleware.checkUserAuth], CourseTypeController.addCourseType);
+router.put("/course-types/:id", [authMiddleware.checkUserAuth], CourseTypeController.updateCourseType);
+router.delete("/course-types/:id", [authMiddleware.checkUserAuth], CourseTypeController.deleteCourseType);
 
 // Stream routes
-router.get(
-  "/streams",
-  [authMiddleware.checkUserAuth],
-  StreamController.getAllStreams
-);
-router.get(
-  "/streams/:id",
-  [authMiddleware.checkUserAuth],
-  StreamController.getStreamById
-);
-router.post(
-  "/streams",
-  [authMiddleware.checkUserAuth],
-  StreamController.addStream
-);
-router.put(
-  "/streams/:id",
-  [authMiddleware.checkUserAuth],
-  StreamController.updateStream
-);
-router.delete(
-  "/streams/:id",
-  [authMiddleware.checkUserAuth],
-  StreamController.deleteStream
-);
+router.get("/streams", [authMiddleware.checkUserAuth], StreamController.getAllStreams);
+router.get("/streams/:id", [authMiddleware.checkUserAuth], StreamController.getStreamById);
+router.post("/streams", [authMiddleware.checkUserAuth], StreamController.addStream);
+router.put("/streams/:id", [authMiddleware.checkUserAuth], StreamController.updateStream);
+router.delete("/streams/:id", [authMiddleware.checkUserAuth], StreamController.deleteStream);
 
 //Select Dropdown Data route
 router.get("/dropdown", [authMiddleware.checkUserAuth], getDropdownData);
@@ -908,47 +298,17 @@ router.post(
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
 
-router.post(
-  "/visa_decline_process",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  visaProcessController.saveVisaDeclineProcess
-);
-router.post(
-  "/visa_approve_process",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  visaProcessController.saveVisaApproveProcess
-);
-router.post(
-  "/travel_history",
-  [authMiddleware.checkUserAuth],
-  visaProcessController.saveTravelHistory
-);
-router.get(
-  "/visa_process/:id",
-  [authMiddleware.checkUserAuth],
-  visaProcessController.getAllVisaProcess
-);
-router.delete(
-  "/delete_visa_item/:formName/:id",
-  [authMiddleware.checkUserAuth],
-  visaProcessController.deleteVisaProcessItem
-);
+router.post("/visa_decline_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaDeclineProcess);
+router.post("/visa_approve_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaApproveProcess);
+router.post("/travel_history", [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
+router.get("/visa_process/:id", [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
+router.delete("/delete_visa_item/:formName/:id", [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
 
 //multiple data fileds routes
 
-router.post(
-  "/saveStudentBasicInfo",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentBasicInfo
-);
+router.post("/saveStudentBasicInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentBasicInfo);
 
-router.get(
-  "/basicStudentInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getBasicInfoById
-);
+router.get("/basicStudentInfo/:id", [authMiddleware.checkUserAuth], TaskController.getBasicInfoById);
 
 router.post(
   "/basicStudentInfo",
@@ -964,11 +324,7 @@ router.delete(
   TaskController.deletePoliceClearenceDocuments // Controller logic
 );
 
-router.get(
-  "/studentAcademicInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentAcademicInfoById
-);
+router.get("/studentAcademicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentAcademicInfoById);
 
 router.post(
   "/studentAcademicInfo",
@@ -977,77 +333,29 @@ router.post(
   SaveStudentDetailsController.saveStudentAcademicInfo
 );
 
-router.get(
-  "/studentExamInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentExamInfoById
-);
+router.get("/studentExamInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentExamInfoById);
 
-router.post(
-  "/studentExamInfo",
-  uploadMultiple.uploadExamDocs,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentExamInfo
-);
+router.post("/studentExamInfo", uploadMultiple.uploadExamDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentExamInfo);
 
-router.get(
-  "/studentFundInfo/:id",
-  [authMiddleware.checkUserAuth],
-  getStudentFundPlanDetails
-);
-router.post(
-  "/studentFundInfo",
-  uploadMultiple.uploadFundDocs,
-  [authMiddleware.checkUserAuth],
-  saveStudentPlanDetails
-);
+router.get("/studentFundInfo/:id", [authMiddleware.checkUserAuth], getStudentFundPlanDetails);
+router.post("/studentFundInfo", uploadMultiple.uploadFundDocs, [authMiddleware.checkUserAuth], saveStudentPlanDetails);
 
-router.get(
-  "/studentWorkInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentWorkInfoById
-);
-router.post(
-  "/studentWorkInfo",
-  uploadMultiple.uploadWorkDocs,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentWorkInfo
-);
+router.get("/studentWorkInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentWorkInfoById);
+router.post("/studentWorkInfo", uploadMultiple.uploadWorkDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentWorkInfo);
 
-router.get(
-  "/gapReason/:id/:type",
-  [authMiddleware.checkUserAuth],
-  getAllGapReasons
-);
+router.get("/gapReason/:id/:type", [authMiddleware.checkUserAuth], getAllGapReasons);
 
-router.post(
-  "/gapReason",
-  uploadMultiple.uploadGapDocs,
-  [authMiddleware.checkUserAuth],
-  saveGapReason
-);
+router.post("/gapReason", uploadMultiple.uploadGapDocs, [authMiddleware.checkUserAuth], saveGapReason);
 
-router.delete(
-  "/basic_info/:type/:id",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.deleteStudentAcademicInfo
-);
-router.post(
-  "/saveStudentStudyPreferenceInfo",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentStudyPreferenceInfo
-);
+router.delete("/basic_info/:type/:id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.deleteStudentAcademicInfo);
+router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentStudyPreferenceInfo);
 router.post(
   "/studentPrimaryEducation/:type",
   [authMiddleware.checkUserAuth],
   uploadMultiple.uploadMultiple,
   SaveStudentDetailsController.saveStudentPrimaryEducation
 );
-router.get(
-  "/studentPrimaryEducation/:student_id",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.studentPrimaryEducationDetails
-);
+router.get("/studentPrimaryEducation/:student_id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.studentPrimaryEducationDetails);
 
 router.post(
   "/graduationDetails",
@@ -1056,47 +364,17 @@ router.post(
   SaveStudentDetailsController.saveStudentGraduationDetails
 );
 
-router.get(
-  "/getStudentBasicInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentBasicInfoById
-);
+router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentBasicInfoById);
 
-router.get(
-  "/getStudentStudyPrferenceInfo/:id",
-  [authMiddleware.checkUserAuth],
-  TaskController.getStudentStudyPreferenceInfoById
-);
+router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentStudyPreferenceInfoById);
 
-router.post(
-  "/study_preferences_details",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.createStudyPreferenceDetails
-);
-router.get(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.getStudyPreferenceDetails
-);
-router.put(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.updateStudyPreferenceDetails
-);
+router.post("/study_preferences_details", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.createStudyPreferenceDetails);
+router.get("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.getStudyPreferenceDetails);
+router.put("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.updateStudyPreferenceDetails);
 
-router.post(
-  "/additional_docs/:id",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  studentAdditionalController.saveAdditionalDocs
-);
+router.post("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.saveAdditionalDocs);
 
-router.get(
-  "/additional_docs/:id",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  studentAdditionalController.getAdditionalDocs
-);
+router.get("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.getAdditionalDocs);
 
 router.delete(
   "/additional_docs/:id/:name",
@@ -1106,55 +384,23 @@ router.delete(
 );
 
 // passport details
-router.get(
-  "/passport_details/:user_id",
-  [authMiddleware.checkUserAuth],
-  PassportDetailsController.getPassportDetailsByUserId
-);
+router.get("/passport_details/:user_id", [authMiddleware.checkUserAuth], PassportDetailsController.getPassportDetailsByUserId);
 router.post("/passport_details", PassportDetailsController.addPassportDetails);
-router.put(
-  "/passport_details/:id",
-  [authMiddleware.checkUserAuth],
-  PassportDetailsController.updatePassportDetails
-);
-router.delete(
-  "/passport_details/:id",
-  [authMiddleware.checkUserAuth],
-  PassportDetailsController.deletePassportDetails
-);
+router.put("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.updatePassportDetails);
+router.delete("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.deletePassportDetails);
 
-router.post(
-  "/family_information",
-  familyInformationController.addOrUpdateFamilyInformation
-);
-router.get(
-  "/family_information/:userId",
-  familyInformationController.getFamilyInformationByUserId
-);
+router.post("/family_information", familyInformationController.addOrUpdateFamilyInformation);
+router.get("/family_information/:userId", familyInformationController.getFamilyInformationByUserId);
 
-router.post(
-  "/employment_history/:id",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  saveEmploymentHistory
-);
-router.get(
-  "/employment_history/:id",
-  [authMiddleware.checkUserAuth],
-  getEmploymentHistory
-);
+router.post("/employment_history/:id", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
+router.get("/employment_history/:id", [authMiddleware.checkUserAuth], getEmploymentHistory);
 
-router.get(
-  "/kyc_details/:id",
-  [authMiddleware.checkUserAuth],
-  getKycDetails
-);
+router.get("/kyc_details/:id", [authMiddleware.checkUserAuth], getKycDetails);
 
-router.get(
-  "/fetch_all_user_docs/:id",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAllUserDocuments
-);
+router.post("/proceed_kyc", [authMiddleware.checkUserAuth], proceedToKyc);
 
+router.get("/kyc_pending", [authMiddleware.checkUserAuth], kycPendingDetails);
+
+router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 
 module.exports = router;
