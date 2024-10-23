@@ -53,11 +53,27 @@ const studyPreferencesByUserPrimaryInfoController = require("../controller/study
 const studyPreferencesDetailsController = require("../controller/study_preference_details");
 const visaProcessController = require("../controller/visa_process");
 const studentAdditionalController = require("../controller/studentAdditionalDocs");
-const { getStudentFundPlanDetails, saveStudentPlanDetails } = require("../controller/fund_paln_controller");
-const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_controller");
-const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
-const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
-const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
+const {
+  getStudentFundPlanDetails,
+  saveStudentPlanDetails,
+} = require("../controller/fund_paln_controller");
+const {
+  saveGapReason,
+  getAllGapReasons,
+} = require("../controller/gap_reason_controller");
+const {
+  saveEmploymentHistory,
+  getEmploymentHistory,
+} = require("../controller/employment_history_controller");
+const {
+  handleMulterError,
+  uploadPoliceClearenceDocs,
+} = require("../middleware/multer_error_handler");
+const {
+  getLeadHistory,
+  addLeadHistory,
+} = require("../controller/lead_history_controller");
+const { getKycDetails } = require("../controller/kyc_controller");
 
 const router = express.Router();
 
