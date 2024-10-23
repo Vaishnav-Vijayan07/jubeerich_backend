@@ -211,12 +211,20 @@ router.delete("/status/:id", [authMiddleware.checkUserAuth], StatusController.de
 router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController.getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
-router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
+// router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCreTl);
-router.get("/assigned_leads_regional_managers", [authMiddleware.checkUserAuth], LeadListingController.getAllAssignedLeadsRegionalMangers);
+router.get(
+  "/assigned_leads_regional_managers",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.getAllAssignedLeadsRegionalMangers
+);
 router.get("/leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCounsellorTL);
 router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
-router.get("/assigned_leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCounsellorTL);
+router.get(
+  "/assigned_leads_counsellor_tl",
+  [authMiddleware.checkUserAuth],
+  LeadListingController.getAssignedLeadsForCounsellorTL
+);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
 router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
@@ -298,8 +306,18 @@ router.post(
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
 
-router.post("/visa_decline_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaDeclineProcess);
-router.post("/visa_approve_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaApproveProcess);
+router.post(
+  "/visa_decline_process",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadMultiple,
+  visaProcessController.saveVisaDeclineProcess
+);
+router.post(
+  "/visa_approve_process",
+  [authMiddleware.checkUserAuth],
+  uploadMultiple.uploadMultiple,
+  visaProcessController.saveVisaApproveProcess
+);
 router.post("/travel_history", [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
 router.get("/visa_process/:id", [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
 router.delete("/delete_visa_item/:formName/:id", [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
@@ -341,14 +359,23 @@ router.get("/studentFundInfo/:id", [authMiddleware.checkUserAuth], getStudentFun
 router.post("/studentFundInfo", uploadMultiple.uploadFundDocs, [authMiddleware.checkUserAuth], saveStudentPlanDetails);
 
 router.get("/studentWorkInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentWorkInfoById);
-router.post("/studentWorkInfo", uploadMultiple.uploadWorkDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentWorkInfo);
+router.post(
+  "/studentWorkInfo",
+  uploadMultiple.uploadWorkDocs,
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentWorkInfo
+);
 
 router.get("/gapReason/:id/:type", [authMiddleware.checkUserAuth], getAllGapReasons);
 
 router.post("/gapReason", uploadMultiple.uploadGapDocs, [authMiddleware.checkUserAuth], saveGapReason);
 
 router.delete("/basic_info/:type/:id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.deleteStudentAcademicInfo);
-router.post("/saveStudentStudyPreferenceInfo", [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentStudyPreferenceInfo);
+router.post(
+  "/saveStudentStudyPreferenceInfo",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentStudyPreferenceInfo
+);
 router.post(
   "/studentPrimaryEducation/:type",
   [authMiddleware.checkUserAuth],
@@ -388,7 +415,11 @@ router.get("/passport_details/:user_id", [authMiddleware.checkUserAuth], Passpor
 router.post("/passport_details", PassportDetailsController.addPassportDetails);
 router.put("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.updatePassportDetails);
 router.delete("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.deletePassportDetails);
+router.put("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.updatePassportDetails);
+router.delete("/passport_details/:id", [authMiddleware.checkUserAuth], PassportDetailsController.deletePassportDetails);
 
+router.post("/family_information", familyInformationController.addOrUpdateFamilyInformation);
+router.get("/family_information/:userId", familyInformationController.getFamilyInformationByUserId);
 router.post("/family_information", familyInformationController.addOrUpdateFamilyInformation);
 router.get("/family_information/:userId", familyInformationController.getFamilyInformationByUserId);
 

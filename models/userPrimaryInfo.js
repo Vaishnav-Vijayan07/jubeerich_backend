@@ -208,11 +208,7 @@ module.exports = (sequelize, Sequelize) => {
       remark_details: {
         type: Sequelize.JSONB,
         allowNull: true,
-      },
-      kyc_status: {
-        type: Sequelize.ENUM("pending", "completed", "rejected"),
-        allowNull: true,
-      },
+      }
     },
     {
       underscored: true,
