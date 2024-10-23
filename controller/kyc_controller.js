@@ -1,8 +1,6 @@
 const db = require("../models");
-const { sequelize } = require("../models");
 
 exports.getKycDetails = async (req, res, next) => {
-    const transaction = await sequelize.transaction();
     try {
         const { id } = req.params;
         console.log('id', id);

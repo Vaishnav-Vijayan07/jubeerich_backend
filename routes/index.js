@@ -1153,7 +1153,7 @@ router.get(
 router.get(
   "/fetch_all_user_docs/:id",
   [authMiddleware.checkUserAuth],
-  LeadListingController.getAllUserDocuments
+  LeadListingController.getAllUserDocuments 
 );
 
 
