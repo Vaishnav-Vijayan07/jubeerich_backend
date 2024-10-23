@@ -1044,11 +1044,6 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         id: country.id,
       }));
 
-      // const examDetails = info.exams.map((exam)=> ({
-      //   exam_name: exam.exam_name,
-      //   marks: exam.marks,
-      // }))
-
       const examDetails = info.exams.map((exam) => ({
         exam_type: exam.exam_type,
         // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
