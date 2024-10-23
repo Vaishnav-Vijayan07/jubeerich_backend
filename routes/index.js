@@ -219,7 +219,7 @@ router.delete("/status/:id", [authMiddleware.checkUserAuth], StatusController.de
 router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController.getLeads);
 router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
-router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
+// router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCreTl);
 router.get(
   "/assigned_leads_regional_managers",
@@ -460,6 +460,5 @@ router.get("/family_information/:userId", familyInformationController.getFamilyI
 
 router.post("/employment_history/:id", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
 router.get("/employment_history/:id", [authMiddleware.checkUserAuth], getEmploymentHistory);
-
 
 module.exports = router;
