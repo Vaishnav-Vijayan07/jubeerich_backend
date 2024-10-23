@@ -41,7 +41,6 @@ const OrdinaryTaskController = require("../controller/ordinary_task_controller")
 const DocumentsListingController = require("../controller/documents_listing_controller");
 const PassportDetailsController = require("../controller/passport_details_controller");
 const familyInformationController = require("../controller/family_info_container");
-const CountryMangerController = require("../controller/country_manager_controller");
 
 // Import additional controllers
 const CampusController = require("../controller/campus_controller");
@@ -462,7 +461,5 @@ router.get("/family_information/:userId", familyInformationController.getFamilyI
 router.post("/employment_history/:id", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
 router.get("/employment_history/:id", [authMiddleware.checkUserAuth], getEmploymentHistory);
 
-// country manager
-router.get("/get_leads_for_country_manager", [authMiddleware.checkUserAuth], CountryMangerController.getLeadsForCountryManager);
 
 module.exports = router;
