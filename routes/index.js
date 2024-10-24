@@ -57,7 +57,7 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const { getKycDetails } = require("../controller/kyc_controller");
+const KycDetails = require("../controller/kyc_controller");
 
 const router = express.Router();
 
@@ -460,5 +460,7 @@ router.get("/family_information/:userId", familyInformationController.getFamilyI
 
 router.post("/employment_history/:id", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
 router.get("/employment_history/:id", [authMiddleware.checkUserAuth], getEmploymentHistory);
+router.get("/kyc_details", [authMiddleware.checkUserAuth], KycDetails.getKycDetails);
+
 
 module.exports = router;
