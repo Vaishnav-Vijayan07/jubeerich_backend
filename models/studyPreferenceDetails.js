@@ -68,6 +68,15 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
+      kyc_status: {
+        type: Sequelize.STRING,
+        defaultValue: "pending for submission",
+      },
+      application_status: {
+        type: Sequelize.ENUM("pending", "submitted", "approved", "rejected"),
+        defaultValue: "pending",
+        allowNull: false, // Optional: Ensures this field is not null
+      },
     },
     {
       tableName: "study_preference_details",

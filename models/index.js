@@ -3,16 +3,12 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const sequelize = new Sequelize(
-  process.env.DB_dbname,
-  process.env.DB_user,
-  process.env.DB_pss,
-  {
-    dialect: "postgres",
-    host: process.env.DB_host,
-    port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
-  }
-);
+const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, process.env.DB_pss, {
+  dialect: "postgres",
+  host: process.env.DB_host,
+  port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
+  minifyAliases : true,
+});
 
 const db = {};
 db.Sequelize = Sequelize;
@@ -51,10 +47,7 @@ db.adminUsers = require("./adminUsers")(sequelize, Sequelize);
 db.academicInfos = require("./academicInfo")(sequelize, Sequelize);
 db.workInfos = require("./workInfos")(sequelize, Sequelize);
 db.previousVisaDecline = require("./previousVisaDecline")(sequelize, Sequelize);
-db.previousVisaApprove = require("./previousVisaApproval")(
-  sequelize,
-  Sequelize
-);
+db.previousVisaApprove = require("./previousVisaApproval")(sequelize, Sequelize);
 db.travelHistory = require("./travelHistory")(sequelize, Sequelize);
 db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
 db.fundPlan = require("./fundPlan")(sequelize, Sequelize);
@@ -66,22 +59,27 @@ db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
 db.courseType = require("./courseType")(sequelize, Sequelize);
 db.studyPreference = require("./studyPreference")(sequelize, Sequelize);
-db.studyPreferenceDetails = require("./studyPreferenceDetails")(
-  sequelize,
-  Sequelize
-);
+db.studyPreferenceDetails = require("./studyPreferenceDetails")(sequelize, Sequelize);
 db.graduationDetails = require("./graduationDetails")(sequelize, Sequelize);
 db.educationDetails = require("./educationDetails")(sequelize, Sequelize);
-db.studentAdditionalDocs = require("./studentAdditionalDocs")(
-  sequelize,
-  Sequelize
-);
+db.studentAdditionalDocs = require("./studentAdditionalDocs")(sequelize, Sequelize);
 db.passportDetails = require("./passportDetails")(sequelize, Sequelize);
 db.familyInformation = require("./familyInformation")(sequelize, Sequelize);
 db.EmploymentHistory = require("./employmentHistory")(sequelize, Sequelize);
 db.userHistory = require("./history")(sequelize, Sequelize);
+db.application = require("./application")(sequelize, Sequelize);
 
 //Associations
+
+db.application.belongsTo(db.studyPreferenceDetails, {
+  foreignKey: "studyPrefernceId",
+  as: "studyPreferenceDetails",
+});
+
+db.studyPreferenceDetails.hasMany(db.application, {
+  foreignKey: "studyPrefernceId",
+  as: "application",
+});
 
 db.country.hasMany(db.comments, {
   foreignKey: "country_id",
@@ -183,6 +181,36 @@ db.studyPreferenceDetails.belongsTo(db.campus, {
 db.campus.hasMany(db.studyPreferenceDetails, {
   foreignKey: "campusId",
   as: "campus_preferred",
+});
+
+db.studyPreferenceDetails.belongsTo(db.university, {
+  foreignKey: "universityId",
+  as: "preferred_university",
+});
+
+db.university.hasMany(db.studyPreferenceDetails, {
+  foreignKey: "universityId",
+  as: "university_preferred",
+});
+
+db.studyPreferenceDetails.belongsTo(db.stream, {
+  foreignKey: "streamId",
+  as: "preferred_stream",
+});
+
+db.stream.hasMany(db.studyPreferenceDetails, {
+  foreignKey: "streamId",
+  as: "stream_preferred",
+});
+
+db.studyPreferenceDetails.belongsTo(db.courseType, {
+  foreignKey: "courseTypeId",
+  as: "preferred_course_type",
+});
+
+db.courseType.hasMany(db.studyPreferenceDetails, {
+  foreignKey: "courseTypeId",
+  as: "course_type_preferred",
 });
 
 // course relation
@@ -575,51 +603,51 @@ db.EmploymentHistory.belongsTo(db.userPrimaryInfo, {
 db.passportDetails.belongsTo(db.userPrimaryInfo, {
   foreignKey: "user_id",
   as: "passport_name",
-})
+});
 
 db.userPrimaryInfo.hasMany(db.passportDetails, {
-  foreignKey: 'user_id',
-  as: "passportDetails"
-})
+  foreignKey: "user_id",
+  as: "passportDetails",
+});
 
 db.familyInformation.belongsTo(db.userPrimaryInfo, {
   foreignKey: "user_id",
   as: "user_family",
-})
+});
 
 db.userPrimaryInfo.hasMany(db.familyInformation, {
-  foreignKey: 'user_id',
-  as: "familyDetails"
-})
+  foreignKey: "user_id",
+  as: "familyDetails",
+});
 
 db.userBasicInfo.belongsTo(db.userPrimaryInfo, {
   foreignKey: "user_id",
   as: "student_basic_info",
-})
+});
 
 db.userPrimaryInfo.hasOne(db.userBasicInfo, {
-  foreignKey: 'user_id',
-  as: "basic_info_details"
-})
+  foreignKey: "user_id",
+  as: "basic_info_details",
+});
 
 db.maritalStatus.hasMany(db.userBasicInfo, {
-  foreignKey: "marital_status", 
-  as: "students_maritals" 
+  foreignKey: "marital_status",
+  as: "students_maritals",
 });
 
 db.userBasicInfo.belongsTo(db.maritalStatus, {
   foreignKey: "marital_status",
-  as: "marital_status_details"
+  as: "marital_status_details",
 });
 
 db.studentAdditionalDocs.belongsTo(db.userPrimaryInfo, {
-  foreignKey: "student_id", 
-  as: "student_docs" 
+  foreignKey: "student_id",
+  as: "student_docs",
 });
 
 db.userPrimaryInfo.hasOne(db.studentAdditionalDocs, {
   foreignKey: "student_id",
-  as: "additional_docs"
+  as: "additional_docs",
 });
 
 module.exports = db;
