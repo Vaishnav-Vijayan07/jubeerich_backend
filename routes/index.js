@@ -425,8 +425,6 @@ router.get("/family_information/:userId", familyInformationController.getFamilyI
 
 router.post("/employment_history/:id", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, saveEmploymentHistory);
 router.get("/employment_history/:id", [authMiddleware.checkUserAuth], getEmploymentHistory);
-router.get("/kyc_details", [authMiddleware.checkUserAuth], KycDetails.getKycDetails);
-
 
 router.get("/kyc_details/:id", [authMiddleware.checkUserAuth], getKycDetails);
 
