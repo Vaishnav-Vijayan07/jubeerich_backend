@@ -259,24 +259,57 @@ exports.proceedToKyc = async (req, res) => {
 exports.kycPendingDetails = async (req, res) => {
   try {
     const applicationData = await db.application.findAll({
+      logging: console.log,
       include: [
         {
           model: db.studyPreferenceDetails,
           as: "studyPreferenceDetails",
           attributes: ["id", "kyc_status"],
+          required: true, // Set this association as required
           include: [
             {
               model: db.studyPreference,
               as: "studyPreference",
+              required: true, // Set this association as required
               include: [
-                {
-                  model: db.userPrimaryInfo,
-                  as: "userPrimaryInfo",
-                },
                 {
                   model: db.country,
                   as: "country",
-                  attributes: [["country_name", "country"]],
+                  attributes: ["country_name"],
+                  required: true, // Set this association as required
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["assign_type", "lead_received_date", "full_name", "counsiler_id"],
+                  required: true, // Set this association as required
+                  include: [
+                    {
+                      model: db.officeType,
+                      as: "office_type_name",
+                      attributes: ["office_type_name"],
+                      required: true, // Set this association as required
+                    },
+                    {
+                      model: db.leadSource,
+                      as: "source_name",
+                      attributes: ["source_name"],
+                      required: true, // Set this association as required
+                    },
+                    {
+                      model: db.adminUsers,
+                      as: "counselors",
+                      attributes: ["name", "id", "country_id"],
+                      through: { attributes: [] },
+                      subquery: false,
+                      required: true, // Set this association as required
+                      where: {
+                        country_id: {
+                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                        },
+                      },
+                    },
+                  ],
                 },
               ],
             },
@@ -284,16 +317,19 @@ exports.kycPendingDetails = async (req, res) => {
               model: db.course,
               as: "preferred_courses",
               attributes: ["course_name"],
+              required: true, // Set this association as required
             },
             {
               model: db.campus,
               as: "preferred_campus",
               attributes: ["campus_name"],
+              required: true, // Set this association as required
             },
             {
               model: db.university,
               as: "preferred_university",
               attributes: ["university_name"],
+              required: true, // Set this association as required
             },
           ],
         },
@@ -301,30 +337,10 @@ exports.kycPendingDetails = async (req, res) => {
       attributes: ["id"],
     });
 
-    // const { userPrimaryInfoId } = applicationData[0]?.studyPreferenceDetails?.studyPreference;
-
-    // console.log(userPrimaryInfoId);
-
-    // const userData = await db.userPrimaryInfo.findByPk(userPrimaryInfoId, {
-    //   include: [
-    //     {
-    //       model: db.officeType,
-    //       as: "office_type_name",
-    //       attributes: ["office_type_name"],
-    //     },
-    //     {
-    //       model: db.leadSource,
-    //       as: "source_name",
-    //       attributes: ["source_name"],
-    //     },
-    //   ],
-    //   attributes:["id"]
-    // });
-
     res.status(200).json({
       status: true,
       message: "Data retrieved successfully",
-      data: { applicationData },
+      data: applicationData,
     });
   } catch (error) {
     console.log(error);
