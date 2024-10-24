@@ -7,14 +7,14 @@ exports.getKycDetails = async (req, res, next) => {
 
         const personalDetails = await db.userPrimaryInfo.findOne({
             where: { id: id },
-            attributes: ["id", "full_name", "email", "phone", "source_id"],
+            attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id"],
         });
 
         if (!personalDetails) {
             throw new Error('User not found');
         }
         
-        const [leadSource, branches, assignedCounselor, createdBy, educationDetails, studyPreferences, previousVisaDeclines, previousVisaApprovals, travelHistories, basicInfoDetails, passportDetails, workInfos, familyDetails, fundPlan, exams, graduationDetails, gapReasons, userEmploymentHistories] = await Promise.all([
+        const [leadSource, branches, assignedCounselor, createdBy, educationDetails, studyPreferences, previousVisaDeclines, previousVisaApprovals, travelHistories, basicInfoDetails, passportDetails, workInfos, familyDetails, fundPlan, exams, graduationDetails, gapReasons, userEmploymentHistories, channel_name] = await Promise.all([
             personalDetails.getSource_name(),
             personalDetails.getBranch_name(),
             personalDetails.getAssigned_branch_counselor_name(),
@@ -61,7 +61,6 @@ exports.getKycDetails = async (req, res, next) => {
                             model: db.university,
                             as: "declined_university_applied",
                             required: false,
-                            // attributes: ["id","university_name", "location"],
                         },
                     ]
                 }
@@ -123,7 +122,8 @@ exports.getKycDetails = async (req, res, next) => {
             personalDetails.getExams({ where: { student_id: id } }), 
             personalDetails.getGraduationDetails({ where: { student_id: id } }),
             personalDetails.getGapReasons({ where: { student_id: id } }),
-            personalDetails.getUserEmploymentHistories({ where: { student_id: id } })
+            personalDetails.getUserEmploymentHistories({ where: { student_id: id } }),
+            personalDetails.getChannel_name()
         ]);
         
 
@@ -133,12 +133,6 @@ exports.getKycDetails = async (req, res, next) => {
                 message: "User not found",
             });
         }
-
-        // return res.status(200).json({
-        //     status: true,
-        //     personalDetails,
-        //     message: "Data retrieved successfully",
-        // });
 
         return res.status(200).json({
             status: true,
@@ -161,6 +155,7 @@ exports.getKycDetails = async (req, res, next) => {
             graduationDetails: graduationDetails,
             gapReasons: gapReasons,
             userEmploymentHistories: userEmploymentHistories,
+            channel_name: channel_name,
             message: "Data retrieved successfully",
         });
 
