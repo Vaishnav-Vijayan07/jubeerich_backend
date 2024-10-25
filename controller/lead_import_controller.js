@@ -187,8 +187,6 @@ exports.bulkUpload = async (req, res) => {
     // Save valid data to UserPrimaryInfo and UserCountries
     if (jsonData.length > 0) {
       const createdUsers = await UserPrimaryInfo.bulkCreate(jsonData, { returning: true });
-      console.log("json data ======>", jsonData);
-      
 
       // Collect user ID and preferred country IDs
       for (const user of createdUsers) {
