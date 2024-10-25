@@ -595,7 +595,7 @@ const getLeastAssignedCre = async () => {
           Sequelize.literal(`(
               SELECT COUNT(*)
               FROM "user_primary_info"
-              WHERE "user_primary_info"."assigned_cre" = "admin_users"."id"
+              WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
             )`),
           "assignment_count",
         ],
