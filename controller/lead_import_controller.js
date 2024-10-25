@@ -7,6 +7,7 @@ const OfficeType = db.officeType;
 const Region = db.region;
 const Franchise = db.franchise;
 const UserPrimaryInfo = db.userPrimaryInfo;
+const Country = db.country;
 const UserCountries = db.userContries; // Import the UserCountries model
 const fs = require("fs");
 const path = require("path");
@@ -32,7 +33,8 @@ exports.bulkUpload = async (req, res) => {
     const franchises = await Franchise.findAll();
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
-    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } }); // Find the user_id of cre_tl
+    const countries = await Country.findAll();
+    const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } }); // Find the user_id of cre_tl
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -62,6 +64,11 @@ exports.bulkUpload = async (req, res) => {
 
     const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
       acc[officeType.slug] = officeType.id;
+      return acc;
+    }, {});
+
+    const countryCodeToId = countries.reduce((acc, country) => {
+      acc[country.country_code] = country.id;
       return acc;
     }, {});
 
@@ -98,16 +105,21 @@ exports.bulkUpload = async (req, res) => {
               const emailKey = email || "";
               const phoneKey = phone || "";
 
-              // Handle preferred_country, ensuring it can be a single ID or comma-separated list
+              // Handle preferred_country as a comma-separated string of country codes
               let preferred_country = row.getCell(11).value;
-              if (typeof preferred_country === "string") {
+
+              if (preferred_country && typeof preferred_country === "string") {
                 preferred_country = preferred_country
-                  .split(",")
-                  .map((id) => parseInt(id.trim(), 11))
-                  .filter((id) => !isNaN(id));
+                  .split(",") // Split by commas
+                  .map((code) => code.trim()) // Remove any whitespace around codes
+                  .filter((code) => countryCodeToId[code]) // Filter out invalid codes
+                  .map((code) => countryCodeToId[code]); // Map to country IDs
               } else {
-                preferred_country = [parseInt(preferred_country, 10)].filter((id) => !isNaN(id));
+                // Default to an empty array if no valid codes are found
+                preferred_country = [];
               }
+
+              console.log("preferred_country after processing ====>", preferred_country);
 
               const rowData = {
                 lead_received_date: row.getCell(2).value,
@@ -184,16 +196,38 @@ exports.bulkUpload = async (req, res) => {
         const franchiseId = user.franchise_id;
 
         console.log("franchiseId ======================>", franchiseId);
+        console.log("preferredCountries ===>", preferredCountries);
 
-        // Create user-countries associations
-        const userCountries = preferredCountries.map((countryId) => ({
-          user_primary_info_id: userId,
-          country_id: countryId,
-        }));
+        // Retrieve existing user-country associations for this user
+        const existingUserCountries = await UserCountries.findAll({
+          where: {
+            user_primary_info_id: userId,
+          },
+          attributes: ["country_id"],
+        });
+
+        const existingCountryIds = new Set(existingUserCountries.map((uc) => uc.country_id));
+
+        const userCountries = preferredCountries
+          .filter((countryId) => !existingCountryIds.has(countryId)) // Exclude duplicates
+          .map((countryId) => ({
+            user_primary_info_id: userId,
+            country_id: countryId,
+          }));
 
         if (userCountries.length > 0) {
           await UserCountries.bulkCreate(userCountries);
         }
+
+        // Create user-countries associations
+        // const userCountries = preferredCountries.map((countryId) => ({
+        //   user_primary_info_id: userId,
+        //   country_id: countryId,
+        // }));
+
+        // if (userCountries.length > 0) {
+        //   await UserCountries.bulkCreate(userCountries);
+        // }
 
         if (franchiseId) {
           let leastAssignedUsers = [];

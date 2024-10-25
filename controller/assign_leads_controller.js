@@ -38,19 +38,16 @@ exports.assignCres = async (req, res) => {
       }
     }
 
-    const { "access_role.role_name": role_name } = await db.adminUsers.findByPk(
-      cre_id,
-      {
-        include: [
-          {
-            model: db.accessRoles,
-            attributes: ["role_name"],
-          },
-        ],
-        attributes: [],
-        raw: true, // Ensure it returns plain data, not a Sequelize instance
-      }
-    );
+    const { "access_role.role_name": role_name } = await db.adminUsers.findByPk(cre_id, {
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
+      attributes: [],
+      raw: true, // Ensure it returns plain data, not a Sequelize instance
+    });
 
     console.log(cre_id, role_name);
 
@@ -72,9 +69,7 @@ exports.assignCres = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries =
-          userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
-          "Unknown Country";
+        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
@@ -96,13 +91,7 @@ exports.assignCres = async (req, res) => {
           );
 
           // add the details to lead history
-          await addLeadHistory(
-            user_id,
-            `Task assigned to ${role_name}`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(user_id, `Task assigned to ${role_name}`, userId, null, transaction);
         } else {
           // Create new task
           await db.tasks.create(
@@ -117,13 +106,7 @@ exports.assignCres = async (req, res) => {
             { transaction }
           );
 
-          await addLeadHistory(
-            user_id,
-            `Task assigned to ${role_name}`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(user_id, `Task assigned to ${role_name}`, userId, null, transaction);
         }
 
         // Update assigned_cre for the user
@@ -235,13 +218,7 @@ exports.assignCounselorTL = async (req, res) => {
           },
           { where: { id: user_id }, transaction }
         );
-        await addLeadHistory(
-          user_id,
-          `Lead assigned to Branch counsellor TL`,
-          userId,
-          null,
-          transaction
-        );
+        await addLeadHistory(user_id, `Lead assigned to Branch counsellor TL`, userId, null, transaction);
       })
     );
 
@@ -315,9 +292,7 @@ exports.assignBranchCounselors = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries =
-          userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
-          "Unknown Country";
+        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
@@ -421,11 +396,8 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           as: "preferredCountries",
         },
       });
-      const countries =
-        userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
-        "Unknown Country";
-      const currentCounselor =
-        leastCounselor[index % leastCounselor.length].user_id;
+      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
 
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
@@ -571,9 +543,7 @@ exports.autoAssign = async (req, res) => {
           as: "preferredCountries",
         },
       });
-      const countries =
-        userInfo.preferredCountries.map((c) => c.country_name).join(", ") ||
-        "Unknown Country";
+      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
       const currentCre = leastCre[index % leastCre.length].user_id;
 
       const dueDate = new Date();
@@ -590,10 +560,7 @@ exports.autoAssign = async (req, res) => {
         },
         { transaction }
       );
-      return UserPrimaryInfo.update(
-        { assigned_cre: currentCre, assign_type: "auto_assign" },
-        { where: { id }, transaction }
-      );
+      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign" }, { where: { id }, transaction });
     });
 
     // Perform bulk update
@@ -617,7 +584,6 @@ exports.autoAssign = async (req, res) => {
   }
 };
 
-// round robin method
 const getLeastAssignedCre = async () => {
   try {
     // Fetch all CREs with their current assignment counts
@@ -640,7 +606,13 @@ const getLeastAssignedCre = async () => {
           { role_id: process.env.CRE_TL_ID },
         ],
       },
-      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+      order: [
+        [Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "user_primary_info"
+            WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
+          )`), 'ASC']
+      ],
     });
 
     return creList.map((cre) => ({
@@ -648,10 +620,46 @@ const getLeastAssignedCre = async () => {
       assignment_count: parseInt(cre.dataValues.assignment_count, 10),
     }));
   } catch (error) {
-    console.error("Error fetching CREs with assignment counts:", error);
+    console.error("Error fetching CREs with assignment counts:", error.message || error);
     throw error;
   }
 };
+
+// round robin method
+// const getLeastAssignedCre = async () => {
+//   try {
+//     // Fetch all CREs with their current assignment counts
+//     const creList = await db.adminUsers.findAll({
+//       attributes: [
+//         ["id", "user_id"],
+//         "username",
+//         [
+//           Sequelize.literal(`(
+//               SELECT COUNT(*)
+//               FROM "user_primary_info"
+//               WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
+//             )`),
+//           "assignment_count",
+//         ],
+//       ],
+//       where: {
+//         [Sequelize.Op.or]: [
+//           { role_id: process.env.CRE_ID },
+//           { role_id: process.env.CRE_TL_ID },
+//         ],
+//       },
+//       order: [[Sequelize.literal("assignment_count"), "ASC"]],
+//     });
+
+//     return creList.map((cre) => ({
+//       user_id: cre.dataValues.user_id,
+//       assignment_count: parseInt(cre.dataValues.assignment_count, 10),
+//     }));
+//   } catch (error) {
+//     console.error("Error fetching CREs with assignment counts:", error);
+//     throw error;
+//   }
+// };
 
 const getLeastAssignedCounselors = async () => {
   try {
