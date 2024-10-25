@@ -197,17 +197,37 @@ exports.bulkUpload = async (req, res) => {
 
         console.log("franchiseId ======================>", franchiseId);
         console.log("preferredCountries ===>", preferredCountries);
-        
 
-        // Create user-countries associations
-        const userCountries = preferredCountries.map((countryId) => ({
-          user_primary_info_id: userId,
-          country_id: countryId,
-        }));
+        // Retrieve existing user-country associations for this user
+        const existingUserCountries = await UserCountries.findAll({
+          where: {
+            user_primary_info_id: userId,
+          },
+          attributes: ["country_id"],
+        });
+
+        const existingCountryIds = new Set(existingUserCountries.map((uc) => uc.country_id));
+
+        const userCountries = preferredCountries
+          .filter((countryId) => !existingCountryIds.has(countryId)) // Exclude duplicates
+          .map((countryId) => ({
+            user_primary_info_id: userId,
+            country_id: countryId,
+          }));
 
         if (userCountries.length > 0) {
           await UserCountries.bulkCreate(userCountries);
         }
+
+        // Create user-countries associations
+        // const userCountries = preferredCountries.map((countryId) => ({
+        //   user_primary_info_id: userId,
+        //   country_id: countryId,
+        // }));
+
+        // if (userCountries.length > 0) {
+        //   await UserCountries.bulkCreate(userCountries);
+        // }
 
         if (franchiseId) {
           let leastAssignedUsers = [];
