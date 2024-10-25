@@ -7,6 +7,7 @@ const OfficeType = db.officeType;
 const Region = db.region;
 const Franchise = db.franchise;
 const UserPrimaryInfo = db.userPrimaryInfo;
+const Country = db.country;
 const UserCountries = db.userContries; // Import the UserCountries model
 const fs = require("fs");
 const path = require("path");
@@ -32,7 +33,8 @@ exports.bulkUpload = async (req, res) => {
     const franchises = await Franchise.findAll();
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
-    const creTl = await AdminUsers.findOne({ where: { role_id: 4 } }); // Find the user_id of cre_tl
+    const countries = await Country.findAll(); 
+    const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } }); // Find the user_id of cre_tl
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -62,6 +64,11 @@ exports.bulkUpload = async (req, res) => {
 
     const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
       acc[officeType.slug] = officeType.id;
+      return acc;
+    }, {});
+
+    const countryCodeToId = countries.reduce((acc, country) => {
+      acc[country.country_code] = country.id;
       return acc;
     }, {});
 
@@ -100,14 +107,19 @@ exports.bulkUpload = async (req, res) => {
 
               // Handle preferred_country, ensuring it can be a single ID or comma-separated list
               let preferred_country = row.getCell(11).value;
+              console.log("Entered Preffered Country ===>", preferred_country);
+              
               if (typeof preferred_country === "string") {
                 preferred_country = preferred_country
                   .split(",")
-                  .map((id) => parseInt(id.trim(), 11))
-                  .filter((id) => !isNaN(id));
+                  .map((code) => countryCodeToId[code.trim()] || null)
+                  .filter((id) => id !== null); // Filter out invalid codes
               } else {
-                preferred_country = [parseInt(preferred_country, 10)].filter((id) => !isNaN(id));
+                preferred_country = [countryCodeToId[preferred_country.trim()]] || [];
               }
+
+              console.log("preferred_country after ====>", preferred_country);
+              
 
               const rowData = {
                 lead_received_date: row.getCell(2).value,

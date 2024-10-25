@@ -16,12 +16,7 @@ module.exports = (sequelize, Sequelize) => {
     isd: {
       type: Sequelize.STRING,
       allowNull: true,
-    },
-    slug: {
-      type: Sequelize.STRING(255),
-      allowNull: true,
-      unique: true,
-    },
+    }
   });
 
   return Country;
