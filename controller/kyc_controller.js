@@ -7,7 +7,7 @@ exports.getKycDetails = async (req, res, next) => {
 
         const personalDetails = await db.userPrimaryInfo.findOne({
             where: { id: id },
-            attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id"],
+            attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id", "branch_id", "assigned_branch_counselor"],
         });
 
         if (!personalDetails) {
@@ -125,7 +125,6 @@ exports.getKycDetails = async (req, res, next) => {
             personalDetails.getUserEmploymentHistories({ where: { student_id: id } }),
             personalDetails.getChannel_name()
         ]);
-        
 
         if (!personalDetails) {
             return res.status(404).json({
