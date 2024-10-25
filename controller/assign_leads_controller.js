@@ -416,6 +416,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
       return UserPrimaryInfo.update(
         {
           assigned_branch_counselor: currentCounselor,
+          updated_by: userId,
           assign_type: "auto_assign",
         },
         { where: { id }, transaction }
@@ -560,7 +561,10 @@ exports.autoAssign = async (req, res) => {
         },
         { transaction }
       );
-      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign" }, { where: { id }, transaction });
+      return UserPrimaryInfo.update(
+        { assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId },
+        { where: { id }, transaction }
+      );
     });
 
     // Perform bulk update
@@ -601,17 +605,17 @@ const getLeastAssignedCre = async () => {
         ],
       ],
       where: {
-        [Sequelize.Op.or]: [
-          { role_id: process.env.CRE_ID },
-          { role_id: process.env.CRE_TL_ID },
-        ],
+        [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
       },
       order: [
-        [Sequelize.literal(`(
+        [
+          Sequelize.literal(`(
             SELECT COUNT(*)
             FROM "user_primary_info"
             WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
-          )`), 'ASC']
+          )`),
+          "ASC",
+        ],
       ],
     });
 
