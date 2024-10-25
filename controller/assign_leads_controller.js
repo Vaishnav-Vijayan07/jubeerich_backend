@@ -601,9 +601,18 @@ const getLeastAssignedCre = async () => {
         ],
       ],
       where: {
-        [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+        [Sequelize.Op.or]: [
+          { role_id: process.env.CRE_ID },
+          { role_id: process.env.CRE_TL_ID },
+        ],
       },
-      order: [[Sequelize.literal("assignment_count"), "ASC"]],
+      order: [
+        [Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "user_primary_info"
+            WHERE "user_primary_info"."assigned_cre" = "admin_user"."id"
+          )`), 'ASC']
+      ],
     });
 
     return creList.map((cre) => ({
@@ -611,7 +620,7 @@ const getLeastAssignedCre = async () => {
       assignment_count: parseInt(cre.dataValues.assignment_count, 10),
     }));
   } catch (error) {
-    console.error("Error fetching CREs with assignment counts:", error);
+    console.error("Error fetching CREs with assignment counts:", error.message || error);
     throw error;
   }
 };
