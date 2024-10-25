@@ -35,8 +35,7 @@ app.use((err, req, res, next) => {
 });
 
 db.sequelize
-  // .sync({ alter: true })
-  .authenticate()
+  .sync({ alter: true })
   .then(async (result) => {
     app.listen(port, () => {
       console.log(`Backend listens to ${port}`);
