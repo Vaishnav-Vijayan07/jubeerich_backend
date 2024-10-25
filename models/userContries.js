@@ -18,6 +18,7 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
         allowNull: false,
+        onDelete: "CASCADE",
       },
     },
     {
