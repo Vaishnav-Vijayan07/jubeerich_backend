@@ -33,7 +33,7 @@ exports.bulkUpload = async (req, res) => {
     const franchises = await Franchise.findAll();
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
-    const countries = await Country.findAll(); 
+    const countries = await Country.findAll();
     const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } }); // Find the user_id of cre_tl
 
     const sourceSlugToId = sources.reduce((acc, source) => {
@@ -105,21 +105,21 @@ exports.bulkUpload = async (req, res) => {
               const emailKey = email || "";
               const phoneKey = phone || "";
 
-              // Handle preferred_country, ensuring it can be a single ID or comma-separated list
+              // Handle preferred_country as a comma-separated string of country codes
               let preferred_country = row.getCell(11).value;
-              console.log("Entered Preffered Country ===>", preferred_country);
-              
-              if (typeof preferred_country === "string") {
+
+              if (preferred_country && typeof preferred_country === "string") {
                 preferred_country = preferred_country
-                  .split(",")
-                  .map((code) => countryCodeToId[code.trim()] || null)
-                  .filter((id) => id !== null); // Filter out invalid codes
+                  .split(",") // Split by commas
+                  .map((code) => code.trim()) // Remove any whitespace around codes
+                  .filter((code) => countryCodeToId[code]) // Filter out invalid codes
+                  .map((code) => countryCodeToId[code]); // Map to country IDs
               } else {
-                preferred_country = [countryCodeToId[preferred_country.trim()]] || [];
+                // Default to an empty array if no valid codes are found
+                preferred_country = [];
               }
 
-              console.log("preferred_country after ====>", preferred_country);
-              
+              console.log("preferred_country after processing ====>", preferred_country);
 
               const rowData = {
                 lead_received_date: row.getCell(2).value,
@@ -196,6 +196,8 @@ exports.bulkUpload = async (req, res) => {
         const franchiseId = user.franchise_id;
 
         console.log("franchiseId ======================>", franchiseId);
+        console.log("preferredCountries ===>", preferredCountries);
+        
 
         // Create user-countries associations
         const userCountries = preferredCountries.map((countryId) => ({
