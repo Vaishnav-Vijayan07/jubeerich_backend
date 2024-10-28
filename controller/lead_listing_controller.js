@@ -148,13 +148,7 @@ exports.getAllLeads = async (req, res) => {
 
     const country_id = adminUser?.country_id;
 
-    console.log("role id ===========>", country_id, roleId);
-    
-
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
-
-      console.log("roleId == process.env.COUNTRY_MANAGER_ID ====>", roleId, process.env.COUNTRY_MANAGER_ID);
-      
       
       userPrimaryInfos = await UserPrimaryInfo.findAll({
         where: { is_deleted: false },
@@ -180,7 +174,7 @@ exports.getAllLeads = async (req, res) => {
             as: "preferredCountries",
             attributes: ["country_name", "id"],
             through: { attributes: [] },
-            required: false,
+            required: true,
             where: country_id ? { id: country_id } : {},
           },
           {
