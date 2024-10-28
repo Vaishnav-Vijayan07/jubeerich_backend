@@ -57,13 +57,13 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const { getKycDetails, proceedToKyc, kycPendingDetails } = require("../controller/kyc_controller");
+const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC } = require("../controller/kyc_controller");
 
 const router = express.Router();
 
 //Lead histoy routes
 
-router.get("/lead_history/:id", [authMiddleware.checkUserAuth], getLeadHistory);
+router.get("/lead_history/:id/:country", [authMiddleware.checkUserAuth], getLeadHistory);
 
 //post route for creating user history
 router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
@@ -177,7 +177,7 @@ router.put("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskCon
 router.delete("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskController.deleteTask);
 
 // Comments routes
-router.get("/comment/:leadId", [authMiddleware.checkUserAuth], CommentsController.getCommentsByLeadId);
+router.get("/comment/:leadId/:countryFilter", [authMiddleware.checkUserAuth], CommentsController.getCommentsByLeadId);
 router.post("/comment", [authMiddleware.checkUserAuth], CommentsController.createComment);
 router.put("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.updateComment);
 router.delete("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.deleteComment);
@@ -430,7 +430,15 @@ router.get("/kyc_details/:id", [authMiddleware.checkUserAuth], getKycDetails);
 
 router.post("/proceed_kyc", [authMiddleware.checkUserAuth], proceedToKyc);
 
+router.post("/kyc_reject", [authMiddleware.checkUserAuth], rejectKYC);
+
+router.post("/approve_kyc", [authMiddleware.checkUserAuth], approveKYC);
+
 router.get("/kyc_pending", [authMiddleware.checkUserAuth], kycPendingDetails);
+
+router.get("/kyc_rejected", [authMiddleware.checkUserAuth], kycRejectedDetails);
+
+router.get("/kyc_approved", [authMiddleware.checkUserAuth], kycApprovedDetails);
 
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 

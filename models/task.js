@@ -52,6 +52,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
       },
+      is_rejected: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      kyc_remarks: {
+        type: Sequelize.JSONB,
+        allowNull: true
+      }
     },
     {
       tableName: "tasks",
