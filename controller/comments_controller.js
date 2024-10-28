@@ -1,5 +1,6 @@
 const { where } = require("sequelize");
 const db = require("../models");
+const { getUniqueCountryData, getUserDataWithCountry } = require("../utils/academic_query_helper");
 const Comments = db.comments;
 
 // Get all comments
@@ -21,8 +22,33 @@ exports.getAllComments = async (req, res) => {
 
 exports.getCommentsByLeadId = async (req, res) => {
   try {
-    const leadId = req.params.leadId;
+    const { leadId, countryFilter } = req.params;
+
+    const lead = await db.userPrimaryInfo.findByPk(leadId);
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found!",
+      });
+    }
+
+    const countriesInComments = await getUserDataWithCountry(leadId, db.comments, "comments");
+
+    console.log(JSON.stringify(countriesInComments, null, 2));
+    
+
+    const uniqueCountryData = getUniqueCountryData(countriesInComments);
+
+    let isfilterAvailable = countryFilter !== "all";
+
+    let where = {};
+    if (isfilterAvailable) {
+      // Check if country is not "all"
+      where = { id: Number(countryFilter) }; // Set where condition for country ID
+    }
+
     const comments = await Comments.findAll({
+      order: [["createdAt", "DESC"]],
       where: { lead_id: leadId },
       include: [
         {
@@ -33,22 +59,33 @@ exports.getCommentsByLeadId = async (req, res) => {
         {
           model: db.country,
           as: "country",
-          attributes: ["country_name"],
+          attributes: ["country_name","id"],
+          where,
           required: false,
         },
       ],
     });
 
-    const formattedComments = comments.map((comment) => {
-      const commentJson = comment.toJSON();
-      return {
-        ...commentJson,
-        user: commentJson.user.name,
-      };
-    });
+    let finalisedHistory = [];
+
+    if (isfilterAvailable) {
+      finalisedHistory = [
+        ...comments.filter((history) => history.country?.id === Number(countryFilter)),
+        ...comments.filter((history) => !history.country_id && !history.country),
+      ];
+    }
+
+    console.log(`Finalised history length for lead ${leadId} and country ${countryFilter}:`, finalisedHistory.length);
+    console.log(`Total comments length for lead ${leadId}:`, comments.length);
+    
+    
+
     res.json({
       status: true,
-      data: formattedComments,
+      data: {
+        countries: uniqueCountryData,
+        formattedComments: isfilterAvailable ? finalisedHistory : comments,
+      },
     });
   } catch (error) {
     console.error("Error fetching comments:", error);
@@ -64,10 +101,7 @@ exports.createComment = async (req, res) => {
   const { lead_id, user_id, comment } = req.body;
   const { role_id } = req;
 
-  const [lead, adminUser] = await Promise.all([
-    db.userPrimaryInfo.findByPk(lead_id),
-    db.adminUsers.findByPk(user_id),
-  ]);
+  const [lead, adminUser] = await Promise.all([db.userPrimaryInfo.findByPk(lead_id), db.adminUsers.findByPk(user_id)]);
 
   // Handle not found cases
   if (!lead) {

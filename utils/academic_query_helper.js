@@ -105,9 +105,7 @@ const batchUpsertExamDocs = async (model, records, transaction) => {
             deleteFile("examDocuments", docName);
           }
 
-          updatePromises.push(
-            existingRecord.update(updateFields, { transaction })
-          );
+          updatePromises.push(existingRecord.update(updateFields, { transaction }));
         }
       }
     }
@@ -127,75 +125,35 @@ const batchUpsertGraduationData = async (model, records, transaction) => {
     "individual_marksheet",
   ];
 
-  return batchUpsertData(
-    model,
-    records,
-    transaction,
-    fileFields,
-    "graduationDocuments"
-  );
+  return batchUpsertData(model, records, transaction, fileFields, "graduationDocuments");
 };
 
 const batchUpsertWorkData = async (model, records, transaction) => {
-  const fileFields = [
-    "appointment_document",
-    "bank_statement",
-    "job_offer_document",
-    "payslip_document",
-    "experience_certificate",
-  ];
+  const fileFields = ["appointment_document", "bank_statement", "job_offer_document", "payslip_document", "experience_certificate"];
 
-  return batchUpsertData(
-    model,
-    records,
-    transaction,
-    fileFields,
-    "workDocuments"
-  );
+  return batchUpsertData(model, records, transaction, fileFields, "workDocuments");
 };
 
 const batchUpsertFundData = async (model, records, transaction) => {
   const fileFields = ["supporting_document"];
 
-  return batchUpsertData(
-    model,
-    records,
-    transaction,
-    fileFields,
-    "fundDocuments"
-  );
+  return batchUpsertData(model, records, transaction, fileFields, "fundDocuments");
 };
 
 const batchUpsertGapReasonData = async (model, records, transaction) => {
   const fileFields = ["supporting_document"];
 
-  return batchUpsertData(
-    model,
-    records,
-    transaction,
-    fileFields,
-    "gapDocuments"
-  );
+  return batchUpsertData(model, records, transaction, fileFields, "gapDocuments");
 };
 const batchUpsertExamData = async (model, records, transaction) => {
   const fileFields = ["score_card"];
 
-  return batchUpsertData(
-    model,
-    records,
-    transaction,
-    fileFields,
-    "examDocuments"
-  );
+  return batchUpsertData(model, records, transaction, fileFields, "examDocuments");
 };
 
 const addOrUpdateAcademic = async (academicRecords, transaction) => {
   try {
-    await batchUpsertAcademicInfo(
-      db.academicInfos,
-      academicRecords,
-      transaction
-    );
+    await batchUpsertAcademicInfo(db.academicInfos, academicRecords, transaction);
     return { success: true };
   } catch (error) {
     console.log(error);
@@ -255,11 +213,7 @@ const addOrUpdateWork = async (workRecords, transaction) => {
   }
 };
 
-const addOrUpdateStudyPreference = async (
-  studyPreferenceRecords,
-  studyPreferenceId,
-  transaction
-) => {
+const addOrUpdateStudyPreference = async (studyPreferenceRecords, studyPreferenceId, transaction) => {
   // Map records to include the studyPreferenceId
   const records = studyPreferenceRecords.map((record) => ({
     ...record,
@@ -269,11 +223,7 @@ const addOrUpdateStudyPreference = async (
   console.log("STUDY RECORDS", records);
 
   try {
-    await batchUpsertStudyPreference(
-      db.studyPreferenceDetails,
-      records,
-      transaction
-    );
+    await batchUpsertStudyPreference(db.studyPreferenceDetails, records, transaction);
     return { success: true };
   } catch (error) {
     console.log(error);
@@ -283,11 +233,7 @@ const addOrUpdateStudyPreference = async (
 
 const addOrUpdateGraduationData = async (graduationDetails, transaction) => {
   try {
-    await batchUpsertGraduationData(
-      db.graduationDetails,
-      graduationDetails,
-      transaction
-    );
+    await batchUpsertGraduationData(db.graduationDetails, graduationDetails, transaction);
     return { success: true };
   } catch (error) {
     console.log(error);
@@ -353,6 +299,32 @@ const addLeadHistory = async (
   }
 };
 
+const getUserDataWithCountry = async (leadId, dbToFetchFrom, type) => {
+  let where = type == "history" ? { student_id: leadId } : { lead_id: leadId };
+
+  return await dbToFetchFrom.findAll({
+    where,
+    include: [
+      {
+        model: db.country,
+        as: "country",
+        attributes: ["country_name", "id"],
+      },
+    ],
+  });
+};
+
+const getUniqueCountryData = (data) => {
+  const countryMap = new Map();
+  data.forEach((item) => {
+    const { country } = item;
+    if (country && country.country_name && country.id && !countryMap.has(country.id)) {
+      countryMap.set(country.id, { country: country.country_name, id: country.id });
+    }
+  });
+  return Array.from(countryMap.values());
+};
+
 module.exports = {
   addOrUpdateAcademic,
   addOrUpdateWork,
@@ -363,4 +335,6 @@ module.exports = {
   addOrUpdateGapReasonData,
   addOrUpdateExamData,
   addLeadHistory,
+  getUserDataWithCountry,
+  getUniqueCountryData,
 };
