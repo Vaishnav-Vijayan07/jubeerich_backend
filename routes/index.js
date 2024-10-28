@@ -57,7 +57,7 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const { getKycDetails, proceedToKyc, kycPendingDetails } = require("../controller/kyc_controller");
+const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC } = require("../controller/kyc_controller");
 
 const router = express.Router();
 
@@ -430,7 +430,15 @@ router.get("/kyc_details/:id", [authMiddleware.checkUserAuth], getKycDetails);
 
 router.post("/proceed_kyc", [authMiddleware.checkUserAuth], proceedToKyc);
 
+router.post("/kyc_reject", [authMiddleware.checkUserAuth], rejectKYC);
+
+router.post("/approve_kyc", [authMiddleware.checkUserAuth], approveKYC);
+
 router.get("/kyc_pending", [authMiddleware.checkUserAuth], kycPendingDetails);
+
+router.get("/kyc_rejected", [authMiddleware.checkUserAuth], kycRejectedDetails);
+
+router.get("/kyc_approved", [authMiddleware.checkUserAuth], kycApprovedDetails);
 
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 

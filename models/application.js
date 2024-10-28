@@ -15,6 +15,14 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      is_rejected_kyc: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+      application_status: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      }
     },
     {
       tableName: "application_details",
