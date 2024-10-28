@@ -63,7 +63,7 @@ const router = express.Router();
 
 //Lead histoy routes
 
-router.get("/lead_history/:id", [authMiddleware.checkUserAuth], getLeadHistory);
+router.get("/lead_history/:id/:country", [authMiddleware.checkUserAuth], getLeadHistory);
 
 //post route for creating user history
 router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
@@ -177,7 +177,7 @@ router.put("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskCon
 router.delete("/ordinary_task/:id", [authMiddleware.checkUserAuth], OrdinaryTaskController.deleteTask);
 
 // Comments routes
-router.get("/comment/:leadId", [authMiddleware.checkUserAuth], CommentsController.getCommentsByLeadId);
+router.get("/comment/:leadId/:countryFilter", [authMiddleware.checkUserAuth], CommentsController.getCommentsByLeadId);
 router.post("/comment", [authMiddleware.checkUserAuth], CommentsController.createComment);
 router.put("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.updateComment);
 router.delete("/comment/:id", [authMiddleware.checkUserAuth], CommentsController.deleteComment);

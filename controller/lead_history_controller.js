@@ -1,10 +1,19 @@
 const db = require("../models");
+const { getUniqueCountryData, getUserDataWithCountry } = require("../utils/academic_query_helper");
 
 exports.getLeadHistory = async (req, res) => {
   try {
-    const leadId = req.params.id;
+    const { id: leadId, country: countryId } = req.params;
 
-    const lead = await db.userPrimaryInfo.findByPk(leadId); // Note: 'findbyPk' should be 'findByPk'
+    let isfilterAvailable = countryId !== "all";
+
+    let where = {};
+    if (isfilterAvailable) {
+      // Check if country is not "all"
+      where = { id: Number(countryId) }; // Set where condition for country ID
+    }
+
+    const lead = await db.userPrimaryInfo.findByPk(leadId);
     if (!lead) {
       return res.status(404).json({
         success: false,
@@ -12,22 +21,44 @@ exports.getLeadHistory = async (req, res) => {
       });
     }
 
+    const countriesInHistory = await getUserDataWithCountry(leadId, db.userHistory, "history");
+
     const leadHistory = await lead.getUserHistories({
-      order: [["updated_on", "DESC"]], // Order the results by updated_on in descending order
+      order: [["updated_on", "DESC"]],
       include: [
         {
           model: db.country, // Include the associated country model
-          as: "country", // Alias used in the association
-          attributes: ["country_name"], // Specify the country attributes you want to fetch
-          requied : false, // Set to false to perform a LEFT JOIN
+          as: "country", // Alias for the association
+          attributes: ["country_name", "id"],
+          where,
+          required: false,
         },
       ],
     });
 
+    const uniqueCountryData = getUniqueCountryData(countriesInHistory);
+
+    let finalisedHistory = [];
+
+    if (isfilterAvailable) {
+      finalisedHistory = [
+        ...leadHistory.filter((history) => history.country?.id === Number(countryId)),
+        ...leadHistory.filter((history) => !history.country_id && !history.country),
+      ];
+    }
+
+    console.log("finalisedHistory", finalisedHistory.length);
+
+    console.log("leadHistory", leadHistory.length);
+
     // Send the response
     res.status(200).json({
       success: true,
-      data: leadHistory,
+      data: {
+        leadHistory: isfilterAvailable ? finalisedHistory : leadHistory,
+        countries: uniqueCountryData,
+        finalisedHistory,
+      },
     });
   } catch (err) {
     console.log(err);
