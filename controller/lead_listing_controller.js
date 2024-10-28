@@ -148,6 +148,9 @@ exports.getAllLeads = async (req, res) => {
 
     const country_id = adminUser?.country_id;
 
+    console.log("role id ===========>", country_id, roleId);
+    
+
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
 
       console.log("roleId == process.env.COUNTRY_MANAGER_ID ====>", roleId, process.env.COUNTRY_MANAGER_ID);
