@@ -146,7 +146,7 @@ exports.getAllLeads = async (req, res) => {
       });
     }
 
-    const country_id = adminUser.country_id;
+    const country_id = adminUser?.country_id;
 
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       
@@ -174,7 +174,7 @@ exports.getAllLeads = async (req, res) => {
             as: "preferredCountries",
             attributes: ["country_name", "id"],
             through: { attributes: [] },
-            required: true,
+            required: false,
             where: country_id ? { id: country_id } : {},
           },
           {
