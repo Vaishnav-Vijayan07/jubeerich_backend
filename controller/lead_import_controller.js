@@ -219,13 +219,10 @@ exports.bulkUpload = async (req, res) => {
         if (preferredCountries.length > 0) {
           const studyPreferences = await Promise.all(
             preferredCountries.map(async (countryId) => {
-              return await db.studyPreference.create(
-                {
-                  userPrimaryInfoId: userId,
-                  countryId,
-                },
-                { transaction } // Pass the transaction here inside the create call
-              );
+              return await db.studyPreference.create({
+                userPrimaryInfoId: userId,
+                countryId,
+              });
             })
           );
         }
