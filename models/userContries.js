@@ -8,7 +8,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "user_primary_info",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: "CASCADE",
       },
       country_id: {
@@ -17,7 +17,7 @@ module.exports = (sequelize, Sequelize) => {
           model: "countries",
           key: "id",
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: "CASCADE",
       },
     },

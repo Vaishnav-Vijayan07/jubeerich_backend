@@ -81,6 +81,16 @@ db.studyPreferenceDetails.hasMany(db.application, {
   as: "application",
 });
 
+db.application.belongsTo(db.adminUsers, {
+  foreignKey: "assigned_user",
+  as: "application",
+});
+
+db.adminUsers.hasMany(db.application, {
+  foreignKey: "assigned_user",
+  as: "assigned_applications",
+});
+
 db.country.hasMany(db.comments, {
   foreignKey: "country_id",
   as: "comments",
