@@ -195,9 +195,6 @@ exports.bulkUpload = async (req, res) => {
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id;
 
-        console.log("franchiseId ======================>", franchiseId);
-        console.log("preferredCountries ===>", preferredCountries);
-
         // Retrieve existing user-country associations for this user
         const existingUserCountries = await UserCountries.findAll({
           where: {
@@ -228,6 +225,20 @@ exports.bulkUpload = async (req, res) => {
         // if (userCountries.length > 0) {
         //   await UserCountries.bulkCreate(userCountries);
         // }
+
+        if (userCountries.length > 0) {
+          const studyPreferences = await Promise.all(
+            userCountries.map(async (countryId) => {
+              return await db.studyPreference.create(
+                {
+                  userPrimaryInfoId: userId,
+                  countryId,
+                },
+                { transaction } // Pass the transaction here inside the create call
+              );
+            })
+          );
+        }
 
         if (franchiseId) {
           let leastAssignedUsers = [];
