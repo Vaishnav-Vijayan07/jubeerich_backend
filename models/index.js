@@ -373,11 +373,13 @@ db.userPrimaryInfo.belongsToMany(db.country, {
   through: "user_countries",
   foreignKey: "user_primary_info_id",
   as: "preferredCountries",
+  onDelete: "CASCADE",
 });
 db.country.belongsToMany(db.userPrimaryInfo, {
   through: "user_countries",
   foreignKey: "country_id",
   as: "users",
+  onDelete: "CASCADE",
 });
 
 // UserPrimaryInfo and AdminUser (Counselors) associations (many-to-many)
@@ -386,12 +388,14 @@ db.userPrimaryInfo.belongsToMany(db.adminUsers, {
   foreignKey: "user_id",
   otherKey: "counselor_id",
   as: "counselors",
+  onDelete: "CASCADE",
 });
 db.adminUsers.belongsToMany(db.userPrimaryInfo, {
   through: "user_counselors",
   foreignKey: "counselor_id",
   otherKey: "user_id",
   as: "counseledUsers",
+  onDelete: "CASCADE",
 });
 
 // region
