@@ -15,10 +15,30 @@ exports.getKycDetails = async (req, res, next) => {
     });
 
     if (!personalDetails) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
-    const [leadSource, branches, assignedCounselor, createdBy, educationDetails, studyPreferences, previousVisaDeclines, previousVisaApprovals, travelHistories, basicInfoDetails, passportDetails, workInfos, familyDetails, fundPlan, exams, graduationDetails, gapReasons, userEmploymentHistories, channel_name] = await Promise.all([
+    const [
+      leadSource,
+      branches,
+      assignedCounselor,
+      createdBy,
+      educationDetails,
+      studyPreferences,
+      previousVisaDeclines,
+      previousVisaApprovals,
+      travelHistories,
+      basicInfoDetails,
+      passportDetails,
+      workInfos,
+      familyDetails,
+      fundPlan,
+      exams,
+      graduationDetails,
+      gapReasons,
+      userEmploymentHistories,
+      channel_name,
+    ] = await Promise.all([
       personalDetails.getSource_name(),
       personalDetails.getBranch_name(),
       personalDetails.getAssigned_branch_counselor_name(),
@@ -42,8 +62,8 @@ exports.getKycDetails = async (req, res, next) => {
                     through: "campus_course",
                     as: "campuses",
                     required: true,
-                  }
-                ]
+                  },
+                ],
               },
               {
                 model: db.campus,
@@ -53,86 +73,78 @@ exports.getKycDetails = async (req, res, next) => {
               {
                 model: db.application,
                 as: "application",
-                required: true
-              }
-            ]
-          }
-        ]
+                required: true,
+              },
+            ],
+          },
+        ],
       }),
-      personalDetails.getPreviousVisaDeclines(
-        {
-          where: { student_id: id },
-          include: [
-            {
-              model: db.country,
-              as: "declined_country",
-              required: false,
-              attributes: ["country_name", "country_code"]
-            },
-            {
-              model: db.course,
-              as: "declined_course",
-              required: false,
-              attributes: ["course_name"],
-            },
-            {
-              model: db.university,
-              as: "declined_university_applied",
-              required: false,
-            },
-          ]
-        }
-      ),
-      personalDetails.getPreviousVisaApprovals(
-        {
-          where: { student_id: id },
-          include: [
-            {
-              model: db.country,
-              as: "approved_country",
-              required: false,
-              attributes: ["country_name", "country_code"]
-            },
-            {
-              model: db.course,
-              as: "approved_course",
-              required: false,
-              attributes: ["course_name"]
-            },
-            {
-              model: db.university,
-              as: "approved_university_applied",
-              required: false,
-            }
-          ]
-        }
-      ),
-      personalDetails.getTravelHistories(
-        {
-          where: { student_id: id },
-          include: [
-            {
-              model: db.country,
-              as: "travelHistoryCountry",
-              required: false,
-              attributes: ["country_name", "country_code"]
-            }
-          ]
-        },
-      ),
-      personalDetails.getBasic_info_details(
-        {
-          where: { user_id: id },
-          include: [
-            {
-              model: db.maritalStatus,
-              as: "marital_status_details",
-              required: false,
-              attributes: ["marital_status_name"]
-            }
-          ]
-        }
-      ),
+      personalDetails.getPreviousVisaDeclines({
+        where: { student_id: id },
+        include: [
+          {
+            model: db.country,
+            as: "declined_country",
+            required: false,
+            attributes: ["country_name", "country_code"],
+          },
+          {
+            model: db.course,
+            as: "declined_course",
+            required: false,
+            attributes: ["course_name"],
+          },
+          {
+            model: db.university,
+            as: "declined_university_applied",
+            required: false,
+          },
+        ],
+      }),
+      personalDetails.getPreviousVisaApprovals({
+        where: { student_id: id },
+        include: [
+          {
+            model: db.country,
+            as: "approved_country",
+            required: false,
+            attributes: ["country_name", "country_code"],
+          },
+          {
+            model: db.course,
+            as: "approved_course",
+            required: false,
+            attributes: ["course_name"],
+          },
+          {
+            model: db.university,
+            as: "approved_university_applied",
+            required: false,
+          },
+        ],
+      }),
+      personalDetails.getTravelHistories({
+        where: { student_id: id },
+        include: [
+          {
+            model: db.country,
+            as: "travelHistoryCountry",
+            required: false,
+            attributes: ["country_name", "country_code"],
+          },
+        ],
+      }),
+      personalDetails.getBasic_info_details({
+        where: { user_id: id },
+        include: [
+          {
+            model: db.maritalStatus,
+            as: "marital_status_details",
+            required: false,
+            attributes: ["marital_status_name"],
+          },
+        ],
+      }),
       personalDetails.getPassportDetails({ where: { user_id: id } }),
       personalDetails.getUserWorkInfos({ where: { user_id: id } }),
       personalDetails.getFamilyDetails({ where: { user_id: id } }),
@@ -141,7 +153,7 @@ exports.getKycDetails = async (req, res, next) => {
       personalDetails.getGraduationDetails({ where: { student_id: id } }),
       personalDetails.getGapReasons({ where: { student_id: id } }),
       personalDetails.getUserEmploymentHistories({ where: { student_id: id } }),
-      personalDetails.getChannel_name()
+      personalDetails.getChannel_name(),
     ]);
 
     if (!personalDetails) {
@@ -175,7 +187,6 @@ exports.getKycDetails = async (req, res, next) => {
       channel_name: channel_name,
       message: "Data retrieved successfully",
     });
-
   } catch (error) {
     console.log(error);
     console.error(`Error: ${error.message}`);
@@ -204,17 +215,17 @@ exports.proceedToKyc = async (req, res) => {
         },
       ],
       attributes: ["id"],
-      transaction, 
+      transaction,
     });
 
-    console.log('studyPrefDetails ======>', studyPrefDetails);
+    console.log("studyPrefDetails ======>", studyPrefDetails);
 
     if (studyPrefDetails.length > 0) {
       const applicationsToCreate = studyPrefDetails.map((detail) => ({
         studyPrefernceId: detail.id,
       }));
 
-      console.log('applicationsToCreate ======>', applicationsToCreate);
+      console.log("applicationsToCreate ======>", applicationsToCreate);
 
       await db.application.bulkCreate(applicationsToCreate, { transaction });
     }
@@ -222,7 +233,7 @@ exports.proceedToKyc = async (req, res) => {
     const [setIsProceed] = await db.tasks.update(
       {
         is_proceed_to_kyc: true,
-        isCompleted: true
+        isCompleted: true,
       },
       {
         where: {
@@ -243,7 +254,6 @@ exports.proceedToKyc = async (req, res) => {
       data: studyPrefDetails,
       message: "Data retrieved successfully",
     });
-
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error(`Error: ${error.message}`);
@@ -254,91 +264,184 @@ exports.proceedToKyc = async (req, res) => {
   }
 };
 
-
 exports.kycPendingDetails = async (req, res) => {
   try {
     const { userDecodeId } = req;
-    const { country_id } = await db.adminUsers.findByPk(userDecodeId);
 
-    const applicationData = await db.application.findAll({
-      include: [
-        {
-          model: db.studyPreferenceDetails,
-          as: "studyPreferenceDetails",
-          attributes: ["id", "kyc_status"],
-          required: true, // Set this association as required
-          include: [
-            {
-              model: db.studyPreference,
-              as: "studyPreference",
-              where: { countryId:  country_id },
-              required: true, // Set this association as required
-              include: [
-                {
-                  model: db.country,
-                  as: "country",
-                  attributes: ["country_name"],
-                  required: true, // Set this association as required
-                },
-                {
-                  model: db.userPrimaryInfo,
-                  as: "userPrimaryInfo",
-                  attributes: ["assign_type", "lead_received_date", "full_name", "counsiler_id"],
-                  required: true, // Set this association as required
-                  include: [
-                    {
-                      model: db.officeType,
-                      as: "office_type_name",
-                      attributes: ["office_type_name"],
-                      required: true, // Set this association as required
-                    },
-                    {
-                      model: db.leadSource,
-                      as: "source_name",
-                      attributes: ["source_name"],
-                      required: true, // Set this association as required
-                    },
-                    {
-                      model: db.adminUsers,
-                      as: "counselors",
-                      attributes: ["name", "id", "country_id"],
-                      through: { attributes: [] },
-                      subquery: false,
-                      required: true, // Set this association as required
-                      where: {
-                        country_id: {
-                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+    const { type } = req.query;
+
+    console.log(type);
+
+    if (type !== "application_manager" && type !== "country_manager") {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid type",
+      });
+    }
+
+    let applicationData;
+
+    if (type == "application_manager") {
+      applicationData = await db.application.findAll({
+        include: [
+          {
+            model: db.studyPreferenceDetails,
+            as: "studyPreferenceDetails",
+            attributes: ["id", "kyc_status"],
+            required: true, // Set this association as required
+            include: [
+              {
+                model: db.studyPreference,
+                as: "studyPreference",
+                required: true, // Set this association as required
+                include: [
+                  {
+                    model: db.country,
+                    as: "country",
+                    attributes: ["country_name"],
+                    required: true, // Set this association as required
+                  },
+                  {
+                    model: db.userPrimaryInfo,
+                    as: "userPrimaryInfo",
+                    attributes: ["assign_type", "lead_received_date", "full_name", "counsiler_id"],
+                    required: true, // Set this association as required
+                    include: [
+                      {
+                        model: db.officeType,
+                        as: "office_type_name",
+                        attributes: ["office_type_name"],
+                        required: true, // Set this association as required
+                      },
+                      {
+                        model: db.leadSource,
+                        as: "source_name",
+                        attributes: ["source_name"],
+                        required: true, // Set this association as required
+                      },
+                      {
+                        model: db.adminUsers,
+                        as: "counselors",
+                        attributes: ["name", "id", "country_id"],
+                        through: { attributes: [] },
+                        subquery: false,
+                        required: true, // Set this association as required
+                        where: {
+                          country_id: {
+                            [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                          },
                         },
                       },
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              model: db.course,
-              as: "preferred_courses",
-              attributes: ["course_name"],
-              required: true, // Set this association as required
-            },
-            {
-              model: db.campus,
-              as: "preferred_campus",
-              attributes: ["campus_name"],
-              required: true, // Set this association as required
-            },
-            {
-              model: db.university,
-              as: "preferred_university",
-              attributes: ["university_name"],
-              required: true, // Set this association as required
-            },
-          ],
-        },
-      ],
-      attributes: ["id"],
-      where: { is_rejected_kyc: false, application_status: false }
-    });
+                    ],
+                  },
+                ],
+              },
+              {
+                model: db.course,
+                as: "preferred_courses",
+                attributes: ["course_name"],
+                required: true, // Set this association as required
+              },
+              {
+                model: db.campus,
+                as: "preferred_campus",
+                attributes: ["campus_name"],
+                required: true, // Set this association as required
+              },
+              {
+                model: db.university,
+                as: "preferred_university",
+                attributes: ["university_name"],
+                required: true, // Set this association as required
+              },
+            ],
+          },
+        ],
+        attributes: ["id"],
+        where: { application_status: false },
+      });
+    } else if (type == "country_manager") {
+      const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+      applicationData = await db.application.findAll({
+        include: [
+          {
+            model: db.studyPreferenceDetails,
+            as: "studyPreferenceDetails",
+            attributes: ["id", "kyc_status"],
+            required: true, // Set this association as required
+            include: [
+              {
+                model: db.studyPreference,
+                as: "studyPreference",
+                where: { countryId: country_id },
+                required: true, // Set this association as required
+                include: [
+                  {
+                    model: db.country,
+                    as: "country",
+                    attributes: ["country_name"],
+                    required: true, // Set this association as required
+                  },
+                  {
+                    model: db.userPrimaryInfo,
+                    as: "userPrimaryInfo",
+                    attributes: ["assign_type", "lead_received_date", "full_name", "counsiler_id"],
+                    required: true, // Set this association as required
+                    include: [
+                      {
+                        model: db.officeType,
+                        as: "office_type_name",
+                        attributes: ["office_type_name"],
+                        required: true, // Set this association as required
+                      },
+                      {
+                        model: db.leadSource,
+                        as: "source_name",
+                        attributes: ["source_name"],
+                        required: true, // Set this association as required
+                      },
+                      {
+                        model: db.adminUsers,
+                        as: "counselors",
+                        attributes: ["name", "id", "country_id"],
+                        through: { attributes: [] },
+                        subquery: false,
+                        required: true, // Set this association as required
+                        where: {
+                          country_id: {
+                            [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                          },
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                model: db.course,
+                as: "preferred_courses",
+                attributes: ["course_name"],
+                required: true, // Set this association as required
+              },
+              {
+                model: db.campus,
+                as: "preferred_campus",
+                attributes: ["campus_name"],
+                required: true, // Set this association as required
+              },
+              {
+                model: db.university,
+                as: "preferred_university",
+                attributes: ["university_name"],
+                required: true, // Set this association as required
+              },
+            ],
+          },
+        ],
+        attributes: ["id"],
+        where: { is_rejected_kyc: false, application_status: false },
+      });
+    }
 
     res.status(200).json({
       status: true,
@@ -370,7 +473,7 @@ exports.kycRejectedDetails = async (req, res) => {
             {
               model: db.studyPreference,
               as: "studyPreference",
-              where: { countryId:  country_id },
+              where: { countryId: country_id },
               required: true, // Set this association as required
               include: [
                 {
@@ -436,7 +539,7 @@ exports.kycRejectedDetails = async (req, res) => {
         },
       ],
       attributes: ["id"],
-      where: { is_rejected_kyc: true, application_status: false }
+      where: { is_rejected_kyc: true, application_status: false },
     });
 
     res.status(200).json({
@@ -469,7 +572,7 @@ exports.kycApprovedDetails = async (req, res) => {
             {
               model: db.studyPreference,
               as: "studyPreference",
-              where: { countryId:  country_id },
+              where: { countryId: country_id },
               required: true, // Set this association as required
               include: [
                 {
@@ -535,7 +638,7 @@ exports.kycApprovedDetails = async (req, res) => {
         },
       ],
       attributes: ["id"],
-      where: { application_status: true }
+      where: { application_status: true },
     });
 
     res.status(200).json({
@@ -557,13 +660,11 @@ exports.rejectKYC = async (req, res, next) => {
   try {
     const { student_id, remarks, application_id } = req.body;
 
-    const existTask = await db.tasks.findOne(
-      {
-        where: { studentId: student_id },
-        // attributes: ["kyc_remarks"],
-        transaction,
-      }
-    );
+    const existTask = await db.tasks.findOne({
+      where: { studentId: student_id },
+      // attributes: ["kyc_remarks"],
+      transaction,
+    });
 
     const formattedRemark = [
       {
@@ -589,34 +690,30 @@ exports.rejectKYC = async (req, res, next) => {
     // }
 
     const newTaskData = {
-      ...existTask.toJSON(), 
-      title: `${existTask.title} - Rejected`, 
+      ...existTask.toJSON(),
+      title: `${existTask.title} - Rejected`,
       is_rejected: true,
       kyc_remarks: formattedRemark,
       isCompleted: false,
       is_proceed_to_kyc: false,
       createdAt: new Date(),
-      updatedAt: new Date(), 
+      updatedAt: new Date(),
     };
-    
+
     delete newTaskData.id;
 
-    console.log('newTaskData',newTaskData);
-    
-    
+    console.log("newTaskData", newTaskData);
+
     const newTask = await db.tasks.create(newTaskData, { transaction });
-    
+
     if (!newTask) {
       throw new Error("Failed to create new task");
     }
 
-    const [rejectApplication] = await db.application.update(
-      { is_rejected_kyc: true },
-      { where: { id: application_id }, transaction }
-    );
+    const [rejectApplication] = await db.application.update({ is_rejected_kyc: true }, { where: { id: application_id }, transaction });
 
     if (rejectApplication == 0) {
-      throw new Error("Application Rejection Failed"); 
+      throw new Error("Application Rejection Failed");
     }
 
     await transaction.commit();
@@ -625,7 +722,6 @@ exports.rejectKYC = async (req, res, next) => {
       status: true,
       message: "KYC Rejected",
     });
-
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error(`Error: ${error.message}`);
@@ -641,13 +737,10 @@ exports.approveKYC = async (req, res, next) => {
   try {
     const { application_id } = req.body;
 
-    const [approveApplication] = await db.application.update(
-      { application_status: true },
-      { where: { id: application_id }, transaction }
-    );
+    const [approveApplication] = await db.application.update({ application_status: true }, { where: { id: application_id }, transaction });
 
     if (approveApplication == 0) {
-      throw new Error("Application Approve Failed"); 
+      throw new Error("Application Approve Failed");
     }
 
     await transaction.commit();
@@ -656,7 +749,6 @@ exports.approveKYC = async (req, res, next) => {
       status: true,
       message: "KYC Approved",
     });
-
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error(`Error: ${error.message}`);
