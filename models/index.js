@@ -664,4 +664,26 @@ db.userPrimaryInfo.hasOne(db.studentAdditionalDocs, {
   as: "additional_docs",
 });
 
+// Add beforeDestroy hook to UserPrimaryInfo
+db.userPrimaryInfo.addHook("beforeDestroy", async (user) => {
+  // Delete from user_countries
+  await db.userContries.destroy({
+    where: { user_primary_info_id: user.id },
+  });
+  
+  // Delete from user_counselors
+  await db.userCounselors.destroy({
+    where: { user_id: user.id },
+  });
+});
+
+// Add beforeDestroy hook to Country
+db.country.addHook("beforeDestroy", async (country) => {
+  // Delete from user_countries
+  await db.userContries.destroy({
+    where: { country_id: country.id },
+  });
+});
+
+
 module.exports = db;
