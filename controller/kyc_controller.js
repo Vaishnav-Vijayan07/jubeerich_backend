@@ -218,17 +218,53 @@ exports.proceedToKyc = async (req, res) => {
       transaction,
     });
 
-    console.log("studyPrefDetails ======>", studyPrefDetails);
+    console.log('studyPrefDetails ======>', studyPrefDetails);
+
+    // if (studyPrefDetails.length > 0) {
+    //   const applicationsToCreate = studyPrefDetails.map((detail) => ({
+    //     studyPrefernceId: detail.id,
+    //   }));
+
+    //   console.log('applicationsToCreate ======>', applicationsToCreate);
+
+    //   await db.application.bulkCreate(applicationsToCreate, { transaction });
+    // }
 
     if (studyPrefDetails.length > 0) {
-      const applicationsToCreate = studyPrefDetails.map((detail) => ({
-        studyPrefernceId: detail.id,
-      }));
+      const applicationsToCreate = [];
+      const applicationsToUpdate = [];
 
-      console.log("applicationsToCreate ======>", applicationsToCreate);
+      for (const detail of studyPrefDetails) {
+        const existingApplications = await db.application.findAll({
+          where: { studyPrefernceId: detail.id },
+          attributes: ['id']
+        });
 
-      await db.application.bulkCreate(applicationsToCreate, { transaction });
+        if (existingApplications.length > 0) {
+          applicationsToUpdate.push(...existingApplications.map(app => app.id));
+        } else {
+          applicationsToCreate.push({ studyPrefernceId: detail.id });
+        }
+      }
+
+      console.log('applicationsToCreate ======>', applicationsToCreate);
+      console.log('applicationsToUpdate ======>', applicationsToUpdate);
+
+      if (applicationsToCreate.length > 0) {
+        await db.application.bulkCreate(applicationsToCreate, { transaction });
+      }
+
+      if (applicationsToUpdate.length > 0) {
+        await db.application.update(
+          { is_rejected_kyc: false },
+          {
+            where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
+            transaction
+          }
+        );
+      }
     }
+  
 
     const [setIsProceed] = await db.tasks.update(
       {
