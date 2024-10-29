@@ -18,9 +18,9 @@ exports.assignApplication = async (req, res, next) => {
             { where: { id: application_id } }
         )
 
-        console.log('assignUser',assignUser);
+        console.log('assignUser', assignUser);
 
-        if(assignUser == 0) throw new Error("User not assigned");
+        if (assignUser == 0) throw new Error("User not assigned");
 
         await transaction.commit();
 
@@ -42,10 +42,25 @@ exports.assignApplication = async (req, res, next) => {
 exports.autoAssignApplication = async (req, res, next) => {
     const transaction = await sequelize.transaction();
     try {
+        const { application_id } = req.body;
+
+        const leastAssignedUser = await getLeastAssignedApplicationMember();
+        console.log('leastAssignedUser',leastAssignedUser);
         
-        let result = await getLeastAssignedApplicationMembers();
-        console.log('Result', result);
-        
+
+        if (!leastAssignedUser) {
+            throw new Error("No eligible team member found");
+        }
+
+        const [assignUser] = await db.application.update(
+            { assigned_user: leastAssignedUser?.user_id },
+            { where: { id: application_id }, transaction }
+        );
+
+        if (assignUser === 0) throw new Error("User not assigned");
+
+        await transaction.commit();
+
         return res.status(200).json({
             status: true,
             message: "Application Assigned to Team Member",
@@ -61,43 +76,49 @@ exports.autoAssignApplication = async (req, res, next) => {
     }
 };
 
-const getLeastAssignedApplicationMembers = async () => {
+const getLeastAssignedApplicationMember = async () => {
     try {
-        const applicationMembersList = await db.adminUsers.findAll({
+        const [leastAssignedMember] = await db.adminUsers.findAll({
             attributes: [
                 ["id", "user_id"],
                 "username",
                 [
                     Sequelize.literal(`(
-                SELECT COUNT(*)
-                FROM "application_details"
-                WHERE "application_details"."assigned_user" = "admin_user"."id"
-              )`),
+                        SELECT COUNT(*)
+                        FROM "application_details"
+                        WHERE "application_details"."assigned_user" = "admin_user"."id"
+                    )`),
                     "assignment_count",
                 ],
             ],
             where: {
-                [Sequelize.Op.or]: [{ role_id: process.env.APPLICATION_TEAM_ID }, { role_id: process.env.APPLICATION_MANAGER_ID }],
-            },order: [
+                [Sequelize.Op.or]: [
+                    { role_id: process.env.APPLICATION_TEAM_ID },
+                    { role_id: process.env.APPLICATION_MANAGER_ID },
+                ],
+            },
+            order: [
                 [
                     Sequelize.literal(`(
-              SELECT COUNT(*)
-              FROM "application_details"
-              WHERE "application_details"."assigned_user" = "admin_user"."id"
-            )`),
+                        SELECT COUNT(*)
+                        FROM "application_details"
+                        WHERE "application_details"."assigned_user" = "admin_user"."id"
+                    )`),
                     "ASC",
                 ],
             ],
-            
+            limit: 1,
         });
 
-        return applicationMembersList.map((member) => ({
-            user_id: member.dataValues.user_id,
-            assignment_count: parseInt(member.dataValues.assignment_count, 10),
-        }));
+        if (!leastAssignedMember) return null;
+
+        return {
+            user_id: leastAssignedMember.dataValues.user_id,
+            assignment_count: parseInt(leastAssignedMember.dataValues.assignment_count, 10),
+        };
 
     } catch (error) {
-        console.error("Error fetching Members with assignment counts:", error.message || error);
+        console.error("Error fetching least assigned member:", error.message || error);
         throw error;
     }
 };
