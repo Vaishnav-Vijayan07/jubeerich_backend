@@ -573,21 +573,6 @@ exports.rejectKYC = async (req, res, next) => {
       ...(existTask?.kyc_remarks || []),
     ];
 
-    // const [rejectTask] = await db.tasks.update(
-    //   {
-    //     is_proceed_to_kyc: false,
-    //     kyc_remarks: formattedRemark,
-    //   },
-    //   {
-    //     where: { studentId: student_id },
-    //     transaction,
-    //   }
-    // );
-
-    // if (rejectTask == 0) {
-    //   throw new Error("KYC Rejection Failed");
-    // }
-
     const newTaskData = {
       ...existTask.toJSON(), 
       title: `${existTask.title} - Rejected`, 
@@ -600,9 +585,6 @@ exports.rejectKYC = async (req, res, next) => {
     };
     
     delete newTaskData.id;
-
-    console.log('newTaskData',newTaskData);
-    
     
     const newTask = await db.tasks.create(newTaskData, { transaction });
     

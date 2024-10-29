@@ -22,6 +22,14 @@ module.exports = (sequelize, Sequelize) => {
       application_status: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
+      },
+      assigned_user: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
       }
     },
     {
