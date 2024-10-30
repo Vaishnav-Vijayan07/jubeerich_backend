@@ -62,16 +62,18 @@ exports.getApplicationById = async (req, res, next) => {
                                     model: db.userPrimaryInfo,
                                     as: "userPrimaryInfo",
                                     attributes: ["id", "full_name", "office_type", "source_id", "lead_received_date", "assign_type"],
-                                    inlcude: [
+                                    include: [
                                         {
                                             model: db.leadSource,
-                                            require: true,
-                                            as: "source_name"
+                                            required: true,
+                                            as: "source_name",
+                                            attributes: ["id", "source_name"]
                                         },
                                         {
                                             model: db.officeType,
-                                            require: true,
-                                            as: "office_type"
+                                            required: true,
+                                            as: "office_type_name",
+                                            attributes: ["id", "office_type_name"]
                                         }
                                     ]
                                 }
@@ -184,6 +186,38 @@ exports.autoAssignApplication = async (req, res, next) => {
       message: error.message || "Internal server error",
     });
   }
+};
+
+exports.getApplicationDetailsByType = async(req, res, next) => {
+    try {
+
+        const { id, type } = req.params;
+
+        const educationalDetails = await db.userPrimaryInfo.findByPk(id,
+            {
+                include: [
+                    {
+                        model: db.educationDetails,
+                        required: true,
+                        as: "educationDetails",
+                        attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
+                    }
+                ]
+            }
+        );
+
+        console.log('educationalDetails',educationalDetails);
+
+        return res.status(200).json({
+            status: true,
+            data: educationalDetails,
+            message: "Success",
+          });
+
+    } catch (error) {
+        console.error("Error fetching least assigned member:", error.message || error);
+        throw error;
+    }
 };
 
 const getLeastAssignedApplicationMember = async () => {

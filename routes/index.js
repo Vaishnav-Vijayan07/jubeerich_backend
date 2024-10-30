@@ -58,7 +58,7 @@ const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/e
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
 const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
-const { assignApplication, autoAssignApplication, getApplicationById } = require("../controller/application_controller");
+const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType } = require("../controller/application_controller");
 
 const router = express.Router();
 
@@ -446,6 +446,8 @@ router.get("/kyc_pending_by_user", [authMiddleware.checkUserAuth], getAllKycByUs
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 
 router.get("/application/:id", [authMiddleware.checkUserAuth], getApplicationById);
+
+router.get("/details_application/:type/:id", [authMiddleware.checkUserAuth], getApplicationDetailsByType);
 
 router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
 

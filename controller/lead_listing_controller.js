@@ -1246,35 +1246,35 @@ exports.getAllUserDocuments = async (req, res) => {
           model: db.studentAdditionalDocs,
           as: "additional_docs",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["passport_doc", "updated_cv", "profile_assessment_doc", "pte_cred", "lor", "sop", "gte_form"],
         },
         {
           model: db.previousVisaDecline,
           as: "previousVisaDeclines",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "visa_type", "declined_letter"],
         },
         {
           model: db.previousVisaApprove,
           as: "previousVisaApprovals",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "visa_type", "approved_letter"],
         },
         {
           model: db.fundPlan,
           as: "fundPlan",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "type", "supporting_document"],
         },
         {
           model: db.educationDetails,
           as: "educationDetails",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: [
             "id",
             "qualification",
@@ -1290,7 +1290,7 @@ exports.getAllUserDocuments = async (req, res) => {
           model: db.workInfos,
           as: "userWorkInfos",
           where: { user_id: id },
-          require: false,
+          required: false,
           attributes: [
             "id",
             "company",
@@ -1306,25 +1306,28 @@ exports.getAllUserDocuments = async (req, res) => {
           model: db.userExams,
           as: "exams",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "exam_type", "score_card", "overall_score"],
         },
         {
           model: db.userBasicInfo,
           as: "basic_info_details",
           where: { user_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "police_clearance_docs"],
         },
         {
           model: db.EmploymentHistory,
           as: "userEmploymentHistories",
           where: { student_id: id },
-          require: false,
+          required: false,
           attributes: ["id", "visa_page", "permit_card", "salary_account_statement", "supporting_documents"],
         },
       ],
     });
+
+    console.log('AllDocs =========>',AllDocs);
+    
 
     res.status(200).json({
       status: true,
