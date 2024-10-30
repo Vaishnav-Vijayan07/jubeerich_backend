@@ -443,6 +443,6 @@ router.get("/kyc_approved", [authMiddleware.checkUserAuth], kycApprovedDetails);
 
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 
-router.post("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
+router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
 
 module.exports = router;

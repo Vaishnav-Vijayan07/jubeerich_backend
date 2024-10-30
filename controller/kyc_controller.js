@@ -272,7 +272,7 @@ exports.kycPendingDetails = async (req, res) => {
 
     console.log(type);
 
-    if (type !== "application_manager" && type !== "country_manager") {
+    if (type !== "application_manager_pending" && type !== "application_manager_assigned" && type !== "country_manager") {
       return res.status(400).json({
         status: false,
         message: "Invalid type",
@@ -281,9 +281,33 @@ exports.kycPendingDetails = async (req, res) => {
 
     let applicationData;
 
-    if (type == "application_manager") {
+    console.log(type.includes("application_manager"));
+
+    if (type.includes("application_manager")) {
+      let isPending = type == "application_manager_pending";
+
+      let dynamicWhere;
+
+      if (isPending) {
+        dynamicWhere = {
+          [db.Sequelize.Op.and]: [{ application_status: false }, { assigned_user: { [db.Sequelize.Op.eq]: null } }],
+        };
+      } else {
+        dynamicWhere = {
+          [db.Sequelize.Op.and]: [{ application_status: false }, { assigned_user: { [db.Sequelize.Op.ne]: null } }],
+        };
+      }
+
+      console.log("dynamicWhere", dynamicWhere);
+
       applicationData = await db.application.findAll({
         include: [
+          {
+            model: db.adminUsers,
+            as: "application",
+            required: false,
+            attributes: ["id", "name"],
+          },
           {
             model: db.studyPreferenceDetails,
             as: "studyPreferenceDetails",
@@ -358,7 +382,7 @@ exports.kycPendingDetails = async (req, res) => {
           },
         ],
         attributes: ["id"],
-        where: { application_status: false },
+        where: dynamicWhere,
       });
     } else if (type == "country_manager") {
       const { country_id } = await db.adminUsers.findByPk(userDecodeId);
@@ -442,6 +466,8 @@ exports.kycPendingDetails = async (req, res) => {
         where: { is_rejected_kyc: false, application_status: false },
       });
     }
+
+    console.log(applicationData.length);
 
     res.status(200).json({
       status: true,
