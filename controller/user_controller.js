@@ -145,17 +145,13 @@ exports.createLead = async (req, res) => {
 
       // Set the regionalManagerId only if the region exists
       regionalManagerId = region ? region.regional_manager_id : null;
-      regionMangerRoleName =
-        region?.adminUsers?.accessRoles?.role_name || "Region Manager";
+      regionMangerRoleName = region?.adminUsers?.accessRoles?.role_name || "Region Manager";
 
       console.log(regionalManagerId, region?.adminUsers);
     }
 
     if (counsiler_id !== "null") {
-      const counsilerExists = await checkIfEntityExists(
-        "admin_user",
-        counsiler_id
-      );
+      const counsilerExists = await checkIfEntityExists("admin_user", counsiler_id);
       if (!counsilerExists) {
         await transaction.rollback(); // Rollback the transaction if counsiler ID is invalid
         return res.status(400).json({
@@ -179,10 +175,7 @@ exports.createLead = async (req, res) => {
     }
 
     if (updated_by !== null) {
-      const updatedByExists = await checkIfEntityExists(
-        "admin_user",
-        updated_by
-      );
+      const updatedByExists = await checkIfEntityExists("admin_user", updated_by);
       if (!updatedByExists) {
         await transaction.rollback(); // Rollback the transaction if updated by ID is invalid
         return res.status(400).json({
@@ -241,17 +234,10 @@ exports.createLead = async (req, res) => {
         ielts,
         lead_received_date: lead_received_date || receivedDate,
         assigned_cre_tl:
-          userRole?.role_id == process.env.IT_TEAM_ID &&
-          office_type == process.env.CORPORATE_OFFICE_ID
-            ? creTl?.id
-            : null,
+          userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID ? creTl?.id : null,
         created_by: userId,
-        assign_type:
-          userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
-        regional_manager_id:
-          userRole?.role_id == process.env.IT_TEAM_ID
-            ? regionalManagerId
-            : null,
+        assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
+        regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
       },
       { transaction }
     );
@@ -260,37 +246,13 @@ exports.createLead = async (req, res) => {
     console.log("USER ID", userPrimaryId);
 
     if (userPrimaryId) {
-      await addLeadHistory(
-        userPrimaryId,
-        `Lead created by ${role}`,
-        userId,
-        null,
-        transaction
-      );
+      await addLeadHistory(userPrimaryId, `Lead created by ${role}`, userId, null, transaction);
     }
 
-    if (
-      userRole?.role_id == process.env.IT_TEAM_ID &&
-      office_type == process.env.CORPORATE_OFFICE_ID
-    ) {
-      await addLeadHistory(
-        userPrimaryId,
-        `Lead assigned to ${creTl?.access_role.role_name}`,
-        userId,
-        null,
-        transaction
-      );
-    } else if (
-      userRole?.role_id == process.env.IT_TEAM_ID &&
-      regionalManagerId
-    ) {
-      await addLeadHistory(
-        userPrimaryId,
-        `Lead assigned to ${regionMangerRoleName}`,
-        userId,
-        null,
-        transaction
-      );
+    if (userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID) {
+      await addLeadHistory(userPrimaryId, `Lead assigned to ${creTl?.access_role.role_name}`, userId, null, transaction);
+    } else if (userRole?.role_id == process.env.IT_TEAM_ID && regionalManagerId) {
+      await addLeadHistory(userPrimaryId, `Lead assigned to ${regionMangerRoleName}`, userId, null, transaction);
     }
 
     if (preferred_country.length > 0) {
@@ -343,10 +305,7 @@ exports.createLead = async (req, res) => {
       await Promise.all(examDetailsPromises);
     }
 
-    if (
-      userRole?.role_id == process.env.CRE_ID ||
-      userRole?.role_id == process.env.COUNSELLOR_ROLE_ID
-    ) {
+    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID) {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 1);
 
@@ -368,22 +327,18 @@ exports.createLead = async (req, res) => {
         },
         { transaction }
       );
-      await addLeadHistory(
-        userPrimaryInfo.id,
-        `Task created for ${role}`,
-        userId,
-        null,
-        transaction
-      );
+      await addLeadHistory(userPrimaryInfo.id, `Task created for ${role}`, userId, null, transaction);
+
+      if (userRole?.role_id == process.env.COUNSELLOR_ROLE_ID) {
+        await db.userCounselors.create({ user_id: userPrimaryInfo.id, counselor_id: userId });
+      }
     } else if (userRole?.role_id == process.env.CRE_RECEPTION_ID) {
       let leastAssignedUsers = [];
 
       for (const countryId of preferred_country) {
         const users = await getLeastAssignedUsers(countryId);
         if (users?.leastAssignedUserId) {
-          leastAssignedUsers = leastAssignedUsers.concat(
-            users.leastAssignedUserId
-          );
+          leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
         }
       }
 
@@ -399,13 +354,7 @@ exports.createLead = async (req, res) => {
           counselor_id: userId,
         }));
 
-        await addLeadHistory(
-          userPrimaryInfo.id,
-          `Lead assigned to Counsellors`,
-          userId,
-          null,
-          transaction
-        );
+        await addLeadHistory(userPrimaryInfo.id, `Lead assigned to Counsellors`, userId, null, transaction);
 
         await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -421,9 +370,7 @@ exports.createLead = async (req, res) => {
           });
 
           if (countries) {
-            countryName = countries
-              .map((country) => country.country_name)
-              .join(", ");
+            countryName = countries.map((country) => country.country_name).join(", ");
           }
         }
 
@@ -442,13 +389,7 @@ exports.createLead = async (req, res) => {
           );
         }
 
-        await addLeadHistory(
-          userPrimaryInfo.id,
-          `Task assigned to Counsellors`,
-          userId,
-          null,
-          transaction
-        );
+        await addLeadHistory(userPrimaryInfo.id, `Task assigned to Counsellors`, userId, null, transaction);
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
       console.log("IT TEAM ID ==>", userRole?.role_id);
@@ -456,14 +397,9 @@ exports.createLead = async (req, res) => {
       if (franchise_id) {
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
-          const users = await getLeastAssignedCounsellor(
-            countryId,
-            franchise_id
-          );
+          const users = await getLeastAssignedCounsellor(countryId, franchise_id);
           if (users?.leastAssignedUserId) {
-            leastAssignedUsers = leastAssignedUsers.concat(
-              users.leastAssignedUserId
-            );
+            leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
           }
         }
 
@@ -479,13 +415,7 @@ exports.createLead = async (req, res) => {
             counselor_id: userId,
           }));
 
-          await addLeadHistory(
-            userPrimaryInfo.id,
-            `Lead assigned to Franchise Counsellor`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(userPrimaryInfo.id, `Lead assigned to Franchise Counsellor`, userId, null, transaction);
 
           await db.userCounselors.bulkCreate(userCounselorsData);
 
@@ -501,9 +431,7 @@ exports.createLead = async (req, res) => {
             });
 
             if (countries) {
-              countryName = countries
-                .map((country) => country.country_name)
-                .join(", ");
+              countryName = countries.map((country) => country.country_name).join(", ");
             }
           }
 
@@ -522,13 +450,7 @@ exports.createLead = async (req, res) => {
             );
           }
 
-          await addLeadHistory(
-            userPrimaryInfo.id,
-            `Task assigned to Franchise Counsellor`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(userPrimaryInfo.id, `Task assigned to Franchise Counsellor`, userId, null, transaction);
         }
       }
     }
@@ -637,20 +559,14 @@ exports.updateLead = async (req, res) => {
     ];
 
     for (const entity of entities) {
-      if (
-        entity.id !== null &&
-        !(await checkIfEntityExists(entity.model, entity.id))
-      ) {
+      if (entity.id !== null && !(await checkIfEntityExists(entity.model, entity.id))) {
         await transaction.rollback();
         return res.status(400).json({
           status: false,
           message: `Invalid ${entity.model.replace("_", " ")} ID provided`,
           errors: [
             {
-              msg: `Please provide a valid ${entity.model.replace(
-                "_",
-                " "
-              )} ID`,
+              msg: `Please provide a valid ${entity.model.replace("_", " ")} ID`,
             },
           ],
         });
@@ -721,14 +637,9 @@ exports.updateLead = async (req, res) => {
 
     // Check if preferred countries are changed
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      const currentCountryIds = currentPreferredCountries.map(
-        (country) => country.id
-      );
+      const currentCountryIds = currentPreferredCountries.map((country) => country.id);
 
-      if (
-        JSON.stringify(currentCountryIds.sort()) !==
-        JSON.stringify(preferred_country.sort())
-      ) {
+      if (JSON.stringify(currentCountryIds.sort()) !== JSON.stringify(preferred_country.sort())) {
         // Remove current assignments
         await lead.setPreferredCountries([], { transaction });
 
@@ -913,21 +824,9 @@ exports.updateUserStatus = async (req, res) => {
     await leadExists.update({ status_id, followup_date }, { transaction });
 
     if (role_id == process.env.COUNSELLOR_ROLE_ID) {
-      await addLeadHistory(
-        lead_id,
-        `Status changed to ${statusName}`,
-        userId,
-        countryId,
-        transaction
-      );
+      await addLeadHistory(lead_id, `Status changed to ${statusName}`, userId, countryId, transaction);
     } else {
-      await addLeadHistory(
-        lead_id,
-        `Status changed to ${statusName}`,
-        userId,
-        null,
-        transaction
-      );
+      await addLeadHistory(lead_id, `Status changed to ${statusName}`, userId, null, transaction);
     }
 
     await transaction.commit();
@@ -1248,9 +1147,7 @@ exports.updateRemarkDetails = async (req, res) => {
       color: status?.color,
     };
 
-    const remarkIndex = existLead?.remark_details.findIndex(
-      (data) => data.id == remark_id
-    );
+    const remarkIndex = existLead?.remark_details.findIndex((data) => data.id == remark_id);
     const remarkArray = existLead.remark_details;
 
     console.log("index", remarkIndex);
@@ -1307,10 +1204,7 @@ exports.updateFlagStatus = async (req, res) => {
       });
     }
 
-    const [affectedRows] = await db.userPrimaryInfo.update(
-      { flag_id: flag_id },
-      { where: { id: id }, transaction }
-    );
+    const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: flag_id }, { where: { id: id }, transaction });
 
     if (affectedRows === 0) {
       return res.status(404).json({
@@ -1322,21 +1216,9 @@ exports.updateFlagStatus = async (req, res) => {
     if (role_id == process.env.COUNSELLOR_ROLE_ID) {
       const { country_id } = await db.adminUsers.findByPk(userDecodeId);
 
-      await addLeadHistory(
-        id,
-        `Flag updated to ${flag.flag_name} by ${role_name}`,
-        userDecodeId,
-        country_id,
-        transaction
-      );
+      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, country_id, transaction);
     } else {
-      await addLeadHistory(
-        id,
-        `Flag updated to ${flag.flag_name} by ${role_name}`,
-        userDecodeId,
-        null,
-        transaction
-      );
+      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, null, transaction);
     }
 
     // commit the transaction

@@ -8,7 +8,7 @@ module.exports = (sequelize, Sequelize) => {
             model: "user_primary_info",
             key: "id",
           },
-          allowNull: false,
+          allowNull: true,
         },
         counselor_id: {
           type: Sequelize.INTEGER,
@@ -16,7 +16,7 @@ module.exports = (sequelize, Sequelize) => {
             model: "admin_users",
             key: "id",
           },
-          allowNull: false,
+          allowNull: true,
         },
       },
       {

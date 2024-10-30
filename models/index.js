@@ -373,11 +373,13 @@ db.userPrimaryInfo.belongsToMany(db.country, {
   through: "user_countries",
   foreignKey: "user_primary_info_id",
   as: "preferredCountries",
+  onDelete: "CASCADE",
 });
 db.country.belongsToMany(db.userPrimaryInfo, {
   through: "user_countries",
   foreignKey: "country_id",
   as: "users",
+  onDelete: "CASCADE",
 });
 
 // UserPrimaryInfo and AdminUser (Counselors) associations (many-to-many)
@@ -386,12 +388,14 @@ db.userPrimaryInfo.belongsToMany(db.adminUsers, {
   foreignKey: "user_id",
   otherKey: "counselor_id",
   as: "counselors",
+  onDelete: "CASCADE",
 });
 db.adminUsers.belongsToMany(db.userPrimaryInfo, {
   through: "user_counselors",
   foreignKey: "counselor_id",
   otherKey: "user_id",
   as: "counseledUsers",
+  onDelete: "CASCADE",
 });
 
 // region
@@ -659,5 +663,27 @@ db.userPrimaryInfo.hasOne(db.studentAdditionalDocs, {
   foreignKey: "student_id",
   as: "additional_docs",
 });
+
+// Add beforeDestroy hook to UserPrimaryInfo
+db.userPrimaryInfo.addHook("beforeDestroy", async (user) => {
+  // Delete from user_countries
+  await db.userContries.destroy({
+    where: { user_primary_info_id: user.id },
+  });
+  
+  // Delete from user_counselors
+  await db.userCounselors.destroy({
+    where: { user_id: user.id },
+  });
+});
+
+// Add beforeDestroy hook to Country
+db.country.addHook("beforeDestroy", async (country) => {
+  // Delete from user_countries
+  await db.userContries.destroy({
+    where: { country_id: country.id },
+  });
+});
+
 
 module.exports = db;
