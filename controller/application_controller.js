@@ -192,89 +192,6 @@ exports.autoAssignApplication = async (req, res, next) => {
   }
 };
 
-// exports.getApplicationDetailsByType = async (req, res, next) => {
-//   try {
-
-//     const { id, type } = req.params;
-
-//     const educationalDetails = await db.userPrimaryInfo.findByPk(id,
-//       {
-//         attributes: ["id"],
-//         include: [
-//           {
-//             model: db.educationDetails,
-//             required: true,
-//             as: "educationDetails",
-//             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
-//           },
-//           {
-//             model: db.graduationDetails,
-//             required: true,
-//             as: "graduationDetails",
-//             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "university_name", "college_name"]
-//           },
-//           {
-//             model: db.gapReason,
-//             required: true,
-//             as: "gapReasons",
-//             attributes: ["id", "reason", "start_date", "end_date", "type"]
-//           }
-//         ]
-//       }
-//     );
-
-//     const visaDetails = await db.userPrimaryInfo.findByPk(id,
-//       {
-//         attributes: ["id"],
-//         include: [
-//           {
-//             model: db.previousVisaApprove,
-//             required: true,
-//             as: "previousVisaApprovals",
-//             attributes: ["id", "country_id", "visa_type"],
-//             include: [
-//               {
-//                 model: db.country,
-//                 required: true,
-//                 as: 'approved_country',
-//                 attributes: ["id", "country_name"]
-//               }
-//             ]
-//           },
-//           {
-//             model: db.previousVisaDecline,
-//             required: true,
-//             as: "previousVisaDeclines",
-//             attributes: ["id", "country_id", "visa_type"],
-//             include: [
-//               {
-//                 model: db.country,
-//                 required: true,
-//                 as: 'declined_country',
-//                 attributes: ["id", "country_name"]
-//               }
-//             ]
-//           }
-//         ]
-//       }
-//     );
-
-//     console.log('educationalDetails', educationalDetails);
-//     console.log('visaDetails', visaDetails);
-
-//     return res.status(200).json({
-//       status: true,
-//       data: educationalDetails,
-//       visaDetails: visaDetails,
-//       message: "Success",
-//     });
-
-//   } catch (error) {
-//     console.error("Error fetching least assigned member:", error.message || error);
-//     throw error;
-//   }
-// };
-
 exports.getApplicationDetailsByType = async (req, res, next) => {
   try {
     const { id, type } = req.params;
@@ -307,6 +224,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
       });
       response.data = educationalDetails;
     } else if (type == types.visa) {
+
       const visaDetails = await db.userPrimaryInfo.findByPk(id, {
         attributes: ["id"],
         include: [
@@ -314,7 +232,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
             model: db.previousVisaApprove,
             required: true,
             as: "previousVisaApprovals",
-            attributes: ["id", "country_id", "visa_type"],
+            attributes: ["id", "country_id", "visa_type", "approved_letter"],
             include: [
               {
                 model: db.country,
@@ -328,7 +246,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
             model: db.previousVisaDecline,
             required: true,
             as: "previousVisaDeclines",
-            attributes: ["id", "country_id", "visa_type"],
+            attributes: ["id", "country_id", "visa_type", "declined_letter"],
             include: [
               {
                 model: db.country,
