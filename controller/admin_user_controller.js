@@ -4,23 +4,47 @@ const { Op } = require("sequelize");
 const db = require("../models");
 
 exports.getAllAdminUsers = async (req, res, next) => {
-  try {
-    const users = await db.adminUsers.findAll({
-      include: [
-        {
-          model: db.accessRoles,
-          as: "access_role",
-          attributes: ["role_name"],
-        },
-        {
-          model: db.country,
-          attributes: ["country_name"],
-          required: false, // This makes it a LEFT JOIN (optional relation)
-        },
-      ],
-    });
+  const { role_name } = req;
 
-    console.log(JSON.stringify(users, null, 2));
+  let users = [];
+
+  console.log(role_name);
+  
+
+  try {
+    if (role_name == "Application Manager") {
+      const { id } = await db.accessRoles.findOne({
+        where: { role_name : "Application Member" },
+      });
+
+      users = await db.adminUsers.findAll({
+        where: { role_id : id },
+        include: [
+          {
+            model: db.accessRoles,
+            as: "access_role",
+            attributes: ["role_name"],
+          },
+        ],
+        attributes:["id","name"]
+      });
+    } else {
+      users = await db.adminUsers.findAll({
+        include: [
+          {
+            model: db.accessRoles,
+            as: "access_role",
+            attributes: ["role_name"],
+          },
+          {
+            model: db.country,
+            attributes: ["country_name"],
+            required: false, // This makes it a LEFT JOIN (optional relation)
+          },
+        ],
+      });
+    }
+
 
     if (!users || users.length === 0) {
       return res.status(204).json({
@@ -306,20 +330,7 @@ exports.getAdminUsersById = (req, res, next) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
-  const {
-    employee_id,
-    name,
-    email,
-    phone,
-    address,
-    username,
-    updated_by,
-    role_id,
-    branch_id,
-    region_id,
-    country_id,
-    franchise_id,
-  } = req.body;
+  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
 
   try {
     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
@@ -333,14 +344,10 @@ exports.addAdminUsers = async (req, res) => {
 
     if (conflicts.length > 0) {
       const conflictFields = [];
-      if (conflicts.some((user) => user.employee_id === employee_id))
-        conflictFields.push("Employee ID");
-      if (conflicts.some((user) => user.email === email))
-        conflictFields.push("Email");
-      if (conflicts.some((user) => user.phone === phone))
-        conflictFields.push("Phone");
-      if (conflicts.some((user) => user.username === username))
-        conflictFields.push("Username");
+      if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
+      if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
+      if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
+      if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
 
       return res.status(409).json({
         status: false,
@@ -353,10 +360,7 @@ exports.addAdminUsers = async (req, res) => {
     if (role_id == process.env.FRANCHISE_MANAGER_ID) {
       existFranchiseTL = await db.adminUsers.findOne({
         where: {
-          [Op.and]: [
-            { role_id: process.env.FRANCHISE_MANAGER_ID },
-            { franchise_id },
-          ],
+          [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
         },
       });
 
@@ -602,10 +606,7 @@ exports.deleteAdminUsers = async (req, res) => {
     }
 
     // Update the access_roles table to set updated_by to null where it references the admin user to be deleted
-    await db.accessRoles.update(
-      { updated_by: null },
-      { where: { updated_by: id } }
-    );
+    await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
 
     // Delete the admin user
     await user.destroy();

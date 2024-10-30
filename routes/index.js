@@ -445,7 +445,7 @@ router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListi
 
 router.get("/application/:id", [authMiddleware.checkUserAuth], getApplicationById);
 
-router.post("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
+router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
 
 router.post("/auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplication);
 
