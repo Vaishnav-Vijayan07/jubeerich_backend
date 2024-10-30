@@ -4,17 +4,16 @@ const { Op } = require("sequelize");
 const db = require("../models");
 
 exports.getAllAdminUsers = async (req, res, next) => {
-  const { role_name } = req;
+  const { role_id } = req;
 
   let users = [];
 
-  console.log(role_name);
   
 
   try {
-    if (role_name == "Application Manager") {
+    if (role_id == process.env.APPLICATION_MANAGER_ID) {
       const { id } = await db.accessRoles.findOne({
-        where: { role_name : "Application Member" },
+        where: { id : process.env.APPLICATION_TEAM_ID},
       });
 
       users = await db.adminUsers.findAll({

@@ -57,7 +57,7 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC } = require("../controller/kyc_controller");
+const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
 const { assignApplication, autoAssignApplication } = require("../controller/application_controller");
 
 const router = express.Router();
@@ -441,10 +441,12 @@ router.get("/kyc_rejected", [authMiddleware.checkUserAuth], kycRejectedDetails);
 
 router.get("/kyc_approved", [authMiddleware.checkUserAuth], kycApprovedDetails);
 
+router.get("/kyc_pending_by_user", [authMiddleware.checkUserAuth], getAllKycByUser);
+
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 
 router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
 
-router.post("/auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplication);
+router.patch("/auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplication);
 
 module.exports = router;

@@ -218,7 +218,7 @@ exports.proceedToKyc = async (req, res) => {
       transaction,
     });
 
-    console.log('studyPrefDetails ======>', studyPrefDetails);
+    console.log("studyPrefDetails ======>", studyPrefDetails);
 
     // if (studyPrefDetails.length > 0) {
     //   const applicationsToCreate = studyPrefDetails.map((detail) => ({
@@ -237,18 +237,18 @@ exports.proceedToKyc = async (req, res) => {
       for (const detail of studyPrefDetails) {
         const existingApplications = await db.application.findAll({
           where: { studyPrefernceId: detail.id },
-          attributes: ['id']
+          attributes: ["id"],
         });
 
         if (existingApplications.length > 0) {
-          applicationsToUpdate.push(...existingApplications.map(app => app.id));
+          applicationsToUpdate.push(...existingApplications.map((app) => app.id));
         } else {
           applicationsToCreate.push({ studyPrefernceId: detail.id });
         }
       }
 
-      console.log('applicationsToCreate ======>', applicationsToCreate);
-      console.log('applicationsToUpdate ======>', applicationsToUpdate);
+      console.log("applicationsToCreate ======>", applicationsToCreate);
+      console.log("applicationsToUpdate ======>", applicationsToUpdate);
 
       if (applicationsToCreate.length > 0) {
         await db.application.bulkCreate(applicationsToCreate, { transaction });
@@ -259,12 +259,11 @@ exports.proceedToKyc = async (req, res) => {
           { is_rejected_kyc: false },
           {
             where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
-            transaction
+            transaction,
           }
         );
       }
     }
-  
 
     const [setIsProceed] = await db.tasks.update(
       {
@@ -326,11 +325,11 @@ exports.kycPendingDetails = async (req, res) => {
 
       if (isPending) {
         dynamicWhere = {
-          [db.Sequelize.Op.and]: [{ application_status: false }, { assigned_user: { [db.Sequelize.Op.eq]: null } }],
+          [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: { [db.Sequelize.Op.eq]: null } }],
         };
       } else {
         dynamicWhere = {
-          [db.Sequelize.Op.and]: [{ application_status: false }, { assigned_user: { [db.Sequelize.Op.ne]: null } }],
+          [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: { [db.Sequelize.Op.ne]: null } }],
         };
       }
 
@@ -798,6 +797,111 @@ exports.approveKYC = async (req, res, next) => {
     });
   } catch (error) {
     if (transaction) await transaction.rollback();
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.getAllKycByUser = async (req, res) => {
+  try {
+    const { userDecodeId } = req;
+
+    let applicationData = await db.application.findAll({
+      where: {
+        [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: userDecodeId }],
+      },
+
+      include: [
+        {
+          model: db.adminUsers,
+          as: "application",
+          required: false,
+          attributes: ["id", "name"],
+        },
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails",
+          attributes: ["id", "kyc_status"],
+          required: true, // Set this association as required
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              required: true, // Set this association as required
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                  required: true, // Set this association as required
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["assign_type", "lead_received_date", "full_name", "counsiler_id"],
+                  required: true, // Set this association as required
+                  include: [
+                    {
+                      model: db.officeType,
+                      as: "office_type_name",
+                      attributes: ["office_type_name"],
+                      required: true, // Set this association as required
+                    },
+                    {
+                      model: db.leadSource,
+                      as: "source_name",
+                      attributes: ["source_name"],
+                      required: true, // Set this association as required
+                    },
+                    {
+                      model: db.adminUsers,
+                      as: "counselors",
+                      attributes: ["name", "id", "country_id"],
+                      through: { attributes: [] },
+                      subquery: false,
+                      required: true, // Set this association as required
+                      where: {
+                        country_id: {
+                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+              required: true, // Set this association as required
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+              required: true, // Set this association as required
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name"],
+              required: true, // Set this association as required
+            },
+          ],
+        },
+      ],
+      attributes: ["id"],
+    });
+
+    return res.status(200).json({
+      status: true,
+      data: applicationData,
+    });
+  } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
