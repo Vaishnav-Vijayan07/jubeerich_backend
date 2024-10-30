@@ -1,6 +1,10 @@
 const db = require("../models");
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
+const types = {
+  education : 'education',
+  visa : 'visa'
+}
 
 exports.getApplicationById = async (req, res, next) => {
     try {
@@ -188,36 +192,162 @@ exports.autoAssignApplication = async (req, res, next) => {
   }
 };
 
-exports.getApplicationDetailsByType = async(req, res, next) => {
-    try {
+// exports.getApplicationDetailsByType = async (req, res, next) => {
+//   try {
 
-        const { id, type } = req.params;
+//     const { id, type } = req.params;
 
-        const educationalDetails = await db.userPrimaryInfo.findByPk(id,
-            {
-                include: [
-                    {
-                        model: db.educationDetails,
-                        required: true,
-                        as: "educationDetails",
-                        attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
-                    }
-                ]
-            }
-        );
+//     const educationalDetails = await db.userPrimaryInfo.findByPk(id,
+//       {
+//         attributes: ["id"],
+//         include: [
+//           {
+//             model: db.educationDetails,
+//             required: true,
+//             as: "educationDetails",
+//             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
+//           },
+//           {
+//             model: db.graduationDetails,
+//             required: true,
+//             as: "graduationDetails",
+//             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "university_name", "college_name"]
+//           },
+//           {
+//             model: db.gapReason,
+//             required: true,
+//             as: "gapReasons",
+//             attributes: ["id", "reason", "start_date", "end_date", "type"]
+//           }
+//         ]
+//       }
+//     );
 
-        console.log('educationalDetails',educationalDetails);
+//     const visaDetails = await db.userPrimaryInfo.findByPk(id,
+//       {
+//         attributes: ["id"],
+//         include: [
+//           {
+//             model: db.previousVisaApprove,
+//             required: true,
+//             as: "previousVisaApprovals",
+//             attributes: ["id", "country_id", "visa_type"],
+//             include: [
+//               {
+//                 model: db.country,
+//                 required: true,
+//                 as: 'approved_country',
+//                 attributes: ["id", "country_name"]
+//               }
+//             ]
+//           },
+//           {
+//             model: db.previousVisaDecline,
+//             required: true,
+//             as: "previousVisaDeclines",
+//             attributes: ["id", "country_id", "visa_type"],
+//             include: [
+//               {
+//                 model: db.country,
+//                 required: true,
+//                 as: 'declined_country',
+//                 attributes: ["id", "country_name"]
+//               }
+//             ]
+//           }
+//         ]
+//       }
+//     );
 
-        return res.status(200).json({
-            status: true,
-            data: educationalDetails,
-            message: "Success",
-          });
+//     console.log('educationalDetails', educationalDetails);
+//     console.log('visaDetails', visaDetails);
 
-    } catch (error) {
-        console.error("Error fetching least assigned member:", error.message || error);
-        throw error;
+//     return res.status(200).json({
+//       status: true,
+//       data: educationalDetails,
+//       visaDetails: visaDetails,
+//       message: "Success",
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching least assigned member:", error.message || error);
+//     throw error;
+//   }
+// };
+
+exports.getApplicationDetailsByType = async (req, res, next) => {
+  try {
+    const { id, type } = req.params;
+
+    let response = { status: true, message: "Successly fetched details" };
+
+    if (type == types.education) {
+      const educationalDetails = await db.userPrimaryInfo.findByPk(id, {
+        attributes: ["id"],
+        include: [
+          {
+            model: db.educationDetails,
+            required: true,
+            as: "educationDetails",
+            attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"]
+          },
+          {
+            model: db.graduationDetails,
+            required: true,
+            as: "graduationDetails",
+            attributes: ["id", "qualification", "start_date", "end_date", "percentage", "university_name", "college_name"]
+          },
+          {
+            model: db.gapReason,
+            required: true,
+            as: "gapReasons",
+            attributes: ["id", "reason", "start_date", "end_date", "type"]
+          }
+        ]
+      });
+      response.data = educationalDetails;
+    } else if (type == types.visa) {
+      const visaDetails = await db.userPrimaryInfo.findByPk(id, {
+        attributes: ["id"],
+        include: [
+          {
+            model: db.previousVisaApprove,
+            required: true,
+            as: "previousVisaApprovals",
+            attributes: ["id", "country_id", "visa_type"],
+            include: [
+              {
+                model: db.country,
+                required: true,
+                as: 'approved_country',
+                attributes: ["id", "country_name"]
+              }
+            ]
+          },
+          {
+            model: db.previousVisaDecline,
+            required: true,
+            as: "previousVisaDeclines",
+            attributes: ["id", "country_id", "visa_type"],
+            include: [
+              {
+                model: db.country,
+                required: true,
+                as: 'declined_country',
+                attributes: ["id", "country_name"]
+              }
+            ]
+          }
+        ]
+      });
+      response.visaDetails = visaDetails;
     }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching details:", error.message || error);
+    throw error;
+  }
 };
 
 const getLeastAssignedApplicationMember = async () => {
