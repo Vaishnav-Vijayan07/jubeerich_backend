@@ -89,7 +89,7 @@ db.application.belongsTo(db.studyPreferenceDetails, {
 
 db.studyPreferenceDetails.hasMany(db.application, {
   foreignKey: "studyPrefernceId",
-  as: "application",
+  as: "applications",
 });
 
 db.application.belongsTo(db.adminUsers, {
