@@ -384,8 +384,6 @@ exports.getApplicationChecks = async (req, res, next) => {
 
     const applicationChecks = await db.eligibilityChecks.findOne({ where: { application_id: id } });
 
-    console.log('applicationChecks',applicationChecks);
-    
     return res.status(200).json({
       status: true,
       data: applicationChecks,
@@ -415,6 +413,37 @@ exports.getPortalDetails = async (req, res, next) => {
       data: portalDetails,
       message: "Check Updated Successfully",
     });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.completeApplication = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { ref_id } = req.body;
+
+    const [completeApplication] = await db.application.update(
+      { application_status: 'submitted', reference_id: ref_id },
+      { where: { id: id } }
+    )
+
+    console.log('completeApplication',completeApplication);
+
+    if(completeApplication == 0){
+      throw new Error("Application not completed");
+    }
+    
+    return res.status(200).json({
+      status: true,
+      data: portalDetails,
+      message: "Application Completed Successfully",
+    });
+
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
