@@ -388,6 +388,31 @@ exports.getApplicationChecks = async (req, res, next) => {
     
     return res.status(200).json({
       status: true,
+      data: applicationChecks,
+      message: "Check Updated Successfully",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.getPortalDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    console.log('id', id);
+
+    const portalDetails = await db.university.findByPk(id);
+
+    console.log('portalDetails',portalDetails);
+    
+    return res.status(200).json({
+      status: true,
+      data: portalDetails,
       message: "Check Updated Successfully",
     });
   } catch (error) {
