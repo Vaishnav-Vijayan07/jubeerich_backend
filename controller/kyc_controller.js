@@ -200,7 +200,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id } = req.body;
+    const { student_id, task_id } = req.body;
     const { userDecodeId } = req;
 
     const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
@@ -272,7 +272,7 @@ exports.proceedToKyc = async (req, res) => {
       },
       {
         where: {
-          studentId: student_id,
+          id: task_id,
         },
         transaction,
       }
