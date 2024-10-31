@@ -34,11 +34,15 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
       defaultValue: {
         formatting: false,
-        checks: false,
+        scanning: false,
         clarity: false,
       },
     },
     immigration_check: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
+    application_fee_check: {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },

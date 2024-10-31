@@ -1,10 +1,21 @@
 const db = require("../models");
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
+
 const types = {
-  education: "education",
-  visa: "visa",
-};
+  education: 'education',
+  visa: 'visa'
+}
+
+const CheckTypes = {
+  availability: 'availability',
+  campus: 'campus',
+  entry_requirement: 'entry_requirement',
+  quantity: 'quantity',
+  quality: 'quality',
+  immigration: 'immigration',
+  application_fee: 'application_fee'
+}
 
 exports.getApplicationById = async (req, res, next) => {
   try {
@@ -91,10 +102,11 @@ exports.getApplicationById = async (req, res, next) => {
       data: {
         existApplication: existApplication,
         studyPreferDetails: studyPreferDetails,
-        assigned_user: assigned_user,
+        assigned_user: assigned_user
       },
       message: "Application Assigned to Team Member",
     });
+
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
@@ -259,8 +271,11 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error fetching details:", error.message || error);
-    throw error;
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -304,5 +319,80 @@ const getLeastAssignedApplicationMember = async () => {
   } catch (error) {
     console.error("Error fetching least assigned member:", error.message || error);
     throw error;
+  }
+};
+
+exports.updateApplicationChecks = async (req, res, next) => {
+  try {
+    const { application_id, check_type, quality_value } = req.body;
+
+    let updateCheck;
+    let updateValues = {};
+
+    switch (check_type) {
+      case CheckTypes.availability:
+        updateValues = { availability_check: true };
+        break;
+      case CheckTypes.campus:
+        updateValues = { campus_check: true };
+        break;
+      case CheckTypes.entry_requirement:
+        updateValues = { entry_requirement_check: true };
+        break;
+      case CheckTypes.quantity:
+        updateValues = { quantity_check: true };
+        break;
+      case CheckTypes.immigration:
+        updateValues = { immigration_check: true };
+        break;
+      case CheckTypes.application_fee:
+        updateValues = { application_fee_check: true };
+        break;
+      case CheckTypes.quality:
+        console.log('Entered quality check');
+        updateValues = { quality_check: quality_value };
+        break;
+      default:
+        throw new Error("Invalid check type");
+    }
+
+    [updateCheck] = await db.eligibilityChecks.update(updateValues, { where: { application_id: application_id } });
+
+    console.log('updateCheck', updateCheck);
+    if (updateCheck == 0) {
+      throw new Error("Application check not updated");
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Check Updated Successfully",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.getApplicationChecks = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const applicationChecks = await db.eligibilityChecks.findOne({ where: { application_id: id } });
+
+    console.log('applicationChecks',applicationChecks);
+    
+    return res.status(200).json({
+      status: true,
+      message: "Check Updated Successfully",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
   }
 };
