@@ -68,8 +68,19 @@ db.familyInformation = require("./familyInformation")(sequelize, Sequelize);
 db.EmploymentHistory = require("./employmentHistory")(sequelize, Sequelize);
 db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
+db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 
 //Associations
+
+db.application.hasOne(db.eligibilityChecks, {
+  foreignKey: "application_id",
+  as: "eligibilityChecks",
+});
+
+db.eligibilityChecks.belongsTo(db.application, {
+  foreignKey: "application_id",
+  as: "application",
+});
 
 db.application.belongsTo(db.studyPreferenceDetails, {
   foreignKey: "studyPrefernceId",

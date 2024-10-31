@@ -251,7 +251,18 @@ exports.proceedToKyc = async (req, res) => {
       console.log("applicationsToUpdate ======>", applicationsToUpdate);
 
       if (applicationsToCreate.length > 0) {
-        await db.application.bulkCreate(applicationsToCreate, { transaction });
+        // Insert new applications and retrieve the newly created records
+        const createdApplications = await db.application.bulkCreate(applicationsToCreate, {
+          transaction,
+          returning: true, // Use `returning` to get the created records with IDs
+        });
+
+        // Prepare eligibility data using the IDs of the created applications
+        const eligibilityData = createdApplications.map((app) => ({
+          application_id: app.id,
+        }));
+
+        await db.eligibilityChecks.bulkCreate(eligibilityData, { transaction });
       }
 
       if (applicationsToUpdate.length > 0) {
