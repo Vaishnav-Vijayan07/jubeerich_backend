@@ -27,7 +27,7 @@ exports.getApplicationById = async (req, res, next) => {
       throw new Error("Application not found");
     }
 
-    const [assigned_user, studyPreferDetails] = await Promise.all([
+    const [assigned_user, studyPreferDetails, checks] = await Promise.all([
       existApplication.getApplication({ attributes: ["id", "name"] }),
       existApplication.getStudyPreferenceDetails({
         attributes: ["id", "intakeYear", "intakeMonth","streamId"],
@@ -95,6 +95,7 @@ exports.getApplicationById = async (req, res, next) => {
           },
         ],
       }),
+      existApplication.getEligibilityChecks(),
     ]);
 
     return res.status(200).json({
@@ -102,7 +103,8 @@ exports.getApplicationById = async (req, res, next) => {
       data: {
         existApplication: existApplication,
         studyPreferDetails: studyPreferDetails,
-        assigned_user: assigned_user
+        assigned_user: assigned_user,
+        checks: checks
       },
       message: "Application Assigned to Team Member",
     });
