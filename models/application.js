@@ -17,11 +17,11 @@ module.exports = (sequelize, Sequelize) => {
       },
       is_rejected_kyc: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
-      application_status: {
+      proceed_to_application_manager: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
       assigned_user: {
         type: Sequelize.INTEGER,
@@ -30,7 +30,31 @@ module.exports = (sequelize, Sequelize) => {
           model: "admin_users",
           key: "id",
         },
-      }
+      },
+      application_status: {
+        type: Sequelize.ENUM("pending", "submitted", "offer_accepted", "rejected"),
+        defaultValue: "pending",
+      },
+      kyc_status: {
+        type: Sequelize.ENUM("submitted", "approved", "rejected"),
+        defaultValue: "submitted",
+      },
+      reference_id: {
+        type: Sequelize.STRING(20),
+        allowNull: true,
+      },
+      comments: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
+      offer_letter: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
+      offer_letter_type: {
+        type: Sequelize.ENUM("conditional", "unconditional"),
+        allowNull: true
+      },
     },
     {
       tableName: "application_details",

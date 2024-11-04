@@ -72,7 +72,7 @@ exports.getKycDetails = async (req, res, next) => {
               },
               {
                 model: db.application,
-                as: "application",
+                as: "applications",
                 required: true,
               },
             ],
@@ -336,11 +336,11 @@ exports.kycPendingDetails = async (req, res) => {
 
       if (isPending) {
         dynamicWhere = {
-          [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: { [db.Sequelize.Op.eq]: null } }],
+          [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: { [db.Sequelize.Op.eq]: null } }],
         };
       } else {
         dynamicWhere = {
-          [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: { [db.Sequelize.Op.ne]: null } }],
+          [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: { [db.Sequelize.Op.ne]: null } }],
         };
       }
 
@@ -357,7 +357,7 @@ exports.kycPendingDetails = async (req, res) => {
           {
             model: db.studyPreferenceDetails,
             as: "studyPreferenceDetails",
-            attributes: ["id", "kyc_status"],
+            attributes: ["id"],
             required: true, // Set this association as required
             include: [
               {
@@ -427,7 +427,7 @@ exports.kycPendingDetails = async (req, res) => {
             ],
           },
         ],
-        attributes: ["id"],
+        attributes: ["id", "application_status", "kyc_status"],
         where: dynamicWhere,
       });
     } else if (type == "country_manager") {
@@ -437,7 +437,7 @@ exports.kycPendingDetails = async (req, res) => {
           {
             model: db.studyPreferenceDetails,
             as: "studyPreferenceDetails",
-            attributes: ["id", "kyc_status"],
+            attributes: ["id"],
             required: true, // Set this association as required
             include: [
               {
@@ -508,8 +508,8 @@ exports.kycPendingDetails = async (req, res) => {
             ],
           },
         ],
-        attributes: ["id"],
-        where: { is_rejected_kyc: false, application_status: false },
+        attributes: ["id", "application_status", "kyc_status"],
+        where: { is_rejected_kyc: false, proceed_to_application_manager: false },
       });
     }
 
@@ -539,7 +539,7 @@ exports.kycRejectedDetails = async (req, res) => {
         {
           model: db.studyPreferenceDetails,
           as: "studyPreferenceDetails",
-          attributes: ["id", "kyc_status"],
+          attributes: ["id"],
           required: true, // Set this association as required
           include: [
             {
@@ -610,8 +610,8 @@ exports.kycRejectedDetails = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id"],
-      where: { is_rejected_kyc: true, application_status: false },
+      attributes: ["id", "application_status", "kyc_status"],
+      where: { is_rejected_kyc: true, proceed_to_application_manager: false },
     });
 
     res.status(200).json({
@@ -638,7 +638,7 @@ exports.kycApprovedDetails = async (req, res) => {
         {
           model: db.studyPreferenceDetails,
           as: "studyPreferenceDetails",
-          attributes: ["id", "kyc_status"],
+          attributes: ["id"],
           required: true, // Set this association as required
           include: [
             {
@@ -709,8 +709,8 @@ exports.kycApprovedDetails = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id"],
-      where: { application_status: true },
+      attributes: ["id", "application_status", "kyc_status"],
+      where: { proceed_to_application_manager: true },
     });
 
     res.status(200).json({
@@ -767,7 +767,10 @@ exports.rejectKYC = async (req, res, next) => {
       throw new Error("Failed to create new task");
     }
 
-    const [rejectApplication] = await db.application.update({ is_rejected_kyc: true }, { where: { id: application_id }, transaction });
+    const [rejectApplication] = await db.application.update(
+      { is_rejected_kyc: true, kyc_status: "rejected" },
+      { where: { id: application_id }, transaction }
+    );
 
     if (rejectApplication == 0) {
       throw new Error("Application Rejection Failed");
@@ -794,7 +797,10 @@ exports.approveKYC = async (req, res, next) => {
   try {
     const { application_id } = req.body;
 
-    const [approveApplication] = await db.application.update({ application_status: true }, { where: { id: application_id }, transaction });
+    const [approveApplication] = await db.application.update(
+      { proceed_to_application_manager: true, kyc_status: "approved", application_status: "submitted" },
+      { where: { id: application_id }, transaction }
+    );
 
     if (approveApplication == 0) {
       throw new Error("Application Approve Failed");
@@ -819,10 +825,11 @@ exports.approveKYC = async (req, res, next) => {
 exports.getAllKycByUser = async (req, res) => {
   try {
     const { userDecodeId } = req;
+    const { status } = req.query;  
 
     let applicationData = await db.application.findAll({
       where: {
-        [db.Sequelize.Op.and]: [{ application_status: true }, { assigned_user: userDecodeId }],
+        [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: userDecodeId }, { application_status: status }],
       },
 
       include: [
@@ -835,7 +842,7 @@ exports.getAllKycByUser = async (req, res) => {
         {
           model: db.studyPreferenceDetails,
           as: "studyPreferenceDetails",
-          attributes: ["id", "kyc_status"],
+          attributes: ["id"],
           required: true, // Set this association as required
           include: [
             {
@@ -905,7 +912,7 @@ exports.getAllKycByUser = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id"],
+      attributes: ["id", "kyc_status", "application_status"],
     });
 
     return res.status(200).json({

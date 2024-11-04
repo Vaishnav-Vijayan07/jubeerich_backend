@@ -57,22 +57,8 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const {
-  getKycDetails,
-  proceedToKyc,
-  kycPendingDetails,
-  rejectKYC,
-  kycRejectedDetails,
-  kycApprovedDetails,
-  approveKYC,
-  getAllKycByUser,
-} = require("../controller/kyc_controller");
-const {
-  assignApplication,
-  autoAssignApplication,
-  getApplicationById,
-  getApplicationDetailsByType,
-} = require("../controller/application_controller");
+const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
+const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType, updateApplicationChecks, getApplicationChecks, getPortalDetails, completeApplication, provdeOfferLetter } = require("../controller/application_controller");
 
 const router = express.Router();
 
@@ -500,5 +486,15 @@ router.get("/details_application/:type/:id", [authMiddleware.checkUserAuth], get
 router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplication);
 
 router.patch("/auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplication);
+
+router.put('/check_application', [authMiddleware.checkUserAuth], updateApplicationChecks);
+
+router.get('/details_checks', [authMiddleware.checkUserAuth], getApplicationChecks);
+
+router.get('/portal_details/:id', [authMiddleware.checkUserAuth], getPortalDetails);
+
+router.get('/complete_application/:id', [authMiddleware.checkUserAuth], completeApplication);
+
+router.put('/provide_offer/:id', uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
 
 module.exports = router;

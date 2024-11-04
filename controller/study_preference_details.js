@@ -1,45 +1,6 @@
 const { where } = require("sequelize");
 const db = require("../models");
-const {
-  addOrUpdateStudyPreference,
-} = require("../utils/academic_query_helper");
-
-// Need to change like Dynamic Form
-// exports.createStudyPreferenceDetails = async (req, res) => {
-//     try {
-//         const { studyPreferenceId, universityId, campusId, courseTypeId, streamId, courseId, intakeYear, intakeMonth, estimatedBudget } = req.body;
-
-//         if (!studyPreferenceId || !universityId || !campusId || !courseTypeId || !streamId || !courseId || !intakeYear || !intakeMonth || !estimatedBudget) {
-//             return res.status(400).json({
-//                 status: false,
-//                 message: "All fields are required.",
-//             });
-//         }
-
-//         const newDetails = await db.studyPreferenceDetails.create({
-//             studyPreferenceId,
-//             universityId,
-//             campusId,
-//             courseTypeId,
-//             streamId,
-//             courseId,
-//             intakeYear,
-//             intakeMonth,
-//             estimatedBudget,
-//         });
-
-//         res.status(201).json({
-//             status: true,
-//             data: newDetails,
-//         });
-//     } catch (error) {
-//         console.error(`Error creating study preference details: ${error}`);
-//         res.status(500).json({
-//             status: false,
-//             message: "Internal server error",
-//         });
-//     }
-// };
+const { addOrUpdateStudyPreference } = require("../utils/academic_query_helper");
 
 exports.createStudyPreferenceDetails = async (req, res) => {
   const transaction = await db.sequelize.transaction(); // Start a transaction
@@ -47,11 +8,7 @@ exports.createStudyPreferenceDetails = async (req, res) => {
     const { study_preferences, studyPreferenceId } = req.body;
 
     // Call addOrUpdate function with transaction
-    await addOrUpdateStudyPreference(
-      study_preferences,
-      studyPreferenceId,
-      transaction
-    );
+    await addOrUpdateStudyPreference(study_preferences, studyPreferenceId, transaction);
 
     await transaction.commit(); // Commit transaction if all is successful
 
@@ -75,6 +32,9 @@ exports.getStudyPreferenceDetails = async (req, res) => {
   try {
     const userPrimaryInfoId = parseInt(req.params.id);
     const { userDecodeId, role_name, role_id } = req;
+
+    console.log("Application ASSOCIATIONS ===========>", db.application.associations);
+    console.log("sTUDY PREF ASSOCIATIONS ===========>", db.studyPreferenceDetails.associations);
 
     const { country } =
       (await db.adminUsers.findByPk(userDecodeId, {
@@ -104,6 +64,13 @@ exports.getStudyPreferenceDetails = async (req, res) => {
         {
           model: db.studyPreferenceDetails, // Include associated study preference details
           as: "studyPreferenceDetails", // Alias as defined in the association
+          include: [
+            {
+              model: db.application,
+              as: "applications", // Alias defined in association
+              required: false,
+            },
+          ],
         },
         {
           model: db.country, // Include the country model
@@ -114,9 +81,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
     });
 
     if (!studyPreferences || studyPreferences.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No study preferences found for this student" });
+      return res.status(404).json({ message: "No study preferences found for this student" });
     }
 
     console.log(role_id == process.env.COUNSELLOR_ROLE_ID);
@@ -128,10 +93,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
       studyDetails: preference.studyPreferenceDetails,
       country_name: preference.country.country_name,
       country_id: preference.country.id,
-      isEditable:
-        role_id == process.env.COUNSELLOR_ROLE_ID
-          ? preference.country.id == country?.id
-          : true,
+      isEditable: role_id == process.env.COUNSELLOR_ROLE_ID ? preference.country.id == country?.id : true,
     }));
 
     res.status(200).json({ data: modifiedResponse });
@@ -210,26 +172,6 @@ exports.updateStudyPreferenceDetails = async (req, res) => {
         estimatedBudget: countryWiseData?.estimatedBudget,
       });
     }
-
-    // const detail = await db.studyPreferenceDetails.findByPk(id);
-
-    // if (!detail) {
-    //     return res.status(404).json({
-    //         status: false,
-    //         message: "Study preference detail not found.",
-    //     });
-    // }
-
-    // await detail.update({
-    //     universityId,
-    //     campusId,
-    //     courseTypeId,
-    //     streamId,
-    //     courseId,
-    //     intakeYear,
-    //     intakeMonth,
-    //     estimatedBudget,
-    // });
 
     res.status(200).json({
       status: true,
