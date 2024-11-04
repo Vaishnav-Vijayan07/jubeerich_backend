@@ -43,7 +43,7 @@ exports.getApplicationById = async (req, res, next) => {
                 as: "campuses",
                 attributes: ["id", "campus_name"],
                 through: {
-                  attributes: ["course_link"],
+                  attributes: ["course_link", "course_fee", "application_fee"],
                 },
               },
             ],
