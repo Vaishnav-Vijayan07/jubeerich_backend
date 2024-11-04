@@ -912,7 +912,7 @@ exports.getAllKycByUser = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id", "kyc_status", "application_status"],
+      attributes: ["id", "kyc_status", "application_status", "offer_letter"],
     });
 
     return res.status(200).json({

@@ -32,7 +32,6 @@ db.branches = require("./branch")(sequelize, Sequelize);
 db.userPrimaryInfo = require("./userPrimaryInfo")(sequelize, Sequelize);
 db.userBasicInfo = require("./userBasicInfo")(sequelize, Sequelize);
 db.userAcademicInfo = require("./userAcademicInfo")(sequelize, Sequelize);
-db.userStudyPreference = require("./userStudyPreference")(sequelize, Sequelize);
 db.tasks = require("./task")(sequelize, Sequelize);
 db.userBranches = require("./userBranches")(sequelize, Sequelize);
 db.status = require("./status")(sequelize, Sequelize);

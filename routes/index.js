@@ -197,9 +197,17 @@ router.post("/franchise", [authMiddleware.checkUserAuth], FranchiseController.ad
 router.put("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.updateFranchise);
 router.delete("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.deleteFranchise);
 
-router.get("/get_all_franchise_counsellors/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsByFranchise);
+router.get(
+  "/get_all_franchise_counsellors/:id",
+  [authMiddleware.checkUserAuth],
+  FranchiseController.getAllCounsellorsByFranchise
+);
 
-router.get("/get_all_franchise_counsellors_tl/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsTLByFranchise);
+router.get(
+  "/get_all_franchise_counsellors_tl/:id",
+  [authMiddleware.checkUserAuth],
+  FranchiseController.getAllCounsellorsTLByFranchise
+);
 
 // Statuses routes
 router.get("/status", [authMiddleware.checkUserAuth], StatusController.getAllStatuses);
@@ -354,7 +362,12 @@ router.post(
 
 router.get("/studentExamInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentExamInfoById);
 
-router.post("/studentExamInfo", uploadMultiple.uploadExamDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentExamInfo);
+router.post(
+  "/studentExamInfo",
+  uploadMultiple.uploadExamDocs,
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.saveStudentExamInfo
+);
 
 router.get("/studentFundInfo/:id", [authMiddleware.checkUserAuth], getStudentFundPlanDetails);
 router.post("/studentFundInfo", uploadMultiple.uploadFundDocs, [authMiddleware.checkUserAuth], saveStudentPlanDetails);
@@ -373,17 +386,16 @@ router.post("/gapReason", uploadMultiple.uploadGapDocs, [authMiddleware.checkUse
 
 router.delete("/basic_info/:type/:id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.deleteStudentAcademicInfo);
 router.post(
-  "/saveStudentStudyPreferenceInfo",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentStudyPreferenceInfo
-);
-router.post(
   "/studentPrimaryEducation/:type",
   [authMiddleware.checkUserAuth],
   uploadMultiple.uploadMultiple,
   SaveStudentDetailsController.saveStudentPrimaryEducation
 );
-router.get("/studentPrimaryEducation/:student_id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.studentPrimaryEducationDetails);
+router.get(
+  "/studentPrimaryEducation/:student_id",
+  [authMiddleware.checkUserAuth],
+  SaveStudentDetailsController.studentPrimaryEducationDetails
+);
 
 router.post(
   "/graduationDetails",
@@ -396,13 +408,35 @@ router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], TaskContr
 
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentStudyPreferenceInfoById);
 
-router.post("/study_preferences_details", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.createStudyPreferenceDetails);
-router.get("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.getStudyPreferenceDetails);
-router.put("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.updateStudyPreferenceDetails);
+router.post(
+  "/study_preferences_details",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.createStudyPreferenceDetails
+);
+router.get(
+  "/study_preferences_details/:id",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.getStudyPreferenceDetails
+);
+router.put(
+  "/study_preferences_details/:id",
+  [authMiddleware.checkUserAuth],
+  studyPreferencesDetailsController.updateStudyPreferenceDetails
+);
 
-router.post("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.saveAdditionalDocs);
+router.post(
+  "/additional_docs/:id",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  studentAdditionalController.saveAdditionalDocs
+);
 
-router.get("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.getAdditionalDocs);
+router.get(
+  "/additional_docs/:id",
+  uploadMultiple.uploadMultiple,
+  [authMiddleware.checkUserAuth],
+  studentAdditionalController.getAdditionalDocs
+);
 
 router.delete(
   "/additional_docs/:id/:name",
