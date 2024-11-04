@@ -825,10 +825,11 @@ exports.approveKYC = async (req, res, next) => {
 exports.getAllKycByUser = async (req, res) => {
   try {
     const { userDecodeId } = req;
+    const { status } = req.query;  
 
     let applicationData = await db.application.findAll({
       where: {
-        [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: userDecodeId }],
+        [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: userDecodeId }, { application_status: status }],
       },
 
       include: [
