@@ -402,7 +402,7 @@ exports.getPortalDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const portalDetails = await db.university.findByPk(id, { attributes: ["id", "university_name", "image_url", "portal_link", "username", "password"] });
+    const portalDetails = await db.university.findByPk(id, { attributes: ["id", "portal_link", "username", "password"] });
 
     console.log('portalDetails',portalDetails);
     
