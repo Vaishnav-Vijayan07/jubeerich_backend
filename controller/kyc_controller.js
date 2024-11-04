@@ -798,7 +798,7 @@ exports.approveKYC = async (req, res, next) => {
     const { application_id } = req.body;
 
     const [approveApplication] = await db.application.update(
-      { proceed_to_application_manager: true, kyc_status: "approved", application_status: "submitted" },
+      { proceed_to_application_manager: true, kyc_status: "approved"},
       { where: { id: application_id }, transaction }
     );
 
@@ -906,13 +906,13 @@ exports.getAllKycByUser = async (req, res) => {
             {
               model: db.university,
               as: "preferred_university",
-              attributes: ["university_name"],
+              attributes: ["university_name","id"],
               required: true, // Set this association as required
             },
           ],
         },
       ],
-      attributes: ["id", "kyc_status", "application_status", "offer_letter"],
+      attributes: ["id", "kyc_status", "application_status", "offer_letter","is_application_checks_passed","comments","reference_id"],
     });
 
     return res.status(200).json({
