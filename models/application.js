@@ -53,7 +53,11 @@ module.exports = (sequelize, Sequelize) => {
       },
       offer_letter_type: {
         type: Sequelize.ENUM("conditional", "unconditional"),
-        allowNull: true
+        allowNull: true,
+      },
+      is_application_checks_passed: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
     },
     {

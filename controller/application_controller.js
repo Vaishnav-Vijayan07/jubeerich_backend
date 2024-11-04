@@ -3,19 +3,19 @@ const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 
 const types = {
-  education: 'education',
-  visa: 'visa'
-}
+  education: "education",
+  visa: "visa",
+};
 
 const CheckTypes = {
-  availability: 'availability',
-  campus: 'campus',
-  entry_requirement: 'entry_requirement',
-  quantity: 'quantity',
-  quality: 'quality',
-  immigration: 'immigration',
-  application_fee: 'application_fee'
-}
+  availability: "availability",
+  campus: "campus",
+  entry_requirement: "entry_requirement",
+  quantity: "quantity",
+  quality: "quality",
+  immigration: "immigration",
+  application_fee: "application_fee",
+};
 
 exports.getApplicationById = async (req, res, next) => {
   try {
@@ -30,7 +30,7 @@ exports.getApplicationById = async (req, res, next) => {
     const [assigned_user, studyPreferDetails, checks] = await Promise.all([
       existApplication.getApplication({ attributes: ["id", "name"] }),
       existApplication.getStudyPreferenceDetails({
-        attributes: ["id", "intakeYear", "intakeMonth","streamId"],
+        attributes: ["id", "intakeYear", "intakeMonth", "streamId"],
         include: [
           {
             model: db.course,
@@ -104,11 +104,10 @@ exports.getApplicationById = async (req, res, next) => {
         existApplication: existApplication,
         studyPreferDetails: studyPreferDetails,
         assigned_user: assigned_user,
-        checks: checks
+        checks: checks,
       },
       message: "Application Assigned to Team Member",
     });
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
@@ -325,6 +324,7 @@ const getLeastAssignedApplicationMember = async () => {
 };
 
 exports.updateApplicationChecks = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
   try {
     const { application_id, check_type, quality_value } = req.body;
 
@@ -348,22 +348,25 @@ exports.updateApplicationChecks = async (req, res, next) => {
         updateValues = { immigration_check: true };
         break;
       case CheckTypes.application_fee:
+        await updateApplication(application_id, transaction);
         updateValues = { application_fee_check: true };
         break;
       case CheckTypes.quality:
-        console.log('Entered quality check');
+        console.log("Entered quality check");
         updateValues = { quality_check: quality_value };
         break;
       default:
         throw new Error("Invalid check type");
     }
 
-    [updateCheck] = await db.eligibilityChecks.update(updateValues, { where: { application_id: application_id } });
+    [updateCheck] = await db.eligibilityChecks.update(updateValues, { where: { application_id: application_id }, transaction });
 
-    console.log('updateCheck', updateCheck);
+    console.log("updateCheck", updateCheck);
     if (updateCheck == 0) {
       throw new Error("Application check not updated");
     }
+
+    await transaction.commit();
 
     return res.status(200).json({
       status: true,
@@ -371,6 +374,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
     });
   } catch (error) {
     console.error(`Error: ${error.message}`);
+    await transaction.rollback();
     return res.status(500).json({
       status: false,
       message: error.message || "Internal server error",
@@ -424,21 +428,20 @@ exports.completeApplication = async (req, res, next) => {
     const { ref_id, comment } = req.body;
 
     const [completeApplication] = await db.application.update(
-      { application_status: 'submitted', reference_id: ref_id, comments: comment },
+      { application_status: "submitted", reference_id: ref_id, comments: comment },
       { where: { id: id } }
-    )
+    );
 
-    console.log('completeApplication',completeApplication);
+    console.log("completeApplication", completeApplication);
 
-    if(completeApplication == 0){
+    if (completeApplication == 0) {
       throw new Error("Application not completed");
     }
-    
+
     return res.status(200).json({
       status: true,
       message: "Application completed successfully",
     });
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
@@ -454,30 +457,44 @@ exports.provdeOfferLetter = async (req, res, next) => {
     const { offer_letter_type } = req.body;
     const offer_letter = req?.files?.offer_letter?.[0];
 
-    console.log('Filess',offer_letter?.path);
-    console.log('offer_letter_type',offer_letter_type);
-    
+    console.log("Filess", offer_letter?.path);
+    console.log("offer_letter_type", offer_letter_type);
+
     const [provideOffer] = await db.application.update(
-      { application_status: 'offer_accepted', offer_letter_type: offer_letter_type, offer_letter: offer_letter?.path },
+      { application_status: "offer_accepted", offer_letter_type: offer_letter_type, offer_letter: offer_letter?.path },
       { where: { id: id } }
-    )
+    );
 
-    console.log('provideOffer',provideOffer);
+    console.log("provideOffer", provideOffer);
 
-    if(provideOffer == 0){
+    if (provideOffer == 0) {
       throw new Error("Offer not accepted");
     }
-    
+
     return res.status(200).json({
       status: true,
       message: "Offer accepted successfully",
     });
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
       message: error.message || "Internal server error",
     });
+  }
+};
+
+const updateApplication = async (application_id, transaction) => {
+  try {
+    const application = await db.application.findOne({ where: { id: application_id } });
+    if (!application) {
+      throw new Error("Application not found");
+    }
+    await db.application.update(
+      { is_application_checks_passed: true },
+      { where: { id: application_id }, transaction } // Correctly apply the transaction
+    );
+  } catch (error) {
+    throw new Error("Application not found");
   }
 };

@@ -459,7 +459,7 @@ router.get('/details_checks', [authMiddleware.checkUserAuth], getApplicationChec
 
 router.get('/portal_details/:id', [authMiddleware.checkUserAuth], getPortalDetails);
 
-router.get('/complete_application/:id', [authMiddleware.checkUserAuth], completeApplication);
+router.patch('/complete_application/:id', [authMiddleware.checkUserAuth], completeApplication);
 
 router.put('/provide_offer/:id', uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
 
