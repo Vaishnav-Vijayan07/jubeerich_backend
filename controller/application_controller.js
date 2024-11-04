@@ -498,3 +498,29 @@ const updateApplication = async (application_id, transaction) => {
     throw new Error("Application not found");
   }
 };
+
+exports.getAllRemarks = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const existApplicationRemarks = await db.application.findByPk(id, { attributes: ["remarks"] });
+
+    if (!existApplicationRemarks) {
+      throw new Error("Application not found");
+    }
+
+    return res.status(200).json({
+      status: true,
+      data: existApplicationRemarks?.remarks || [],
+      message: "Application Remarks fetched successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+

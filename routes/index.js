@@ -58,7 +58,7 @@ const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/e
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
 const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
-const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType, updateApplicationChecks, getApplicationChecks, getPortalDetails, completeApplication, provdeOfferLetter } = require("../controller/application_controller");
+const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType, updateApplicationChecks, getApplicationChecks, getPortalDetails, completeApplication, provdeOfferLetter, getAllRemarks } = require("../controller/application_controller");
 
 const router = express.Router();
 
@@ -496,5 +496,7 @@ router.get('/portal_details/:id', [authMiddleware.checkUserAuth], getPortalDetai
 router.patch('/complete_application/:id', [authMiddleware.checkUserAuth], completeApplication);
 
 router.put('/provide_offer/:id', uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
+
+router.get('/application_remarks/:id', [authMiddleware.checkUserAuth], getAllRemarks);
 
 module.exports = router;

@@ -47,6 +47,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(500),
         allowNull: true,
       },
+      remarks: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+        defaultValue: []
+      },
       offer_letter: {
         type: Sequelize.STRING(500),
         allowNull: true,
