@@ -43,6 +43,18 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(20),
         allowNull: true,
       },
+      comments: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
+      offer_letter: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
+      offer_letter_type: {
+        type: Sequelize.ENUM("conditional", "unconditional"),
+        allowNull: true
+      },
     },
     {
       tableName: "application_details",

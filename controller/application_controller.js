@@ -402,9 +402,7 @@ exports.getPortalDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    console.log('id', id);
-
-    const portalDetails = await db.university.findByPk(id);
+    const portalDetails = await db.university.findByPk(id, { attributes: ["id", "university_name", "image_url", "portal_link", "username", "password"] });
 
     console.log('portalDetails',portalDetails);
     
@@ -425,10 +423,10 @@ exports.getPortalDetails = async (req, res, next) => {
 exports.completeApplication = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { ref_id } = req.body;
+    const { ref_id, comment } = req.body;
 
     const [completeApplication] = await db.application.update(
-      { application_status: 'submitted', reference_id: ref_id },
+      { application_status: 'submitted', reference_id: ref_id, comments: comment },
       { where: { id: id } }
     )
 
@@ -441,7 +439,7 @@ exports.completeApplication = async (req, res, next) => {
     return res.status(200).json({
       status: true,
       data: portalDetails,
-      message: "Application Completed Successfully",
+      message: "University fetched successfully",
     });
 
   } catch (error) {
