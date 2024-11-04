@@ -404,12 +404,10 @@ exports.getPortalDetails = async (req, res, next) => {
 
     const portalDetails = await db.university.findByPk(id, { attributes: ["id", "portal_link", "username", "password"] });
 
-    console.log('portalDetails',portalDetails);
-    
     return res.status(200).json({
       status: true,
       data: portalDetails,
-      message: "Check Updated Successfully",
+      message: "Portal Details fetched Successfully",
     });
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -438,8 +436,41 @@ exports.completeApplication = async (req, res, next) => {
     
     return res.status(200).json({
       status: true,
-      data: portalDetails,
-      message: "University fetched successfully",
+      message: "Application completed successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.provdeOfferLetter = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { offer_letter_type } = req.body;
+    const offer_letter = req?.files?.offer_letter?.[0];
+
+    console.log('Filess',offer_letter?.path);
+    console.log('offer_letter_type',offer_letter_type);
+    
+    const [provideOffer] = await db.application.update(
+      { application_status: 'offer_accepted', offer_letter_type: offer_letter_type, offer_letter: offer_letter?.path },
+      { where: { id: id } }
+    )
+
+    console.log('provideOffer',provideOffer);
+
+    if(provideOffer == 0){
+      throw new Error("Offer not accepted");
+    }
+    
+    return res.status(200).json({
+      status: true,
+      message: "Offer accepted successfully",
     });
 
   } catch (error) {
