@@ -11,6 +11,10 @@ module.exports = (sequelize, Sequelize) => {
           type: Sequelize.FLOAT,
           allowNull: true,
         },
+        application_fee: {
+          type: Sequelize.FLOAT,
+          allowNull: true,
+        },
         course_link: {
           type: Sequelize.STRING,
           allowNull: true,

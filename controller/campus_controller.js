@@ -23,7 +23,7 @@ exports.getAllCampuses = async (req, res) => {
           model: db.course,
           as: "courses",
           through: {
-            attributes: ["course_fee", "course_link"],
+            attributes: ["course_fee", "course_link", "application_fee"],
           },
         },
       ],
@@ -39,6 +39,7 @@ exports.getAllCampuses = async (req, res) => {
           ...course.toJSON(),
           course_id: course ? course.id : null,
           course_fee: course.campus_course ? course.campus_course.course_fee : null,
+          application_fee: course.campus_course ? course.campus_course.application_fee : null,
           course_link: course.campus_course ? course.campus_course.course_link : null,
           campus_course: undefined,
         })),
@@ -67,7 +68,7 @@ exports.getCampusById = async (req, res) => {
           model: db.course,
           as: "courses",
           through: {
-            attributes: ["course_fee", "course_link"],
+            attributes: ["course_fee", "course_link", "application_fee"],
           },
         },
       ],
@@ -84,6 +85,7 @@ exports.getCampusById = async (req, res) => {
         ...course.toJSON(),
         course_id: course ? course.id : null,
         course_fee: course.campus_course ? course.campus_course.course_fee : null,
+        application_fee: course.campus_course ? course.campus_course.application_fee : null,
         course_link: course.campus_course ? course.campus_course.course_link : null,
         campus_course: undefined,
       })),
@@ -142,6 +144,7 @@ exports.addCampus = [
           await newCampus.addCourse(course.course_id, {
             through: {
               course_fee: course.course_fee,
+              application_fee: course.application_fee,
               course_link: course.course_link,
             },
           });
@@ -194,6 +197,7 @@ exports.updateCampus = [
           await campus.addCourse(course.course_id, {
             through: {
               course_fee: course.course_fee,
+              application_fee: course.application_fee,
               course_link: course.course_link,
             },
           });
