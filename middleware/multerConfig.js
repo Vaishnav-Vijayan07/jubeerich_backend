@@ -27,10 +27,17 @@ const multerStorage = multer.diskStorage({
       lor: "uploads/studentAdditionalDocs",
       sop: "uploads/studentAdditionalDocs",
       gte_form: "uploads/studentAdditionalDocs",
+      offer_letter: "uploads/offerLetters"
     };
 
     // Default to 'uploads/' if the field name is not explicitly mapped
     const uploadFolder = folder[file.fieldname] || "uploads/";
+
+    if (!fs.existsSync(uploadFolder)) {
+      fs.mkdirSync(uploadFolder, { recursive: true });
+      console.log(`Created folder: ${uploadFolder}`);
+    }
+
     cb(null, uploadFolder);
   },
   filename: (req, file, cb) => {
@@ -67,6 +74,7 @@ const uploadMultiple = multer({
   { name: "permitCard", maxCount: 1 }, // Add field for Permit Card Document
   { name: "salaryAccountStatement", maxCount: 1 }, // Add field for Salary Account Document
   { name: "supportingDocuments", maxCount: 1 }, // Add field for Supporting Documents Document
+  { name: "offer_letter", maxCount: 1 }, // Add field for Supporting Documents Document
 ]);
 
 const multerStorageGraduationDocs = multer.diskStorage({
