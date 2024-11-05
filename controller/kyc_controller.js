@@ -735,10 +735,23 @@ exports.rejectKYC = async (req, res, next) => {
 
     const existUser = await db.adminUsers.findByPk(userDecodeId, { attributes: ["name"] });
 
+    const existCounsellors = await db.adminUsers.findAll(
+      { where: { role_id: process.env.COUNSELLOR_ROLE_ID } },
+      { attributes: ["id"] }
+    );
+
+    const counsellorIds = existCounsellors.map((data) => data?.id)
+
     const existTask = await db.tasks.findOne({
-      where: { studentId: student_id },
+      where: { studentId: student_id,
+        userId: {
+          [db.Op.in]: counsellorIds,
+        },
+      },
       transaction,
     });
+
+    console.log('existTask ===>',existTask);
 
     const existApplication = await db.application.findByPk(application_id);
 
