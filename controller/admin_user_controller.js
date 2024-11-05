@@ -329,7 +329,22 @@ exports.getAdminUsersById = (req, res, next) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
-  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
+  const {
+    employee_id,
+    name,
+    email,
+    phone,
+    address,
+    username,
+    updated_by,
+    role_id,
+    branch_id,
+    region_id,
+    country_id,
+    franchise_id,
+  } = req.body;
+
+  const transaction = await db.sequelize.transaction();
 
   try {
     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
@@ -339,6 +354,7 @@ exports.addAdminUsers = async (req, res) => {
       where: {
         [Op.or]: [{ employee_id }, { email }, { phone }, { username }],
       },
+      transaction,
     });
 
     if (conflicts.length > 0) {
@@ -348,72 +364,87 @@ exports.addAdminUsers = async (req, res) => {
       if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
       if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
 
+      await transaction.rollback();
       return res.status(409).json({
         status: false,
         message: `${conflictFields.join(", ")} already exists`,
       });
     }
 
-    let existTL;
-    let existFranchiseTL;
+    // Check for Franchise Manager in the franchise
     if (role_id == process.env.FRANCHISE_MANAGER_ID) {
-      existFranchiseTL = await db.adminUsers.findOne({
+      const existFranchiseTL = await db.adminUsers.findOne({
         where: {
           [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
         },
+        transaction,
       });
 
-      console.log("existFranchiseTL", existFranchiseTL);
+      if (existFranchiseTL) {
+        await transaction.rollback();
+        return res.status(409).json({
+          status: false,
+          message: `Franchise Manager already exists in the Franchise`,
+        });
+      }
     }
 
-    if (existFranchiseTL) {
-      return res.status(409).json({
-        status: false,
-        message: `Franchise Manager already exists in the Franchise`,
-      });
-    }
-
+    // Check for TL in the branch
     if (role_id == process.env.COUNSELLOR_TL_ID) {
-      existTL = await db.adminUsers.findOne({
+      const existTL = await db.adminUsers.findOne({
         where: {
           [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
         },
+        transaction,
       });
 
-      console.log("existTL", existTL);
-    }
-
-    if (existTL) {
-      return res.status(409).json({
-        status: false,
-        message: `TL already exists in the branch`,
-      });
+      if (existTL) {
+        await transaction.rollback();
+        return res.status(409).json({
+          status: false,
+          message: `TL already exists in the branch`,
+        });
+      }
     }
 
     // Insert the new admin user
-    const newUser = await db.adminUsers.create({
-      employee_id,
-      name,
-      email,
-      phone,
-      address,
-      username,
-      password,
-      updated_by,
-      role_id,
-      //   profile_image_path: profileImage ? profileImage.path : null,
-      branch_id,
-      region_id,
-      country_id,
-      franchise_id,
-    });
+    const newUser = await db.adminUsers.create(
+      {
+        employee_id,
+        name,
+        email,
+        phone,
+        address,
+        username,
+        password,
+        updated_by,
+        role_id,
+        branch_id,
+        region_id,
+        country_id,
+        franchise_id,
+      },
+      { transaction }
+    );
 
+    await transaction.commit();
     res.json({
       status: true,
       data: newUser,
       message: "Admin user added successfully",
     });
   } catch (error) {
+    await transaction.rollback();
+
+    // Check if the error is a unique constraint violation
+    if (error.name === "SequelizeUniqueConstraintError" && error.fields) {
+      const conflictField = Object.keys(error.fields)[0]; // Get the field with the unique constraint error
+      return res.status(409).json({
+        status: false,
+        message: `The ${conflictField} already exists.`,
+      });
+    }
+
     console.error("Error creating admin user:", error);
     res.status(500).json({
       status: false,
@@ -421,6 +452,100 @@ exports.addAdminUsers = async (req, res) => {
     });
   }
 };
+
+
+// exports.addAdminUsers = async (req, res) => {
+//   const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
+
+//   try {
+//     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
+
+//     // Check if employee_id, email, phone, or username already exist
+//     const conflicts = await db.adminUsers.findAll({
+//       where: {
+//         [Op.or]: [{ employee_id }, { email }, { phone }, { username }],
+//       },
+//     });
+
+//     if (conflicts.length > 0) {
+//       const conflictFields = [];
+//       if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
+//       if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
+//       if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
+//       if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
+
+//       return res.status(409).json({
+//         status: false,
+//         message: `${conflictFields.join(", ")} already exists`,
+//       });
+//     }
+
+//     let existTL;
+//     let existFranchiseTL;
+//     if (role_id == process.env.FRANCHISE_MANAGER_ID) {
+//       existFranchiseTL = await db.adminUsers.findOne({
+//         where: {
+//           [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
+//         },
+//       });
+
+//       console.log("existFranchiseTL", existFranchiseTL);
+//     }
+
+//     if (existFranchiseTL) {
+//       return res.status(409).json({
+//         status: false,
+//         message: `Franchise Manager already exists in the Franchise`,
+//       });
+//     }
+
+//     if (role_id == process.env.COUNSELLOR_TL_ID) {
+//       existTL = await db.adminUsers.findOne({
+//         where: {
+//           [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
+//         },
+//       });
+
+//       console.log("existTL", existTL);
+//     }
+
+//     if (existTL) {
+//       return res.status(409).json({
+//         status: false,
+//         message: `TL already exists in the branch`,
+//       });
+//     }
+
+//     // Insert the new admin user
+//     const newUser = await db.adminUsers.create({
+//       employee_id,
+//       name,
+//       email,
+//       phone,
+//       address,
+//       username,
+//       password,
+//       updated_by,
+//       role_id,
+//       branch_id,
+//       region_id,
+//       country_id,
+//       franchise_id,
+//     });
+
+//     res.json({
+//       status: true,
+//       data: newUser,
+//       message: "Admin user added successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error creating admin user:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.updateAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);
