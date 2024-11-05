@@ -796,7 +796,7 @@ exports.rejectKYC = async (req, res, next) => {
     }
 
     const [rejectApplication] = await db.application.update(
-      { is_rejected_kyc: true, kyc_status: "rejected", remarks: formattedApplicationRemark },
+      { is_rejected_kyc: true, kyc_status: "rejected", remarks: formattedApplicationRemark, application_status: 'rejected', proceed_to_application_manager: false },
       { where: { id: application_id }, transaction }
     );
 
