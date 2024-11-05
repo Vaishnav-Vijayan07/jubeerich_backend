@@ -427,7 +427,7 @@ exports.kycPendingDetails = async (req, res) => {
             ],
           },
         ],
-        attributes: ["id", "application_status", "kyc_status"],
+        attributes: ["id", "application_status", "kyc_status", "remarks"],
         where: dynamicWhere,
       });
     } else if (type == "country_manager") {
@@ -508,7 +508,7 @@ exports.kycPendingDetails = async (req, res) => {
             ],
           },
         ],
-        attributes: ["id", "application_status", "kyc_status"],
+        attributes: ["id", "application_status", "kyc_status", "remarks"],
         where: { is_rejected_kyc: false, proceed_to_application_manager: false },
       });
     }
@@ -610,7 +610,7 @@ exports.kycRejectedDetails = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id", "application_status", "kyc_status"],
+      attributes: ["id", "application_status", "kyc_status", "remarks"],
       where: { is_rejected_kyc: true, proceed_to_application_manager: false },
     });
 
@@ -709,7 +709,7 @@ exports.kycApprovedDetails = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id", "application_status", "kyc_status"],
+      attributes: ["id", "application_status", "kyc_status", "remarks"],
       where: { proceed_to_application_manager: true },
     });
 
@@ -730,13 +730,28 @@ exports.kycApprovedDetails = async (req, res) => {
 exports.rejectKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
+    const { userDecodeId } = req;
     const { student_id, remarks, application_id } = req.body;
+
+    const existUser = await db.adminUsers.findByPk(userDecodeId, { attributes: ["name"] });
 
     const existTask = await db.tasks.findOne({
       where: { studentId: student_id },
-      // attributes: ["kyc_remarks"],
       transaction,
     });
+
+    const existApplication = await db.application.findByPk(application_id);
+
+    const formattedApplicationRemark = [
+      {
+        id: existApplication?.remarks?.length + 1 || 1,
+        remark: remarks,
+        created_by: existUser?.name
+      },
+      ...(existApplication?.remarks || []),
+    ];
+
+    console.log('formattedApplicationRemark',formattedApplicationRemark);
 
     const formattedRemark = [
       {
@@ -768,7 +783,7 @@ exports.rejectKYC = async (req, res, next) => {
     }
 
     const [rejectApplication] = await db.application.update(
-      { is_rejected_kyc: true, kyc_status: "rejected" },
+      { is_rejected_kyc: true, kyc_status: "rejected", remarks: formattedApplicationRemark },
       { where: { id: application_id }, transaction }
     );
 
@@ -798,7 +813,7 @@ exports.approveKYC = async (req, res, next) => {
     const { application_id } = req.body;
 
     const [approveApplication] = await db.application.update(
-      { proceed_to_application_manager: true, kyc_status: "approved", application_status: "submitted" },
+      { proceed_to_application_manager: true, kyc_status: "approved"},
       { where: { id: application_id }, transaction }
     );
 
@@ -906,13 +921,13 @@ exports.getAllKycByUser = async (req, res) => {
             {
               model: db.university,
               as: "preferred_university",
-              attributes: ["university_name"],
+              attributes: ["university_name","id"],
               required: true, // Set this association as required
             },
           ],
         },
       ],
-      attributes: ["id", "kyc_status", "application_status"],
+      attributes: ["id", "kyc_status", "application_status", "offer_letter","is_application_checks_passed","comments","reference_id"],
     });
 
     return res.status(200).json({
