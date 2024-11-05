@@ -213,38 +213,6 @@ module.exports = (sequelize, Sequelize) => {
     {
       underscored: true,
       tableName: "user_primary_info",
-      indexes: [
-        {
-          name: "email_unique",
-          unique: true,
-          fields: ["email"],
-        },
-        {
-          name: "phone_unique",
-          unique: true,
-          fields: ["phone"],
-        },
-        {
-          name: "idx_lead_type_id",
-          fields: ["lead_type_id"],
-        },
-        {
-          name: "idx_source_id",
-          fields: ["source_id"],
-        },
-        {
-          name: "idx_channel_id",
-          fields: ["channel_id"],
-        },
-        {
-          name: "idx_flag_id",
-          fields: ["flag_id"],
-        },
-        {
-          name: "idx_region_id",
-          fields: ["region_id"],
-        },
-      ],
     }
   );
 

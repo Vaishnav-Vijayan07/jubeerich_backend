@@ -7,7 +7,6 @@ const universityValidationRules = [
   check("university_name").not().isEmpty().withMessage("University name is required"),
   check("location").not().isEmpty().withMessage("Location is required"),
   check("country_id").optional().isInt().withMessage("Choose a country"),
-  check("portal_link").optional().isURL().withMessage("Invalid portal link"),
   check("username").optional().isString().withMessage("Invalid username"),
   check("password").optional().isString().withMessage("Invalid password"),
 ];
