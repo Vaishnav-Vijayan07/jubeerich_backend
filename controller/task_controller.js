@@ -33,7 +33,7 @@ exports.getTasks = async (req, res) => {
         },
       ],
       where: { userId: userId },
-      order: [['createdAt', 'ASC']],
+      // order: [['createdAt', 'ASC']],
     });
 
     console.log("tasks ===>", tasks);
