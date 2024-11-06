@@ -396,7 +396,8 @@ exports.saveStudentWorkInfo = async (req, res) => {
     const itemData = {
       id: item.id,
       company: item.company,
-      years: Number(item.years),
+      // years: Number(item.years),
+      years: item.years,
       designation: item.designation,
       from: item.from,
       to: item.to,
