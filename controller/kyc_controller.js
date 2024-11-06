@@ -267,8 +267,8 @@ exports.proceedToKyc = async (req, res) => {
 
       if (applicationsToUpdate.length > 0) {
         await db.application.update(
-          // { is_rejected_kyc: false, application_status: 'pending' },
-          { is_rejected_kyc: false },
+          { is_rejected_kyc: false, application_status: 'pending' },
+          // { is_rejected_kyc: false },
           {
             where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
             transaction,
