@@ -29,6 +29,12 @@ exports.getTasks = async (req, res) => {
               through: { attributes: [] },
               required: false,
             },
+            {
+              model: db.status,
+              as: "status",
+              attributes: ["status_name", "color"],
+              required: false,
+            },
           ],
         },
       ],
