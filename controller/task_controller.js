@@ -66,6 +66,35 @@ exports.getTaskById = async (req, res) => {
     // Fetch the task by ID and ensure it belongs to the authenticated user
     const task = await db.tasks.findOne({
       where: { id: id, userId: userId },
+      include: [
+        {
+          model: db.userPrimaryInfo,
+          as: "student_name",
+          attributes: ["flag_id"],
+          required: false,
+          include: [
+            {
+              model: db.flag,
+              as: "user_primary_flags",
+              attributes: ["flag_name", "color"],
+              required: false,
+            },
+            {
+              model: db.country,
+              as: "preferredCountries",
+              attributes: ["country_name", "id"],
+              through: { attributes: [] },
+              required: false,
+            },
+            {
+              model: db.status,
+              as: "status",
+              attributes: ["status_name", "color"],
+              required: false,
+            },
+          ],
+        },
+      ],
     });
 
     if (!task) {
@@ -130,9 +159,7 @@ exports.finishTask = async (req, res) => {
     for (const countryId of countryIds) {
       const users = await getLeastAssignedUsers(countryId);
       if (users?.leastAssignedUserId) {
-        leastAssignedUsers = leastAssignedUsers.concat(
-          users.leastAssignedUserId
-        );
+        leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
       }
       console.log("users ==========>", users.leastAssignedUserId);
     }
@@ -164,9 +191,7 @@ exports.finishTask = async (req, res) => {
           });
 
           if (countries) {
-            countryName = countries
-              .map((country) => country.country_name)
-              .join(", ");
+            countryName = countries.map((country) => country.country_name).join(", ");
           }
         }
 
@@ -188,13 +213,7 @@ exports.finishTask = async (req, res) => {
     task.isCompleted = isCompleted;
     await task.save();
 
-    await addLeadHistory(
-      studentId,
-      `Task finished by ${role_name}`,
-      userId,
-      null,
-      transaction
-    );
+    await addLeadHistory(studentId, `Task finished by ${role_name}`, userId, null, transaction);
 
     //commit the transaction
     await transaction.commit();
@@ -311,21 +330,9 @@ exports.assignNewCountry = async (req, res) => {
       if (role_id == process.env.COUNSELLOR_ROLE_ID) {
         const { country_id } = await db.adminUsers.findByPk(userId);
 
-        await addLeadHistory(
-          studentId,
-          `Country ${countryName} added by ${role_name}`,
-          userId,
-          country_id,
-          transaction
-        );
+        await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, country_id, transaction);
       } else {
-        await addLeadHistory(
-          studentId,
-          `Country ${countryName} added by ${role_name}`,
-          userId,
-          null,
-          transaction
-        );
+        await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
       }
     }
 
@@ -432,12 +439,8 @@ exports.getStudentBasicInfoById = async (req, res) => {
     // Combine primaryInfoData with filtered preferredCountries
     const combinedInfo = {
       ...primaryInfoData,
-      country_ids:
-        primaryInfo?.preferredCountries?.map((country) => country.id) || [],
-      country_names:
-        primaryInfo?.preferredCountries?.map(
-          (country) => country.country_name
-        ) || [],
+      country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
+      country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
@@ -529,10 +532,7 @@ exports.saveBasicInfo = async (req, res) => {
     // Loop through the documents received from the frontend
     req.body.police_clearance_docs?.forEach(async (doc, index) => {
       let certificatePath;
-      const certificateFile = req.files.find(
-        (file) =>
-          file.fieldname === `police_clearance_docs[${index}][certificate]`
-      );
+      const certificateFile = req.files.find((file) => file.fieldname === `police_clearance_docs[${index}][certificate]`);
 
       // Check if there's a new file for this document
       if (certificateFile) {
@@ -551,8 +551,7 @@ exports.saveBasicInfo = async (req, res) => {
         }
       } else {
         // No new file, get the existing path from the body
-        certificatePath =
-          req.body.police_clearance_docs[index].certificate_path;
+        certificatePath = req.body.police_clearance_docs[index].certificate_path;
       }
 
       policeDocs.push({
@@ -568,28 +567,16 @@ exports.saveBasicInfo = async (req, res) => {
       ...primaryInfo,
       id: parseInt(primaryInfo.id, 10), // Convert ID to an integer
       office_type: parseInt(primaryInfo.office_type, 10), // Convert office_type to an integer
-      branch_id:
-        primaryInfo.branch_id !== "null"
-          ? parseInt(primaryInfo.branch_id, 10)
-          : null, // Convert branch_id or set to null
-      franchise_id:
-        primaryInfo.franchise_id !== "null"
-          ? parseInt(primaryInfo.franchise_id, 10)
-          : null, // Convert franchise_id or set to null
-      region_id:
-        primaryInfo.region_id !== "null"
-          ? parseInt(primaryInfo.region_id, 10)
-          : null, // Convert region_id or set to null
+      branch_id: primaryInfo.branch_id !== "null" ? parseInt(primaryInfo.branch_id, 10) : null, // Convert branch_id or set to null
+      franchise_id: primaryInfo.franchise_id !== "null" ? parseInt(primaryInfo.franchise_id, 10) : null, // Convert franchise_id or set to null
+      region_id: primaryInfo.region_id !== "null" ? parseInt(primaryInfo.region_id, 10) : null, // Convert region_id or set to null
     };
 
     const parsedBasicInfo = {
       passport_no: basicInfo.passport_no,
       dob: basicInfo.dob !== "null" ? new Date(basicInfo.dob) : null, // Convert to Date or null
       gender: basicInfo.gender, // Assuming gender is already correct
-      marital_status:
-        basicInfo.marital_status !== "null"
-          ? parseInt(basicInfo.marital_status, 10)
-          : null, // Convert to integer or null
+      marital_status: basicInfo.marital_status !== "null" ? parseInt(basicInfo.marital_status, 10) : null, // Convert to integer or null
       nationality: basicInfo.nationality,
       secondary_number: basicInfo.secondary_number,
       state: basicInfo.state,
@@ -598,10 +585,8 @@ exports.saveBasicInfo = async (req, res) => {
       emergency_contact_name: basicInfo.emergency_contact_name,
       emergency_contact_relationship: basicInfo.emergency_contact_relationship,
       emergency_contact_phone: basicInfo.emergency_contact_phone,
-      concern_on_medical_condition:
-        basicInfo.concern_on_medical_condition === "true", // Convert string to boolean
-      concern_on_medical_condition_details:
-        basicInfo.concern_on_medical_condition_details,
+      concern_on_medical_condition: basicInfo.concern_on_medical_condition === "true", // Convert string to boolean
+      concern_on_medical_condition_details: basicInfo.concern_on_medical_condition_details,
       criminal_offence: basicInfo.criminal_offence === "true", // Convert string to boolean
       criminal_offence_details: basicInfo.criminal_offence_details,
       police_clearance_docs: [], // Initialize as an empty array
@@ -824,9 +809,7 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
     });
 
     // Extract data values, or use default empty object if no data
-    const studyPreferenceInfoData = studyPreferenceInfo
-      ? studyPreferenceInfo.dataValues
-      : {};
+    const studyPreferenceInfoData = studyPreferenceInfo ? studyPreferenceInfo.dataValues : {};
 
     // Send the response with combined information
     res.status(200).json({
