@@ -42,11 +42,15 @@ exports.createLead = async (req, res) => {
     franchise_id,
     lead_type_id,
     exam_details,
-  } = req.body;
+  } = req.body;  
 
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
+  flag_id = flag_id ? JSON.parse(flag_id) : null;
 
+  console.log('flag ===>>>',flag_id);
+  
+  
   console.log("preferred_country insertion ==>", preferred_country);
 
   const examDocuments = req.files && req.files["exam_documents"];
@@ -522,6 +526,7 @@ exports.updateLead = async (req, res) => {
   // Parse exam_details and preferred_country if they are provided as strings
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
+  flag_id = flag_id ? JSON.parse(flag_id) : null;
 
   console.log("preferred_country ====>", preferred_country);
 
@@ -1204,7 +1209,12 @@ exports.updateFlagStatus = async (req, res) => {
       });
     }
 
-    const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: flag_id }, { where: { id: id }, transaction });
+    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] })
+    console.log('existFlag===>',existFlag);
+    
+    const newFlagArr = [...existFlag?.flag_id || [], flag_id]
+    
+    const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: newFlagArr }, { where: { id: id }, transaction });
 
     if (affectedRows === 0) {
       return res.status(404).json({
@@ -1230,6 +1240,64 @@ exports.updateFlagStatus = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error Saving Comment : ${error}`);
+    // rollback transaction
+    await transaction.rollback();
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.removeFlagStatus = async (req, res) => {
+  const { id } = req.params;
+  const { flag_id } = req.body;
+
+  const { role_name, userDecodeId, role_id } = req;
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const flag = await db.flag.findByPk(flag_id, {
+      attributes: ["flag_name"],
+    });
+
+    if (!flag) {
+      return res.status(404).json({
+        status: false,
+        message: "Flag not found",
+      });
+    }
+
+    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] })
+    const removedFlagArr = existFlag?.flag_id?.filter((flagId) => flagId != flag_id);
+    console.log('removedFlagArr ===================>',removedFlagArr);
+    
+    const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: removedFlagArr }, { where: { id: id }, transaction });
+
+    if (affectedRows === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Flag not updated",
+      });
+    }
+
+    if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+      const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, country_id, transaction);
+    } else {
+      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, null, transaction);
+    }
+
+    // commit the transaction
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Flag Updated successfully",
+    });
+  } catch (error) {
+    console.error(`Error : ${error}`);
     // rollback transaction
     await transaction.rollback();
     return res.status(500).json({

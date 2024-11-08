@@ -266,6 +266,8 @@ router.put("/followup_remark/:id", [authMiddleware.checkUserAuth], UserControlle
 
 router.put("/update_flag_status/:id", [authMiddleware.checkUserAuth], UserController.updateFlagStatus);
 
+router.put("/remove_flag_status/:id", [authMiddleware.checkUserAuth], UserController.removeFlagStatus);
+
 // Excel Import route
 router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
 

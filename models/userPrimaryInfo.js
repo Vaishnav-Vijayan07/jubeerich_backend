@@ -71,15 +71,19 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      // flag_id: {
+      //   type: Sequelize.INTEGER,
+      //   references: {
+      //     model: "flags",
+      //     key: "id",
+      //   },
+      //   allowNull: true,
+      //   onDelete: "SET NULL",
+      //   onUpdate: "CASCADE",
+      // },
       flag_id: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: "flags",
-          key: "id",
-        },
+        type: Sequelize.ARRAY(Sequelize.INTEGER),
         allowNull: true,
-        onDelete: "SET NULL",
-        onUpdate: "CASCADE",
       },
       region_id: {
         type: Sequelize.INTEGER,
@@ -208,7 +212,17 @@ module.exports = (sequelize, Sequelize) => {
       remark_details: {
         type: Sequelize.JSONB,
         allowNull: true,
-      }
+      },
+      flag_details: {
+        type: Sequelize.VIRTUAL,
+        async get() {
+          const flagIds = this.getDataValue("flag_id") || [];
+          return await sequelize.models.flag.findAll({
+            where: { id: { [Sequelize.Op.in]: flagIds } },
+            attributes: ["id", "flag_name", "color"],
+          });
+        },
+      },
     },
     {
       underscored: true,
