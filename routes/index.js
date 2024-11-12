@@ -248,6 +248,7 @@ router.delete("/exams", [authMiddleware.checkUserAuth], UserController.deleteExa
 router.get("/tasks", [authMiddleware.checkUserAuth], TaskController.getTasks);
 router.get("/tasks/:id", [authMiddleware.checkUserAuth], TaskController.getTaskById);
 router.put("/finish_task", [authMiddleware.checkUserAuth], TaskController.finishTask);
+router.put("/complete_task", [authMiddleware.checkUserAuth], TaskController.completeTask);
 router.put("/assign_new_country", [authMiddleware.checkUserAuth], TaskController.assignNewCountry);
 
 // Status Config routes

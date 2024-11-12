@@ -1,11 +1,14 @@
-const { where, Op } = require("sequelize");
+const { where, Op, fn, col, Sequelize } = require("sequelize");
 const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const moment = require('moment');
 
 exports.getTasks = async (req, res) => {
+  const { date } = req.query;
+  
   try {
     const userId = req.userDecodeId;
     const tasks = await db.tasks.findAll({
@@ -38,7 +41,10 @@ exports.getTasks = async (req, res) => {
           ],
         },
       ],
-      where: { userId: userId },
+      where: { 
+        userId: userId,
+        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
+      },
       // order: [['createdAt', 'ASC']],
     });
 
@@ -232,6 +238,49 @@ exports.finishTask = async (req, res) => {
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
     //rollback the transaction
+    await transaction.rollback();
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.completeTask = async (req, res) => {
+  // start the transaction
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const { isCompleted, id } = req.body;
+
+    const { role_name, userDecodeId: userId } = req;
+  
+    const task = await db.tasks.findByPk(id);
+
+    console.log('task ======>',task);
+  
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found.",
+      });
+    }
+    const studentId = task.studentId;
+  
+    task.isCompleted = isCompleted;
+    await task.save();
+
+    await addLeadHistory(studentId, `Task Completed by ${role_name}`, userId, null, transaction);
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Task successfully comleted.",
+      task,
+    });
+  } catch (error) {
+    console.error(`Error completing task: ${error}`);
     await transaction.rollback();
     return res.status(500).json({
       status: false,

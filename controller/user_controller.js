@@ -1284,9 +1284,9 @@ exports.removeFlagStatus = async (req, res) => {
     if (role_id == process.env.COUNSELLOR_ROLE_ID) {
       const { country_id } = await db.adminUsers.findByPk(userDecodeId);
 
-      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, country_id, transaction);
+      await addLeadHistory(id, `${flag.flag_name} Flag removed by ${role_name}`, userDecodeId, country_id, transaction);
     } else {
-      await addLeadHistory(id, `Flag updated to ${flag.flag_name} by ${role_name}`, userDecodeId, null, transaction);
+      await addLeadHistory(id, `${flag.flag_name} Flag removed by ${role_name}`, userDecodeId, null, transaction);
     }
 
     // commit the transaction

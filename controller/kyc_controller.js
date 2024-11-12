@@ -282,7 +282,7 @@ exports.proceedToKyc = async (req, res) => {
     const [setIsProceed] = await db.tasks.update(
       {
         is_proceed_to_kyc: true,
-        isCompleted: true,
+        // isCompleted: true,
       },
       {
         where: {
