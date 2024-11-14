@@ -25,6 +25,16 @@ exports.addOrUpdateFamilyInformation = async (req, res) => {
     number_of_children,
     accompanying_child,
     relatives_info,
+    paternal_grand_mother_info,
+    paternal_grand_father_info,
+    maternal_grand_mother_info,
+    maternal_grand_father_info,
+    paternal_grand_mother_info_spouse,
+    paternal_grand_father_info_spouse,
+    maternal_grand_mother_info_spouse,
+    maternal_grand_father_info_spouse,
+    father_in_law_info,
+    mother_in_law_info
   } = req.body;
 
   try {
@@ -44,6 +54,16 @@ exports.addOrUpdateFamilyInformation = async (req, res) => {
         relatives_info,
         number_of_children,
         accompanying_child,
+        paternal_grand_mother_info,
+        paternal_grand_father_info,
+        maternal_grand_mother_info,
+        maternal_grand_father_info,
+        paternal_grand_mother_info_spouse,
+        paternal_grand_father_info_spouse,
+        maternal_grand_mother_info_spouse,
+        maternal_grand_father_info_spouse,
+        father_in_law_info,
+        mother_in_law_info
       });
       return res.status(200).json({
         status: true,
@@ -64,6 +84,16 @@ exports.addOrUpdateFamilyInformation = async (req, res) => {
         relatives_info,
         number_of_children,
         accompanying_child,
+        paternal_grand_mother_info,
+        paternal_grand_father_info,
+        maternal_grand_mother_info,
+        maternal_grand_father_info,
+        paternal_grand_mother_info_spouse,
+        paternal_grand_father_info_spouse,
+        maternal_grand_mother_info_spouse,
+        maternal_grand_father_info_spouse,
+        father_in_law_info,
+        mother_in_law_info
       });
 
       return res.status(201).json({
