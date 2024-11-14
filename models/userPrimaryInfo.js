@@ -71,16 +71,6 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
-      // flag_id: {
-      //   type: Sequelize.INTEGER,
-      //   references: {
-      //     model: "flags",
-      //     key: "id",
-      //   },
-      //   allowNull: true,
-      //   onDelete: "SET NULL",
-      //   onUpdate: "CASCADE",
-      // },
       flag_id: {
         type: Sequelize.ARRAY(Sequelize.INTEGER),
         allowNull: true,
