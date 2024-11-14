@@ -311,20 +311,22 @@ exports.getAllLeads = async (req, res) => {
             model: db.leadChannel,
             as: "channel_name",
             attributes: ["channel_name"]
-          },,
+          },
           {
             model: db.country,
-            as: "country_name",
+            as: "preferredCountries",
             attributes: ["id", "country_name"],
+            through: {
+              model: db.userContries,
+              attributes: ["country_id", "followup_date", "status_id"],
+            },
+            required: true,
             include: [
               {
                 model: db.status,
-                through: "user_countries",
-                as: "status",
+                as: "country_status",
                 attributes: ["id", "status_name"],
-                through: {
-                  attributes: ["status_id", "followup_date"],
-                },
+                required: true,
               },
             ],
           },
@@ -384,6 +386,58 @@ exports.getAllLeads = async (req, res) => {
           },
         ],
       });
+
+    //   userPrimaryInfos = await UserPrimaryInfo.findAll({
+    //     where: {
+    //       [db.Sequelize.Op.or]: [
+    //         { assigned_cre_tl: cre_id },
+    //         { created_by: cre_id },
+    //         { assigned_cre: cre_id },
+    //         { assigned_regional_manager: cre_id },
+    //         { assigned_counsellor_tl: cre_id },
+    //         { assigned_branch_counselor: cre_id },
+    //         {
+    //           [db.Sequelize.Op.and]: [
+    //             db.Sequelize.literal(`EXISTS (
+    //                 SELECT 1 FROM "user_counselors" 
+    //                 WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+    //                 AND "user_counselors"."counselor_id" = ${cre_id}
+    //               )`),
+    //           ],
+    //         },
+    //         {
+    //           [db.Sequelize.Op.and]: [
+    //             db.Sequelize.literal(`EXISTS (
+    //               SELECT 1 FROM "admin_users"
+    //               WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
+    //               AND "admin_users"."id" = ${cre_id}
+    //             )`),
+    //           ],
+    //         },
+    //       ],
+    //       is_deleted: false,
+    //     },
+    //     include: [
+    //       {
+    //         model: db.country,
+    //         as: "preferredCountries",
+    //         attributes: ["id", "country_name"],
+    //         through: {
+    //           model: db.userContries,
+    //           attributes: ["country_id", "followup_date", "status_id"],
+    //         },
+    //         required: true,
+    //         include: [
+    //           {
+    //             model: db.status,
+    //             as: "country_status",   // Alias specified in the association
+    //             attributes: ["id", "status_name"],
+    //             required: true,
+    //           },
+    //         ],
+    //       },
+    //     ],
+    //   });
     }
 
     // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
@@ -435,6 +489,8 @@ exports.getAllLeads = async (req, res) => {
       userPrimaryInfos.map(async (info) => {
         const preferredCountries = info?.preferredCountries?.map((country) => ({
           country_name: country.country_name,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_id: country?.country_status?.[0]?.id,
           id: country.id,
           followup_date: country.user_countries?.followup_date,
           status_id: country.user_countries?.status_id,

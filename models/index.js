@@ -307,10 +307,10 @@ db.userPrimaryInfo.belongsTo(db.leadChannel, {
   as: "channel_name",
   foreignKey: "channel_id",
 });
-db.userPrimaryInfo.belongsTo(db.country, {
-  as: "country_name",
-  foreignKey: "preferred_country",
-});
+// db.userPrimaryInfo.belongsTo(db.country, {
+//   as: "country_name",
+//   foreignKey: "preferred_country",
+// });
 db.userPrimaryInfo.belongsTo(db.officeType, {
   as: "office_type_name",
   foreignKey: "office_type",
@@ -378,19 +378,35 @@ db.accessRoles.belongsToMany(db.status, {
   foreignKey: "access_role_id",
 });
 
-db.country.belongsToMany(db.status, {
+db.userPrimaryInfo.belongsToMany(db.country, {
+  through: db.userContries,  // Join table
+  foreignKey: "user_primary_info_id",
+  otherKey: "country_id",
+  as: "preferredCountries",
+  onDelete: "CASCADE",
+});
+
+db.country.belongsToMany(db.userPrimaryInfo, {
   through: db.userContries,  // Join table
   foreignKey: "country_id",
+  otherKey: "user_primary_info_id",
+  as: "user_country_name",
+  onDelete: "CASCADE",
+});
+
+db.country.belongsToMany(db.status, {
+  through: db.userContries, 
+  foreignKey: "country_id",
   otherKey: "status_id",
-  as: "status",
+  as: "country_status",
   onDelete: "CASCADE",
 });
 
 db.status.belongsToMany(db.country, {
-  through: db.userContries,  // Join table
+  through: db.userContries,
   foreignKey: "status_id",
   otherKey: "country_id",
-  as: "status_countries",
+  as: "status_country",
   onDelete: "CASCADE",
 });
 
