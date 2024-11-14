@@ -278,23 +278,21 @@ exports.getAllLeads = async (req, res) => {
           {
             model: db.leadChannel,
             as: "channel_name",
-            attributes: ["channel_name"]
+            attributes: ["channel_name"],
           },
+          // {
+          //   model: db.country,
+          //   as: "preferredCountries",
+          //   attributes: ["country_name", "id"],
+          //   through: { attributes: [] }, // Exclude join table attributes
+          // },
           {
             model: db.country,
-            as: "country_name",
-            attributes: ["id", "country_name"],
-            include: [
-              {
-                model: db.status,
-                through: "user_countries",
-                as: "status",
-                attributes: ["id", "status_name"],
-                through: {
-                  attributes: ["status_id", "followup_date"],
-                },
-              },
-            ],
+            as: "preferredCountries",
+            attributes: ["country_name", "id"],
+            through: {
+              attributes: ["followup_date", "status_id"], // Include status and followup_date
+            },
           },
           {
             model: db.officeType,
@@ -336,6 +334,12 @@ exports.getAllLeads = async (req, res) => {
             model: db.status,
             as: "status",
             attributes: ["status_name"],
+            required: false,
+          },
+          {
+            model: db.flag,
+            as: "user_primary_flags",
+            attributes: ["flag_name"],
             required: false,
           },
           {

@@ -378,19 +378,23 @@ db.accessRoles.belongsToMany(db.status, {
   foreignKey: "access_role_id",
 });
 
-db.country.belongsToMany(db.status, {
-  through: db.userContries,  // Join table
-  foreignKey: "country_id",
-  otherKey: "status_id",
-  as: "status",
+// UserPrimaryInfo and Country associations (many-to-many)
+db.userPrimaryInfo.belongsToMany(db.country, {
+  through: {
+    model: "user_countries",
+    attributes: ["followup_date"],
+  },
+  foreignKey: "user_primary_info_id",
+  as: "preferredCountries",
   onDelete: "CASCADE",
 });
-
-db.status.belongsToMany(db.country, {
-  through: db.userContries,  // Join table
-  foreignKey: "status_id",
-  otherKey: "country_id",
-  as: "status_countries",
+db.country.belongsToMany(db.userPrimaryInfo, {
+  through: {
+    model: "user_countries",
+    attributes: ["followup_date"], // Specify the attributes you want to include
+  },
+  foreignKey: "country_id",
+  as: "users",
   onDelete: "CASCADE",
 });
 
@@ -422,15 +426,15 @@ db.franchise.hasMany(db.adminUsers, {
 });
 
 // Flags
-// db.userPrimaryInfo.belongsTo(db.flag, {
-//   as: "user_primary_flags",
-//   foreignKey: "flag_id",
-// });
+db.userPrimaryInfo.belongsTo(db.flag, {
+  as: "user_primary_flags",
+  foreignKey: "flag_id",
+});
 
-// db.flag.hasMany(db.userPrimaryInfo, {
-//   foreignKey: "flag_id",
-//   as: "flags",
-// });
+db.flag.hasMany(db.userPrimaryInfo, {
+  foreignKey: "flag_id",
+  as: "flags",
+});
 
 db.adminUsers.belongsTo(db.franchise, {
   foreignKey: "franchise_id",
