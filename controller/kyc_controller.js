@@ -275,12 +275,14 @@ exports.proceedToKyc = async (req, res) => {
           }
         );
       }
+    } else {
+      throw new Error('Choose atleast one study preference');
     }
 
     const [setIsProceed] = await db.tasks.update(
       {
         is_proceed_to_kyc: true,
-        isCompleted: true,
+        // isCompleted: true,
       },
       {
         where: {

@@ -72,12 +72,12 @@ exports.getLeads = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.adminUsers,
           as: "updated_by_user",
@@ -88,7 +88,35 @@ exports.getLeads = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const counsellorNames = info.counselors?.map((counselor) => ({
+    //     counselor_name: counselor.name,
+    //     id: counselor.id,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     type_name: info.type_name?.name || null,
+    //     source_name: info.source_name?.source_name || null,
+    //     channel_name: info.channel_name?.channel_name || null,
+    //     preferredCountries: preferredCountries,
+    //     counselors: counsellorNames,
+    //     office_type_name: info.office_type_name?.office_type_name || null,
+    //     region_name: info.region_name?.region_name || null,
+    //     counsiler_name: info.counsiler_name?.name || null,
+    //     status: info.status?.status_name || null,
+    //     branch_name: info.branch_name?.branch_name || null,
+    //     assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
+    //     updated_by_user: info.updated_by_user?.name || null,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -98,6 +126,8 @@ exports.getLeads = async (req, res) => {
         counselor_name: counselor.name,
         id: counselor.id,
       }));
+
+      const flagDetails = await info?.flag_details;
 
       return {
         ...info.toJSON(),
@@ -114,7 +144,7 @@ exports.getLeads = async (req, res) => {
         assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -218,12 +248,12 @@ exports.getAllLeads = async (req, res) => {
             attributes: ["status_name"],
             required: false,
           },
-          {
-            model: db.flag,
-            as: "user_primary_flags",
-            attributes: ["flag_name"],
-            required: false,
-          },
+          // {
+          //   model: db.flag,
+          //   as: "user_primary_flags",
+          //   attributes: ["flag_name"],
+          //   required: false,
+          // },
           {
             model: db.adminUsers,
             as: "updated_by_user",
@@ -336,12 +366,12 @@ exports.getAllLeads = async (req, res) => {
             attributes: ["status_name"],
             required: false,
           },
-          {
-            model: db.flag,
-            as: "user_primary_flags",
-            attributes: ["flag_name"],
-            required: false,
-          },
+          // {
+          //   model: db.flag,
+          //   as: "user_primary_flags",
+          //   attributes: ["flag_name"],
+          //   required: false,
+          // },
           {
             model: db.userExams,
             as: "exams",
@@ -352,7 +382,52 @@ exports.getAllLeads = async (req, res) => {
       });
     }
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   const preferredCountries = info?.preferredCountries?.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const examDetails = info.exams?.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams?.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   const counsellorNames = info.counselors?.map((counselor) => ({
+    //     counselor_name: counselor.name,
+    //     id: counselor.id,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     type_name: info.type_name ? info.type_name.name : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     counselors: counsellorNames,
+
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     // region_name: info.region_name ? info.region_name.region_name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       const preferredCountries = info?.preferredCountries?.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -379,6 +454,8 @@ exports.getAllLeads = async (req, res) => {
         id: counselor.id,
       }));
 
+      const flagDetails = await info.flag_details;
+
       return {
         ...info.toJSON(),
         type_name: info.type_name ? info.type_name.name : null,
@@ -395,8 +472,9 @@ exports.getAllLeads = async (req, res) => {
         exam_details: examDetails,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -514,12 +592,12 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -529,7 +607,52 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const examDetails = info.exams.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   const counsellorNames = info.counselors?.map((counselor) => ({
+    //     counselor_name: counselor.name,
+    //     id: counselor.id,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     type_name: info.type_name ? info.type_name.name : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     counselors: counsellorNames,
+
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     // region_name: info.region_name ? info.region_name.region_name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -555,6 +678,8 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         id: counselor.id,
       }));
 
+      const flagDetails = await info.flag_Details;
+
       return {
         ...info.toJSON(),
         type_name: info.type_name ? info.type_name.name : null,
@@ -571,8 +696,9 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         exam_details: examDetails,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -676,12 +802,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -691,7 +817,54 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   // const examDetails = info.exams.map((exam)=> ({
+    //   //   exam_name: exam.exam_name,
+    //   //   marks: exam.marks,
+    //   // }))
+
+    //   const examDetails = info.exams.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     // category_name: info.category_name
+    //     //   ? info.category_name.category_name
+    //     //   : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     franchise_id: info.franchise_id ? info.franchise_id : null,
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     region_name: info.region_name ? info.region_name.region_name : null,
+    //     counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -717,6 +890,8 @@ exports.geLeadsForCreTl = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info.flag_Details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -735,8 +910,9 @@ exports.geLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -841,12 +1017,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -856,7 +1032,52 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   console.log("INFO", info);
+
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const examDetails = info.exams.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     // category_name: info.category_name
+    //     //   ? info.category_name.category_name
+    //     //   : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     franchise_id: info.franchise_id ? info.franchise_id : null,
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     region_name: info.region_name ? info.region_name.region_name : null,
+    //     counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       console.log("INFO", info);
 
       const preferredCountries = info.preferredCountries.map((country) => ({
@@ -880,6 +1101,8 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info?.flag_details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -898,8 +1121,9 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -1003,12 +1227,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -1018,7 +1242,51 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   console.log("INFO", info);
+
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const examDetails = info.exams.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     // category_name: info.category_name
+    //     //   ? info.category_name.category_name
+    //     //   : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     franchise_id: info.franchise_id ? info.franchise_id : null,
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     region_name: info.region_name ? info.region_name.region_name : null,
+    //     counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       console.log("INFO", info);
 
       const preferredCountries = info.preferredCountries.map((country) => ({
@@ -1059,8 +1327,9 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -1168,12 +1437,12 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -1183,7 +1452,49 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    //   const preferredCountries = info.preferredCountries.map((country) => ({
+    //     country_name: country.country_name,
+    //     id: country.id,
+    //   }));
+
+    //   const examDetails = info.exams.map((exam) => ({
+    //     exam_type: exam.exam_type,
+    //     exam_date: exam.exam_date,
+    //     marks: exam.overall_score,
+    //     listening_score: exam.listening_score,
+    //     speaking_score: exam.speaking_score,
+    //     reading_score: exam.reading_score,
+    //     writing_score: exam.writing_score,
+    //     updated_by: exam.updated_by,
+    //   }));
+
+    //   const examDocuments = info.exams.map((exam) => ({
+    //     exam_documents: exam.score_card,
+    //   }));
+
+    //   return {
+    //     ...info.toJSON(),
+    //     // category_name: info.category_name
+    //     //   ? info.category_name.category_name
+    //     //   : null,
+    //     source_name: info.source_name ? info.source_name.source_name : null,
+    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //     preferredCountries: preferredCountries,
+    //     franchise_id: info.franchise_id ? info.franchise_id : null,
+    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //     region_name: info.region_name ? info.region_name.region_name : null,
+    //     counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //     cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //     status: info.status ? info.status.status_name : null,
+    //     exam_details: examDetails,
+    //     exam_documents: examDocuments,
+    //   };
+    // });
+
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -1222,8 +1533,9 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,

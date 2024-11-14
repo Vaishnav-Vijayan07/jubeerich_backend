@@ -1,11 +1,14 @@
-const { Sequelize, where, Op } = require("sequelize");
+const { where, Op, fn, col, Sequelize } = require("sequelize");
 const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const moment = require('moment');
 
 exports.getTasks = async (req, res) => {
+  const { date } = req.query;
+  
   try {
     const userId = req.userDecodeId;
     const tasks = await db.tasks.findAll({
@@ -13,15 +16,15 @@ exports.getTasks = async (req, res) => {
         {
           model: db.userPrimaryInfo,
           as: "student_name",
-          attributes: ["flag_id"],
+          attributes: [ "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows", ], ],
           required: false,
           include: [
-            {
-              model: db.flag,
-              as: "user_primary_flags",
-              attributes: ["flag_name", "color"],
-              required: false,
-            },
+            // {
+            //   model: db.flag,
+            //   as: "user_primary_flags",
+            //   attributes: ["flag_name", "color"],
+            //   required: false,
+            // },
             {
               model: db.country,
               as: "preferredCountries",
@@ -38,11 +41,15 @@ exports.getTasks = async (req, res) => {
           ],
         },
       ],
-      where: { userId: userId },
+      where: { 
+        userId: userId,
+        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
+      },
       // order: [['createdAt', 'ASC']],
     });
 
     console.log("tasks ===>", tasks);
+    console.log('flagDetails',JSON.stringify(tasks,0,2));
 
     res.status(200).json({
       status: true,
@@ -73,12 +80,12 @@ exports.getTaskById = async (req, res) => {
           attributes: ["flag_id"],
           required: false,
           include: [
-            {
-              model: db.flag,
-              as: "user_primary_flags",
-              attributes: ["flag_name", "color"],
-              required: false,
-            },
+            // {
+            //   model: db.flag,
+            //   as: "user_primary_flags",
+            //   attributes: ["flag_name", "color"],
+            //   required: false,
+            // },
             {
               model: db.country,
               as: "preferredCountries",
@@ -97,6 +104,8 @@ exports.getTaskById = async (req, res) => {
       ],
     });
 
+    const flagDetails = await task?.student_name?.flag_details;
+
     if (!task) {
       return res.status(404).json({
         status: false,
@@ -108,6 +117,7 @@ exports.getTaskById = async (req, res) => {
       status: true,
       message: "Task retrieved successfully",
       data: task,
+      flags: flagDetails
     });
   } catch (error) {
     console.error(`Error fetching task by ID: ${error}`);
@@ -228,6 +238,49 @@ exports.finishTask = async (req, res) => {
   } catch (error) {
     console.error(`Error finishing task: ${error}`);
     //rollback the transaction
+    await transaction.rollback();
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.completeTask = async (req, res) => {
+  // start the transaction
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const { isCompleted, id } = req.body;
+
+    const { role_name, userDecodeId: userId } = req;
+  
+    const task = await db.tasks.findByPk(id);
+
+    console.log('task ======>',task);
+  
+    if (!task) {
+      return res.status(404).json({
+        status: false,
+        message: "Task not found.",
+      });
+    }
+    const studentId = task.studentId;
+  
+    task.isCompleted = isCompleted;
+    await task.save();
+
+    await addLeadHistory(studentId, `Task Completed by ${role_name}`, userId, null, transaction);
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Task successfully comleted.",
+      task,
+    });
+  } catch (error) {
+    console.error(`Error completing task: ${error}`);
     await transaction.rollback();
     return res.status(500).json({
       status: false,
@@ -384,6 +437,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "status_id",
         "followup_date",
         "lead_received_date",
+        "flag_id"
       ],
       include: [
         {
@@ -418,12 +472,12 @@ exports.getStudentBasicInfoById = async (req, res) => {
           model: db.academicInfos,
           as: "userAcademicInfos", // The alias you defined in the association
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name", "color"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name", "color"],
+        //   required: false,
+        // },
         {
           model: db.workInfos,
           as: "userWorkInfos", // The alias you defined in the association
@@ -431,6 +485,11 @@ exports.getStudentBasicInfoById = async (req, res) => {
       ],
       nest: true,
     });
+
+    console.log('primaryInfo',primaryInfo);
+    
+
+    const flagDetails = await primaryInfo?.flag_details;
 
     // Extract data values or use default empty object if no data
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
@@ -445,6 +504,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
       flag_color: primaryInfo?.user_primary_flags?.color,
+      flags: flagDetails,
       ...basicInfoData,
     };
 

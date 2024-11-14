@@ -12,10 +12,14 @@ const UserCountries = db.userContries; // Import the UserCountries model
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const { addLeadHistory } = require("../utils/academic_query_helper");
 
 exports.bulkUpload = async (req, res) => {
+  const transaction = await db.sequelize.transaction();
+
   try {
     const userId = req.userDecodeId;
+    const role = req.role_name;
     const workbook = new Excel.Workbook();
     const fileName = `${uuidv4()}.xlsx`; // Generate a unique file name
     const filePath = path.join("uploads", fileName);
@@ -34,7 +38,16 @@ exports.bulkUpload = async (req, res) => {
     const channels = await Channel.findAll();
     const officeTypes = await OfficeType.findAll();
     const countries = await Country.findAll();
-    const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } }); // Find the user_id of cre_tl
+    // const creTl = await AdminUsers.findOne({ where: { role_id: process.env.CRE_TL_ID } }); // Find the user_id of cre_tl
+    const creTl = await AdminUsers.findOne({
+      where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
+    });
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -184,6 +197,8 @@ exports.bulkUpload = async (req, res) => {
 
     await Promise.all(rowPromises); // Await all row processing promises
 
+    const userRole = await db.adminUsers.findOne({ where: { id: userId } });
+
     // Save valid data to UserPrimaryInfo and UserCountries
     if (jsonData.length > 0) {
       const createdUsers = await UserPrimaryInfo.bulkCreate(jsonData, { returning: true });
@@ -194,6 +209,19 @@ exports.bulkUpload = async (req, res) => {
         const userJsonData = jsonData.find((data) => data.email === user.email);
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id;
+        
+        console.log('USERRRRRR ======>', user.office_type);
+            
+        if (user.id) {
+          await addLeadHistory(user.id, `Lead created by ${role}`, req.userDecodeId, null, transaction);
+        }
+    
+        if (userRole?.role_id == process.env.IT_TEAM_ID && user.office_type == process.env.CORPORATE_OFFICE_ID) {
+          await addLeadHistory(user.id, `Lead assigned to ${creTl?.access_role.role_name}`, req.userDecodeId, null, transaction);
+        }
+        //  else if (userRole?.role_id == process.env.IT_TEAM_ID && regionalManagerId) {
+        //   await addLeadHistory(user.id, `Lead assigned to ${regionMangerRoleName}`, req.userDecodeId, null, transaction);
+        // }
 
         // Retrieve existing user-country associations for this user
         const existingUserCountries = await UserCountries.findAll({
@@ -334,6 +362,7 @@ exports.bulkUpload = async (req, res) => {
         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
       });
     } else {
+    await transaction.commit();
       res.status(200).json({
         status: true,
         message: "Data processed and saved successfully",
@@ -341,6 +370,7 @@ exports.bulkUpload = async (req, res) => {
     }
   } catch (error) {
     console.error(`Error processing bulk upload: ${error}`);
+    await transaction.rollback();
     res.status(500).json({
       status: false,
       message: "Internal server error",

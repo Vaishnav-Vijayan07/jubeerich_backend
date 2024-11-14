@@ -248,6 +248,7 @@ router.delete("/exams", [authMiddleware.checkUserAuth], UserController.deleteExa
 router.get("/tasks", [authMiddleware.checkUserAuth], TaskController.getTasks);
 router.get("/tasks/:id", [authMiddleware.checkUserAuth], TaskController.getTaskById);
 router.put("/finish_task", [authMiddleware.checkUserAuth], TaskController.finishTask);
+router.put("/complete_task", [authMiddleware.checkUserAuth], TaskController.completeTask);
 router.put("/assign_new_country", [authMiddleware.checkUserAuth], TaskController.assignNewCountry);
 
 // Status Config routes
@@ -265,6 +266,8 @@ router.post("/followup_remark/", [authMiddleware.checkUserAuth], UserController.
 router.put("/followup_remark/:id", [authMiddleware.checkUserAuth], UserController.updateRemarkDetails);
 
 router.put("/update_flag_status/:id", [authMiddleware.checkUserAuth], UserController.updateFlagStatus);
+
+router.put("/remove_flag_status/:id", [authMiddleware.checkUserAuth], UserController.removeFlagStatus);
 
 // Excel Import route
 router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
