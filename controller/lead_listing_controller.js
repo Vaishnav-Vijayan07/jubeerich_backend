@@ -278,21 +278,23 @@ exports.getAllLeads = async (req, res) => {
           {
             model: db.leadChannel,
             as: "channel_name",
-            attributes: ["channel_name"],
-          },
-          // {
-          //   model: db.country,
-          //   as: "preferredCountries",
-          //   attributes: ["country_name", "id"],
-          //   through: { attributes: [] }, // Exclude join table attributes
-          // },
+            attributes: ["channel_name"]
+          },,
           {
             model: db.country,
-            as: "preferredCountries",
-            attributes: ["country_name", "id"],
-            through: {
-              attributes: ["followup_date", "status_id"], // Include status and followup_date
-            },
+            as: "country_name",
+            attributes: ["id", "country_name"],
+            include: [
+              {
+                model: db.status,
+                through: "user_countries",
+                as: "status",
+                attributes: ["id", "status_name"],
+                through: {
+                  attributes: ["status_id", "followup_date"],
+                },
+              },
+            ],
           },
           {
             model: db.officeType,

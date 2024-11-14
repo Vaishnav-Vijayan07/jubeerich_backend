@@ -378,11 +378,11 @@ db.accessRoles.belongsToMany(db.status, {
   foreignKey: "access_role_id",
 });
 
-// UserPrimaryInfo and Country associations (many-to-many)
-db.userPrimaryInfo.belongsToMany(db.country, {
-  through: db.userContries, // Join table
-  foreignKey: "user_primary_info_id",
-  as: "preferredCountries",
+db.country.belongsToMany(db.status, {
+  through: db.userContries,  // Join table
+  foreignKey: "country_id",
+  otherKey: "status_id",
+  as: "status",
   onDelete: "CASCADE",
 });
 
@@ -391,20 +391,12 @@ db.userPrimaryInfo.hasMany(db.userContries, {
   as: "userCountries",
 });
 
-db.country.belongsToMany(db.userPrimaryInfo, {
-  through: db.userContries, // Join table
-  foreignKey: "country_id",
-  as: "users",
+db.status.belongsToMany(db.country, {
+  through: db.userContries,  // Join table
+  foreignKey: "status_id",
+  otherKey: "country_id",
+  as: "status_countries",
   onDelete: "CASCADE",
-});
-
-db.userContries.belongsTo(db.status, { 
-  foreignKey: "status_id", 
-  as: "userStatus" // Alias for the association
-});
-
-db.userContries.belongsTo(db.userPrimaryInfo, {
-  foreignKey: "user_id",
 });
 
 // UserPrimaryInfo and AdminUser (Counselors) associations (many-to-many)
