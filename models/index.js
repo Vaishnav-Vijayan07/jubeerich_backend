@@ -386,11 +386,6 @@ db.country.belongsToMany(db.status, {
   onDelete: "CASCADE",
 });
 
-db.userPrimaryInfo.hasMany(db.userContries, {
-  foreignKey: "user_id",
-  as: "userCountries",
-});
-
 db.status.belongsToMany(db.country, {
   through: db.userContries,  // Join table
   foreignKey: "status_id",
