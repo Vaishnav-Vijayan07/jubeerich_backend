@@ -425,17 +425,6 @@ db.franchise.hasMany(db.adminUsers, {
   as: "adminUsers",
 });
 
-// Flags
-db.userPrimaryInfo.belongsTo(db.flag, {
-  as: "user_primary_flags",
-  foreignKey: "flag_id",
-});
-
-db.flag.hasMany(db.userPrimaryInfo, {
-  foreignKey: "flag_id",
-  as: "flags",
-});
-
 db.adminUsers.belongsTo(db.franchise, {
   foreignKey: "franchise_id",
   as: "franchise", // Alias for accessing the associated Franchise
