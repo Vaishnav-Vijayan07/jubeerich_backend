@@ -56,6 +56,46 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      paternal_grand_father_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      paternal_grand_mother_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      maternal_grand_father_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      maternal_grand_mother_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      paternal_grand_father_info_spouse: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      paternal_grand_mother_info_spouse: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      maternal_grand_father_info_spouse: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      maternal_grand_mother_info_spouse: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      father_in_law_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
+      mother_in_law_info: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+      },
     },
     {
       underscored: true,
