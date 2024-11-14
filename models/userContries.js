@@ -20,6 +20,19 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
         onDelete: "CASCADE",
       },
+      status_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "status",
+          key: "id",
+        },
+        allowNull: true,
+        onDelete: "CASCADE",
+      },
+      followup_date: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     },
     {
       underscored: true,

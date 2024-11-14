@@ -149,7 +149,6 @@ exports.getAllLeads = async (req, res) => {
     const country_id = adminUser?.country_id;
 
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
-      
       userPrimaryInfos = await UserPrimaryInfo.findAll({
         where: { is_deleted: false },
         // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
@@ -281,11 +280,19 @@ exports.getAllLeads = async (req, res) => {
             as: "channel_name",
             attributes: ["channel_name"],
           },
+          // {
+          //   model: db.country,
+          //   as: "preferredCountries",
+          //   attributes: ["country_name", "id"],
+          //   through: { attributes: [] }, // Exclude join table attributes
+          // },
           {
             model: db.country,
             as: "preferredCountries",
             attributes: ["country_name", "id"],
-            through: { attributes: [] }, // Exclude join table attributes
+            through: {
+              attributes: ["followup_date", "status_id"], // Include status and followup_date
+            },
           },
           {
             model: db.officeType,
@@ -349,6 +356,7 @@ exports.getAllLeads = async (req, res) => {
       const preferredCountries = info?.preferredCountries?.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       const examDetails = info.exams?.map((exam) => ({
@@ -1326,8 +1334,7 @@ exports.getAllUserDocuments = async (req, res) => {
       ],
     });
 
-    console.log('AllDocs =========>',AllDocs);
-    
+    console.log("AllDocs =========>", AllDocs);
 
     res.status(200).json({
       status: true,

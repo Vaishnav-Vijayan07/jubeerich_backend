@@ -7,7 +7,7 @@ const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, proc
   dialect: "postgres",
   host: process.env.DB_host,
   port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
-  minifyAliases : true,
+  minifyAliases: true,
 });
 
 const db = {};
@@ -380,16 +380,22 @@ db.accessRoles.belongsToMany(db.status, {
 
 // UserPrimaryInfo and Country associations (many-to-many)
 db.userPrimaryInfo.belongsToMany(db.country, {
-  through: "user_countries",
+  through: db.userContries,  // Join table
   foreignKey: "user_primary_info_id",
   as: "preferredCountries",
   onDelete: "CASCADE",
 });
+
 db.country.belongsToMany(db.userPrimaryInfo, {
-  through: "user_countries",
+  through: db.userContries,  // Join table
   foreignKey: "country_id",
   as: "users",
   onDelete: "CASCADE",
+});
+
+db.userContries.belongsTo(db.status, {
+  foreignKey: "status_id",
+  as: "status", // Alias for the status relation
 });
 
 // UserPrimaryInfo and AdminUser (Counselors) associations (many-to-many)
@@ -680,7 +686,7 @@ db.userPrimaryInfo.addHook("beforeDestroy", async (user) => {
   await db.userContries.destroy({
     where: { user_primary_info_id: user.id },
   });
-  
+
   // Delete from user_counselors
   await db.userCounselors.destroy({
     where: { user_id: user.id },
@@ -694,6 +700,5 @@ db.country.addHook("beforeDestroy", async (country) => {
     where: { country_id: country.id },
   });
 });
-
 
 module.exports = db;
