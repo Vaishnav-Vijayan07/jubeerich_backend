@@ -489,7 +489,7 @@ exports.getAllLeads = async (req, res) => {
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
