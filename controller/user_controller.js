@@ -765,7 +765,7 @@ exports.deleteLead = async (req, res) => {
 };
 
 exports.updateUserStatus = async (req, res) => {
-  const { status_id, lead_id, followup_date } = req.body;
+  const { status_id, lead_id, followup_date, country_id } = req.body;
   const { userDecodeId: userId, role_name, role_id } = req;
 
   // Start a transaction
@@ -827,6 +827,19 @@ exports.updateUserStatus = async (req, res) => {
     const statusName = statusExists.status_name;
     // Update user status
     await leadExists.update({ status_id, followup_date }, { transaction });
+
+    let [existUserCountry] = await db.userContries.update(
+      { status_id: status_id },
+      { where: { user_primary_info_id: lead_id, country_id: country_id } }
+    )
+
+    if (existUserCountry == 0) {
+      await transaction.rollback();
+      return res.status(403).json({
+        status: false,
+        message: "Status not changed",
+      });
+    }
 
     if (role_id == process.env.COUNSELLOR_ROLE_ID) {
       await addLeadHistory(lead_id, `Status changed to ${statusName}`, userId, countryId, transaction);
