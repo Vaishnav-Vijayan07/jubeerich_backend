@@ -72,12 +72,12 @@ exports.getLeads = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.adminUsers,
           as: "updated_by_user",
@@ -88,7 +88,7 @@ exports.getLeads = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -98,6 +98,8 @@ exports.getLeads = async (req, res) => {
         counselor_name: counselor.name,
         id: counselor.id,
       }));
+
+      const flagDetails = await info?.flag_details;
 
       return {
         ...info.toJSON(),
@@ -114,7 +116,7 @@ exports.getLeads = async (req, res) => {
         assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -342,58 +344,6 @@ exports.getAllLeads = async (req, res) => {
           },
         ],
       });
-
-    //   userPrimaryInfos = await UserPrimaryInfo.findAll({
-    //     where: {
-    //       [db.Sequelize.Op.or]: [
-    //         { assigned_cre_tl: cre_id },
-    //         { created_by: cre_id },
-    //         { assigned_cre: cre_id },
-    //         { assigned_regional_manager: cre_id },
-    //         { assigned_counsellor_tl: cre_id },
-    //         { assigned_branch_counselor: cre_id },
-    //         {
-    //           [db.Sequelize.Op.and]: [
-    //             db.Sequelize.literal(`EXISTS (
-    //                 SELECT 1 FROM "user_counselors" 
-    //                 WHERE "user_counselors"."user_id" = "user_primary_info"."id"
-    //                 AND "user_counselors"."counselor_id" = ${cre_id}
-    //               )`),
-    //           ],
-    //         },
-    //         {
-    //           [db.Sequelize.Op.and]: [
-    //             db.Sequelize.literal(`EXISTS (
-    //               SELECT 1 FROM "admin_users"
-    //               WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
-    //               AND "admin_users"."id" = ${cre_id}
-    //             )`),
-    //           ],
-    //         },
-    //       ],
-    //       is_deleted: false,
-    //     },
-    //     include: [
-    //       {
-    //         model: db.country,
-    //         as: "preferredCountries",
-    //         attributes: ["id", "country_name"],
-    //         through: {
-    //           model: db.userContries,
-    //           attributes: ["country_id", "followup_date", "status_id"],
-    //         },
-    //         required: true,
-    //         include: [
-    //           {
-    //             model: db.status,
-    //             as: "country_status",   // Alias specified in the association
-    //             attributes: ["id", "status_name"],
-    //             required: true,
-    //           },
-    //         ],
-    //       },
-    //     ],
-    //   });
     }
 
     // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
@@ -472,6 +422,8 @@ exports.getAllLeads = async (req, res) => {
         id: counselor.id,
       }));
 
+      const flagDetails = await info.flag_details;
+
       return {
         ...info.toJSON(),
         type_name: info.type_name ? info.type_name.name : null,
@@ -488,6 +440,7 @@ exports.getAllLeads = async (req, res) => {
         exam_details: examDetails,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
+        flag_details: flagDetails,
       };
     }));
 
@@ -607,12 +560,12 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -622,7 +575,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -648,6 +601,8 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         id: counselor.id,
       }));
 
+      const flagDetails = await info.flag_Details;
+
       return {
         ...info.toJSON(),
         type_name: info.type_name ? info.type_name.name : null,
@@ -664,8 +619,9 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         exam_details: examDetails,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
+        flagDetails: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -769,12 +725,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -784,7 +740,7 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -810,6 +766,8 @@ exports.geLeadsForCreTl = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info.flag_Details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -828,8 +786,9 @@ exports.geLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flagDetails: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -934,12 +893,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -949,7 +908,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
       console.log("INFO", info);
 
       const preferredCountries = info.preferredCountries.map((country) => ({
@@ -973,6 +932,8 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info?.flag_details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -991,8 +952,9 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flagDetails: flagDetails
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -1096,12 +1058,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -1111,7 +1073,7 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos =  await Promise.all(userPrimaryInfos.map(async(info) => {
       console.log("INFO", info);
 
       const preferredCountries = info.preferredCountries.map((country) => ({
@@ -1134,6 +1096,8 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info?.flag_details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -1152,8 +1116,9 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails,
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
@@ -1261,12 +1226,12 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           attributes: ["status_name"],
           required: false,
         },
-        {
-          model: db.flag,
-          as: "user_primary_flags",
-          attributes: ["flag_name"],
-          required: false,
-        },
+        // {
+        //   model: db.flag,
+        //   as: "user_primary_flags",
+        //   attributes: ["flag_name"],
+        //   required: false,
+        // },
         {
           model: db.userExams,
           as: "exams",
@@ -1276,7 +1241,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
+    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
@@ -1297,6 +1262,8 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
+      const flagDetails = await info?.flag_details;
+
       return {
         ...info.toJSON(),
         // category_name: info.category_name
@@ -1315,8 +1282,9 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
+        flag_details: flagDetails,
       };
-    });
+    }));
 
     res.status(200).json({
       status: true,
