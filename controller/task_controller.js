@@ -45,7 +45,7 @@ exports.getTasks = async (req, res) => {
         userId: userId,
         [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
       },
-      // order: [['createdAt', 'ASC']],
+      order: [["createdAt", "DESC"]],
     });
 
     console.log("tasks ===>", tasks);

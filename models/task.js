@@ -63,7 +63,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     {
       tableName: "tasks",
-      timestamps: false, // set to true if you have createdAt and updatedAt fields
+      timestamps: true, // set to true if you have createdAt and updatedAt fields
     }
   );
 
