@@ -115,6 +115,7 @@ exports.getLeads = async (req, res) => {
         branch_name: info.branch_name?.branch_name || null,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
+        flagDetails: flagDetails
       };
     }));
 
@@ -284,13 +285,13 @@ exports.getAllLeads = async (req, res) => {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
             },
-            required: true,
+            required: false,
             include: [
               {
                 model: db.status,
                 as: "country_status",
                 attributes: ["id", "status_name"],
-                required: true,
+                required: false,
               },
             ],
           },
