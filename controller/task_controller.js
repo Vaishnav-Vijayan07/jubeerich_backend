@@ -19,12 +19,6 @@ exports.getTasks = async (req, res) => {
           attributes: [ "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows", ], ],
           required: false,
           include: [
-            // {
-            //   model: db.flag,
-            //   as: "user_primary_flags",
-            //   attributes: ["flag_name", "color"],
-            //   required: false,
-            // },
             {
               model: db.country,
               as: "preferredCountries",
