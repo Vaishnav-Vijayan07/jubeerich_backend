@@ -55,7 +55,7 @@ exports.getTasks = async (req, res) => {
           required: false,
           attributes: ["country_id", "followup_date", "status_id", "user_primary_info_id"],
           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.studentId") } },
-          where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
+          // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.id") }, status_id: { [db.Sequelize.Op.not]: null } },
         },
         required: false,
         include: [
@@ -76,7 +76,7 @@ exports.getTasks = async (req, res) => {
           model: db.userPrimaryInfo,
           as: "student_name",
           attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
-          required: false,
+          required: true,
           include: [
             countryFilter,
             // {
