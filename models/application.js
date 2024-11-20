@@ -36,8 +36,8 @@ module.exports = (sequelize, Sequelize) => {
         defaultValue: "pending",
       },
       kyc_status: {
-        type: Sequelize.ENUM("submitted", "approved", "rejected"),
-        defaultValue: "submitted",
+        type: Sequelize.ENUM("pending", "approved", "rejected"),
+        defaultValue: "pending",
       },
       reference_id: {
         type: Sequelize.STRING(20),
