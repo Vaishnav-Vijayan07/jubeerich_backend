@@ -151,6 +151,8 @@ exports.getAllLeads = async (req, res) => {
 
     const country_id = adminUser?.country_id;
 
+    console.log('country_id',country_id);
+
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAll({
         where: { is_deleted: false },
@@ -171,13 +173,31 @@ exports.getAllLeads = async (req, res) => {
             as: "channel_name",
             attributes: ["channel_name"],
           },
+          // {
+          //   model: db.country,
+          //   as: "preferredCountries",
+          //   attributes: ["country_name", "id"],
+          //   through: { attributes: [] },
+          //   required: true,
+          //   where: country_id ? { id: country_id } : {},
+          // },
           {
             model: db.country,
             as: "preferredCountries",
-            attributes: ["country_name", "id"],
-            through: { attributes: [] },
-            required: true,
-            where: country_id ? { id: country_id } : {},
+            attributes: ["id", "country_name"],
+            through: {
+              model: db.userContries,
+              attributes: ["country_id", "followup_date", "status_id"],
+            },
+            required: false,
+            include: [
+              {
+                model: db.status,
+                as: "country_status",
+                attributes: ["id", "status_name"],
+                required: false,
+              },
+            ],
           },
           {
             model: db.adminUsers,
