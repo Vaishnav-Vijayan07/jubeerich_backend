@@ -23,12 +23,35 @@ exports.getLeads = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries",
+        //   attributes: ["country_name", "id"],
+        //   through: { attributes: [] },
+        //   required: false,
+        // },
         {
           model: db.country,
           as: "preferredCountries",
-          attributes: ["country_name", "id"],
-          through: { attributes: [] },
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
           required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.adminUsers,
@@ -92,6 +115,10 @@ exports.getLeads = async (req, res) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       const counsellorNames = info.counselors?.map((counselor) => ({
@@ -115,7 +142,7 @@ exports.getLeads = async (req, res) => {
         branch_name: info.branch_name?.branch_name || null,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
         updated_by_user: info.updated_by_user?.name || null,
-        flagDetails: flagDetails
+        flag_details: flagDetails
       };
     }));
 
@@ -153,7 +180,7 @@ exports.getAllLeads = async (req, res) => {
 
     console.log('country_id',country_id);
 
-    if (roleId == process.env.COUNTRY_MANAGER_ID) {
+    if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID ) {
       userPrimaryInfos = await UserPrimaryInfo.findAll({
         where: { is_deleted: false },
         // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
@@ -188,14 +215,20 @@ exports.getAllLeads = async (req, res) => {
             through: {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
+              where: { country_id: adminUser?.country_id },
             },
             required: false,
             include: [
               {
                 model: db.status,
                 as: "country_status",
-                attributes: ["id", "status_name"],
+                attributes: ["id", "status_name", "color"],
                 required: false,
+                through: { 
+                  model: db.userContries,
+                  attributes: [],
+                },
+                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
               },
             ],
           },
@@ -310,8 +343,13 @@ exports.getAllLeads = async (req, res) => {
               {
                 model: db.status,
                 as: "country_status",
-                attributes: ["id", "status_name"],
+                attributes: ["id", "status_name", "color"],
                 required: false,
+                through: { 
+                  model: db.userContries,
+                  attributes: [],
+                },
+                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
               },
             ],
           },
@@ -367,60 +405,16 @@ exports.getAllLeads = async (req, res) => {
       });
     }
 
-    // const formattedUserPrimaryInfos = userPrimaryInfos.map((info) => {
-    //   const preferredCountries = info?.preferredCountries?.map((country) => ({
-    //     country_name: country.country_name,
-    //     id: country.id,
-    //   }));
-
-    //   const examDetails = info.exams?.map((exam) => ({
-    //     exam_type: exam.exam_type,
-    //     exam_date: exam.exam_date,
-    //     marks: exam.overall_score,
-    //     listening_score: exam.listening_score,
-    //     speaking_score: exam.speaking_score,
-    //     reading_score: exam.reading_score,
-    //     writing_score: exam.writing_score,
-    //     updated_by: exam.updated_by,
-    //   }));
-
-    //   const examDocuments = info.exams?.map((exam) => ({
-    //     exam_documents: exam.score_card,
-    //   }));
-
-    //   const counsellorNames = info.counselors?.map((counselor) => ({
-    //     counselor_name: counselor.name,
-    //     id: counselor.id,
-    //   }));
-
-    //   return {
-    //     ...info.toJSON(),
-    //     type_name: info.type_name ? info.type_name.name : null,
-    //     source_name: info.source_name ? info.source_name.source_name : null,
-    //     channel_name: info.channel_name ? info.channel_name.channel_name : null,
-    //     preferredCountries: preferredCountries,
-    //     counselors: counsellorNames,
-
-    //     office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-    //     // region_name: info.region_name ? info.region_name.region_name : null,
-    //     branch_name: info.branch_name ? info.branch_name.branch_name : null,
-    //     updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-    //     status: info.status ? info.status.status_name : null,
-    //     exam_details: examDetails,
-    //     assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
-    //     exam_documents: examDocuments,
-    //   };
-    // });
-
     const formattedUserPrimaryInfos = await Promise.all(
       userPrimaryInfos.map(async (info) => {
         const preferredCountries = info?.preferredCountries?.map((country) => ({
           country_name: country.country_name,
           status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
           status_id: country?.country_status?.[0]?.id,
           id: country.id,
           followup_date: country.user_countries?.followup_date,
-          status_id: country.user_countries?.status_id,
+          // status_id: country.user_countries?.status_id,
         }));
 
       const examDetails = info.exams?.map((exam) => ({
@@ -533,11 +527,34 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries",
+        //   attributes: ["country_name", "id"],
+        //   through: { attributes: [] }, // Exclude join table attributes
+        // },
         {
           model: db.country,
           as: "preferredCountries",
-          attributes: ["country_name", "id"],
-          through: { attributes: [] }, // Exclude join table attributes
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.officeType,
@@ -599,6 +616,10 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
     const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
         id: country.id,
       }));
 
@@ -622,7 +643,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         id: counselor.id,
       }));
 
-      const flagDetails = await info.flag_Details;
+      const flagDetails = await info.flag_details;
 
       return {
         ...info.toJSON(),
@@ -640,7 +661,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
         exam_details: examDetails,
         assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
         exam_documents: examDocuments,
-        flagDetails: flagDetails
+        flag_details: flagDetails
       };
     }));
 
@@ -699,11 +720,34 @@ exports.geLeadsForCreTl = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Use the alias defined in associations
+        //   attributes: ["country_name", "id"], // Include both name and ID
+        //   through: { attributes: [] }, // Exclude attributes from join table
+        // },
         {
           model: db.country,
-          as: "preferredCountries", // Use the alias defined in associations
-          attributes: ["country_name", "id"], // Include both name and ID
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.officeType,
@@ -765,6 +809,10 @@ exports.geLeadsForCreTl = async (req, res) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       // const examDetails = info.exams.map((exam)=> ({
@@ -787,7 +835,7 @@ exports.geLeadsForCreTl = async (req, res) => {
         exam_documents: exam.score_card,
       }));
 
-      const flagDetails = await info.flag_Details;
+      const flagDetails = await info.flag_details;      
 
       return {
         ...info.toJSON(),
@@ -807,7 +855,7 @@ exports.geLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
-        flagDetails: flagDetails
+        flag_details: flagDetails
       };
     }));
 
@@ -867,11 +915,34 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Use the alias defined in associations
+        //   attributes: ["country_name", "id"], // Include both name and ID
+        //   through: { attributes: [] }, // Exclude attributes from join table
+        // },
         {
           model: db.country,
-          as: "preferredCountries", // Use the alias defined in associations
-          attributes: ["country_name", "id"], // Include both name and ID
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.officeType,
@@ -935,6 +1006,10 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       const examDetails = info.exams.map((exam) => ({
@@ -973,7 +1048,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
         status: info.status ? info.status.status_name : null,
         exam_details: examDetails,
         exam_documents: examDocuments,
-        flagDetails: flagDetails
+        flag_details: flagDetails
       };
     }));
 
@@ -1032,11 +1107,34 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Use the alias defined in associations
+        //   attributes: ["country_name", "id"], // Include both name and ID
+        //   through: { attributes: [] }, // Exclude attributes from join table
+        // },
         {
           model: db.country,
-          as: "preferredCountries", // Use the alias defined in associations
-          attributes: ["country_name", "id"], // Include both name and ID
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.officeType,
@@ -1100,6 +1198,10 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       const examDetails = info.exams.map((exam) => ({
@@ -1200,11 +1302,34 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           as: "channel_name",
           attributes: ["channel_name"],
         },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Use the alias defined in associations
+        //   attributes: ["country_name", "id"], // Include both name and ID
+        //   through: { attributes: [] }, // Exclude attributes from join table
+        // },
         {
           model: db.country,
-          as: "preferredCountries", // Use the alias defined in associations
-          attributes: ["country_name", "id"], // Include both name and ID
-          through: { attributes: [] }, // Exclude attributes from join table
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: { 
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            },
+          ],
         },
         {
           model: db.officeType,
@@ -1266,6 +1391,10 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       const preferredCountries = info.preferredCountries.map((country) => ({
         country_name: country.country_name,
         id: country.id,
+        status_name: country?.country_status?.[0]?.status_name,
+        status_color: country?.country_status?.[0]?.color,
+        status_id: country?.country_status?.[0]?.id,
+        followup_date: country.user_countries?.followup_date,
       }));
 
       const examDetails = info.exams.map((exam) => ({
