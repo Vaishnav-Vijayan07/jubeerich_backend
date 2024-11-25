@@ -296,13 +296,23 @@ exports.finishTask = async (req, res) => {
           }
         }
 
+        let formattedDesc = await createTaskDesc(student, student.id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Create tasks for each least assigned user
         for (const userId of leastAssignedUsers) {
           await db.tasks.create({
             studentId: student.id,
             userId: userId,
-            title: `${student.full_name} - ${countryName} - ${student.phone}`,
-            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            title: `${student.full_name} - ${countryName}`,
+            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           });
@@ -457,13 +467,23 @@ exports.assignNewCountry = async (req, res) => {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
+        let formattedDesc = await createTaskDesc(student, student.id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Create task for the least assigned user
         await db.tasks.create(
           {
             studentId: student.id,
             userId: leastAssignedUserId,
-            title: `${student.full_name} - ${countryName} - ${student.phone}`,
-            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            title: `${student.full_name} - ${countryName}`,
+            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           },
@@ -573,11 +593,15 @@ exports.getStudentBasicInfoById = async (req, res) => {
           model: db.workInfos,
           as: "userWorkInfos", // The alias you defined in the association
         },
+        {
+          model: db.passportDetails,
+          as: "passportDetails"
+        }
       ],
       nest: true,
     });
 
-    console.log('primaryInfo',primaryInfo);
+    console.log('primaryInfo',JSON.stringify(primaryInfo, 0, 2));
     
 
     const flagDetails = await primaryInfo?.flag_details;
