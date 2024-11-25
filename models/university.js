@@ -48,6 +48,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING(200),
       allowNull: true,
     },
+    is_active: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    }
   });
 
   return University;
