@@ -90,7 +90,7 @@ exports.addUniversity = [
       });
     }
 
-    const { university_name, location, country_id, website_url, image_url, portal_link, username, password, updated_by } = req.body;
+    const { university_name, location, country_id, website_url, image_url, portal_link, username, password, updated_by, description } = req.body;
 
     try {
       if (!(await checkCountryExists(country_id))) {
@@ -110,6 +110,7 @@ exports.addUniversity = [
         username,
         password,
         updated_by,
+        description
       });
       res.status(201).json({
         status: true,
@@ -168,6 +169,7 @@ exports.updateUniversity = [
         username: req.body.username ?? university.username,
         password: req.body.password ?? university.password,
         updated_by: req.body.updated_by ?? university.updated_by,
+        description: req.body.description ?? university.description
       });
 
       res.status(200).json({

@@ -44,6 +44,10 @@ module.exports = (sequelize, Sequelize) => {
     updated_by: {
       type: Sequelize.INTEGER,
     },
+    description: {
+      type: Sequelize.STRING(200),
+      allowNull: true,
+    },
   });
 
   return University;
