@@ -4,11 +4,131 @@ const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
-const moment = require('moment');
+const moment = require("moment");
+
+// exports.getTasks = async (req, res) => {
+//   const { date } = req.query;
+
+//   try {
+//     const userId = req.userDecodeId;
+
+//     const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+
+//     if (!adminUser) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Admin user not found",
+//       });
+//     }
+
+//     console.log('COUNTRY', adminUser?.country_id);
+
+//     let countryFilter;
+
+//     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
+//       countryFilter = {
+//         model: db.country,
+//         as: "preferredCountries",
+//         attributes: ["id", "country_name"],
+//         through: {
+//           model: db.userContries,
+//           attributes: ["country_id", "followup_date", "status_id"],
+//           where: { country_id: adminUser?.country_id },
+//         },
+//         required: false,
+//         include: [
+//           {
+//             model: db.status,
+//             as: "country_status",
+//             attributes: ["id", "status_name"],
+//             required: false,
+//           },
+//         ],
+//       }
+//     } else {
+//       countryFilter = {
+//         model: db.country,
+//         as: "preferredCountries",
+//         attributes: ["id", "country_name"],
+//         through: {
+//           model: db.userContries,
+//           required: false,
+//           attributes: ["country_id", "followup_date", "status_id", "user_primary_info_id"],
+//           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.studentId") } },
+//           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
+//           where: {
+//             // user_primary_info_id: {
+//             //   [db.Sequelize.Op.eq]: db.Sequelize.col(
+//             //     "student_name.id"
+//             //   ),
+//             // },
+//             status_id: { [db.Sequelize.Op.not]: null },
+//           },
+//         },
+//         required: false,
+//         include: [
+//           {
+//             model: db.status,
+//             as: "country_status",
+//             attributes: ["id", "status_name"],
+//             required: false,
+//           },
+//         ],
+//       }
+//     }
+
+//     const tasks = await db.tasks.findAll({
+//       include: [
+//         {
+//           model: db.userPrimaryInfo,
+//           as: "student_name",
+//           attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
+//           required: false,
+//           include: [
+//             countryFilter,
+//             // {
+//             //   model: db.country,
+//             //   as: "preferredCountries",
+//             //   attributes: ["country_name", "id"],
+//             //   through: { attributes: [] },
+//             //   required: false,
+//             // },
+//             {
+//               model: db.status,
+//               as: "status",
+//               attributes: ["status_name", "color"],
+//               required: false,
+//             },
+//           ],
+//         },
+//       ],
+//       where: {
+//         userId: userId,
+//         [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
+//       },
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     console.log("tasks ===>", tasks);
+//     console.log('flagDetails',JSON.stringify(tasks,0,2));
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Tasks retrieved successfully",
+//       data: tasks,
+//     });
+//   } catch (error) {
+//     console.error(`Error fetching tasks: ${error}`);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
-  
+
   try {
     const userId = req.userDecodeId;
 
@@ -21,7 +141,7 @@ exports.getTasks = async (req, res) => {
       });
     }
 
-    console.log('COUNTRY', adminUser?.country_id);
+    console.log("COUNTRY", adminUser?.country_id);
 
     let countryFilter;
 
@@ -44,7 +164,7 @@ exports.getTasks = async (req, res) => {
             required: false,
           },
         ],
-      }
+      };
     } else {
       countryFilter = {
         model: db.country,
@@ -55,7 +175,15 @@ exports.getTasks = async (req, res) => {
           required: false,
           attributes: ["country_id", "followup_date", "status_id", "user_primary_info_id"],
           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.studentId") } },
-          where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
+          // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
+          where: {
+            // user_primary_info_id: {
+            //   [db.Sequelize.Op.eq]: db.Sequelize.col(
+            //     "student_name.id"
+            //   ),
+            // },
+            status_id: { [db.Sequelize.Op.not]: null },
+          },
         },
         required: false,
         include: [
@@ -66,44 +194,65 @@ exports.getTasks = async (req, res) => {
             required: false,
           },
         ],
-      }
+      };
     }
 
+    const query = `
+    SELECT 
+      t.id AS id,
+      t.title,
+      t.description,
+      t."dueDate",
+      t."isCompleted",
+      t."is_rejected",
+      t."is_proceed_to_kyc",
+      t."kyc_remarks",
+      u.id AS studentId,
+      u.full_name AS student_name,
+      u.flag_id,
+      (
+        SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json)
+        FROM flags AS f
+        WHERE f.id = ANY(u.flag_id)
+      ) AS flag_details_rows,
+      json_agg(
+        DISTINCT jsonb_build_object(
+          'country_id', c.id,
+          'country_name', c.country_name,
+          'statuses', (
+            SELECT json_agg(
+              jsonb_build_object(
+                'id', s.id,
+                'status_name', s.status_name
+              )
+            )
+            FROM user_countries uc
+            JOIN status s ON uc.status_id = s.id
+            WHERE uc.user_primary_info_id = u.id
+            AND uc.country_id = c.id
+          )
+        )
+      ) AS preferredCountries
+    FROM tasks t
+    LEFT JOIN user_primary_info u ON t."studentId" = u.id
+    LEFT JOIN user_countries uc ON uc.user_primary_info_id = u.id
+    LEFT JOIN countries c ON uc.country_id = c.id
+    WHERE t."userId" = :userId
+      AND DATE(t."dueDate") = DATE(:date)
+    GROUP BY t.id, u.id
+    ORDER BY t."createdAt" DESC;
+  `;
 
-    const tasks = await db.tasks.findAll({
-      include: [
-        {
-          model: db.userPrimaryInfo,
-          as: "student_name",
-          attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
-          required: false,
-          include: [
-            countryFilter,
-            // {
-            //   model: db.country,
-            //   as: "preferredCountries",
-            //   attributes: ["country_name", "id"],
-            //   through: { attributes: [] },
-            //   required: false,
-            // },
-            {
-              model: db.status,
-              as: "status",
-              attributes: ["status_name", "color"],
-              required: false,
-            },
-          ],
-        },
-      ],
-      where: { 
-        userId: userId,
-        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
+    const tasks = await db.sequelize.query(query, {
+      type: db.Sequelize.QueryTypes.SELECT,
+      replacements: {
+        userId,
+        date,
       },
-      order: [["createdAt", "DESC"]],
     });
 
     console.log("tasks ===>", tasks);
-    console.log('flagDetails',JSON.stringify(tasks,0,2));
+    console.log("flagDetails", JSON.stringify(tasks, 0, 2));
 
     res.status(200).json({
       status: true,
@@ -171,7 +320,7 @@ exports.getTaskById = async (req, res) => {
       status: true,
       message: "Task retrieved successfully",
       data: task,
-      flags: flagDetails
+      flags: flagDetails,
     });
   } catch (error) {
     console.error(`Error fetching task by ID: ${error}`);
@@ -308,11 +457,11 @@ exports.completeTask = async (req, res) => {
     const { isCompleted, id } = req.body;
 
     const { role_name, userDecodeId: userId } = req;
-  
+
     const task = await db.tasks.findByPk(id);
 
-    console.log('task ======>',task);
-  
+    console.log("task ======>", task);
+
     if (!task) {
       return res.status(404).json({
         status: false,
@@ -320,7 +469,7 @@ exports.completeTask = async (req, res) => {
       });
     }
     const studentId = task.studentId;
-  
+
     task.isCompleted = isCompleted;
     await task.save();
 
@@ -491,7 +640,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "status_id",
         "followup_date",
         "lead_received_date",
-        "flag_id"
+        "flag_id",
       ],
       include: [
         {
@@ -540,8 +689,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       nest: true,
     });
 
-    console.log('primaryInfo',primaryInfo);
-    
+    console.log("primaryInfo", primaryInfo);
 
     const flagDetails = await primaryInfo?.flag_details;
 

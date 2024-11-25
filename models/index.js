@@ -27,7 +27,6 @@ db.flag = require("./flag")(sequelize, Sequelize);
 db.maritalStatus = require("./maritalStatus")(sequelize, Sequelize);
 db.country = require("./country")(sequelize, Sequelize);
 db.university = require("./university")(sequelize, Sequelize);
-db.programs = require("./programs")(sequelize, Sequelize);
 db.branches = require("./branch")(sequelize, Sequelize);
 db.userPrimaryInfo = require("./userPrimaryInfo")(sequelize, Sequelize);
 db.userBasicInfo = require("./userBasicInfo")(sequelize, Sequelize);
@@ -359,10 +358,6 @@ db.adminUsers.hasMany(db.tasks, { foreignKey: "userId" });
 // In tasks model
 db.tasks.belongsTo(db.adminUsers, { foreignKey: "userId" });
 
-db.programs.belongsTo(db.university, {
-  as: "university_name",
-  foreignKey: "university_id",
-});
 
 db.university.belongsTo(db.country, {
   as: "country_name",

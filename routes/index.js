@@ -25,7 +25,6 @@ const FlagController = require("../controller/flag_controller");
 const MaritalStatusController = require("../controller/marital_status_controller");
 const CountryController = require("../controller/country_controller");
 const UniversityController = require("../controller/university_controller");
-const ProgramController = require("../controller/program_controller");
 const BranchController = require("../controller/branch_controller");
 const UserController = require("../controller/user_controller");
 const TaskController = require("../controller/task_controller");
@@ -162,13 +161,6 @@ router.get("/university/:id", [authMiddleware.checkUserAuth], UniversityControll
 router.post("/university", [authMiddleware.checkUserAuth], UniversityController.addUniversity);
 router.put("/university/:id", [authMiddleware.checkUserAuth], UniversityController.updateUniversity);
 router.delete("/university/:id", [authMiddleware.checkUserAuth], UniversityController.deleteUniversity);
-
-// Programs routes
-router.get("/programs", [authMiddleware.checkUserAuth], ProgramController.getAllPrograms);
-router.get("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.getProgramById);
-router.post("/programs", [authMiddleware.checkUserAuth], ProgramController.addProgram);
-router.put("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.updateProgram);
-router.delete("/programs/:id", [authMiddleware.checkUserAuth], ProgramController.deleteProgram);
 
 // Tasks routes
 router.get("/ordinary_task", [authMiddleware.checkUserAuth], OrdinaryTaskController.getAllTasks);
