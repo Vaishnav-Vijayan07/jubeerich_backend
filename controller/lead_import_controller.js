@@ -13,6 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const { createTaskDesc } = require("../utils/create_task_desc");
 
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -304,13 +305,23 @@ exports.bulkUpload = async (req, res) => {
               }
             }
 
+            let formattedDesc = await createTaskDesc(user, user.id);
+
+            if(!formattedDesc){
+              return res.status(500).json({
+                status: false,
+                message: "Description error",
+              });
+            }
+
             // Create tasks for each least assigned user
             for (const leastUserId of leastAssignedUsers) {
               const task = await db.tasks.create({
                 studentId: user.id,
                 userId: leastUserId,
-                title: `${user.full_name} - ${countryName} - ${user.phone}`,
-                description: `${user.full_name} from ${user?.city}, has applied for admission in ${countryName}`,
+                title: `${user.full_name} - ${countryName}`,
+                // description: `${user.full_name} from ${user?.city}, has applied for admission in ${countryName}`,
+                description: formattedDesc,
                 dueDate: dueDate,
                 updatedBy: userId,
               });

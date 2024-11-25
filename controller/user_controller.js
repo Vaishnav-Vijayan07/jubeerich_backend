@@ -319,13 +319,23 @@ exports.createLead = async (req, res) => {
       }); // Assuming at least one country is selected
       const countryNames = country.map((c) => c.country_name).join(", ");
 
+      let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
+
+      if(!formattedDesc){
+        return res.status(500).json({
+          status: false,
+          message: "Description error",
+        });
+      }
+
       // Create a task for the new lead
       const task = await db.tasks.create(
         {
           studentId: userPrimaryInfo.id,
           userId: userId,
-          title: `${full_name} - ${countryNames} - ${phone}`,
-          description: `${full_name} from ${city}, has applied for admission in ${countryNames}`,
+          title: `${full_name} - ${countryNames}`,
+          // description: `${full_name} from ${city}, has applied for admission in ${countryNames}`,
+          description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
         },
@@ -378,14 +388,24 @@ exports.createLead = async (req, res) => {
           }
         }
 
+        let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Create tasks for each least assigned user
         for (const leastUserId of leastAssignedUsers) {
           const task = await db.tasks.create(
             {
               studentId: userPrimaryInfo.id,
               userId: leastUserId,
-              title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
-              description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
+              title: `${userPrimaryInfo.full_name} - ${countryName}`,
+              // description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
+              description: formattedDesc,
               dueDate: dueDate,
               updatedBy: userId,
             },
@@ -439,14 +459,24 @@ exports.createLead = async (req, res) => {
             }
           }
 
+          let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
+
+          if(!formattedDesc){
+            return res.status(500).json({
+              status: false,
+              message: "Description error",
+            });
+          }
+
           // Create tasks for each least assigned user
           for (const leastUserId of leastAssignedUsers) {
             const task = await db.tasks.create(
               {
                 studentId: userPrimaryInfo.id,
                 userId: leastUserId,
-                title: `${userPrimaryInfo.full_name} - ${countryName} - ${userPrimaryInfo.phone}`,
-                description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
+                title: `${userPrimaryInfo.full_name} - ${countryName}`,
+                // description: `${userPrimaryInfo.full_name} from ${userPrimaryInfo?.city}, has applied for admission in ${countryName}`,
+                description: formattedDesc,
                 dueDate: dueDate,
                 updatedBy: userId,
               },

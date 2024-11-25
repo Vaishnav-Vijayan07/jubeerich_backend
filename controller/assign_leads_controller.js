@@ -3,6 +3,7 @@ const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const { createTaskDesc } = require("../utils/create_task_desc");
 
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
@@ -71,6 +72,15 @@ exports.assignCres = async (req, res) => {
         // Handle multiple preferred countries
         const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
+        let formattedDesc = await createTaskDesc(userInfo, user_id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
           where: { studentId: user_id },
@@ -82,8 +92,9 @@ exports.assignCres = async (req, res) => {
           await existingTask.update(
             {
               userId: cre_id,
-              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-              description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+              title: `${userInfo.full_name} - ${countries}`,
+              // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+              description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
@@ -98,8 +109,9 @@ exports.assignCres = async (req, res) => {
             {
               studentId: user_id,
               userId: cre_id,
-              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-              description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+              title: `${userInfo.full_name} - ${countries}`,
+              // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+              description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
@@ -294,6 +306,15 @@ exports.assignBranchCounselors = async (req, res) => {
         // Handle multiple preferred countries
         const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
+        let formattedDesc = await createTaskDesc(userInfo, user_id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Step 2: Check if the task with studentId exists
         const existingTask = await db.tasks.findOne({
           where: { studentId: user_id },
@@ -306,7 +327,7 @@ exports.assignBranchCounselors = async (req, res) => {
           await existingTask.update(
             {
               userId: counselor_id,
-              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              title: `${userInfo.full_name} - ${countries}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
@@ -318,7 +339,8 @@ exports.assignBranchCounselors = async (req, res) => {
             {
               studentId: user_id,
               userId: counselor_id,
-              title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
+              title: `${userInfo.full_name} - ${countries}`,
+              description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
             },
@@ -396,6 +418,16 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           as: "preferredCountries",
         },
       });
+
+      let formattedDesc = await createTaskDesc(userInfo, id);
+
+      if(!formattedDesc){
+        return res.status(500).json({
+          status: false,
+          message: "Description error",
+        });
+      }
+
       const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
       const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
 
@@ -406,8 +438,9 @@ exports.autoAssignBranchCounselors = async (req, res) => {
         {
           studentId: id,
           userId: currentCounselor,
-          title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-          description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+          title: `${userInfo.full_name} - ${countries}`,
+          // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+          description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
         },
@@ -544,6 +577,16 @@ exports.autoAssign = async (req, res) => {
           as: "preferredCountries",
         },
       });
+
+      let formattedDesc = await createTaskDesc(userInfo, id);
+
+      if(!formattedDesc){
+        return res.status(500).json({
+          status: false,
+          message: "Description error",
+        });
+      }
+
       const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
       const currentCre = leastCre[index % leastCre.length].user_id;
 
@@ -554,8 +597,9 @@ exports.autoAssign = async (req, res) => {
         {
           studentId: id,
           userId: currentCre,
-          title: `${userInfo.full_name} - ${countries} - ${userInfo.phone}`,
-          description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+          title: `${userInfo.full_name} - ${countries}`,
+          // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
+          description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
         },

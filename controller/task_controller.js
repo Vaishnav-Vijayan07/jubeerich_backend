@@ -141,8 +141,6 @@ exports.getTasks = async (req, res) => {
       });
     }
 
-    console.log("COUNTRY", adminUser?.country_id);
-
     let countryFilter;
 
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
@@ -160,8 +158,13 @@ exports.getTasks = async (req, res) => {
           {
             model: db.status,
             as: "country_status",
-            attributes: ["id", "status_name"],
+            attributes: ["id", "status_name", "color"],
             required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
           },
         ],
       };
@@ -172,83 +175,43 @@ exports.getTasks = async (req, res) => {
         attributes: ["id", "country_name"],
         through: {
           model: db.userContries,
-          required: false,
-          attributes: ["country_id", "followup_date", "status_id", "user_primary_info_id"],
-          // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.studentId") } },
-          // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
-          where: {
-            // user_primary_info_id: {
-            //   [db.Sequelize.Op.eq]: db.Sequelize.col(
-            //     "student_name.id"
-            //   ),
-            // },
-            status_id: { [db.Sequelize.Op.not]: null },
-          },
+          attributes: ["country_id", "followup_date", "status_id"],
         },
         required: false,
         include: [
           {
             model: db.status,
             as: "country_status",
-            attributes: ["id", "status_name"],
+            attributes: ["id", "status_name", "color"],
             required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
           },
         ],
-      };
+      }
+
     }
 
-    const query = `
-    SELECT 
-      t.id AS id,
-      t.title,
-      t.description,
-      t."dueDate",
-      t."isCompleted",
-      t."is_rejected",
-      t."is_proceed_to_kyc",
-      t."kyc_remarks",
-      u.id AS studentId,
-      u.full_name AS student_name,
-      u.flag_id,
-      (
-        SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json)
-        FROM flags AS f
-        WHERE f.id = ANY(u.flag_id)
-      ) AS flag_details_rows,
-      json_agg(
-        DISTINCT jsonb_build_object(
-          'country_id', c.id,
-          'country_name', c.country_name,
-          'statuses', (
-            SELECT json_agg(
-              jsonb_build_object(
-                'id', s.id,
-                'status_name', s.status_name
-              )
-            )
-            FROM user_countries uc
-            JOIN status s ON uc.status_id = s.id
-            WHERE uc.user_primary_info_id = u.id
-            AND uc.country_id = c.id
-          )
-        )
-      ) AS preferredCountries
-    FROM tasks t
-    LEFT JOIN user_primary_info u ON t."studentId" = u.id
-    LEFT JOIN user_countries uc ON uc.user_primary_info_id = u.id
-    LEFT JOIN countries c ON uc.country_id = c.id
-    WHERE t."userId" = :userId
-      AND DATE(t."dueDate") = DATE(:date)
-    GROUP BY t.id, u.id
-    ORDER BY t."createdAt" DESC;
-  `;
-
-    const tasks = await db.sequelize.query(query, {
-      type: db.Sequelize.QueryTypes.SELECT,
-      replacements: {
-        userId,
-        date,
+    const tasks = await db.tasks.findAll({
+      include: [
+        {
+          model: db.userPrimaryInfo,
+          as: "student_name",
+          attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
+          required: true,
+          include: [
+            countryFilter,
+          ],
+        },
+      ],
+      where: { 
+        userId: userId,
+        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
       },
+      order: [["createdAt", "DESC"]],
     });
 
     console.log("tasks ===>", tasks);
@@ -273,6 +236,69 @@ exports.getTaskById = async (req, res) => {
     const { id } = req.params; // Get task ID from URL parameters
     const userId = req.userDecodeId; // Get user ID from decoded JWT or session
 
+    const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+
+    if (!adminUser) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin user not found",
+      });
+    }
+
+    let countryFilter;
+
+    if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
+      countryFilter = {
+        model: db.country,
+        as: "preferredCountries",
+        attributes: ["id", "country_name"],
+        through: {
+          model: db.userContries,
+          attributes: ["country_id", "followup_date", "status_id"],
+          where: { country_id: adminUser?.country_id },
+        },
+        required: false,
+        include: [
+          {
+            model: db.status,
+            as: "country_status",
+            attributes: ["id", "status_name", "color"],
+            required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+          },
+        ],
+      }
+    } else {
+      countryFilter = {
+        model: db.country,
+        as: "preferredCountries",
+        attributes: ["id", "country_name"],
+        through: {
+          model: db.userContries,
+          attributes: ["country_id", "followup_date", "status_id"],
+        },
+        required: false,
+        include: [
+          {
+            model: db.status,
+            as: "country_status",
+            attributes: ["id", "status_name", "color"],
+            required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+          },
+        ],
+      }
+
+    }
+
     // Fetch the task by ID and ensure it belongs to the authenticated user
     const task = await db.tasks.findOne({
       where: { id: id, userId: userId },
@@ -281,27 +307,9 @@ exports.getTaskById = async (req, res) => {
           model: db.userPrimaryInfo,
           as: "student_name",
           attributes: ["flag_id"],
-          required: false,
+          required: true,
           include: [
-            // {
-            //   model: db.flag,
-            //   as: "user_primary_flags",
-            //   attributes: ["flag_name", "color"],
-            //   required: false,
-            // },
-            {
-              model: db.country,
-              as: "preferredCountries",
-              attributes: ["country_name", "id"],
-              through: { attributes: [] },
-              required: false,
-            },
-            {
-              model: db.status,
-              as: "status",
-              attributes: ["status_name", "color"],
-              required: false,
-            },
+            countryFilter,
           ],
         },
       ],
@@ -408,13 +416,23 @@ exports.finishTask = async (req, res) => {
           }
         }
 
+        let formattedDesc = await createTaskDesc(student, student.id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Create tasks for each least assigned user
         for (const userId of leastAssignedUsers) {
           await db.tasks.create({
             studentId: student.id,
             userId: userId,
-            title: `${student.full_name} - ${countryName} - ${student.phone}`,
-            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            title: `${student.full_name} - ${countryName}`,
+            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           });
@@ -569,13 +587,23 @@ exports.assignNewCountry = async (req, res) => {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 1);
 
+        let formattedDesc = await createTaskDesc(student, student.id);
+
+        if(!formattedDesc){
+          return res.status(500).json({
+            status: false,
+            message: "Description error",
+          });
+        }
+
         // Create task for the least assigned user
         await db.tasks.create(
           {
             studentId: student.id,
             userId: leastAssignedUserId,
-            title: `${student.full_name} - ${countryName} - ${student.phone}`,
-            description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            title: `${student.full_name} - ${countryName}`,
+            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+            description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
           },
@@ -685,11 +713,16 @@ exports.getStudentBasicInfoById = async (req, res) => {
           model: db.workInfos,
           as: "userWorkInfos", // The alias you defined in the association
         },
+        {
+          model: db.passportDetails,
+          as: "passportDetails"
+        }
       ],
       nest: true,
     });
 
-    console.log("primaryInfo", primaryInfo);
+    console.log('primaryInfo',JSON.stringify(primaryInfo, 0, 2));
+    
 
     const flagDetails = await primaryInfo?.flag_details;
 
