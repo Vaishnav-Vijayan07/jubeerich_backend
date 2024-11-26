@@ -197,17 +197,19 @@ exports.getTasks = async (req, res) => {
 
     }
 
+    const mainInclude = {
+      model: db.userPrimaryInfo,
+      as: "student_name",
+      attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
+      required: true,
+      include: [
+        countryFilter,
+      ],
+    }
+
     const tasks = await db.tasks.findAll({
       include: [
-        {
-          model: db.userPrimaryInfo,
-          as: "student_name",
-          attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
-          required: true,
-          include: [
-            countryFilter,
-          ],
-        },
+        mainInclude
       ],
       where: { 
         userId: userId,
@@ -216,13 +218,23 @@ exports.getTasks = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
-    console.log("tasks ===>", tasks);
-    console.log("flagDetails", JSON.stringify(tasks, 0, 2));
+    const pendingTasks = await db.tasks.findAll({
+      include: [
+        mainInclude
+      ],
+      where: { 
+        userId: userId,
+        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '<', date),
+        isCompleted: false
+      },
+      order: [["createdAt", "DESC"]],
+    });
 
     res.status(200).json({
       status: true,
       message: "Tasks retrieved successfully",
       data: tasks,
+      pendingTasks: pendingTasks
     });
   } catch (error) {
     console.error(`Error fetching tasks: ${error}`);
