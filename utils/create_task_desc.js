@@ -55,11 +55,17 @@ const createTaskDesc = async (primaryInfo, userId) => {
             formattedGender = 'Mr.';
         } else if(existBasicInfo?.gender == 'Female'){
             formattedGender = 'Ms.';
-        } else {
+        } else if (existBasicInfo?.gender == 'Other'){
             formattedGender = 'Mx.'
+        } else {
+            ''
         }
 
-        let desc = `${formattedGender} ${primaryInfo?.full_name} (${currentYear - formattedYear}), ${existBasicInfo?.marital_status_details?.marital_status_name}, from ${primaryInfo?.city}, pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}`
+        let age = currentYear && formattedGender ? `(${currentYear - formattedYear})` : '';
+        let maritalStatus = existBasicInfo?.marital_status_details?.marital_status_name ? `${existBasicInfo?.marital_status_details?.marital_status_name},` : '';
+        let city = primaryInfo?.city ? `${primaryInfo?.city},` : '';
+
+        let desc = `${formattedGender} ${primaryInfo?.full_name} ${age}, ${maritalStatus} from ${city} pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}`
 
         console.log('DESC', desc);
 

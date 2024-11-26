@@ -6,6 +6,7 @@ const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
 const { createTaskDesc } = require("../utils/create_task_desc");
+const { updateTaskDesc } = require("../utils/update_task_desc");
 
 // exports.getTasks = async (req, res) => {
 //   const { date } = req.query;
@@ -819,6 +820,14 @@ exports.saveBasicInfo = async (req, res) => {
 
     const policeDocs = [];
 
+    const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id)
+
+    if(!updatedTask){
+      return res.status(500).json({
+        status: false,
+        message: "Error Updating Task",
+      });
+    }
     // Fetch existing data from the database
     const existingPrimaryData = await db.userPrimaryInfo.findByPk(student_id);
     const existingBasicData = await db.userBasicInfo.findOne({
