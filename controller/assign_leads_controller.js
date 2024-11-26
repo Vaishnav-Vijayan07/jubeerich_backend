@@ -146,7 +146,7 @@ exports.assignCres = async (req, res) => {
     console.error(`Error assigning CRE: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: error?.message || "Internal server error",
     });
   }
 };

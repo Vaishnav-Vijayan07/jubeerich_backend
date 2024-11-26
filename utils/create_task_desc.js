@@ -42,7 +42,7 @@ const createTaskDesc = async (primaryInfo, userId) => {
             ]
         })
 
-        if (!existStudyPref) {
+        if (!existStudyPref?.studyPreferenceDetails.length > 0) {
             throw new Error('Study Preference not found')
         }
 
@@ -66,8 +66,7 @@ const createTaskDesc = async (primaryInfo, userId) => {
         return desc;
         
     } catch (error) {
-        console.log(error);
-        throw new Error('Internal server error')
+        throw error
     }
 }
 
