@@ -281,6 +281,7 @@ router.put("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.upd
 router.delete("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.deleteCampus);
 router.get("/get_configured_courses/:campus_id", [authMiddleware.checkUserAuth], CampusController.getCoursesWithDetails);
 router.post("/configure_courses", [authMiddleware.checkUserAuth], CampusController.configureCourses);
+router.delete("/configure_courses/", [authMiddleware.checkUserAuth], CampusController.deleteCourseAssociation);
 
 // Course routes
 router.get("/courses", [authMiddleware.checkUserAuth], CourseController.getAllCourses);

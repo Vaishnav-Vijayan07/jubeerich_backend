@@ -358,7 +358,6 @@ db.adminUsers.hasMany(db.tasks, { foreignKey: "userId" });
 // In tasks model
 db.tasks.belongsTo(db.adminUsers, { foreignKey: "userId" });
 
-
 db.university.belongsTo(db.country, {
   as: "country_name",
   foreignKey: "country_id",
@@ -374,7 +373,7 @@ db.accessRoles.belongsToMany(db.status, {
 });
 
 db.userPrimaryInfo.belongsToMany(db.country, {
-  through: db.userContries,  // Join table
+  through: db.userContries, // Join table
   foreignKey: "user_primary_info_id",
   otherKey: "country_id",
   as: "preferredCountries",
@@ -382,7 +381,7 @@ db.userPrimaryInfo.belongsToMany(db.country, {
 });
 
 db.country.belongsToMany(db.userPrimaryInfo, {
-  through: db.userContries,  // Join table
+  through: db.userContries, // Join table
   foreignKey: "country_id",
   otherKey: "user_primary_info_id",
   as: "user_country_name",
@@ -390,7 +389,7 @@ db.country.belongsToMany(db.userPrimaryInfo, {
 });
 
 db.country.belongsToMany(db.status, {
-  through: db.userContries, 
+  through: db.userContries,
   foreignKey: "country_id",
   otherKey: "status_id",
   as: "country_status",
@@ -593,17 +592,22 @@ db.leadSource.belongsTo(db.leadType, {
 
 // campus course association
 db.campus.belongsToMany(db.course, {
-  through: "campus_course",
+  through: db.campusCourse,
   foreignKey: "campus_id",
   otherKey: "course_id",
   as: "courses",
 });
 
 db.course.belongsToMany(db.campus, {
-  through: "campus_course",
+  through: db.campusCourse,
   foreignKey: "course_id",
   otherKey: "campus_id",
   as: "campuses",
+});
+
+db.campusCourse.belongsTo(db.course, {
+  foreignKey: "course_id",
+  as: "courses", // Alias for the course model
 });
 
 db.EmploymentHistory.belongsTo(db.adminUsers, {

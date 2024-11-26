@@ -48,5 +48,4 @@ db.sequelize
 
 // app.listen(port, () => {
 //   console.log(`Backend listens to ${port}`);
-  
 // });
