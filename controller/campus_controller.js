@@ -98,18 +98,81 @@ exports.getCampusById = async (req, res) => {
   }
 };
 
-// Add a new campus and associate courses
+// // Add a new campus and associate courses
+// exports.addCampus = [
+//   // Validation middleware
+//   ...campusValidationRules,
+//   async (req, res) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       return res.status(400).json({ status: false, message: "Validation failed", errors: errors.array() });
+//     }
+
+//     const userId = req.userDecodeId;
+//     const { campus_name, location, university_id, courses } = req.body;
+
+//     try {
+//       // Create the new campus
+//       const newCampus = await Campus.create({
+//         campus_name,
+//         location,
+//         university_id,
+//         updated_by: userId,
+//       });
+
+//       // Associate courses with the newly created campus
+//       if (courses && Array.isArray(courses)) {
+//         const courseIds = courses.map((course) => course.course_id);
+
+//         // Check for duplicate courses in the campus
+//         const existingCourses = await newCampus.getCourses({ where: { id: courseIds } });
+
+//         if (existingCourses.length > 0) {
+//           const existingCourseIds = existingCourses.map((course) => course.id);
+//           const duplicateCourses = courses.filter((course) => existingCourseIds.includes(course.course_id));
+
+//           return res.status(400).json({
+//             status: false,
+//             message: "Duplicate courses detected",
+//             duplicates: duplicateCourses.map((course) => course.course_id),
+//           });
+//         }
+
+//         // If no duplicates, proceed to add courses
+//         for (const course of courses) {
+//           // Adding course to the junction table
+//           await newCampus.addCourse(course.course_id, {
+//             through: {
+//               course_fee: course.course_fee,
+//               application_fee: course.application_fee,
+//               course_link: course.course_link,
+//             },
+//           });
+//         }
+//       }
+
+//       res.status(201).json({ status: true, message: "Campus created successfully", data: newCampus });
+//     } catch (error) {
+//       console.error(`Error creating campus: ${error}`);
+//       res.status(500).json({ status: false, message: "Internal server error" });
+//     }
+//   },
+// ];
+
 exports.addCampus = [
-  // Validation middleware
-  ...campusValidationRules,
+  ...campusValidationRules, // Apply campus validation rules
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ status: false, message: "Validation failed", errors: errors.array() });
+      return res.status(400).json({
+        status: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
     }
 
     const userId = req.userDecodeId;
-    const { campus_name, location, university_id, courses } = req.body;
+    const { campus_name, location, university_id } = req.body;
 
     try {
       // Create the new campus
@@ -120,44 +183,80 @@ exports.addCampus = [
         updated_by: userId,
       });
 
-      // Associate courses with the newly created campus
-      if (courses && Array.isArray(courses)) {
-        const courseIds = courses.map((course) => course.course_id);
-
-        // Check for duplicate courses in the campus
-        const existingCourses = await newCampus.getCourses({ where: { id: courseIds } });
-
-        if (existingCourses.length > 0) {
-          const existingCourseIds = existingCourses.map((course) => course.id);
-          const duplicateCourses = courses.filter((course) => existingCourseIds.includes(course.course_id));
-
-          return res.status(400).json({
-            status: false,
-            message: "Duplicate courses detected",
-            duplicates: duplicateCourses.map((course) => course.course_id),
-          });
-        }
-
-        // If no duplicates, proceed to add courses
-        for (const course of courses) {
-          // Adding course to the junction table
-          await newCampus.addCourse(course.course_id, {
-            through: {
-              course_fee: course.course_fee,
-              application_fee: course.application_fee,
-              course_link: course.course_link,
-            },
-          });
-        }
-      }
-
-      res.status(201).json({ status: true, message: "Campus created successfully", data: newCampus });
+      res.status(201).json({
+        status: true,
+        message: "Campus created successfully",
+        data: newCampus,
+      });
     } catch (error) {
       console.error(`Error creating campus: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({
+        status: false,
+        message: "Internal server error",
+      });
     }
   },
 ];
+
+// Associate courses with an existing campus
+exports.configureCourses = async (req, res) => {
+  const { campus_id, courses } = req.body;
+
+  if (!campus_id || !courses || !Array.isArray(courses)) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid input. Campus ID and courses are required.",
+    });
+  }
+
+  try {
+    const campus = await Campus.findByPk(campus_id);
+    if (!campus) {
+      return res.status(404).json({
+        status: false,
+        message: "Campus not found",
+      });
+    }
+
+    const courseIds = courses.map((course) => course.course_id);
+
+    // Check for duplicate courses in the campus
+    const existingCourses = await campus.getCourses({ where: { id: courseIds } });
+
+    if (existingCourses.length > 0) {
+      const existingCourseIds = existingCourses.map((course) => course.id);
+      const duplicateCourses = courses.filter((course) => existingCourseIds.includes(course.course_id));
+
+      return res.status(400).json({
+        status: false,
+        message: "Duplicate courses detected",
+        duplicates: duplicateCourses.map((course) => course.course_id),
+      });
+    }
+
+    // If no duplicates, proceed to add courses
+    for (const course of courses) {
+      await campus.addCourse(course.course_id, {
+        through: {
+          course_fee: course.course_fee,
+          application_fee: course.application_fee,
+          course_link: course.course_link,
+        },
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Courses associated successfully",
+    });
+  } catch (error) {
+    console.error(`Error associating courses: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 // Update a campus and its associated courses
 exports.updateCampus = [

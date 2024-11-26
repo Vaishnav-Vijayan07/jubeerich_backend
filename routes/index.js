@@ -279,6 +279,7 @@ router.get("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.get
 router.post("/campuses", [authMiddleware.checkUserAuth], CampusController.addCampus);
 router.put("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.updateCampus);
 router.delete("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.deleteCampus);
+router.post("/configure_courses", [authMiddleware.checkUserAuth], CampusController.configureCourses);
 
 // Course routes
 router.get("/courses", [authMiddleware.checkUserAuth], CourseController.getAllCourses);
