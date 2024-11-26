@@ -169,7 +169,8 @@ exports.updateUniversity = [
         username: req.body.username ?? university.username,
         password: req.body.password ?? university.password,
         updated_by: req.body.updated_by ?? university.updated_by,
-        description: req.body.description ?? university.description
+        description: req.body.description ?? university.description,
+        is_active: req.body.is_active ?? university.is_active
       });
 
       res.status(200).json({
