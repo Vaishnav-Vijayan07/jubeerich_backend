@@ -54,40 +54,81 @@ exports.getAllCampuses = async (req, res) => {
   }
 };
 
+// exports.getCoursesWithDetails = async (req, res) => {
+//   const { campus_id } = req.query;
+
+//   try {
+//     // Fetch courses associated with the campus, if `campus_id` is provided
+//     const courses = await Course.findAll({
+//       include: [
+//         {
+//           model: Campus,
+//           as: "campuses",
+//           attributes: ["id", "campus_name"],
+//           through: {
+//             attributes: ["id", "course_fee", "course_link", "application_fee"], // Include details from the junction table
+//           },
+//           where: campus_id ? { id: campus_id } : undefined, // Filter by campus_id if provided
+//         },
+//       ],
+//     });
+
+//     // Transform the courses for a cleaner response structure
+//     const modifiedCourses = courses.map((course) => ({
+//       id: course.id,
+//       course_name: course.course_name,
+//       description: course.description,
+//       duration: course.duration,
+//       course_fee: course.campuses[0]?.campus_course?.course_fee || null,
+//       application_fee: course.campuses[0]?.campus_course?.application_fee || null,
+//       course_link: course.campuses[0]?.campus_course?.course_link || null,
+//     }));
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Courses retrieved successfully",
+//       data: courses,
+//     });
+//   } catch (error) {
+//     console.error(`Error retrieving courses: ${error}`);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 exports.getCoursesWithDetails = async (req, res) => {
-  const { campus_id } = req.query;
+  const { campus_id } = req.params;
 
   try {
-    // Fetch courses associated with the campus, if `campus_id` is provided
-    const courses = await Course.findAll({
+    // Fetch data directly from the join table (campus_course)
+    const campusCourses = await db.campusCourse.findAll({
+      where: campus_id ? { campus_id } : {},
       include: [
         {
-          model: Campus,
-          as: "campuses",
-          attributes: ["id", "campus_name"],
-          through: {
-            attributes: ["course_fee", "course_link", "application_fee"], // Include details from the junction table
-          },
-          where: campus_id ? { id: campus_id } : undefined, // Filter by campus_id if provided
+          model: db.course, // Assuming the model is named 'course'
+          as: "courses", // Use the correct alias for the course relation
+          attributes: ["course_name"], // Fetch only the name field of the course
         },
       ],
     });
-
-    // Transform the courses for a cleaner response structure
-    const modifiedCourses = courses.map((course) => ({
-      id: course.id,
-      course_name: course.course_name,
-      description: course.description,
-      duration: course.duration,
-      course_fee: course.campuses[0]?.campus_course?.course_fee || null,
-      application_fee: course.campuses[0]?.campus_course?.application_fee || null,
-      course_link: course.campuses[0]?.campus_course?.course_link || null,
+    
+    const flattenedResponse = campusCourses.map((item) => ({
+      id: item.id,
+      course_fee: item.course_fee,
+      application_fee: item.application_fee,
+      course_link: item.course_link,
+      campus_id: item.campus_id,
+      course_id: item?.course_id,
+      course_name: item.courses ? item.courses.course_name : null, // Extract course_name
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
     }));
-
     res.status(200).json({
       status: true,
       message: "Courses retrieved successfully",
-      data: modifiedCourses,
+      data: flattenedResponse,
     });
   } catch (error) {
     console.error(`Error retrieving courses: ${error}`);
