@@ -54,6 +54,50 @@ exports.getAllCampuses = async (req, res) => {
   }
 };
 
+exports.getCoursesWithDetails = async (req, res) => {
+  const { campus_id } = req.query;
+
+  try {
+    // Fetch courses associated with the campus, if `campus_id` is provided
+    const courses = await Course.findAll({
+      include: [
+        {
+          model: Campus,
+          as: "campuses",
+          attributes: ["id", "campus_name"],
+          through: {
+            attributes: ["course_fee", "course_link", "application_fee"], // Include details from the junction table
+          },
+          where: campus_id ? { id: campus_id } : undefined, // Filter by campus_id if provided
+        },
+      ],
+    });
+
+    // Transform the courses for a cleaner response structure
+    const modifiedCourses = courses.map((course) => ({
+      id: course.id,
+      course_name: course.course_name,
+      description: course.description,
+      duration: course.duration,
+      course_fee: course.campuses[0]?.campus_course?.course_fee || null,
+      application_fee: course.campuses[0]?.campus_course?.application_fee || null,
+      course_link: course.campuses[0]?.campus_course?.course_link || null,
+    }));
+
+    res.status(200).json({
+      status: true,
+      message: "Courses retrieved successfully",
+      data: modifiedCourses,
+    });
+  } catch (error) {
+    console.error(`Error retrieving courses: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // Get campus by ID with its courses
 exports.getCampusById = async (req, res) => {
   const id = parseInt(req.params.id);
@@ -200,60 +244,53 @@ exports.addCampus = [
 
 // Associate courses with an existing campus
 exports.configureCourses = async (req, res) => {
-  const { campus_id, courses } = req.body;
+  const { campus_id, course_id, course_fee, application_fee, course_link } = req.body;
 
-  if (!campus_id || !courses || !Array.isArray(courses)) {
+  // Validate required inputs
+  if (!campus_id || !course_id) {
     return res.status(400).json({
       status: false,
-      message: "Invalid input. Campus ID and courses are required.",
+      message: "Invalid input. Campus ID and Course ID are required.",
     });
   }
 
   try {
+    // Check if the campus exists
     const campus = await Campus.findByPk(campus_id);
     if (!campus) {
       return res.status(404).json({
         status: false,
-        message: "Campus not found",
+        message: "Campus not found.",
       });
     }
 
-    const courseIds = courses.map((course) => course.course_id);
-
-    // Check for duplicate courses in the campus
-    const existingCourses = await campus.getCourses({ where: { id: courseIds } });
-
+    // Check if the course is already associated with the campus
+    const existingCourses = await campus.getCourses({ where: { id: course_id } });
     if (existingCourses.length > 0) {
-      const existingCourseIds = existingCourses.map((course) => course.id);
-      const duplicateCourses = courses.filter((course) => existingCourseIds.includes(course.course_id));
-
       return res.status(400).json({
         status: false,
-        message: "Duplicate courses detected",
-        duplicates: duplicateCourses.map((course) => course.course_id),
+        message: "Duplicate course detected. This course is already associated with the campus.",
       });
     }
 
-    // If no duplicates, proceed to add courses
-    for (const course of courses) {
-      await campus.addCourse(course.course_id, {
-        through: {
-          course_fee: course.course_fee,
-          application_fee: course.application_fee,
-          course_link: course.course_link,
-        },
-      });
-    }
+    // Associate the course with the campus
+    await campus.addCourse(course_id, {
+      through: {
+        course_fee: course_fee || null,
+        application_fee: application_fee || null,
+        course_link: course_link || null,
+      },
+    });
 
     res.status(200).json({
       status: true,
-      message: "Courses associated successfully",
+      message: "Course associated successfully.",
     });
   } catch (error) {
-    console.error(`Error associating courses: ${error}`);
+    console.error(`Error associating course: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "Internal server error.",
     });
   }
 };
