@@ -18,6 +18,13 @@ exports.getAllCampuses = async (req, res) => {
         {
           model: db.university,
           attributes: ["university_name"],
+          include: [
+            {
+              model: db.country, // Include the country model
+              as: 'country_name',
+              attributes: ["country_name"], // Fetch the country name
+            },
+          ],
         },
         {
           model: db.course,
@@ -35,6 +42,7 @@ exports.getAllCampuses = async (req, res) => {
       return {
         ...campus.toJSON(),
         university: campus.university ? campus.university.university_name : null,
+        country: campus.university ? campus?.university?.country_name?.country_name : null,
         courses: campus.courses.map((course) => ({
           ...course.toJSON(),
           course_id: course ? course.id : null,
