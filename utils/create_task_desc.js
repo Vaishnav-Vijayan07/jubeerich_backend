@@ -16,10 +16,6 @@ const createTaskDesc = async (primaryInfo, userId) => {
                 }
             ]
         });
-        
-        if (!existBasicInfo) {
-            throw new Error('Basic info not found')
-        }
 
         const existStudyPref = await db.studyPreference.findOne({
             where: { userPrimaryInfoId: userId },
@@ -42,9 +38,6 @@ const createTaskDesc = async (primaryInfo, userId) => {
             ]
         })
 
-        if (!existStudyPref?.studyPreferenceDetails.length > 0) {
-            throw new Error('Study Preference not found')
-        }
 
         let formattedYear = moment(existBasicInfo?.dob).year();
         let currentYear = moment().year();
@@ -58,14 +51,16 @@ const createTaskDesc = async (primaryInfo, userId) => {
         } else if (existBasicInfo?.gender == 'Other'){
             formattedGender = 'Mx.'
         } else {
-            ''
+            formattedGender = ''
         }
-
+        
         let age = currentYear && formattedGender ? `(${currentYear - formattedYear})` : '';
         let maritalStatus = existBasicInfo?.marital_status_details?.marital_status_name ? `${existBasicInfo?.marital_status_details?.marital_status_name},` : '';
         let city = primaryInfo?.city ? `${primaryInfo?.city},` : '';
+        let studyPref = existStudyPref?.studyPreferenceDetails?.[0] ? `pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}` : '';
 
-        let desc = `${formattedGender} ${primaryInfo?.full_name} ${age}, ${maritalStatus} from ${city} pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}`
+        // let desc = `${formattedGender} ${primaryInfo?.full_name} ${age}, ${maritalStatus} from ${city} pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}`
+        let desc = `${formattedGender} ${primaryInfo?.full_name} ${age}, ${maritalStatus} from ${city} ${studyPref}`
 
         console.log('DESC', desc);
 

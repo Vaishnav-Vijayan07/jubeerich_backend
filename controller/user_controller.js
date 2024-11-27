@@ -2,6 +2,7 @@ const { validationResult, check } = require("express-validator");
 const db = require("../models");
 const { checkIfEntityExists } = require("../utils/helper");
 const { addLeadHistory } = require("../utils/academic_query_helper");
+const { createTaskDesc } = require("../utils/create_task_desc");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const Status = db.status;
 const StatusAccessRole = db.statusAccessRoles;
@@ -856,10 +857,14 @@ exports.updateUserStatus = async (req, res) => {
     }
     const statusName = statusExists.status_name;
     // Update user status
-    await leadExists.update({ status_id, followup_date }, { transaction });
+    // await leadExists.update({ status_id, followup_date }, { transaction });
+
+    const exisTask = await db.tasks.findOne({ where: { studentId: lead_id, userId: userId } });
+
+    await exisTask.update({ dueDate: followup_date }, { transaction });
 
     let [existUserCountry] = await db.userContries.update(
-      { status_id: status_id },
+      { status_id: status_id, followup_date: followup_date },
       { where: { user_primary_info_id: lead_id, country_id: country_id } }
     )
 

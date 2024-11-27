@@ -658,7 +658,70 @@ exports.assignNewCountry = async (req, res) => {
 exports.getStudentBasicInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;
+    const userId = req.userDecodeId;
     console.log("Fetching info for studentId:", studentId);
+
+    const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+
+    if (!adminUser) {
+      return res.status(404).json({
+        status: false,
+        message: "Admin user not found",
+      });
+    }
+
+    let countryFilter;
+
+    if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
+      countryFilter = {
+        model: db.country,
+        as: "preferredCountries",
+        attributes: ["id", "country_name"],
+        through: {
+          model: db.userContries,
+          attributes: ["country_id", "followup_date", "status_id"],
+          where: { country_id: adminUser?.country_id },
+        },
+        required: false,
+        include: [
+          {
+            model: db.status,
+            as: "country_status",
+            attributes: ["id", "status_name", "color"],
+            required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+          },
+        ],
+      }
+    } else {
+      countryFilter = {
+        model: db.country,
+        as: "preferredCountries",
+        attributes: ["id", "country_name"],
+        through: {
+          model: db.userContries,
+          attributes: ["country_id", "followup_date", "status_id"],
+        },
+        required: false,
+        include: [
+          {
+            model: db.status,
+            as: "country_status",
+            attributes: ["id", "status_name", "color"],
+            required: false,
+            through: { 
+              model: db.userContries,
+              attributes: [],
+            },
+            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+          },
+        ],
+      }
+    }
 
     // Fetch basic information for the student
     const basicInfo = await db.userBasicInfo.findOne({
@@ -685,14 +748,15 @@ exports.getStudentBasicInfoById = async (req, res) => {
         "flag_id",
       ],
       include: [
-        {
-          model: db.country,
-          as: "preferredCountries", // Adjusted alias to match Sequelize associations
-          attributes: ["id", "country_name"], // Only include ID and name
-          through: {
-            attributes: [], // Exclude attributes from the join table
-          },
-        },
+        countryFilter,
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Adjusted alias to match Sequelize associations
+        //   attributes: ["id", "country_name"], // Only include ID and name
+        //   through: {
+        //     attributes: [], // Exclude attributes from the join table
+        //   },
+        // },
         {
           model: db.studyPreference,
           as: "studyPreferences",
@@ -797,14 +861,15 @@ exports.getBasicInfoById = async (req, res) => {
         "region_id",
       ],
       include: [
-        {
-          model: db.country,
-          as: "preferredCountries", // Adjusted alias to match Sequelize associations
-          attributes: ["id", "country_name"], // Only include ID and name
-          through: {
-            attributes: [], // Exclude attributes from the join table
-          },
-        },
+        // {
+        //   model: db.country,
+        //   as: "preferredCountries", // Adjusted alias to match Sequelize associations
+        //   attributes: ["id", "country_name"], // Only include ID and name
+        //   through: {
+        //     attributes: [], // Exclude attributes from the join table
+        //   },
+        // },
+        countryFilter
       ],
     });
 
@@ -890,7 +955,7 @@ exports.saveBasicInfo = async (req, res) => {
     };
 
     const parsedBasicInfo = {
-      passport_no: basicInfo.passport_no,
+      passport_no: basicInfo.passport_no || null,
       dob: basicInfo.dob !== "null" ? new Date(basicInfo.dob) : null, // Convert to Date or null
       gender: basicInfo.gender, // Assuming gender is already correct
       marital_status: basicInfo.marital_status !== "null" ? parseInt(basicInfo.marital_status, 10) : null, // Convert to integer or null
