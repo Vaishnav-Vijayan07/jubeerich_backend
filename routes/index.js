@@ -58,6 +58,7 @@ const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
 const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
 const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType, updateApplicationChecks, getApplicationChecks, getPortalDetails, completeApplication, provdeOfferLetter, getAllRemarks } = require("../controller/application_controller");
+const { createTaskConfig, getAllTaskConfig, getTaskConfig, updateTaskConfig, createOrUpdateTaskConfig } = require("../controller/master_data_controller");
 
 const router = express.Router();
 
@@ -496,5 +497,11 @@ router.patch('/complete_application/:id', [authMiddleware.checkUserAuth], comple
 router.put('/provide_offer/:id', uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
 
 router.get('/application_remarks/:id', [authMiddleware.checkUserAuth], getAllRemarks);
+
+router.get('/master_data/:id', [authMiddleware.checkUserAuth], getTaskConfig);
+
+router.get('/master_data', [authMiddleware.checkUserAuth], getAllTaskConfig);
+
+router.post('/master_data', [authMiddleware.checkUserAuth], createOrUpdateTaskConfig);
 
 module.exports = router;

@@ -67,6 +67,7 @@ db.EmploymentHistory = require("./employmentHistory")(sequelize, Sequelize);
 db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
 db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
+db.masterData = require("./masterData")(sequelize, Sequelize);
 
 //Associations
 
