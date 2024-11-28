@@ -312,7 +312,6 @@ exports.createLead = async (req, res) => {
 
     if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID) {
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 1);
 
       // const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
       const country = await db.country.findAll({
@@ -374,7 +373,6 @@ exports.createLead = async (req, res) => {
         await db.userCounselors.bulkCreate(userCounselorsData);
 
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
 
         let countryName = "Unknown";
         if (preferred_country.length > 0) {
@@ -445,7 +443,6 @@ exports.createLead = async (req, res) => {
           await db.userCounselors.bulkCreate(userCounselorsData);
 
           const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 1);
 
           let countryName = "Unknown";
           if (preferred_country.length > 0) {
