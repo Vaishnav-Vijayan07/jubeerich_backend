@@ -954,7 +954,7 @@ exports.saveBasicInfo = async (req, res) => {
     };
 
     const parsedBasicInfo = {
-      passport_no: basicInfo.passport_no || null,
+      passport_no: basicInfo.passport_no != "null" ? basicInfo.passport_no : null,
       dob: basicInfo.dob !== "null" ? new Date(basicInfo.dob) : null, // Convert to Date or null
       gender: basicInfo.gender, // Assuming gender is already correct
       marital_status: basicInfo.marital_status !== "null" ? parseInt(basicInfo.marital_status, 10) : null, // Convert to integer or null
