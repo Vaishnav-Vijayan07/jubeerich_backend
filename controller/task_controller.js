@@ -861,15 +861,14 @@ exports.getBasicInfoById = async (req, res) => {
         "region_id",
       ],
       include: [
-        // {
-        //   model: db.country,
-        //   as: "preferredCountries", // Adjusted alias to match Sequelize associations
-        //   attributes: ["id", "country_name"], // Only include ID and name
-        //   through: {
-        //     attributes: [], // Exclude attributes from the join table
-        //   },
-        // },
-        countryFilter
+        {
+          model: db.country,
+          as: "preferredCountries", // Adjusted alias to match Sequelize associations
+          attributes: ["id", "country_name"], // Only include ID and name
+          through: {
+            attributes: [], // Exclude attributes from the join table
+          },
+        },
       ],
     });
 
