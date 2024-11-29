@@ -3,7 +3,7 @@ const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 const { addLeadHistory } = require("../utils/academic_query_helper");
-const { createTaskDesc } = require("../utils/create_task_desc");
+const { createTaskDesc } = require("../utils/task_description");
 
 exports.assignCres = async (req, res) => {
   const { cre_id, user_ids } = req.body;
