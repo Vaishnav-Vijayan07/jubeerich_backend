@@ -50,8 +50,6 @@ db.travelHistory = require("./travelHistory")(sequelize, Sequelize);
 db.campusCourse = require("./campusCourse")(sequelize, Sequelize);
 db.fundPlan = require("./fundPlan")(sequelize, Sequelize);
 db.gapReason = require("./reasonForGap")(sequelize, Sequelize);
-
-// course
 db.campus = require("./campus")(sequelize, Sequelize);
 db.course = require("./course")(sequelize, Sequelize);
 db.stream = require("./stream")(sequelize, Sequelize);
@@ -68,8 +66,19 @@ db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
 db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 db.masterData = require("./masterData")(sequelize, Sequelize);
+db.stages = require("./stages")(sequelize, Sequelize);
 
 //Associations
+
+db.userPrimaryInfo.belongsTo(db.stages, {
+  foreignKey: "stage_id",
+  as: "stage",
+});
+
+db.stages.hasMany(db.userPrimaryInfo, {
+  foreignKey: "stage_id",
+  as: "users",
+});
 
 db.application.hasOne(db.eligibilityChecks, {
   foreignKey: "application_id",
