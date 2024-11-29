@@ -49,11 +49,6 @@ exports.createLead = async (req, res) => {
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
 
-  console.log('flag ===>>>',flag_id);
-  
-  
-  console.log("preferred_country insertion ==>", preferred_country);
-
   const examDocuments = req.files && req.files["exam_documents"];
 
   // Start a transaction
