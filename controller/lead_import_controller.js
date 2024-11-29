@@ -13,7 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const { addLeadHistory } = require("../utils/academic_query_helper");
-const { createTaskDesc } = require("../utils/create_task_desc");
+const { createTaskDesc } = require("../utils/task_description");
 
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();

@@ -203,6 +203,16 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.JSONB,
         allowNull: true,
       },
+
+      stage_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "stages",
+          key: "id",
+        },
+        allowNull: true,
+      },
+
       flag_details: {
         type: Sequelize.VIRTUAL,
         async get() {

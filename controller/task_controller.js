@@ -5,128 +5,7 @@ const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
-const { createTaskDesc } = require("../utils/create_task_desc");
-const { updateTaskDesc } = require("../utils/update_task_desc");
-
-// exports.getTasks = async (req, res) => {
-//   const { date } = req.query;
-
-//   try {
-//     const userId = req.userDecodeId;
-
-//     const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
-
-//     if (!adminUser) {
-//       return res.status(404).json({
-//         status: false,
-//         message: "Admin user not found",
-//       });
-//     }
-
-//     console.log('COUNTRY', adminUser?.country_id);
-
-//     let countryFilter;
-
-//     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
-//       countryFilter = {
-//         model: db.country,
-//         as: "preferredCountries",
-//         attributes: ["id", "country_name"],
-//         through: {
-//           model: db.userContries,
-//           attributes: ["country_id", "followup_date", "status_id"],
-//           where: { country_id: adminUser?.country_id },
-//         },
-//         required: false,
-//         include: [
-//           {
-//             model: db.status,
-//             as: "country_status",
-//             attributes: ["id", "status_name"],
-//             required: false,
-//           },
-//         ],
-//       }
-//     } else {
-//       countryFilter = {
-//         model: db.country,
-//         as: "preferredCountries",
-//         attributes: ["id", "country_name"],
-//         through: {
-//           model: db.userContries,
-//           required: false,
-//           attributes: ["country_id", "followup_date", "status_id", "user_primary_info_id"],
-//           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col("student_name.studentId") } },
-//           // where: { user_primary_info_id: { [db.Sequelize.Op.eq]: db.Sequelize.col('student_name.id') }, status_id: { [db.Sequelize.Op.not]: null } },
-//           where: {
-//             // user_primary_info_id: {
-//             //   [db.Sequelize.Op.eq]: db.Sequelize.col(
-//             //     "student_name.id"
-//             //   ),
-//             // },
-//             status_id: { [db.Sequelize.Op.not]: null },
-//           },
-//         },
-//         required: false,
-//         include: [
-//           {
-//             model: db.status,
-//             as: "country_status",
-//             attributes: ["id", "status_name"],
-//             required: false,
-//           },
-//         ],
-//       }
-//     }
-
-//     const tasks = await db.tasks.findAll({
-//       include: [
-//         {
-//           model: db.userPrimaryInfo,
-//           as: "student_name",
-//           attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
-//           required: false,
-//           include: [
-//             countryFilter,
-//             // {
-//             //   model: db.country,
-//             //   as: "preferredCountries",
-//             //   attributes: ["country_name", "id"],
-//             //   through: { attributes: [] },
-//             //   required: false,
-//             // },
-//             {
-//               model: db.status,
-//               as: "status",
-//               attributes: ["status_name", "color"],
-//               required: false,
-//             },
-//           ],
-//         },
-//       ],
-//       where: {
-//         userId: userId,
-//         [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
-//       },
-//       order: [["createdAt", "DESC"]],
-//     });
-
-//     console.log("tasks ===>", tasks);
-//     console.log('flagDetails',JSON.stringify(tasks,0,2));
-
-//     res.status(200).json({
-//       status: true,
-//       message: "Tasks retrieved successfully",
-//       data: tasks,
-//     });
-//   } catch (error) {
-//     console.error(`Error fetching tasks: ${error}`);
-//     res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
+const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
@@ -670,6 +549,10 @@ exports.getStudentBasicInfoById = async (req, res) => {
 
     let countryFilter;
 
+    let unfilteredCountries;
+
+    console.log('unfilteredCountries',JSON.stringify(unfilteredCountries, 0, 2));
+    
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
       countryFilter = {
         model: db.country,
@@ -695,6 +578,38 @@ exports.getStudentBasicInfoById = async (req, res) => {
           },
         ],
       }
+
+      unfilteredCountries = await db.userPrimaryInfo.findOne({
+        where: { id: studentId },
+        attributes: [
+          "id",
+          "full_name",
+          "email",
+          "phone",
+          "city",
+          "office_type",
+          "remarks",
+          "source_id",
+          "channel_id",
+          "lead_received_date",
+          "status_id",
+          "followup_date",
+          "lead_received_date",
+          "flag_id",
+        ],
+        include: [
+          {
+            model: db.country,
+            as: "preferredCountries",
+            attributes: ["id", "country_name"],
+            through: {
+              model: db.userContries,
+              attributes: [],
+            },
+          }
+        ]
+      })
+
     } else {
       countryFilter = {
         model: db.country,
@@ -798,7 +713,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
     });
 
     console.log('primaryInfo',JSON.stringify(primaryInfo, 0, 2));
-    
 
     const flagDetails = await primaryInfo?.flag_details;
 
@@ -810,7 +724,8 @@ exports.getStudentBasicInfoById = async (req, res) => {
     const combinedInfo = {
       ...primaryInfoData,
       country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
-      country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
+      // country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
+      country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_name) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
@@ -891,10 +806,12 @@ exports.getBasicInfoById = async (req, res) => {
 exports.saveBasicInfo = async (req, res) => {
   try {
     const { basicInfo, primaryInfo, student_id } = req.body;
+    const userId = req.userDecodeId;
+    const { role_id } = req
 
     const policeDocs = [];
 
-    const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id)
+    const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
 
     if(!updatedTask){
       return res.status(500).json({

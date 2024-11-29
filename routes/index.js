@@ -56,9 +56,36 @@ const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_co
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
 const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
-const { getKycDetails, proceedToKyc, kycPendingDetails, rejectKYC, kycRejectedDetails, kycApprovedDetails, approveKYC, getAllKycByUser } = require("../controller/kyc_controller");
-const { assignApplication, autoAssignApplication, getApplicationById, getApplicationDetailsByType, updateApplicationChecks, getApplicationChecks, getPortalDetails, completeApplication, provdeOfferLetter, getAllRemarks } = require("../controller/application_controller");
-const { createTaskConfig, getAllTaskConfig, getTaskConfig, updateTaskConfig, createOrUpdateTaskConfig } = require("../controller/master_data_controller");
+const {
+  getKycDetails,
+  proceedToKyc,
+  kycPendingDetails,
+  rejectKYC,
+  kycRejectedDetails,
+  kycApprovedDetails,
+  approveKYC,
+  getAllKycByUser,
+} = require("../controller/kyc_controller");
+const {
+  assignApplication,
+  autoAssignApplication,
+  getApplicationById,
+  getApplicationDetailsByType,
+  updateApplicationChecks,
+  getApplicationChecks,
+  getPortalDetails,
+  completeApplication,
+  provdeOfferLetter,
+  getAllRemarks,
+} = require("../controller/application_controller");
+const {
+  createTaskConfig,
+  getAllTaskConfig,
+  getTaskConfig,
+  updateTaskConfig,
+  createOrUpdateTaskConfig,
+} = require("../controller/master_data_controller");
+const { getAllStages, getStageById, addStage, updateStage, deleteStage } = require("../controller/stages_controller");
 
 const router = express.Router();
 
@@ -71,6 +98,13 @@ router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 
 // Auth routes
 router.post("/login", authController.login);
+
+// Stages routes
+router.get("/stages", [authMiddleware.checkUserAuth], getAllStages);
+router.get("/stages/:id", [authMiddleware.checkUserAuth], getStageById);
+router.post("/stages", [authMiddleware.checkUserAuth], addStage);
+router.put("/stages/:id", [authMiddleware.checkUserAuth], updateStage);
+router.delete("/stages/:id", [authMiddleware.checkUserAuth], deleteStage);
 
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
@@ -190,17 +224,9 @@ router.post("/franchise", [authMiddleware.checkUserAuth], FranchiseController.ad
 router.put("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.updateFranchise);
 router.delete("/franchise/:id", [authMiddleware.checkUserAuth], FranchiseController.deleteFranchise);
 
-router.get(
-  "/get_all_franchise_counsellors/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getAllCounsellorsByFranchise
-);
+router.get("/get_all_franchise_counsellors/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsByFranchise);
 
-router.get(
-  "/get_all_franchise_counsellors_tl/:id",
-  [authMiddleware.checkUserAuth],
-  FranchiseController.getAllCounsellorsTLByFranchise
-);
+router.get("/get_all_franchise_counsellors_tl/:id", [authMiddleware.checkUserAuth], FranchiseController.getAllCounsellorsTLByFranchise);
 
 // Statuses routes
 router.get("/status", [authMiddleware.checkUserAuth], StatusController.getAllStatuses);
@@ -215,18 +241,10 @@ router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController
 router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
 // router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCreTl);
-router.get(
-  "/assigned_leads_regional_managers",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAllAssignedLeadsRegionalMangers
-);
+router.get("/assigned_leads_regional_managers", [authMiddleware.checkUserAuth], LeadListingController.getAllAssignedLeadsRegionalMangers);
 router.get("/leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCounsellorTL);
 router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
-router.get(
-  "/assigned_leads_counsellor_tl",
-  [authMiddleware.checkUserAuth],
-  LeadListingController.getAssignedLeadsForCounsellorTL
-);
+router.get("/assigned_leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCounsellorTL);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
 router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
@@ -314,18 +332,8 @@ router.post(
   studyPreferencesByUserPrimaryInfoController.createStudyPreferencesByUserPrimaryInfo
 );
 
-router.post(
-  "/visa_decline_process",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  visaProcessController.saveVisaDeclineProcess
-);
-router.post(
-  "/visa_approve_process",
-  [authMiddleware.checkUserAuth],
-  uploadMultiple.uploadMultiple,
-  visaProcessController.saveVisaApproveProcess
-);
+router.post("/visa_decline_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaDeclineProcess);
+router.post("/visa_approve_process", [authMiddleware.checkUserAuth], uploadMultiple.uploadMultiple, visaProcessController.saveVisaApproveProcess);
 router.post("/travel_history", [authMiddleware.checkUserAuth], visaProcessController.saveTravelHistory);
 router.get("/visa_process/:id", [authMiddleware.checkUserAuth], visaProcessController.getAllVisaProcess);
 router.delete("/delete_visa_item/:formName/:id", [authMiddleware.checkUserAuth], visaProcessController.deleteVisaProcessItem);
@@ -361,23 +369,13 @@ router.post(
 
 router.get("/studentExamInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentExamInfoById);
 
-router.post(
-  "/studentExamInfo",
-  uploadMultiple.uploadExamDocs,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentExamInfo
-);
+router.post("/studentExamInfo", uploadMultiple.uploadExamDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentExamInfo);
 
 router.get("/studentFundInfo/:id", [authMiddleware.checkUserAuth], getStudentFundPlanDetails);
 router.post("/studentFundInfo", uploadMultiple.uploadFundDocs, [authMiddleware.checkUserAuth], saveStudentPlanDetails);
 
 router.get("/studentWorkInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentWorkInfoById);
-router.post(
-  "/studentWorkInfo",
-  uploadMultiple.uploadWorkDocs,
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.saveStudentWorkInfo
-);
+router.post("/studentWorkInfo", uploadMultiple.uploadWorkDocs, [authMiddleware.checkUserAuth], SaveStudentDetailsController.saveStudentWorkInfo);
 
 router.get("/gapReason/:id/:type", [authMiddleware.checkUserAuth], getAllGapReasons);
 
@@ -390,11 +388,7 @@ router.post(
   uploadMultiple.uploadMultiple,
   SaveStudentDetailsController.saveStudentPrimaryEducation
 );
-router.get(
-  "/studentPrimaryEducation/:student_id",
-  [authMiddleware.checkUserAuth],
-  SaveStudentDetailsController.studentPrimaryEducationDetails
-);
+router.get("/studentPrimaryEducation/:student_id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.studentPrimaryEducationDetails);
 
 router.post(
   "/graduationDetails",
@@ -407,35 +401,13 @@ router.get("/getStudentBasicInfo/:id", [authMiddleware.checkUserAuth], TaskContr
 
 router.get("/getStudentStudyPrferenceInfo/:id", [authMiddleware.checkUserAuth], TaskController.getStudentStudyPreferenceInfoById);
 
-router.post(
-  "/study_preferences_details",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.createStudyPreferenceDetails
-);
-router.get(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.getStudyPreferenceDetails
-);
-router.put(
-  "/study_preferences_details/:id",
-  [authMiddleware.checkUserAuth],
-  studyPreferencesDetailsController.updateStudyPreferenceDetails
-);
+router.post("/study_preferences_details", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.createStudyPreferenceDetails);
+router.get("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.getStudyPreferenceDetails);
+router.put("/study_preferences_details/:id", [authMiddleware.checkUserAuth], studyPreferencesDetailsController.updateStudyPreferenceDetails);
 
-router.post(
-  "/additional_docs/:id",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  studentAdditionalController.saveAdditionalDocs
-);
+router.post("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.saveAdditionalDocs);
 
-router.get(
-  "/additional_docs/:id",
-  uploadMultiple.uploadMultiple,
-  [authMiddleware.checkUserAuth],
-  studentAdditionalController.getAdditionalDocs
-);
+router.get("/additional_docs/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], studentAdditionalController.getAdditionalDocs);
 
 router.delete(
   "/additional_docs/:id/:name",
@@ -486,22 +458,22 @@ router.patch("/assign_application", [authMiddleware.checkUserAuth], assignApplic
 
 router.patch("/auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplication);
 
-router.put('/check_application', [authMiddleware.checkUserAuth], updateApplicationChecks);
+router.put("/check_application", [authMiddleware.checkUserAuth], updateApplicationChecks);
 
-router.get('/details_checks', [authMiddleware.checkUserAuth], getApplicationChecks);
+router.get("/details_checks", [authMiddleware.checkUserAuth], getApplicationChecks);
 
-router.get('/portal_details/:id', [authMiddleware.checkUserAuth], getPortalDetails);
+router.get("/portal_details/:id", [authMiddleware.checkUserAuth], getPortalDetails);
 
-router.patch('/complete_application/:id', [authMiddleware.checkUserAuth], completeApplication);
+router.patch("/complete_application/:id", [authMiddleware.checkUserAuth], completeApplication);
 
-router.put('/provide_offer/:id', uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
+router.put("/provide_offer/:id", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], provdeOfferLetter);
 
-router.get('/application_remarks/:id', [authMiddleware.checkUserAuth], getAllRemarks);
+router.get("/application_remarks/:id", [authMiddleware.checkUserAuth], getAllRemarks);
 
-router.get('/master_data/:id', [authMiddleware.checkUserAuth], getTaskConfig);
+router.get("/master_data/:id", [authMiddleware.checkUserAuth], getTaskConfig);
 
-router.get('/master_data', [authMiddleware.checkUserAuth], getAllTaskConfig);
+router.get("/master_data", [authMiddleware.checkUserAuth], getAllTaskConfig);
 
-router.post('/master_data', [authMiddleware.checkUserAuth], createOrUpdateTaskConfig);
+router.post("/master_data", [authMiddleware.checkUserAuth], createOrUpdateTaskConfig);
 
 module.exports = router;

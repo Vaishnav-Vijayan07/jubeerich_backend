@@ -1,6 +1,7 @@
 const { where } = require("sequelize");
 const db = require("../models");
 const { addOrUpdateStudyPreference } = require("../utils/academic_query_helper");
+const { updateTaskDescStudyPref } = require("../utils/task_description");
 
 exports.createStudyPreferenceDetails = async (req, res) => {
   const transaction = await db.sequelize.transaction(); // Start a transaction
@@ -11,6 +12,8 @@ exports.createStudyPreferenceDetails = async (req, res) => {
     await addOrUpdateStudyPreference(study_preferences, studyPreferenceId, transaction);
 
     await transaction.commit(); // Commit transaction if all is successful
+
+    const updatedTask = await updateTaskDescStudyPref(studyPreferenceId);
 
     res.status(201).json({
       status: true,
