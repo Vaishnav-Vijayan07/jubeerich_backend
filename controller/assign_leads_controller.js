@@ -432,7 +432,6 @@ exports.autoAssignBranchCounselors = async (req, res) => {
       const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
 
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 1);
 
       const task = await db.tasks.upsert(
         {
@@ -591,7 +590,6 @@ exports.autoAssign = async (req, res) => {
       const currentCre = leastCre[index % leastCre.length].user_id;
 
       const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 1);
 
       const task = await db.tasks.upsert(
         {

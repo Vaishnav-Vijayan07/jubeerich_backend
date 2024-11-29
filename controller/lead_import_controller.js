@@ -290,7 +290,6 @@ exports.bulkUpload = async (req, res) => {
             await db.userCounselors.bulkCreate(userCounselorsData);
 
             const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 1);
 
             let countryName = "Unknown";
             if (preferredCountries.length > 0) {

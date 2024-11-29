@@ -294,7 +294,6 @@ exports.finishTask = async (req, res) => {
 
       if (isCompleted) {
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
 
         let countryName = "Unknown";
         if (countryIds.length > 0) {
@@ -478,7 +477,6 @@ exports.assignNewCountry = async (req, res) => {
 
         // Prepare due date and task creation details
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 1);
 
         let formattedDesc = await createTaskDesc(student, student.id);
 
