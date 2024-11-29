@@ -81,12 +81,9 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
                 ]
             });
 
-            console.log(JSON.stringify(adminUser, 0, 2));
-
             if(!adminUser){
                 throw new Error('No User Found');
             }
-
             countryName = adminUser?.country?.country_name;
 
         } else {
@@ -95,7 +92,6 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
             if (!existTask.length > 0) {
                 return true
             }
-    
             countryName = existTask[0]?.title?.split("-")?.[1];
         }
 
@@ -167,7 +163,6 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
 
 const updateTaskDescStudyPref = async (studyPrefId) => {
     try {
-
         const existStudyPref = await db.studyPreference.findByPk(studyPrefId,
             {
                 include: [
@@ -194,8 +189,6 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
             }
         )
 
-        console.log('existStudyPref',JSON.stringify(existStudyPref, 0, 2));
-        
         if (!existStudyPref?.studyPreferenceDetails.length > 0) {
             throw new Error('Study Preference not found')
         }
@@ -215,8 +208,6 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
         if (!existBasicInfo) {
             throw new Error('Basic Info not found')
         }
-
-        console.log('existBasicInfo',JSON.stringify(existBasicInfo, 0, 2));
 
         let formattedYear = moment(existBasicInfo['dob']).year();
         let currentYear = moment().year();

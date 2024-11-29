@@ -549,6 +549,10 @@ exports.getStudentBasicInfoById = async (req, res) => {
 
     let countryFilter;
 
+    let unfilteredCountries;
+
+    console.log('unfilteredCountries',JSON.stringify(unfilteredCountries, 0, 2));
+    
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
       countryFilter = {
         model: db.country,
@@ -574,6 +578,38 @@ exports.getStudentBasicInfoById = async (req, res) => {
           },
         ],
       }
+
+      unfilteredCountries = await db.userPrimaryInfo.findOne({
+        where: { id: studentId },
+        attributes: [
+          "id",
+          "full_name",
+          "email",
+          "phone",
+          "city",
+          "office_type",
+          "remarks",
+          "source_id",
+          "channel_id",
+          "lead_received_date",
+          "status_id",
+          "followup_date",
+          "lead_received_date",
+          "flag_id",
+        ],
+        include: [
+          {
+            model: db.country,
+            as: "preferredCountries",
+            attributes: ["id", "country_name"],
+            through: {
+              model: db.userContries,
+              attributes: [],
+            },
+          }
+        ]
+      })
+
     } else {
       countryFilter = {
         model: db.country,
@@ -677,7 +713,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
     });
 
     console.log('primaryInfo',JSON.stringify(primaryInfo, 0, 2));
-    
 
     const flagDetails = await primaryInfo?.flag_details;
 
@@ -689,7 +724,8 @@ exports.getStudentBasicInfoById = async (req, res) => {
     const combinedInfo = {
       ...primaryInfoData,
       country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
-      country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
+      // country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
+      country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_name) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
