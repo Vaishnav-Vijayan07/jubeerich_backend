@@ -1,6 +1,6 @@
 const { validationResult, check } = require("express-validator");
 const db = require("../models");
-const { checkIfEntityExists } = require("../utils/helper");
+const { checkIfEntityExists, getStageData } = require("../utils/helper");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
 const UserPrimaryInfo = db.userPrimaryInfo;
@@ -43,16 +43,12 @@ exports.createLead = async (req, res) => {
     franchise_id,
     lead_type_id,
     exam_details,
-  } = req.body;  
+  } = req.body;
+  const { role_id } = req;
 
   exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
-
-  console.log('flag ===>>>',flag_id);
-  
-  
-  console.log("preferred_country insertion ==>", preferred_country);
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -216,6 +212,7 @@ exports.createLead = async (req, res) => {
 
     const receivedDate = new Date();
     const userRole = await db.adminUsers.findOne({ where: { id: userId } });
+    const stage = getStageData(office_type, role_id);
 
     // Create user and related information
     const userPrimaryInfo = await UserPrimaryInfo.create(
@@ -238,11 +235,11 @@ exports.createLead = async (req, res) => {
         remarks,
         ielts,
         lead_received_date: lead_received_date || receivedDate,
-        assigned_cre_tl:
-          userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID ? creTl?.id : null,
+        assigned_cre_tl: userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID ? creTl?.id : null,
         created_by: userId,
         assign_type: userRole?.role_id == process.env.CRE_ID ? "direct_assign" : null,
         regional_manager_id: userRole?.role_id == process.env.IT_TEAM_ID ? regionalManagerId : null,
+        stage,
       },
       { transaction }
     );
@@ -321,7 +318,7 @@ exports.createLead = async (req, res) => {
 
       let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
 
-      if(!formattedDesc){
+      if (!formattedDesc) {
         return res.status(500).json({
           status: false,
           message: "Description error",
@@ -389,7 +386,7 @@ exports.createLead = async (req, res) => {
 
         let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
 
-        if(!formattedDesc){
+        if (!formattedDesc) {
           return res.status(500).json({
             status: false,
             message: "Description error",
@@ -459,7 +456,7 @@ exports.createLead = async (req, res) => {
 
           let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
 
-          if(!formattedDesc){
+          if (!formattedDesc) {
             return res.status(500).json({
               status: false,
               message: "Description error",
@@ -486,8 +483,6 @@ exports.createLead = async (req, res) => {
         }
       }
     }
-
-    // get the count of items in that history table
 
     // Commit the transaction
     await transaction.commit();
@@ -863,7 +858,7 @@ exports.updateUserStatus = async (req, res) => {
     let [existUserCountry] = await db.userContries.update(
       { status_id: status_id, followup_date: followup_date },
       { where: { user_primary_info_id: lead_id, country_id: country_id } }
-    )
+    );
 
     if (existUserCountry == 0) {
       await transaction.rollback();
@@ -1138,9 +1133,7 @@ exports.createRemarkDetails = async (req, res) => {
 
     const updateRemark = await UserPrimaryInfo.update(
       {
-        remark_details: db.Sequelize.literal(
-          `jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`
-        ),
+        remark_details: db.Sequelize.literal(`jsonb_build_array('${formattedRemark}'::jsonb) || COALESCE(remark_details, '[]'::jsonb)`),
       },
       { where: { id: lead_id } }
     );
@@ -1254,11 +1247,11 @@ exports.updateFlagStatus = async (req, res) => {
       });
     }
 
-    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] })
-    console.log('existFlag===>',existFlag);
-    
-    const newFlagArr = [...existFlag?.flag_id || [], flag_id]
-    
+    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] });
+    console.log("existFlag===>", existFlag);
+
+    const newFlagArr = [...(existFlag?.flag_id || []), flag_id];
+
     const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: newFlagArr }, { where: { id: id }, transaction });
 
     if (affectedRows === 0) {
@@ -1313,10 +1306,10 @@ exports.removeFlagStatus = async (req, res) => {
       });
     }
 
-    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] })
+    const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] });
     const removedFlagArr = existFlag?.flag_id?.filter((flagId) => flagId != flag_id);
-    console.log('removedFlagArr ===================>',removedFlagArr);
-    
+    console.log("removedFlagArr ===================>", removedFlagArr);
+
     const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: removedFlagArr }, { where: { id: id }, transaction });
 
     if (affectedRows === 0) {

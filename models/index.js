@@ -66,19 +66,8 @@ db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
 db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 db.masterData = require("./masterData")(sequelize, Sequelize);
-db.stages = require("./stages")(sequelize, Sequelize);
 
 //Associations
-
-db.userPrimaryInfo.belongsTo(db.stages, {
-  foreignKey: "stage_id",
-  as: "stage",
-});
-
-db.stages.hasMany(db.userPrimaryInfo, {
-  foreignKey: "stage_id",
-  as: "users",
-});
 
 db.application.hasOne(db.eligibilityChecks, {
   foreignKey: "application_id",
