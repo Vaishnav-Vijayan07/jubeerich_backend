@@ -70,7 +70,6 @@ db.masterData = require("./masterData")(sequelize, Sequelize);
 
 //Associations
 
-
 db.application.hasOne(db.eligibilityChecks, {
   foreignKey: "application_id",
   as: "eligibilityChecks",

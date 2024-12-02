@@ -6,6 +6,7 @@ const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
 const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
+const stageDatas = require("../constants/stage_data");
 
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
@@ -41,11 +42,11 @@ exports.getTasks = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
           },
         ],
       };
@@ -65,46 +66,48 @@ exports.getTasks = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
           },
         ],
-      }
-
+      };
     }
 
     const mainInclude = {
       model: db.userPrimaryInfo,
       as: "student_name",
-      attributes: [ "id", "flag_id", [ db.Sequelize.literal(`( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`), "flag_details_rows" ], ],
-      required: true,
-      include: [
-        countryFilter,
+      attributes: [
+        "id",
+        "flag_id",
+        [
+          db.Sequelize.literal(
+            `( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`
+          ),
+          "flag_details_rows",
+        ],
       ],
-    }
+      required: true,
+      include: [countryFilter],
+    };
 
     const tasks = await db.tasks.findAll({
-      include: [
-        mainInclude
-      ],
-      where: { 
+      include: [mainInclude],
+      where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '=', date)
+        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
       },
       order: [["createdAt", "DESC"]],
     });
 
     const pendingTasks = await db.tasks.findAll({
-      include: [
-        mainInclude
-      ],
-      where: { 
+      include: [mainInclude],
+      where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn('DATE', col('dueDate')), '<', date),
-        isCompleted: false
+        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+        isCompleted: false,
       },
       order: [["createdAt", "DESC"]],
     });
@@ -113,7 +116,7 @@ exports.getTasks = async (req, res) => {
       status: true,
       message: "Tasks retrieved successfully",
       data: tasks,
-      pendingTasks: pendingTasks
+      pendingTasks: pendingTasks,
     });
   } catch (error) {
     console.error(`Error fetching tasks: ${error}`);
@@ -157,14 +160,14 @@ exports.getTaskById = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
           },
         ],
-      }
+      };
     } else {
       countryFilter = {
         model: db.country,
@@ -181,15 +184,14 @@ exports.getTaskById = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
           },
         ],
-      }
-
+      };
     }
 
     // Fetch the task by ID and ensure it belongs to the authenticated user
@@ -201,9 +203,7 @@ exports.getTaskById = async (req, res) => {
           as: "student_name",
           attributes: ["flag_id"],
           required: true,
-          include: [
-            countryFilter,
-          ],
+          include: [countryFilter],
         },
       ],
     });
@@ -310,7 +310,7 @@ exports.finishTask = async (req, res) => {
 
         let formattedDesc = await createTaskDesc(student, student.id);
 
-        if(!formattedDesc){
+        if (!formattedDesc) {
           return res.status(500).json({
             status: false,
             message: "Description error",
@@ -337,6 +337,10 @@ exports.finishTask = async (req, res) => {
     await task.save();
 
     await addLeadHistory(studentId, `Task finished by ${role_name}`, userId, null, transaction);
+
+    await student.update({
+      stage: stageDatas.counsellor,
+    });
 
     //commit the transaction
     await transaction.commit();
@@ -480,7 +484,7 @@ exports.assignNewCountry = async (req, res) => {
 
         let formattedDesc = await createTaskDesc(student, student.id);
 
-        if(!formattedDesc){
+        if (!formattedDesc) {
           return res.status(500).json({
             status: false,
             message: "Description error",
@@ -551,8 +555,8 @@ exports.getStudentBasicInfoById = async (req, res) => {
 
     let unfilteredCountries;
 
-    console.log('unfilteredCountries',JSON.stringify(unfilteredCountries, 0, 2));
-    
+    console.log("unfilteredCountries", JSON.stringify(unfilteredCountries, 0, 2));
+
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
       countryFilter = {
         model: db.country,
@@ -570,14 +574,14 @@ exports.getStudentBasicInfoById = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
           },
         ],
-      }
+      };
 
       unfilteredCountries = await db.userPrimaryInfo.findOne({
         where: { id: studentId },
@@ -606,10 +610,9 @@ exports.getStudentBasicInfoById = async (req, res) => {
               model: db.userContries,
               attributes: [],
             },
-          }
-        ]
-      })
-
+          },
+        ],
+      });
     } else {
       countryFilter = {
         model: db.country,
@@ -626,14 +629,14 @@ exports.getStudentBasicInfoById = async (req, res) => {
             as: "country_status",
             attributes: ["id", "status_name", "color"],
             required: false,
-            through: { 
+            through: {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+            where: { id: { [Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
           },
         ],
-      }
+      };
     }
 
     // Fetch basic information for the student
@@ -706,13 +709,13 @@ exports.getStudentBasicInfoById = async (req, res) => {
         },
         {
           model: db.passportDetails,
-          as: "passportDetails"
-        }
+          as: "passportDetails",
+        },
       ],
       nest: true,
     });
 
-    console.log('primaryInfo',JSON.stringify(primaryInfo, 0, 2));
+    console.log("primaryInfo", JSON.stringify(primaryInfo, 0, 2));
 
     const flagDetails = await primaryInfo?.flag_details;
 
@@ -761,18 +764,7 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: [
-        "id",
-        "full_name",
-        "email",
-        "phone",
-        "city",
-        "office_type",
-        "remarks",
-        "branch_id",
-        "franchise_id",
-        "region_id",
-      ],
+      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
       include: [
         {
           model: db.country,
@@ -807,7 +799,7 @@ exports.saveBasicInfo = async (req, res) => {
   try {
     const { basicInfo, primaryInfo, student_id } = req.body;
     const userId = req.userDecodeId;
-    const { role_id } = req
+    const { role_id } = req;
 
     const policeDocs = [];
 
@@ -838,9 +830,7 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs
-            ? existingBasicData.police_clearance_docs[index]?.certificate
-            : null;
+          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
 
         if (previousCertificatePath) {
           console.log(previousCertificatePath);

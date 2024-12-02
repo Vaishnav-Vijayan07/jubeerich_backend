@@ -1,3 +1,4 @@
+const stageDatas = require("../constants/stage_data");
 const db = require("../models");
 const sequelize = db.sequelize;
 
@@ -203,6 +204,14 @@ exports.proceedToKyc = async (req, res) => {
     const { student_id, task_id } = req.body;
     const { userDecodeId, role_id } = req;
 
+    const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
+    if (!student) {
+      return res.status(404).json({
+        status: false,
+        message: "Student not found.",
+      });
+    }
+
     const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
 
     let dynamicWhere;
@@ -266,7 +275,7 @@ exports.proceedToKyc = async (req, res) => {
 
       if (applicationsToUpdate.length > 0) {
         await db.application.update(
-          { is_rejected_kyc: false, application_status: 'pending' },
+          { is_rejected_kyc: false, application_status: "pending" },
           // { is_rejected_kyc: false },
           {
             where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
@@ -275,7 +284,7 @@ exports.proceedToKyc = async (req, res) => {
         );
       }
     } else {
-      throw new Error('Choose atleast one study preference');
+      throw new Error("Choose atleast one study preference");
     }
 
     const [setIsProceed] = await db.tasks.update(
@@ -294,6 +303,10 @@ exports.proceedToKyc = async (req, res) => {
     if (setIsProceed === 0) {
       throw new Error("Updation Failed");
     }
+
+    student.update({
+      stage : stageDatas.kyc
+    })
 
     await transaction.commit();
 
@@ -737,15 +750,13 @@ exports.rejectKYC = async (req, res, next) => {
 
     const existUser = await db.adminUsers.findByPk(userDecodeId, { attributes: ["name"] });
 
-    const existCounsellors = await db.adminUsers.findAll(
-      { where: { role_id: process.env.COUNSELLOR_ROLE_ID } },
-      { attributes: ["id"] }
-    );
+    const existCounsellors = await db.adminUsers.findAll({ where: { role_id: process.env.COUNSELLOR_ROLE_ID } }, { attributes: ["id"] });
 
-    const counsellorIds = existCounsellors.map((data) => data?.id)
+    const counsellorIds = existCounsellors.map((data) => data?.id);
 
     const existTask = await db.tasks.findOne({
-      where: { studentId: student_id,
+      where: {
+        studentId: student_id,
         userId: {
           [db.Op.in]: counsellorIds,
         },
@@ -753,7 +764,7 @@ exports.rejectKYC = async (req, res, next) => {
       transaction,
     });
 
-    console.log('existTask ===>',existTask);
+    console.log("existTask ===>", existTask);
 
     const existApplication = await db.application.findByPk(application_id);
 
@@ -761,12 +772,12 @@ exports.rejectKYC = async (req, res, next) => {
       {
         id: existApplication?.remarks?.length + 1 || 1,
         remark: remarks,
-        created_by: existUser?.name
+        created_by: existUser?.name,
       },
       ...(existApplication?.remarks || []),
     ];
 
-    console.log('formattedApplicationRemark',formattedApplicationRemark);
+    console.log("formattedApplicationRemark", formattedApplicationRemark);
 
     const formattedRemark = [
       {
@@ -798,7 +809,13 @@ exports.rejectKYC = async (req, res, next) => {
     }
 
     const [rejectApplication] = await db.application.update(
-      { is_rejected_kyc: true, kyc_status: "rejected", remarks: formattedApplicationRemark, application_status: 'rejected', proceed_to_application_manager: false },
+      {
+        is_rejected_kyc: true,
+        kyc_status: "rejected",
+        remarks: formattedApplicationRemark,
+        application_status: "rejected",
+        proceed_to_application_manager: false,
+      },
       { where: { id: application_id }, transaction }
     );
 
@@ -828,7 +845,7 @@ exports.approveKYC = async (req, res, next) => {
     const { application_id } = req.body;
 
     const [approveApplication] = await db.application.update(
-      { proceed_to_application_manager: true, kyc_status: "approved"},
+      { proceed_to_application_manager: true, kyc_status: "approved" },
       { where: { id: application_id }, transaction }
     );
 
@@ -855,7 +872,7 @@ exports.approveKYC = async (req, res, next) => {
 exports.getAllKycByUser = async (req, res) => {
   try {
     const { userDecodeId } = req;
-    const { status } = req.query;  
+    const { status } = req.query;
 
     let applicationData = await db.application.findAll({
       where: {
@@ -936,13 +953,13 @@ exports.getAllKycByUser = async (req, res) => {
             {
               model: db.university,
               as: "preferred_university",
-              attributes: ["university_name","id"],
+              attributes: ["university_name", "id"],
               required: true, // Set this association as required
             },
           ],
         },
       ],
-      attributes: ["id", "kyc_status", "application_status", "offer_letter","is_application_checks_passed","comments","reference_id"],
+      attributes: ["id", "kyc_status", "application_status", "offer_letter", "is_application_checks_passed", "comments", "reference_id"],
     });
 
     return res.status(200).json({

@@ -85,7 +85,6 @@ const {
   updateTaskConfig,
   createOrUpdateTaskConfig,
 } = require("../controller/master_data_controller");
-const { getAllStages, getStageById, addStage, updateStage, deleteStage } = require("../controller/stages_controller");
 
 const router = express.Router();
 
@@ -99,12 +98,6 @@ router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 // Auth routes
 router.post("/login", authController.login);
 
-// Stages routes
-router.get("/stages", [authMiddleware.checkUserAuth], getAllStages);
-router.get("/stages/:id", [authMiddleware.checkUserAuth], getStageById);
-router.post("/stages", [authMiddleware.checkUserAuth], addStage);
-router.put("/stages/:id", [authMiddleware.checkUserAuth], updateStage);
-router.delete("/stages/:id", [authMiddleware.checkUserAuth], deleteStage);
 
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
