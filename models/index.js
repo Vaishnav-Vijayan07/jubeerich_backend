@@ -15,7 +15,6 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.Op = Op;
 
-db.stages = require("./stages")(sequelize, Sequelize);
 db.accessRoles = require("./accessRoles")(sequelize, Sequelize);
 db.accessPowers = require("./accessPowers")(sequelize, Sequelize);
 db.leadType = require("./leadType")(sequelize, Sequelize);
@@ -678,17 +677,6 @@ db.studentAdditionalDocs.belongsTo(db.userPrimaryInfo, {
 db.userPrimaryInfo.hasOne(db.studentAdditionalDocs, {
   foreignKey: "student_id",
   as: "additional_docs",
-});
-
-
-db.userPrimaryInfo.belongsTo(db.stages, {
-  foreignKey: "stage_id",
-  as: "stage",
-});
-
-db.stages.hasMany(db.userPrimaryInfo, {
-  foreignKey: "stage_id",
-  as: "users",
 });
 
 // Add beforeDestroy hook to UserPrimaryInfo
