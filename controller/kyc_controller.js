@@ -201,16 +201,25 @@ exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const { student_id, task_id } = req.body;
-    const { userDecodeId } = req;
+    const { userDecodeId, role_id } = req;
 
     const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
+
+    let dynamicWhere;
+    
+    if(role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID){
+      dynamicWhere = { userPrimaryInfoId: student_id }
+    } else {
+      dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id }
+    }
 
     const studyPrefDetails = await db.studyPreferenceDetails.findAll({
       include: [
         {
           model: db.studyPreference,
           as: "studyPreference",
-          where: { countryId: country_id, userPrimaryInfoId: student_id },
+          // where: { countryId: country_id, userPrimaryInfoId: student_id },
+          where: dynamicWhere,
           attributes: [],
         },
       ],
@@ -219,16 +228,6 @@ exports.proceedToKyc = async (req, res) => {
     });
 
     console.log("studyPrefDetails ======>", studyPrefDetails);
-
-    // if (studyPrefDetails.length > 0) {
-    //   const applicationsToCreate = studyPrefDetails.map((detail) => ({
-    //     studyPrefernceId: detail.id,
-    //   }));
-
-    //   console.log('applicationsToCreate ======>', applicationsToCreate);
-
-    //   await db.application.bulkCreate(applicationsToCreate, { transaction });
-    // }
 
     if (studyPrefDetails.length > 0) {
       const applicationsToCreate = [];
@@ -398,7 +397,7 @@ exports.kycPendingDetails = async (req, res) => {
                         attributes: ["name", "id", "country_id"],
                         through: { attributes: [] },
                         subquery: false,
-                        required: true, // Set this association as required
+                        required: false, // Set this association as required
                         where: {
                           country_id: {
                             [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
@@ -479,7 +478,7 @@ exports.kycPendingDetails = async (req, res) => {
                         attributes: ["name", "id", "country_id"],
                         through: { attributes: [] },
                         subquery: false,
-                        required: true, // Set this association as required
+                        required: false, // Set this association as required
                         where: {
                           country_id: {
                             [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
@@ -911,7 +910,7 @@ exports.getAllKycByUser = async (req, res) => {
                       attributes: ["name", "id", "country_id"],
                       through: { attributes: [] },
                       subquery: false,
-                      required: true, // Set this association as required
+                      required: false, // Set this association as required
                       where: {
                         country_id: {
                           [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
