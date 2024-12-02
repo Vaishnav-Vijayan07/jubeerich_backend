@@ -6,14 +6,24 @@ const { updateTaskDescStudyPref } = require("../utils/task_description");
 exports.createStudyPreferenceDetails = async (req, res) => {
   const transaction = await db.sequelize.transaction(); // Start a transaction
   try {
+    const { role_id } = req
     const { study_preferences, studyPreferenceId } = req.body;
 
     // Call addOrUpdate function with transaction
     await addOrUpdateStudyPreference(study_preferences, studyPreferenceId, transaction);
 
     await transaction.commit(); // Commit transaction if all is successful
-
-    const updatedTask = await updateTaskDescStudyPref(studyPreferenceId);
+    
+    if(role_id != process.env.IT_TEAM_ID || role_id != process.env.CRE_TL_ID){
+      const updatedTask = await updateTaskDescStudyPref(studyPreferenceId);
+  
+      if(!updatedTask){
+        return res.status(500).json({
+          status: false,
+          message: "Error Updating Task",
+        });
+      }
+    }
 
     res.status(201).json({
       status: true,

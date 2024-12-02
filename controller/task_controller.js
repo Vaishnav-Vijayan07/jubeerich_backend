@@ -811,13 +811,15 @@ exports.saveBasicInfo = async (req, res) => {
 
     const policeDocs = [];
 
-    const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
-
-    if(!updatedTask){
-      return res.status(500).json({
-        status: false,
-        message: "Error Updating Task",
-      });
+    if(role_id != process.env.IT_TEAM_ID || role_id != process.env.CRE_TL_ID){
+      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
+  
+      if(!updatedTask){
+        return res.status(500).json({
+          status: false,
+          message: "Error Updating Task",
+        });
+      }
     }
     // Fetch existing data from the database
     const existingPrimaryData = await db.userPrimaryInfo.findByPk(student_id);
