@@ -215,11 +215,11 @@ exports.proceedToKyc = async (req, res) => {
     const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
 
     let dynamicWhere;
-    
-    if(role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID){
-      dynamicWhere = { userPrimaryInfoId: student_id }
+
+    if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
+      dynamicWhere = { userPrimaryInfoId: student_id };
     } else {
-      dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id }
+      dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
     }
 
     const studyPrefDetails = await db.studyPreferenceDetails.findAll({
@@ -304,9 +304,9 @@ exports.proceedToKyc = async (req, res) => {
       throw new Error("Updation Failed");
     }
 
-    student.update({
-      stage : stageDatas.kyc
-    })
+    await student.update({
+      stage: stageDatas.kyc,
+    });
 
     await transaction.commit();
 
@@ -842,7 +842,17 @@ exports.rejectKYC = async (req, res, next) => {
 exports.approveKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
-    const { application_id } = req.body;
+    const { application_id, student_id } = req.body;
+
+    const application = await db.application.findByPk(application_id);
+    const student = await db.userPrimaryInfo.findByPk(student_id);
+
+    if (!application || !student) {
+      return res.status(404).json({
+        status: false,
+        message: "Application or Student not found",
+      });
+    }
 
     const [approveApplication] = await db.application.update(
       { proceed_to_application_manager: true, kyc_status: "approved" },
@@ -852,6 +862,10 @@ exports.approveKYC = async (req, res, next) => {
     if (approveApplication == 0) {
       throw new Error("Application Approve Failed");
     }
+
+    await student.update({
+      stage: stageDatas.application,
+    });
 
     await transaction.commit();
 
