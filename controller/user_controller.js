@@ -3,6 +3,7 @@ const db = require("../models");
 const { checkIfEntityExists, getStageData } = require("../utils/helper");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
+const IdsFromEnv = require("../constants/ids");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const Status = db.status;
 const StatusAccessRole = db.statusAccessRoles;
@@ -245,7 +246,6 @@ exports.createLead = async (req, res) => {
     );
 
     const userPrimaryId = userPrimaryInfo?.id;
-    console.log("USER ID", userPrimaryId);
 
     if (userPrimaryId) {
       await addLeadHistory(userPrimaryId, `Lead created by ${role}`, userId, null, transaction);
@@ -273,7 +273,17 @@ exports.createLead = async (req, res) => {
 
     // Associate the preferred countries with the user
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      await userPrimaryInfo.setPreferredCountries(preferred_country, {
+      console.log("<=== preferred_country ===>", preferred_country);
+
+      const countryAssociations = preferred_country.map((countryId) => ({
+        user_primary_info_id: userPrimaryInfo.id, // Assuming this is defined earlier
+        country_id: countryId,
+        status_id: IdsFromEnv.NEW_LEAD_STATUS_ID, // Add the desired status_id
+      }));
+
+      // Use bulkCreate with `updateOnDuplicate` to ensure no duplicates
+      await db.userContries.bulkCreate(countryAssociations, {
+        updateOnDuplicate: ["status_id"], // Updates status_id if already associated
         transaction,
       });
     }
