@@ -14,7 +14,7 @@ exports.createStudyPreferenceDetails = async (req, res) => {
 
     await transaction.commit(); // Commit transaction if all is successful
     
-    if(role_id != process.env.IT_TEAM_ID || role_id != process.env.CRE_TL_ID){
+    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID && role_id != process.env.REGIONAL_MANAGER_ID){
       const updatedTask = await updateTaskDescStudyPref(studyPreferenceId);
   
       if(!updatedTask){

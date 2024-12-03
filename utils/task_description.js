@@ -236,7 +236,8 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
             {
                 description: desc,
             },
-            { where: { studentId: existStudyPref?.userPrimaryInfoId, isCompleted: false, is_proceed_to_kyc: false } }
+            // { where: { studentId: existStudyPref?.userPrimaryInfoId, isCompleted: false, is_proceed_to_kyc: false } }
+            { where: { studentId: existStudyPref?.userPrimaryInfoId, isCompleted: false } }
         )
 
         if ([updateTask] == 0) {

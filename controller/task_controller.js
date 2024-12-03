@@ -553,7 +553,36 @@ exports.getStudentBasicInfoById = async (req, res) => {
 
     let countryFilter;
 
-    let unfilteredCountries;
+    let unfilteredCountries = await db.userPrimaryInfo.findOne({
+      where: { id: studentId },
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "source_id",
+        "channel_id",
+        "lead_received_date",
+        "status_id",
+        "followup_date",
+        "lead_received_date",
+        "flag_id",
+      ],
+      include: [
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: [],
+          },
+        },
+      ],
+    });
 
     console.log("unfilteredCountries", JSON.stringify(unfilteredCountries, 0, 2));
 
@@ -583,36 +612,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
         ],
       };
 
-      unfilteredCountries = await db.userPrimaryInfo.findOne({
-        where: { id: studentId },
-        attributes: [
-          "id",
-          "full_name",
-          "email",
-          "phone",
-          "city",
-          "office_type",
-          "remarks",
-          "source_id",
-          "channel_id",
-          "lead_received_date",
-          "status_id",
-          "followup_date",
-          "lead_received_date",
-          "flag_id",
-        ],
-        include: [
-          {
-            model: db.country,
-            as: "preferredCountries",
-            attributes: ["id", "country_name"],
-            through: {
-              model: db.userContries,
-              attributes: [],
-            },
-          },
-        ],
-      });
     } else {
       countryFilter = {
         model: db.country,
@@ -710,6 +709,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         {
           model: db.passportDetails,
           as: "passportDetails",
+          attributes: ["passports"]
         },
       ],
       nest: true,
@@ -723,6 +723,12 @@ exports.getStudentBasicInfoById = async (req, res) => {
     const basicInfoData = basicInfo ? basicInfo.dataValues : {};
     const primaryInfoData = primaryInfo ? primaryInfo.dataValues : {};
 
+    const passportNumber = primaryInfo?.passportDetails?.[0]?.passports?.sort((a, b) => {
+      const dateA = new Date(a.date_of_expiry);
+      const dateB = new Date(b.date_of_expiry);
+      return dateB - dateA;
+    });
+
     // Combine primaryInfoData with filtered preferredCountries
     const combinedInfo = {
       ...primaryInfoData,
@@ -734,6 +740,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
       flag_color: primaryInfo?.user_primary_flags?.color,
       flags: flagDetails,
+      passportNumber: moment(passportNumber?.[0]?.date_of_expiry).format("YYYY-MM-DD") > moment().format("YYYY-MM-DD") ? passportNumber?.[0]?.passport_number : 'N/A',
       ...basicInfoData,
     };
 
