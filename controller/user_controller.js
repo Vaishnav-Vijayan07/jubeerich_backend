@@ -43,11 +43,9 @@ exports.createLead = async (req, res) => {
     ielts,
     franchise_id,
     lead_type_id,
-    exam_details,
   } = req.body;
   const { role_id } = req;
 
-  exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
 
@@ -287,34 +285,6 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    // Handle exam details
-    if (Array.isArray(exam_details) && exam_details?.length > 0) {
-      const examDetailsPromises = exam_details.map(async (exam, index) => {
-        const examDocument = examDocuments ? examDocuments[index] : null;
-
-        // Create the exam record
-        const createdExam = await db.userExams.create(
-          {
-            student_id: userPrimaryInfo.id,
-            exam_type: exam.exam_type,
-            score_card: examDocument ? examDocument?.filename : null, // Save the filename of the uploaded document
-            exam_date: exam.exam_date,
-            listening_score: exam.listening_score,
-            speaking_score: exam.speaking_score,
-            reading_score: exam.reading_score,
-            writing_score: exam.writing_score,
-            // overall_score: exam.marks,
-            overall_score: exam.overall_score,
-            updated_by: updated_by,
-          },
-          { transaction }
-        );
-
-        return createdExam;
-      });
-
-      await Promise.all(examDetailsPromises);
-    }
 
     if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID) {
       const dueDate = new Date();
@@ -547,7 +517,6 @@ exports.updateLead = async (req, res) => {
     lead_received_date,
     zipcode,
     franchise_id,
-    exam_details,
   } = req.body;
 
   console.log(branch_id);
@@ -555,8 +524,6 @@ exports.updateLead = async (req, res) => {
   console.log(region_id);
   console.log(office_type);
 
-  // Parse exam_details and preferred_country if they are provided as strings
-  exam_details = exam_details ? JSON.parse(exam_details) : null;
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
 
@@ -689,60 +656,6 @@ exports.updateLead = async (req, res) => {
       await lead.setPreferredCountries(preferred_country, {
         transaction,
       });
-    }
-
-    // Handle exam details
-    if (Array.isArray(exam_details) && exam_details.length > 0) {
-      const examDetailsPromises = exam_details.map(async (exam, index) => {
-        const examDocument = examDocuments ? examDocuments[index] : null;
-
-        let updateData = {
-          exam_type: exam.exam_type,
-          exam_date: exam.exam_date,
-          listening_score: exam.listening_score,
-          speaking_score: exam.speaking_score,
-          reading_score: exam.reading_score,
-          writing_score: exam.writing_score,
-          // overall_score: exam.marks,
-          overall_score: exam.overall_score,
-          updated_by: updated_by,
-        };
-
-        if (examDocument && examDocument.size !== 0) {
-          updateData.score_card = examDocument.filename;
-        }
-        console.log("exam.exam_type", exam.exam_type);
-
-        if (exam.id) {
-          return db.userExams.update(updateData, {
-            where: {
-              student_id: id,
-              // exam_type: exam.exam_type,
-              id: exam.id,
-            },
-            transaction,
-          });
-        } else {
-          return db.userExams.create(
-            {
-              student_id: id,
-              exam_type: exam.exam_type,
-              exam_date: exam.exam_date,
-              listening_score: exam.listening_score,
-              speaking_score: exam.speaking_score,
-              reading_score: exam.reading_score,
-              writing_score: exam.writing_score,
-              // overall_score: exam.marks,
-              overall_score: exam.overall_score,
-              updated_by: updated_by,
-              score_card: examDocument ? examDocument.filename : null,
-            },
-            { transaction }
-          );
-        }
-      });
-
-      await Promise.all(examDetailsPromises);
     }
 
     await transaction.commit();
