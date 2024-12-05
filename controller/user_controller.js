@@ -276,12 +276,11 @@ exports.createLead = async (req, res) => {
       const countryAssociations = preferred_country.map((countryId) => ({
         user_primary_info_id: userPrimaryInfo.id, // Assuming this is defined earlier
         country_id: countryId,
-        status_id: IdsFromEnv.NEW_LEAD_STATUS_ID, // Add the desired status_id
+        status_id: IdsFromEnv.NEW_LEAD_STATUS_ID,  // Add the desired status_id
       }));
 
       // Use bulkCreate with `updateOnDuplicate` to ensure no duplicates
       await db.userContries.bulkCreate(countryAssociations, {
-        updateOnDuplicate: ["status_id"], // Updates status_id if already associated
         transaction,
       });
     }

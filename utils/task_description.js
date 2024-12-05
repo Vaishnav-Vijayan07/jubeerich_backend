@@ -95,9 +95,13 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
             countryName = existTask[0]?.title?.split("-")?.[1];
         }
 
-        const existMaritalStatus = await db.maritalStatus.findByPk(basicInfo['marital_status']);
+        let existMaritalStatus;
+        
+        if(basicInfo?.['marital_status'] != 'null') {
+            existMaritalStatus = await db.maritalStatus.findByPk(basicInfo?.['marital_status'])
+        }
 
-        let formattedYear = moment(basicInfo['dob']).year();
+        let formattedYear = moment(basicInfo?.['dob']).year();
         let currentYear = moment().year();
 
         const existStudyPref = await db.studyPreference.findOne({
@@ -123,11 +127,11 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
 
         let formattedGender;
 
-        if (basicInfo['gender'] == 'Male') {
+        if (basicInfo?.['gender'] == 'Male') {
             formattedGender = 'Mr.';
-        } else if (basicInfo['gender'] == 'Female') {
+        } else if (basicInfo?.['gender'] == 'Female') {
             formattedGender = 'Ms.';
-        } else if (basicInfo['gender'] == 'Other') {
+        } else if (basicInfo?.['gender'] == 'Other') {
             formattedGender = 'Mx.'
         } else {
             formattedGender = ''
@@ -136,11 +140,11 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
         let age = currentYear && formattedYear ? `(${Number(currentYear) - Number(formattedYear)})` : '';
 
         let maritalStatus = existMaritalStatus?.marital_status_name ? `${existMaritalStatus?.marital_status_name},` : '';
-        let city = primaryInfo['city'] ? `${primaryInfo['city']},` : '';
+        let city = primaryInfo?.['city'] ? `${primaryInfo?.['city']},` : '';
         let studyPref = existStudyPref?.studyPreferenceDetails?.[0] ? `pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}` : '';
 
-        let desc = `${formattedGender} ${primaryInfo['full_name']} ${Number.isNaN(age) ? '' : age}, ${maritalStatus} from ${city} ${studyPref}`
-        let title = `${primaryInfo['full_name']} - ${countryName}`
+        let desc = `${formattedGender} ${primaryInfo?.['full_name']} ${Number.isNaN(age) ? '' : age}, ${maritalStatus} from ${city} ${studyPref}`
+        let title = `${primaryInfo?.['full_name']} - ${countryName}`
 
         const updateTask = await db.tasks.update(
             {
@@ -205,20 +209,16 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
             }
         )
 
-        if (!existBasicInfo) {
-            throw new Error('Basic Info not found')
-        }
-
-        let formattedYear = moment(existBasicInfo['dob']).year();
+        let formattedYear = moment(existBasicInfo?.['dob']).year();
         let currentYear = moment().year();
 
         let formattedGender;
 
-        if (existBasicInfo['gender'] == 'Male') {
+        if (existBasicInfo?.['gender'] == 'Male') {
             formattedGender = 'Mr.';
-        } else if (existBasicInfo['gender'] == 'Female') {
+        } else if (existBasicInfo?.['gender'] == 'Female') {
             formattedGender = 'Ms.';
-        } else if (existBasicInfo['gender'] == 'Other') {
+        } else if (existBasicInfo?.['gender'] == 'Other') {
             formattedGender = 'Mx.'
         } else {
             formattedGender = ''
@@ -227,10 +227,10 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
         let age = currentYear && formattedYear ? `(${Number(currentYear) - Number(formattedYear)})` : '';
 
         let maritalStatus = existBasicInfo?.marital_status_details?.marital_status_name ? `${existBasicInfo?.marital_status_details?.marital_status_name},` : '';
-        let city = existStudyPref?.userPrimaryInfo['city'] ? `${existStudyPref?.userPrimaryInfo['city']},` : '';
+        let city = existStudyPref?.userPrimaryInfo?.['city'] ? `${existStudyPref?.userPrimaryInfo?.['city']},` : '';
         let studyPref = existStudyPref?.studyPreferenceDetails?.[0] ? `pursuing ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_courses?.course_name} at ${existStudyPref?.studyPreferenceDetails?.[0]?.preferred_university?.university_name}, Intake ${existStudyPref?.studyPreferenceDetails?.[0]?.intakeYear}` : '';
 
-        let desc = `${formattedGender} ${existStudyPref?.userPrimaryInfo['full_name']} ${Number.isNaN(age) ? '' : age}, ${maritalStatus} from ${city} ${studyPref}`
+        let desc = `${formattedGender} ${existStudyPref?.userPrimaryInfo?.['full_name']} ${Number.isNaN(age) ? '' : age}, ${maritalStatus} from ${city} ${studyPref}`
 
         const updateTask = await db.tasks.update(
             {
