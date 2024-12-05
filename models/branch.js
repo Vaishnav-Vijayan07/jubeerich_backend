@@ -67,14 +67,6 @@ module.exports = (sequelize, Sequelize) => {
     support_mail: {
       type: Sequelize.STRING(255),
     },
-    office_type: {
-      type: Sequelize.INTEGER,
-      references: {
-        model: "office_types",
-        key: "id",
-      },
-      allowNull: true,
-    },
     region_id: {
       type: Sequelize.INTEGER,
       references: {
