@@ -299,6 +299,32 @@ const addLeadHistory = async (
   }
 };
 
+const getRoleForUserHistory = async (userId) => {
+  try {
+    const adminUser = await db.adminUsers.findByPk(userId, {
+      attributes: ["country_id"],
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
+      raw: true, // Ensure it returns plain data, not a Sequelize instance
+    });
+
+    const role_name = adminUser?.["access_role.role_name"] || "User";
+    const country_id = adminUser?.country_id || null;
+
+    return {
+      role_name,
+      country_id,
+    };
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Role fetching failed: ${error.message}`);
+  }
+};
+
 const getUserDataWithCountry = async (leadId, dbToFetchFrom, type) => {
   let where = type == "history" ? { student_id: leadId } : { lead_id: leadId };
 
@@ -337,4 +363,5 @@ module.exports = {
   addLeadHistory,
   getUserDataWithCountry,
   getUniqueCountryData,
+  getRoleForUserHistory,
 };

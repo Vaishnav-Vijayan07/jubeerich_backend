@@ -69,6 +69,16 @@ db.masterData = require("./masterData")(sequelize, Sequelize);
 
 //Associations
 
+db.application.belongsTo(db.adminUsers,{
+  foreignKey: "counsellor_id",
+  as: "counsellor"
+})
+
+db.adminUsers.hasMany(db.application, {
+  foreignKey: "counsellor_id",
+  as: "applications",
+});
+
 db.application.hasOne(db.eligibilityChecks, {
   foreignKey: "application_id",
   as: "eligibilityChecks",
