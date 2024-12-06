@@ -1,5 +1,6 @@
 const stageDatas = require("../constants/stage_data");
 const db = require("../models");
+const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
 const sequelize = db.sequelize;
 
 exports.getKycDetails = async (req, res, next) => {
@@ -251,7 +252,7 @@ exports.proceedToKyc = async (req, res) => {
         if (existingApplications.length > 0) {
           applicationsToUpdate.push(...existingApplications.map((app) => app.id));
         } else {
-          applicationsToCreate.push({ studyPrefernceId: detail.id });
+          applicationsToCreate.push({ studyPrefernceId: detail.id, counsellor_id: userDecodeId });
         }
       }
 
@@ -307,6 +308,9 @@ exports.proceedToKyc = async (req, res) => {
     await student.update({
       stage: stageDatas.kyc,
     });
+
+    const { role_name, country_id: country } = await getRoleForUserHistory(userDecodeId);
+    await addLeadHistory(student_id, `Task moved to KYC verfication by ${role_name}`, userDecodeId, country, transaction);
 
     await transaction.commit();
 
@@ -746,27 +750,57 @@ exports.rejectKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
     const { userDecodeId } = req;
-    const { student_id, remarks, application_id } = req.body;
 
+    const { student_id, remarks, application_id } = req.body;
     const existUser = await db.adminUsers.findByPk(userDecodeId, { attributes: ["name"] });
 
-    const existCounsellors = await db.adminUsers.findAll({ where: { role_id: process.env.COUNSELLOR_ROLE_ID } }, { attributes: ["id"] });
-
-    const counsellorIds = existCounsellors.map((data) => data?.id);
-
-    const existTask = await db.tasks.findOne({
-      where: {
-        studentId: student_id,
-        userId: {
-          [db.Op.in]: counsellorIds,
+    const existApplication = await db.application.findByPk(application_id, {
+      attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails", // Must match the alias defined in the association
+          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId"],
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              attributes: ["countryId"],
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name"],
+            },
+          ],
         },
-      },
-      transaction,
+      ],
     });
 
-    console.log("existTask ===>", existTask);
+    const { studyPreferenceDetails } = existApplication;
 
-    const existApplication = await db.application.findByPk(application_id);
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const country_name = studyPreferenceDetails?.studyPreference?.country?.country_name || "N/A";
+    const counsellor_id = existApplication?.counsellor_id;
 
     const formattedApplicationRemark = [
       {
@@ -779,30 +813,41 @@ exports.rejectKYC = async (req, res, next) => {
 
     console.log("formattedApplicationRemark", formattedApplicationRemark);
 
+    const existTask = await db.tasks.findOne({
+      attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description"],
+      where: {
+        studentId: student_id,
+        userId: counsellor_id,
+      },
+      transaction,
+    });
+    const { studentId, title, kyc_remarks, description } = existTask;
+
+    console.log("existTask", existTask);
+
     const formattedRemark = [
       {
-        id: existTask?.kyc_remarks?.length + 1 || 1,
+        id: kyc_remarks?.length + 1 || 1,
         remark: remarks,
       },
-      ...(existTask?.kyc_remarks || []),
+      kyc_remarks || [],
     ];
 
-    const newTaskData = {
-      ...existTask.toJSON(),
-      title: `${existTask.title} - Rejected`,
-      is_rejected: true,
-      kyc_remarks: formattedRemark,
-      isCompleted: false,
-      is_proceed_to_kyc: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    delete newTaskData.id;
-
-    console.log("newTaskData", newTaskData);
-
-    const newTask = await db.tasks.create(newTaskData, { transaction });
+    const newTask = await db.tasks.create(
+      {
+        studentId: studentId,
+        userId: counsellor_id,
+        title: `${title} - Rejected`,
+        is_rejected: true,
+        kyc_remarks: formattedRemark,
+        description: description,
+        isCompleted: false,
+        is_proceed_to_kyc: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { transaction }
+    );
 
     if (!newTask) {
       throw new Error("Failed to create new task");
@@ -822,6 +867,19 @@ exports.rejectKYC = async (req, res, next) => {
     if (rejectApplication == 0) {
       throw new Error("Application Rejection Failed");
     }
+
+    const { country_id, role_name } = await getRoleForUserHistory(userDecodeId);
+    const { role_name: counsellor_role_name } = await getRoleForUserHistory(existTask?.userId);
+
+    await addLeadHistory(
+      student_id,
+      `Application for ${courseName} - ${universityName} - ${campusName} Rejected by ${role_name}`,
+      userDecodeId,
+      country_id,
+      transaction
+    );
+
+    await addLeadHistory(student_id, `Task assigned to ${counsellor_role_name}-${country_name} for rejection`, userDecodeId, country_id, transaction);
 
     await transaction.commit();
 
@@ -843,8 +901,47 @@ exports.approveKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
     const { application_id, student_id } = req.body;
+    const { role_name, userDecodeId } = req;
 
-    const application = await db.application.findByPk(application_id);
+    const application = await db.application.findByPk(application_id, {
+      attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails", // Must match the alias defined in the association
+          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId"],
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              attributes: ["countryId"],
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name"],
+            },
+          ],
+        },
+      ],
+    });
     const student = await db.userPrimaryInfo.findByPk(student_id);
 
     if (!application || !student) {
@@ -853,6 +950,13 @@ exports.approveKYC = async (req, res, next) => {
         message: "Application or Student not found",
       });
     }
+
+    const { studyPreferenceDetails } = application;
+
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const country_name = studyPreferenceDetails?.studyPreference?.country?.country_name || "N/A";
 
     const [approveApplication] = await db.application.update(
       { proceed_to_application_manager: true, kyc_status: "approved" },
@@ -866,6 +970,15 @@ exports.approveKYC = async (req, res, next) => {
     await student.update({
       stage: stageDatas.application,
     });
+
+    const { country_id } = await getRoleForUserHistory(userDecodeId);
+    await addLeadHistory(
+      student_id,
+      `KYC verfication approved by ${role_name}, for ${courseName} - ${universityName} - ${campusName} and application moved to application manager`,
+      userDecodeId,
+      country_id,
+      transaction
+    );
 
     await transaction.commit();
 
