@@ -325,6 +325,61 @@ const getRoleForUserHistory = async (userId) => {
   }
 };
 
+const getApplicationDetailsForHistory = async (application_id) => {
+  try {
+    const application = await db.application.findByPk(application_id, {
+      attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails", // Must match the alias defined in the association
+          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId"],
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              attributes: ["countryId","userPrimaryInfoId"],
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["id"],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name"],
+            },
+          ],
+        },
+      ],
+    });
+
+
+    return application ? application : null;
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Application fetching failed: ${error.message}`);
+  }
+};
+
 const getUserDataWithCountry = async (leadId, dbToFetchFrom, type) => {
   let where = type == "history" ? { student_id: leadId } : { lead_id: leadId };
 
@@ -364,4 +419,5 @@ module.exports = {
   getUserDataWithCountry,
   getUniqueCountryData,
   getRoleForUserHistory,
+  getApplicationDetailsForHistory,
 };
