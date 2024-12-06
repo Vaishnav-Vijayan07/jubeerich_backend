@@ -2,24 +2,6 @@ const db = require("../models");
 const Country = db.country;
 const { validationResult, check } = require("express-validator");
 
-async function generateUniqueSlug(name) {
-  // Create a base slug with underscores and capitalize it
-  const baseSlug = name.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric characters with underscores
-    .replace(/(^_+|_+$)/g, '')   // Remove leading and trailing underscores
-    .toUpperCase();              // Capitalize the slug
-
-  let uniqueSlug = baseSlug;
-  let counter = 1;
-
-  while (await Channel.findOne({ where: { slug: uniqueSlug } })) {
-    uniqueSlug = `${baseSlug}_${counter}`; // Use underscore instead of hyphen for uniqueness
-    counter++;
-  }
-
-  return uniqueSlug;
-}
-
 // Validation rules for Country
 const countryValidationRules = [
   check("country_name").not().isEmpty().withMessage("Country name is required"),
@@ -83,12 +65,10 @@ exports.addCountry = [
     const { country_name, isd, country_code } = req.body;
 
     try {
-      const slug = await generateUniqueSlug(country_name)
       const newCountry = await Country.create({
         country_name,
         isd,
         country_code,
-        slug
       });
       res.status(201).json({
         status: true,
@@ -180,7 +160,7 @@ exports.deleteCountry = async (req, res) => {
       status: true,
       message: "Country deleted successfully",
     });
-  } catch (error) {
+  } catch (error) {y
     console.error(`Error deleting country: ${error}`);
     res.status(500).json({
       status: false,
