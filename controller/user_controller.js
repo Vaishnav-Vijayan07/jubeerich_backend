@@ -276,7 +276,7 @@ exports.createLead = async (req, res) => {
       const countryAssociations = preferred_country.map((countryId) => ({
         user_primary_info_id: userPrimaryInfo.id, // Assuming this is defined earlier
         country_id: countryId,
-        status_id: IdsFromEnv.NEW_LEAD_STATUS_ID,  // Add the desired status_id
+        status_id: IdsFromEnv.NEW_LEAD_STATUS_ID, // Add the desired status_id
       }));
 
       // Use bulkCreate with `updateOnDuplicate` to ensure no duplicates
@@ -285,8 +285,7 @@ exports.createLead = async (req, res) => {
       });
     }
 
-
-    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID) {
+    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID || userRole?.role_id == process.env.BRANCH_COUNSELLOR_ID) {
       const dueDate = new Date();
 
       // const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
@@ -791,9 +790,9 @@ exports.updateUserStatus = async (req, res) => {
     }
 
     if (role_id == process.env.COUNSELLOR_ROLE_ID) {
-      await addLeadHistory(lead_id, `Status changed to ${statusName}`, userId, countryId, transaction);
+      await addLeadHistory(lead_id, `Status changed to ${statusName} by ${role_name}`, userId, countryId, transaction);
     } else {
-      await addLeadHistory(lead_id, `Status changed to ${statusName}`, userId, null, transaction);
+      await addLeadHistory(lead_id, `Status changed to ${statusName} by ${role_name}`, userId, null, transaction);
     }
 
     await transaction.commit();

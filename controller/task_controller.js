@@ -3,7 +3,7 @@ const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
-const { addLeadHistory } = require("../utils/academic_query_helper");
+const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
 const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
@@ -329,14 +329,15 @@ exports.finishTask = async (req, res) => {
             updatedBy: req.userDecodeId,
           });
         }
+        const { role_name: role } = await getRoleForUserHistory(leastAssignedUsers[0]);
+        await addLeadHistory(studentId, `Task finished by ${role_name}`, userId, null, transaction);
+        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role}`, userId, null, transaction);
       }
     }
 
     // Update the original task as completed
     task.isCompleted = isCompleted;
     await task.save();
-
-    await addLeadHistory(studentId, `Task finished by ${role_name}`, userId, null, transaction);
 
     await student.update({
       stage: stageDatas.counsellor,
@@ -504,14 +505,14 @@ exports.assignNewCountry = async (req, res) => {
           },
           { transaction }
         );
-      }
-
-      if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+        const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
         const { country_id } = await db.adminUsers.findByPk(userId);
-
-        await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, country_id, transaction);
-      } else {
-        await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
+        if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, country_id, transaction);
+        } else {
+          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
+        }
+        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
       }
     }
 
@@ -611,7 +612,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
           },
         ],
       };
-
     } else {
       countryFilter = {
         model: db.country,
@@ -740,7 +740,10 @@ exports.getStudentBasicInfoById = async (req, res) => {
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
       flag_color: primaryInfo?.user_primary_flags?.color,
       flags: flagDetails,
-      passportNumber: moment(passportNumber?.[0]?.date_of_expiry).format("YYYY-MM-DD") > moment().format("YYYY-MM-DD") ? passportNumber?.[0]?.passport_number : 'N/A',
+      passportNumber:
+        moment(passportNumber?.[0]?.date_of_expiry).format("YYYY-MM-DD") > moment().format("YYYY-MM-DD")
+          ? passportNumber?.[0]?.passport_number
+          : "N/A",
       ...basicInfoData,
     };
 
@@ -809,8 +812,9 @@ exports.saveBasicInfo = async (req, res) => {
     const { role_id } = req;
 
     const policeDocs = [];
-
-    if(role_id != process.env.IT_TEAM_ID || role_id != process.env.CRE_TL_ID){
+    console.log('role_id',role_id);
+    
+    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID){
       const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
   
       if(!updatedTask){

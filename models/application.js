@@ -15,6 +15,14 @@ module.exports = (sequelize, Sequelize) => {
           key: "id",
         },
       },
+      counsellor_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
+      },
       is_rejected_kyc: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
