@@ -160,7 +160,7 @@ exports.deleteCountry = async (req, res) => {
       status: true,
       message: "Country deleted successfully",
     });
-  } catch (error) {y
+  } catch (error) {
     console.error(`Error deleting country: ${error}`);
     res.status(500).json({
       status: false,
