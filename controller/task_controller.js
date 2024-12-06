@@ -512,8 +512,7 @@ exports.assignNewCountry = async (req, res) => {
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
         }
-        const role = adminUser?.access_role?.role_name || "Counsellor";
-        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role}`, userId, country_id, transaction);
+        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
       }
     }
 

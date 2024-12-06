@@ -752,7 +752,16 @@ exports.rejectKYC = async (req, res, next) => {
     const { userDecodeId } = req;
 
     const { student_id, remarks, application_id } = req.body;
-    const existUser = await db.adminUsers.findByPk(userDecodeId, { attributes: ["name"] });
+    const existUser = await db.adminUsers.findByPk(userDecodeId, { 
+      attributes: ["name", "country_id"],
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name"]
+        }
+      ]
+    });
+
 
     const existApplication = await db.application.findByPk(application_id, {
       attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
@@ -772,6 +781,11 @@ exports.rejectKYC = async (req, res, next) => {
                   as: "country",
                   attributes: ["country_name"],
                 },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["full_name"]
+                }
               ],
             },
             {
@@ -795,6 +809,7 @@ exports.rejectKYC = async (req, res, next) => {
     });
 
     const { studyPreferenceDetails } = existApplication;
+    const { studyPreference } = studyPreferenceDetails;
 
     const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
     const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
@@ -837,7 +852,8 @@ exports.rejectKYC = async (req, res, next) => {
       {
         studentId: studentId,
         userId: counsellor_id,
-        title: `${title} - Rejected`,
+        // title: `${title} - Rejected`,
+        title: `${studyPreference?.userPrimaryInfo?.full_name} - ${existUser?.country?.country_name} - Rejected`,
         is_rejected: true,
         kyc_remarks: formattedRemark,
         description: description,
