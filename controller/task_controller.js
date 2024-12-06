@@ -813,11 +813,12 @@ exports.saveBasicInfo = async (req, res) => {
     const { role_id } = req;
 
     const policeDocs = [];
-
-    if (role_id != process.env.IT_TEAM_ID || role_id != process.env.CRE_TL_ID) {
-      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id);
-
-      if (!updatedTask) {
+    console.log('role_id',role_id);
+    
+    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID){
+      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
+  
+      if(!updatedTask){
         return res.status(500).json({
           status: false,
           message: "Error Updating Task",

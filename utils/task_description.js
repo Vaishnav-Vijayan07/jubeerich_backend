@@ -95,9 +95,14 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
             countryName = existTask[0]?.title?.split("-")?.[1];
         }
 
-        const existMaritalStatus = await db.maritalStatus.findByPk(basicInfo?.['marital_status']);
-
+        let existMaritalStatus;
+        
+        if(basicInfo?.['marital_status'] != 'null') {
+            existMaritalStatus = await db.maritalStatus.findByPk(basicInfo?.['marital_status'])
+        }
+        
         let formattedYear = moment(basicInfo?.['dob']).year();
+        
         let currentYear = moment().year();
 
         const existStudyPref = await db.studyPreference.findOne({
@@ -134,6 +139,7 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
         }
 
         let age = currentYear && formattedYear ? `(${Number(currentYear) - Number(formattedYear)})` : '';
+        // let age = currentYear && formattedYear && !isNaN(Number(formattedYear)) ? `(${Number(currentYear) - Number(formattedYear)})` : '';
 
         let maritalStatus = existMaritalStatus?.marital_status_name ? `${existMaritalStatus?.marital_status_name},` : '';
         let city = primaryInfo?.['city'] ? `${primaryInfo?.['city']},` : '';
@@ -204,10 +210,6 @@ const updateTaskDescStudyPref = async (studyPrefId) => {
                 ]
             }
         )
-
-        // if (!existBasicInfo) {
-        //     throw new Error('Basic Info not found')
-        // }
 
         let formattedYear = moment(existBasicInfo?.['dob']).year();
         let currentYear = moment().year();
