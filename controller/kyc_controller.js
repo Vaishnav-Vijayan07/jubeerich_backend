@@ -202,7 +202,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id, task_id } = req.body;
+    const { student_id, task_id, is_rejected } = req.body;
     const { userDecodeId, role_id } = req;
 
     const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
@@ -217,7 +217,7 @@ exports.proceedToKyc = async (req, res) => {
 
     let dynamicWhere;
 
-    if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
+    if ((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) && !is_rejected) {
       dynamicWhere = { userPrimaryInfoId: student_id };
     } else {
       dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
