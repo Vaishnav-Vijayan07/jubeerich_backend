@@ -493,18 +493,35 @@ exports.assignNewCountry = async (req, res) => {
         }
 
         // Create task for the least assigned user
-        await db.tasks.create(
-          {
-            studentId: student.id,
-            userId: leastAssignedUserId,
-            title: `${student.full_name} - ${countryName}`,
-            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
-            description: formattedDesc,
-            dueDate: dueDate,
-            updatedBy: req.userDecodeId,
-          },
-          { transaction }
-        );
+        if(role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID){
+          await db.tasks.create(
+            {
+              studentId: student.id,
+              userId: req.userDecodeId,
+              title: `${student.full_name} - ${countryName}`,
+              // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+              description: formattedDesc,
+              dueDate: dueDate,
+              updatedBy: req.userDecodeId,
+              assigned_country: newCountryId
+            },
+            { transaction }
+          );
+        } else {
+          await db.tasks.create(
+            {
+              studentId: student.id,
+              userId: leastAssignedUserId,
+              title: `${student.full_name} - ${countryName}`,
+              // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+              description: formattedDesc,
+              dueDate: dueDate,
+              updatedBy: req.userDecodeId,
+              assigned_country: newCountryId
+            },
+            { transaction }
+          );
+        }
         const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
         const { country_id } = await db.adminUsers.findByPk(userId);
         if (role_id == process.env.COUNSELLOR_ROLE_ID) {

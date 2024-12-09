@@ -202,7 +202,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id, task_id, is_rejected } = req.body;
+    const { student_id, task_id, is_rejected, assigned_country } = req.body;
     const { userDecodeId, role_id } = req;
 
     const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
@@ -217,8 +217,18 @@ exports.proceedToKyc = async (req, res) => {
 
     let dynamicWhere;
 
+    // if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
+    //   dynamicWhere = { userPrimaryInfoId: student_id };
+    // } else {
+    //   dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
+    // }
+
     if ((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) && !is_rejected) {
       dynamicWhere = { userPrimaryInfoId: student_id };
+    } else if((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) && is_rejected) {
+      console.log('Entered',assigned_country);
+      
+      dynamicWhere = { countryId: assigned_country, userPrimaryInfoId: student_id };
     } else {
       dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
     }
@@ -762,6 +772,7 @@ exports.rejectKYC = async (req, res, next) => {
       ]
     });
 
+    console.log('existUser',existUser);
 
     const existApplication = await db.application.findByPk(application_id, {
       attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
@@ -829,14 +840,15 @@ exports.rejectKYC = async (req, res, next) => {
     console.log("formattedApplicationRemark", formattedApplicationRemark);
 
     const existTask = await db.tasks.findOne({
-      attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description"],
+      attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
       where: {
         studentId: student_id,
         userId: counsellor_id,
+        assigned_country: existUser?.country_id
       },
       transaction,
     });
-    const { studentId, title, kyc_remarks, description } = existTask;
+    const { studentId, title, kyc_remarks, description, assigned_country } = existTask;
 
     console.log("existTask", existTask);
 
@@ -861,6 +873,7 @@ exports.rejectKYC = async (req, res, next) => {
         is_proceed_to_kyc: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        assigned_country: assigned_country
       },
       { transaction }
     );
