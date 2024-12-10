@@ -69,6 +69,9 @@ exports.assignCres = async (req, res) => {
           throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
         }
 
+        console.log('userInfo',JSON.stringify(userInfo.preferredCountries?.[0]?.id, 0, 2));
+        throw new Error('Test')
+
         // Handle multiple preferred countries
         const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
@@ -97,6 +100,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
+              assigned_country: userInfo.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -114,6 +118,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
+              assigned_country: userInfo.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -624,10 +629,11 @@ exports.autoAssign = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
+          assigned_country: userInfo.preferredCountries?.[0]?.id
         },
         { transaction }
       );
-      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId }, { where: { id }, transaction });
+      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId, assigned_country: userInfo.preferredCountries?.[0]?.i }, { where: { id }, transaction });
     });
 
     // Perform bulk update
