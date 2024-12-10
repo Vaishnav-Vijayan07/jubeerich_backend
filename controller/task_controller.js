@@ -3,10 +3,11 @@ const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
-const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
+const { addLeadHistory, getRoleForUserHistory, getRegionDataForHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
 const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
+const IdsFromEnv = require("../constants/ids");
 
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
@@ -411,7 +412,7 @@ exports.assignNewCountry = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { id, newCountryId } = req.body;
-    const { role_id, userDecodeId: userId, role_name } = req;
+    const { role_id, userDecodeId: userId, role_name:current_user_role } = req;
 
     // Find task by primary key
     const task = await db.tasks.findByPk(id);
@@ -493,7 +494,7 @@ exports.assignNewCountry = async (req, res) => {
         }
 
         // Create task for the least assigned user
-        if(role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID){
+        if (role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID) {
           await db.tasks.create(
             {
               studentId: student.id,
@@ -503,7 +504,7 @@ exports.assignNewCountry = async (req, res) => {
               description: formattedDesc,
               dueDate: dueDate,
               updatedBy: req.userDecodeId,
-              assigned_country: newCountryId
+              assigned_country: newCountryId,
             },
             { transaction }
           );
@@ -517,17 +518,20 @@ exports.assignNewCountry = async (req, res) => {
               description: formattedDesc,
               dueDate: dueDate,
               updatedBy: req.userDecodeId,
-              assigned_country: newCountryId
+              assigned_country: newCountryId,
             },
             { transaction }
           );
         }
         const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
-        const { country_id } = await db.adminUsers.findByPk(userId);
+        const { country_id, branch_id } = await db.adminUsers.findByPk(userId);
         if (role_id == process.env.COUNSELLOR_ROLE_ID) {
-          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, country_id, transaction);
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, country_id, transaction);
+        } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
+          const { region_name } = await getRegionDataForHistory(branch_id);
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
         } else {
-          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
         await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
       }
@@ -726,7 +730,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         {
           model: db.passportDetails,
           as: "passportDetails",
-          attributes: ["passports"]
+          attributes: ["passports"],
         },
       ],
       nest: true,
@@ -829,12 +833,12 @@ exports.saveBasicInfo = async (req, res) => {
     const { role_id } = req;
 
     const policeDocs = [];
-    console.log('role_id',role_id);
-    
-    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID){
-      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
-  
-      if(!updatedTask){
+    console.log("role_id", role_id);
+
+    if (role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID) {
+      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id);
+
+      if (!updatedTask) {
         return res.status(500).json({
           status: false,
           message: "Error Updating Task",

@@ -6,18 +6,23 @@ const { updateTaskDescStudyPref } = require("../utils/task_description");
 exports.createStudyPreferenceDetails = async (req, res) => {
   const transaction = await db.sequelize.transaction(); // Start a transaction
   try {
-    const { role_id } = req
+    const { role_id } = req;
     const { study_preferences, studyPreferenceId } = req.body;
 
     // Call addOrUpdate function with transaction
     await addOrUpdateStudyPreference(study_preferences, studyPreferenceId, transaction);
 
     await transaction.commit(); // Commit transaction if all is successful
-    
-    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID && role_id != process.env.REGIONAL_MANAGER_ID && role_id != process.env.COUNSELLOR_TL_ID){
+
+    if (
+      role_id != process.env.IT_TEAM_ID &&
+      role_id != process.env.CRE_TL_ID &&
+      role_id != process.env.REGIONAL_MANAGER_ID &&
+      role_id != process.env.COUNSELLOR_TL_ID
+    ) {
       const updatedTask = await updateTaskDescStudyPref(studyPreferenceId);
-  
-      if(!updatedTask){
+
+      if (!updatedTask) {
         return res.status(500).json({
           status: false,
           message: "Error Updating Task",
@@ -45,9 +50,6 @@ exports.getStudyPreferenceDetails = async (req, res) => {
   try {
     const userPrimaryInfoId = parseInt(req.params.id);
     const { userDecodeId, role_name, role_id } = req;
-
-    console.log("Application ASSOCIATIONS ===========>", db.application.associations);
-    console.log("sTUDY PREF ASSOCIATIONS ===========>", db.studyPreferenceDetails.associations);
 
     const { country } =
       (await db.adminUsers.findByPk(userDecodeId, {
