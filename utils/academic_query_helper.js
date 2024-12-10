@@ -302,7 +302,7 @@ const addLeadHistory = async (
 const getRoleForUserHistory = async (userId) => {
   try {
     const adminUser = await db.adminUsers.findByPk(userId, {
-      attributes: ["country_id"],
+      attributes: ["country_id", "id", "branch_id"],
       include: [
         {
           model: db.accessRoles,
@@ -314,10 +314,14 @@ const getRoleForUserHistory = async (userId) => {
 
     const role_name = adminUser?.["access_role.role_name"] || "User";
     const country_id = adminUser?.country_id || null;
+    const branch_id = adminUser?.branch_id || null;
+    const admin_id = adminUser?.id;
 
     return {
       role_name,
       country_id,
+      admin_id,
+      branch_id,
     };
   } catch (error) {
     console.log(error);
