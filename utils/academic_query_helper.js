@@ -325,6 +325,25 @@ const getRoleForUserHistory = async (userId) => {
   }
 };
 
+const getRegionDataForHistory = async (region_id) => {
+  try {
+    const region = await db.region.findByPk(region_id, {
+      attributes: ["regional_manager_id", "region_name"], // Fetch regional_manager_id from the region table
+    });
+
+    console.log(region);
+
+    const { region_name } = region;
+
+    return {
+      region_name,
+    };
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Role fetching failed: ${error.message}`);
+  }
+};
+
 const getApplicationDetailsForHistory = async (application_id) => {
   try {
     const application = await db.application.findByPk(application_id, {
@@ -338,7 +357,7 @@ const getApplicationDetailsForHistory = async (application_id) => {
             {
               model: db.studyPreference,
               as: "studyPreference",
-              attributes: ["countryId","userPrimaryInfoId"],
+              attributes: ["countryId", "userPrimaryInfoId"],
               include: [
                 {
                   model: db.country,
@@ -371,7 +390,6 @@ const getApplicationDetailsForHistory = async (application_id) => {
         },
       ],
     });
-
 
     return application ? application : null;
   } catch (error) {
@@ -420,4 +438,5 @@ module.exports = {
   getUniqueCountryData,
   getRoleForUserHistory,
   getApplicationDetailsForHistory,
+  getRegionDataForHistory,
 };
