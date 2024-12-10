@@ -202,7 +202,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id, task_id, is_rejected, assigned_country } = req.body;
+    const { student_id, task_id, assigned_country } = req.body;
     const { userDecodeId, role_id } = req;
 
     const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
@@ -223,11 +223,7 @@ exports.proceedToKyc = async (req, res) => {
     //   dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
     // }
 
-    if ((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) && !is_rejected) {
-      dynamicWhere = { userPrimaryInfoId: student_id };
-    } else if((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) && is_rejected) {
-      console.log('Entered',assigned_country);
-      
+    if ((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID)) {
       dynamicWhere = { countryId: assigned_country, userPrimaryInfoId: student_id };
     } else {
       dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
@@ -759,9 +755,9 @@ exports.kycApprovedDetails = async (req, res) => {
 exports.rejectKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
-    const { userDecodeId } = req;
+    const { userDecodeId, role_id } = req;
+    const { student_id, remarks, application_id, assigned_country_id } = req.body;
 
-    const { student_id, remarks, application_id } = req.body;
     const existUser = await db.adminUsers.findByPk(userDecodeId, { 
       attributes: ["name", "country_id"],
       include: [
@@ -839,19 +835,34 @@ exports.rejectKYC = async (req, res, next) => {
 
     console.log("formattedApplicationRemark", formattedApplicationRemark);
 
+    console.log('student_id',student_id);
+    console.log('counsellor_id',counsellor_id);
+    console.log('existUser',existUser?.country_id);
+    console.log('assigned_country_id',assigned_country_id);
+
     const existTask = await db.tasks.findOne({
       attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
       where: {
         studentId: student_id,
         userId: counsellor_id,
-        assigned_country: existUser?.country_id
+        assigned_country: role_id == process.env.APPLICATION_MANAGER_ID || process.env.APPLICATION_TEAM_ID ? assigned_country_id : existUser?.country_id
       },
       transaction,
     });
+    console.log("existTask", JSON.stringify(existTask));
+
+    // throw new Error('Test')
     const { studentId, title, kyc_remarks, description, assigned_country } = existTask;
 
-    console.log("existTask", existTask);
-
+    let countryName;
+    if(role_id == process.env.APPLICATION_MANAGER_ID || process.env.APPLICATION_TEAM_ID){
+      countryData = await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] });
+      countryName = countryData?.country_name;
+    } else {
+      countryName = existUser?.country?.country_name;
+    }
+    console.log(countryName);
+    
     const formattedRemark = [
       {
         id: kyc_remarks?.length + 1 || 1,
@@ -864,8 +875,7 @@ exports.rejectKYC = async (req, res, next) => {
       {
         studentId: studentId,
         userId: counsellor_id,
-        // title: `${title} - Rejected`,
-        title: `${studyPreference?.userPrimaryInfo?.full_name} - ${existUser?.country?.country_name} - Rejected`,
+        title: `${studyPreference?.userPrimaryInfo?.full_name} - ${countryName} - Rejected`,
         is_rejected: true,
         kyc_remarks: formattedRemark,
         description: description,
