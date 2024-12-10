@@ -69,9 +69,6 @@ exports.assignCres = async (req, res) => {
           throw new Error(`UserPrimaryInfo with ID ${user_id} not found`);
         }
 
-        console.log('userInfo',JSON.stringify(userInfo.preferredCountries?.[0]?.id, 0, 2));
-        throw new Error('Test')
-
         // Handle multiple preferred countries
         const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
 
