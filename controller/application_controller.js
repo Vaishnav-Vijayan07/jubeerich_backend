@@ -345,6 +345,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
     const { application_id, check_type, quality_value } = req.body;
+    const { userDecodeId, role_name } = req;
 
     let updateCheck;
     let updateValues = {};
@@ -366,7 +367,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
         updateValues = { immigration_check: true };
         break;
       case CheckTypes.application_fee:
-        await updateApplication(application_id, transaction);
+        await updateApplication(application_id, userDecodeId, role_name, transaction);
         updateValues = { application_fee_check: true };
         break;
       case CheckTypes.quality:
@@ -441,9 +442,23 @@ exports.getPortalDetails = async (req, res, next) => {
 };
 
 exports.completeApplication = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+  const { id } = req.params;
+  const { ref_id, comment } = req.body;
+  const { userDecodeId, role_name } = req;
   try {
-    const { id } = req.params;
-    const { ref_id, comment } = req.body;
+    const application = await getApplicationDetailsForHistory(id);
+
+    if (!application) {
+      throw new Error("Application not found");
+    }
+
+    const { studyPreferenceDetails } = application;
+
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const student_id = studyPreferenceDetails?.studyPreference?.userPrimaryInfo?.id;
 
     const [completeApplication] = await db.application.update(
       { application_status: "submitted", reference_id: ref_id, comments: comment },
@@ -456,11 +471,17 @@ exports.completeApplication = async (req, res, next) => {
       throw new Error("Application not completed");
     }
 
+    const action = `Application for ${courseName} - ${universityName} - ${campusName} has submitted successfully by ${role_name}`;
+    await addLeadHistory(student_id, action, userDecodeId, null, transaction);
+
+    await transaction.commit();
+
     return res.status(200).json({
       status: true,
       message: "Application completed successfully",
     });
   } catch (error) {
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
@@ -502,9 +523,8 @@ exports.provdeOfferLetter = async (req, res, next) => {
   }
 };
 
-const updateApplication = async (application_id, transaction) => {
+const updateApplication = async (application_id, userDecodeId, role_name, transaction) => {
   try {
-    const { userDecodeId, role_name } = req;
     const application = await getApplicationDetailsForHistory(application_id);
     if (!application) {
       throw new Error("Application not found");
