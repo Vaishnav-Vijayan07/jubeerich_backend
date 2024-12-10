@@ -223,7 +223,7 @@ exports.proceedToKyc = async (req, res) => {
     //   dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
     // }
 
-    if ((role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID)) {
+    if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
       dynamicWhere = { countryId: assigned_country, userPrimaryInfoId: student_id };
     } else {
       dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
@@ -761,10 +761,12 @@ exports.rejectKYC = async (req, res, next) => {
     // Fetch user details
     const existUser = await db.adminUsers.findByPk(userDecodeId, {
       attributes: ["name", "country_id"],
-      include: {
-        model: db.country,
-        attributes: ["country_name"],
-      },
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name"],
+        },
+      ],
     });
 
     // Fetch application details

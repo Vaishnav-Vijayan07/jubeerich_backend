@@ -412,7 +412,7 @@ exports.assignNewCountry = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { id, newCountryId } = req.body;
-    const { role_id, userDecodeId: userId, role_name:current_user_role } = req;
+    const { role_id, userDecodeId: userId, role_name: current_user_role } = req;
 
     // Find task by primary key
     const task = await db.tasks.findByPk(id);
@@ -524,16 +524,27 @@ exports.assignNewCountry = async (req, res) => {
           );
         }
         const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
-        const { country_id, branch_id } = await db.adminUsers.findByPk(userId);
+        const { country_id, branch_id } = await db.adminUsers.findByPk(userId, {
+          attributes: ["country_id", "branch_id"], // Fetch only required attributes
+        });
+
+        let region_name = null;
+
         if (role_id == process.env.COUNSELLOR_ROLE_ID) {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, country_id, transaction);
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
-          const { region_name } = await getRegionDataForHistory(branch_id);
+          const region = await getRegionDataForHistory(branch_id);
+          region_name = region.region_name;
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
-        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
+
+        if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
+          await addLeadHistory(studentId, `Task assigned to ${current_user_role} - ${region_name}`, userId, null, transaction);
+        } else {
+          await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
+        }
       }
     }
 
