@@ -819,7 +819,7 @@ exports.rejectKYC = async (req, res, next) => {
 
     // Fetch existing task details
     const assignedCountry = 
-      [process.env.APPLICATION_MANAGER_ID, process.env.APPLICATION_TEAM_ID].includes(role_id) 
+      [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString()) 
         ? assigned_country_id 
         : existUser?.country_id;
 
