@@ -330,6 +330,7 @@ exports.assignBranchCounselors = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
+              assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -343,6 +344,7 @@ exports.assignBranchCounselors = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
               updatedBy: userId,
+              assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -442,6 +444,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
+          assigned_country: userInfo?.preferredCountries?.[0]?.id
         },
         { transaction }
       );
@@ -450,6 +453,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           assigned_branch_counselor: currentCounselor,
           updated_by: userId,
           assign_type: "auto_assign",
+          assigned_country: userInfo?.preferredCountries?.[0]?.id
         },
         { where: { id }, transaction }
       );
