@@ -215,18 +215,20 @@ exports.proceedToKyc = async (req, res) => {
 
     const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
 
-    let dynamicWhere;
-
-    // if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
-    //   dynamicWhere = { userPrimaryInfoId: student_id };
-    // } else {
-    //   dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
-    // }
-
-    if (role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID) {
-      dynamicWhere = { countryId: assigned_country, userPrimaryInfoId: student_id };
-    } else {
-      dynamicWhere = { countryId: country_id, userPrimaryInfoId: student_id };
+    let dynamicWhere = {
+      countryId: role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id,
+      userPrimaryInfoId: student_id,
+    };
+    
+    const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
+    
+    const statusRes = await updateClosedStatus(student_id, updateStatusCountry);
+    
+    if (!statusRes) {
+      return res.status(404).json({
+        status: false,
+        message: "Status not updated",
+      });
     }
 
     const studyPrefDetails = await db.studyPreferenceDetails.findAll({
@@ -234,7 +236,6 @@ exports.proceedToKyc = async (req, res) => {
         {
           model: db.studyPreference,
           as: "studyPreference",
-          // where: { countryId: country_id, userPrimaryInfoId: student_id },
           where: dynamicWhere,
           attributes: [],
         },
@@ -283,7 +284,6 @@ exports.proceedToKyc = async (req, res) => {
       if (applicationsToUpdate.length > 0) {
         await db.application.update(
           { is_rejected_kyc: false, application_status: "pending" },
-          // { is_rejected_kyc: false },
           {
             where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
             transaction,
@@ -1124,3 +1124,19 @@ exports.getAllKycByUser = async (req, res) => {
     });
   }
 };
+
+const updateClosedStatus = async (studentId, countryId) => {
+  const [updatedClosedStatus] = await db.userContries.update(
+    {
+      status_id: process.env.CLOSED_LEAD_STATUS_ID,
+    },
+    {
+      where: { user_primary_info_id: studentId, country_id: countryId },
+    }
+  );
+
+  console.log('updatedClosedStatus:', updatedClosedStatus);
+
+  return updatedClosedStatus != 0;
+};
+
