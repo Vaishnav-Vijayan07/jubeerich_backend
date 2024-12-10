@@ -328,6 +328,7 @@ exports.finishTask = async (req, res) => {
             description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
+            assigned_country: preferredCountries?.[0]?.country_id
           });
         }
         const { role_name: role } = await getRoleForUserHistory(leastAssignedUsers[0]);
