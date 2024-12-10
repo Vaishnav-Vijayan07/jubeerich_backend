@@ -820,10 +820,9 @@ exports.rejectKYC = async (req, res, next) => {
     ];
 
     // Fetch existing task details
-    const assignedCountry = 
-      [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString()) 
-        ? assigned_country_id 
-        : existUser?.country_id;
+    const assignedCountry = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString())
+      ? assigned_country_id
+      : existUser?.country_id;
 
     const existTask = await db.tasks.findOne({
       attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
@@ -835,15 +834,19 @@ exports.rejectKYC = async (req, res, next) => {
       transaction,
     });
 
+    console.log("DATA=====>", assignedCountry);
+    console.log("DATA=====>", assigned_country_id);
+    console.log("DATA=====>", existUser?.country_id);
+    console.log("DATA=====>", JSON.stringify(existTask, null, 2));
+
     if (!existTask) throw new Error("Task not found");
 
     const { kyc_remarks, description } = existTask;
 
     // Determine country name
-    const resolvedCountryName = 
-      [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
-        ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
-        : existUser?.country?.country_name;
+    const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
+      ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
+      : existUser?.country?.country_name;
 
     // Update task remarks
     const formattedTaskRemark = [
@@ -910,14 +913,12 @@ exports.rejectKYC = async (req, res, next) => {
     await transaction.commit();
 
     return res.status(200).json({ status: true, message: "KYC Rejected" });
-
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({ status: false, message: error.message || "Internal server error" });
   }
 };
-
 
 exports.approveKYC = async (req, res, next) => {
   const transaction = await sequelize.transaction();
