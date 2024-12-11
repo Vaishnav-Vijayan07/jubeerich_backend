@@ -220,7 +220,7 @@ exports.proceedToKyc = async (req, res) => {
       userPrimaryInfoId: student_id,
     };
     
-    const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
+    const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
     
     const statusRes = await updateClosedStatus(student_id, updateStatusCountry);
     
@@ -603,7 +603,7 @@ exports.kycRejectedDetails = async (req, res) => {
                       attributes: ["name", "id", "country_id"],
                       through: { attributes: [] },
                       subquery: false,
-                      required: true, // Set this association as required
+                      required: false, // Set this association as required
                       where: {
                         country_id: {
                           [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
@@ -702,7 +702,7 @@ exports.kycApprovedDetails = async (req, res) => {
                       attributes: ["name", "id", "country_id"],
                       through: { attributes: [] },
                       subquery: false,
-                      required: true, // Set this association as required
+                      required: false, // Set this association as required
                       where: {
                         country_id: {
                           [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
