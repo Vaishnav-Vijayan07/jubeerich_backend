@@ -34,7 +34,7 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id },
+          where: { country_id: adminUser?.country_id, status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } },
         },
         required: false,
         include: [
@@ -59,8 +59,9 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
+          where: { status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } }
         },
-        required: false,
+        required: true,
         include: [
           {
             model: db.status,
@@ -98,6 +99,7 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
+        isCompleted: false,
         [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
       },
       order: [["createdAt", "DESC"]],

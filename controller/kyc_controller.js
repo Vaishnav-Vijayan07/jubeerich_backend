@@ -1,3 +1,4 @@
+const { FOLLOWUP_ID } = require("../constants/ids");
 const stageDatas = require("../constants/stage_data");
 const db = require("../models");
 const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
@@ -297,7 +298,7 @@ exports.proceedToKyc = async (req, res) => {
     const [setIsProceed] = await db.tasks.update(
       {
         is_proceed_to_kyc: true,
-        // isCompleted: true,
+        isCompleted: true,
       },
       {
         where: {
@@ -834,11 +835,6 @@ exports.rejectKYC = async (req, res, next) => {
       transaction,
     });
 
-    console.log("DATA=====>", assignedCountry);
-    console.log("DATA=====>", assigned_country_id);
-    console.log("DATA=====>", existUser?.country_id);
-    console.log("DATA=====>", JSON.stringify(existTask, null, 2));
-
     if (!existTask) throw new Error("Task not found");
 
     const { kyc_remarks, description } = existTask;
@@ -874,6 +870,15 @@ exports.rejectKYC = async (req, res, next) => {
     );
 
     if (!newTask) throw new Error("Failed to create new task");
+
+    const statusRes = await updateFollowUpStatus(existTask.studentId, existTask?.assigned_country);
+
+    if (!statusRes) {
+      return res.status(404).json({
+        status: false,
+        message: "Status not updated",
+      });
+    }
 
     // Update application status
     const [rejectApplication] = await db.application.update(
@@ -1135,8 +1140,20 @@ const updateClosedStatus = async (studentId, countryId) => {
     }
   );
 
-  console.log('updatedClosedStatus:', updatedClosedStatus);
-
   return updatedClosedStatus != 0;
 };
+
+const updateFollowUpStatus = async (studentId, countryId) => {
+  const [updatedFollowUpStatus] = await db.userContries.update(
+    {
+      status_id: FOLLOWUP_ID, dueDate: new Date()
+    },
+    {
+      where: { user_primary_info_id: studentId, country_id: countryId },
+    }
+  );
+
+  return updatedFollowUpStatus != 0;
+};
+
 
