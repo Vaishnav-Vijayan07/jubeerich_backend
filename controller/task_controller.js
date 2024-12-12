@@ -102,11 +102,18 @@ exports.getTasks = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
+    const today = new Date(date);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
     const pendingTasks = await db.tasks.findAll({
       include: [mainInclude],
       where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+        [Op.and]: [
+          Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+          Sequelize.where(fn("DATE", col("dueDate")), ">=", today.toISOString().split("T")[0]),
+        ],
         isCompleted: false,
       },
       order: [["createdAt", "DESC"]],
@@ -126,6 +133,125 @@ exports.getTasks = async (req, res) => {
     });
   }
 };
+
+// exports.getTasks = async (req, res) => {
+//   const { date } = req.query;
+
+//   try {
+//     const userId = req.userDecodeId;
+
+//     const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+
+//     if (!adminUser) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Admin user not found",
+//       });
+//     }
+
+//     let countryFilter;
+
+//     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
+//       countryFilter = {
+//         model: db.country,
+//         as: "preferredCountries",
+//         attributes: ["id", "country_name"],
+//         through: {
+//           model: db.userContries,
+//           attributes: ["country_id", "followup_date", "status_id"],
+//           where: { country_id: adminUser?.country_id },
+//         },
+//         required: false,
+//         include: [
+//           {
+//             model: db.status,
+//             as: "country_status",
+//             attributes: ["id", "status_name", "color"],
+//             required: false,
+//             through: {
+//               model: db.userContries,
+//               attributes: [],
+//             },
+//             where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
+//           },
+//         ],
+//       };
+//     } else {
+//       countryFilter = {
+//         model: db.country,
+//         as: "preferredCountries",
+//         attributes: ["id", "country_name"],
+//         through: {
+//           model: db.userContries,
+//           attributes: ["country_id", "followup_date", "status_id"],
+//         },
+//         required: false,
+//         include: [
+//           {
+//             model: db.status,
+//             as: "country_status",
+//             attributes: ["id", "status_name", "color"],
+//             required: false,
+//             through: {
+//               model: db.userContries,
+//               attributes: [],
+//             },
+//             where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
+//           },
+//         ],
+//       };
+//     }
+
+//     const mainInclude = {
+//       model: db.userPrimaryInfo,
+//       as: "student_name",
+//       attributes: [
+//         "id",
+//         "flag_id",
+//         [
+//           db.Sequelize.literal(
+//             `( SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM flags AS f WHERE f.id = ANY("student_name"."flag_id") )`
+//           ),
+//           "flag_details_rows",
+//         ],
+//       ],
+//       required: true,
+//       include: [countryFilter],
+//     };
+
+//     const tasks = await db.tasks.findAll({
+//       include: [mainInclude],
+//       where: {
+//         userId: userId,
+//         [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
+//       },
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     const pendingTasks = await db.tasks.findAll({
+//       include: [mainInclude],
+//       where: {
+//         userId: userId,
+//         [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+//         isCompleted: false,
+//       },
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Tasks retrieved successfully",
+//       data: tasks,
+//       pendingTasks: pendingTasks,
+//     });
+//   } catch (error) {
+//     console.error(`Error fetching tasks: ${error}`);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 exports.getTaskById = async (req, res) => {
   try {
@@ -709,7 +835,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         {
           model: db.passportDetails,
           as: "passportDetails",
-          attributes: ["passports"]
+          attributes: ["passports"],
         },
       ],
       nest: true,
@@ -774,7 +900,18 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "branch_id",
+        "franchise_id",
+        "region_id",
+      ],
       include: [
         {
           model: db.country,
@@ -812,12 +949,12 @@ exports.saveBasicInfo = async (req, res) => {
     const { role_id } = req;
 
     const policeDocs = [];
-    console.log('role_id',role_id);
-    
-    if(role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID){
-      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id)
-  
-      if(!updatedTask){
+    console.log("role_id", role_id);
+
+    if (role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID) {
+      const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id);
+
+      if (!updatedTask) {
         return res.status(500).json({
           status: false,
           message: "Error Updating Task",
@@ -841,7 +978,9 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
+          existingBasicData && existingBasicData.police_clearance_docs
+            ? existingBasicData.police_clearance_docs[index]?.certificate
+            : null;
 
         if (previousCertificatePath) {
           console.log(previousCertificatePath);
