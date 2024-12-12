@@ -9,6 +9,7 @@ const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
 const IdsFromEnv = require("../constants/ids");
 
+
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
 
@@ -34,7 +35,7 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id, status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } },
+          where: { country_id: adminUser?.country_id },
         },
         required: false,
         include: [
@@ -59,9 +60,8 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } }
         },
-        required: true,
+        required: false,
         include: [
           {
             model: db.status,
@@ -99,7 +99,6 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
-        isCompleted: false,
         [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
       },
       order: [["createdAt", "DESC"]],
@@ -809,7 +808,18 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "branch_id",
+        "franchise_id",
+        "region_id",
+      ],
       include: [
         {
           model: db.country,
@@ -876,7 +886,9 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
+          existingBasicData && existingBasicData.police_clearance_docs
+            ? existingBasicData.police_clearance_docs[index]?.certificate
+            : null;
 
         if (previousCertificatePath) {
           console.log(previousCertificatePath);

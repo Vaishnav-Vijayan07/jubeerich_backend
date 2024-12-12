@@ -41,11 +41,15 @@ exports.getLeadHistory = async (req, res) => {
     let finalisedHistory = [];
 
     if (isfilterAvailable) {
-      finalisedHistory = [
-        ...leadHistory.filter((history) => history.country?.id === Number(countryId)),
-        ...leadHistory.filter((history) => !history.country_id && !history.country),
-      ];
+      finalisedHistory = leadHistory
+        .filter(
+          (history) =>
+            (history.country?.id === Number(countryId)) || 
+            (!history.country_id && !history.country)
+        )
+        .sort((a, b) => new Date(b.updated_on) - new Date(a.updated_on));
     }
+    
 
     console.log("finalisedHistory", finalisedHistory.length);
     console.log("leadHistory", leadHistory.length);
