@@ -146,6 +146,7 @@ exports.bulkUpload = async (req, res) => {
                 office_type: officeTypeSlugToId[officeTypeSlug] || null,
                 preferred_country,
                 ielts: row.getCell(12).value,
+                region_slug: regionSlug,
                 remarks: row.getCell(13).value,
                 source_slug: sourceSlug,
                 channel_slug: channelSlug,
@@ -352,7 +353,8 @@ exports.bulkUpload = async (req, res) => {
           rowData.phone,
           rowData.city,
           rowData.office_type_slug,
-          rowData.preferred_country.join(", "), // Convert array back to comma-separated string for the report
+          rowData.region_slug,
+          rowData.preferred_country.join(", "),
           rowData.ielts,
           rowData.remarks,
           errorDetails,
