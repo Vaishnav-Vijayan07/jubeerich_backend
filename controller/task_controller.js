@@ -453,7 +453,13 @@ exports.assignNewCountry = async (req, res) => {
       }
 
       // Assign the new country to student's preferred countries
-      await student.addPreferredCountry(newCountryId, { transaction });
+      // await student.addPreferredCountry(newCountryId, { transaction });
+
+      // Assign the new lead status to student's preferred countries
+      // await student.addPreferredStatus(IdsFromEnv.NEW_LEAD_STATUS_ID, { transaction });
+      
+      // Assign the new country to student's preferred countries with status
+      await db.userContries.create({ user_primary_info_id: student.id, country_id: newCountryId, status_id: IdsFromEnv.NEW_LEAD_STATUS_ID }, { transaction });
 
       // Create study preference for the student
       await db.studyPreference.create(

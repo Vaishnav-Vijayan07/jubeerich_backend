@@ -180,7 +180,8 @@ exports.getAllLeads = async (req, res) => {
 
     console.log('country_id',country_id);
 
-    if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID ) {
+    // if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID ) {
+    if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAll({
         where: { is_deleted: false },
         // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
