@@ -2,7 +2,7 @@ const db = require("../models");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
-const { addLeadHistory } = require("../utils/academic_query_helper");
+const { addLeadHistory, getRegionDataForHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
 
 exports.assignCres = async (req, res) => {
@@ -74,7 +74,7 @@ exports.assignCres = async (req, res) => {
 
         let formattedDesc = await createTaskDesc(userInfo, user_id);
 
-        if(!formattedDesc){
+        if (!formattedDesc) {
           return res.status(500).json({
             status: false,
             message: "Description error",
@@ -95,8 +95,9 @@ exports.assignCres = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
               description: formattedDesc,
-              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              dueDate: new Date(new Date().setDate(new Date())),
               updatedBy: userId,
+              assigned_country: userInfo.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -112,8 +113,9 @@ exports.assignCres = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
               description: formattedDesc,
-              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              dueDate: new Date(new Date().setDate(new Date().getDate())),
               updatedBy: userId,
+              assigned_country: userInfo.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -230,7 +232,8 @@ exports.assignCounselorTL = async (req, res) => {
           },
           { where: { id: user_id }, transaction }
         );
-        await addLeadHistory(user_id, `Lead assigned to Branch counsellor TL`, userId, null, transaction);
+        const { region_name } = await getRegionDataForHistory(branch_id);
+        await addLeadHistory(user_id, `Lead assigned to Branch counsellor TL - ${region_name} `, userId, null, transaction);
       })
     );
 
@@ -286,6 +289,11 @@ exports.assignBranchCounselors = async (req, res) => {
       }
     }
 
+    const { branch_id } = await db.adminUsers.findOne({
+      where: { id: userId },
+      transaction,
+    });
+
     // Process each user_id
     await Promise.all(
       user_ids.map(async (user_id) => {
@@ -308,7 +316,7 @@ exports.assignBranchCounselors = async (req, res) => {
 
         let formattedDesc = await createTaskDesc(userInfo, user_id);
 
-        if(!formattedDesc){
+        if (!formattedDesc) {
           return res.status(500).json({
             status: false,
             message: "Description error",
@@ -328,8 +336,9 @@ exports.assignBranchCounselors = async (req, res) => {
             {
               userId: counselor_id,
               title: `${userInfo.full_name} - ${countries}`,
-              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              dueDate: new Date(new Date().setDate(new Date())),
               updatedBy: userId,
+              assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -341,8 +350,9 @@ exports.assignBranchCounselors = async (req, res) => {
               userId: counselor_id,
               title: `${userInfo.full_name} - ${countries}`,
               description: formattedDesc,
-              dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+              dueDate: new Date(new Date().setDate(new Date().getDate())),
               updatedBy: userId,
+              assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
             { transaction }
           );
@@ -360,6 +370,20 @@ exports.assignBranchCounselors = async (req, res) => {
         );
       })
     );
+
+    const { region_name } = await getRegionDataForHistory(branch_id);
+
+    const historyPromisesLeadAssign = user_ids.map((user_id) =>
+      addLeadHistory(user_id, `Lead assigned to Branch counsellor - ${region_name} `, userId, null, transaction)
+    );
+
+    const historyPromisesTaskAssign = user_ids.map((user_id) =>
+      addLeadHistory(user_id, `Task assigned to Branch counsellor  - ${region_name} `, userId, null, transaction)
+    );
+
+    const combinedPromises = [...historyPromisesLeadAssign, ...historyPromisesTaskAssign];
+
+    await Promise.all(combinedPromises);
 
     // Commit transaction
     await transaction.commit();
@@ -421,7 +445,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
 
       let formattedDesc = await createTaskDesc(userInfo, id);
 
-      if(!formattedDesc){
+      if (!formattedDesc) {
         return res.status(500).json({
           status: false,
           message: "Description error",
@@ -442,6 +466,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
+          assigned_country: userInfo?.preferredCountries?.[0]?.id
         },
         { transaction }
       );
@@ -450,6 +475,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           assigned_branch_counselor: currentCounselor,
           updated_by: userId,
           assign_type: "auto_assign",
+          assigned_country: userInfo?.preferredCountries?.[0]?.id
         },
         { where: { id }, transaction }
       );
@@ -579,7 +605,7 @@ exports.autoAssign = async (req, res) => {
 
       let formattedDesc = await createTaskDesc(userInfo, id);
 
-      if(!formattedDesc){
+      if (!formattedDesc) {
         return res.status(500).json({
           status: false,
           message: "Description error",
@@ -600,13 +626,11 @@ exports.autoAssign = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
+          assigned_country: userInfo.preferredCountries?.[0]?.id
         },
         { transaction }
       );
-      return UserPrimaryInfo.update(
-        { assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId },
-        { where: { id }, transaction }
-      );
+      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId, assigned_country: userInfo.preferredCountries?.[0]?.i }, { where: { id }, transaction });
     });
 
     // Perform bulk update

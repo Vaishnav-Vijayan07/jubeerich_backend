@@ -3,10 +3,11 @@ const db = require("../models");
 const path = require("path");
 const fs = require("fs");
 const { deleteFile, deleteUnwantedFiles } = require("../utils/upsert_helpers");
-const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
+const { addLeadHistory, getRoleForUserHistory, getRegionDataForHistory } = require("../utils/academic_query_helper");
 const moment = require("moment");
 const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
+const IdsFromEnv = require("../constants/ids");
 
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
@@ -33,7 +34,7 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id },
+          where: { country_id: adminUser?.country_id, status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } },
         },
         required: false,
         include: [
@@ -58,8 +59,9 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
+          where: { status_id: { [Op.not]: IdsFromEnv.SPAM_LEAD_STATUS_ID } }
         },
-        required: false,
+        required: true,
         include: [
           {
             model: db.status,
@@ -97,6 +99,7 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
+        isCompleted: false,
         [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
       },
       order: [["createdAt", "DESC"]],
@@ -453,6 +456,7 @@ exports.finishTask = async (req, res) => {
             description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
+            assigned_country: preferredCountries?.[0]?.country_id
           });
         }
         const { role_name: role } = await getRoleForUserHistory(leastAssignedUsers[0]);
@@ -537,7 +541,7 @@ exports.assignNewCountry = async (req, res) => {
   const transaction = await db.sequelize.transaction();
   try {
     const { id, newCountryId } = req.body;
-    const { role_id, userDecodeId: userId, role_name } = req;
+    const { role_id, userDecodeId: userId, role_name: current_user_role } = req;
 
     // Find task by primary key
     const task = await db.tasks.findByPk(id);
@@ -619,26 +623,57 @@ exports.assignNewCountry = async (req, res) => {
         }
 
         // Create task for the least assigned user
-        await db.tasks.create(
-          {
-            studentId: student.id,
-            userId: leastAssignedUserId,
-            title: `${student.full_name} - ${countryName}`,
-            // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
-            description: formattedDesc,
-            dueDate: dueDate,
-            updatedBy: req.userDecodeId,
-          },
-          { transaction }
-        );
-        const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
-        const { country_id } = await db.adminUsers.findByPk(userId);
-        if (role_id == process.env.COUNSELLOR_ROLE_ID) {
-          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, country_id, transaction);
+        if (role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID) {
+          await db.tasks.create(
+            {
+              studentId: student.id,
+              userId: req.userDecodeId,
+              title: `${student.full_name} - ${countryName}`,
+              // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+              description: formattedDesc,
+              dueDate: dueDate,
+              updatedBy: req.userDecodeId,
+              assigned_country: newCountryId,
+            },
+            { transaction }
+          );
         } else {
-          await addLeadHistory(studentId, `Country ${countryName} added by ${role_name}`, userId, null, transaction);
+          await db.tasks.create(
+            {
+              studentId: student.id,
+              userId: leastAssignedUserId,
+              title: `${student.full_name} - ${countryName}`,
+              // description: `${student.full_name} from ${student?.city}, has applied for admission in ${countryName}`,
+              description: formattedDesc,
+              dueDate: dueDate,
+              updatedBy: req.userDecodeId,
+              assigned_country: newCountryId,
+            },
+            { transaction }
+          );
         }
-        await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
+        const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
+        const { country_id, branch_id } = await db.adminUsers.findByPk(userId, {
+          attributes: ["country_id", "branch_id"], // Fetch only required attributes
+        });
+
+        let region_name = null;
+
+        if (role_id == process.env.COUNSELLOR_ROLE_ID) {
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, country_id, transaction);
+        } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
+          const region = await getRegionDataForHistory(branch_id);
+          region_name = region.region_name;
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
+        } else {
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
+        }
+
+        if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
+          await addLeadHistory(studentId, `Task assigned to ${current_user_role} - ${region_name}`, userId, null, transaction);
+        } else {
+          await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
+        }
       }
     }
 

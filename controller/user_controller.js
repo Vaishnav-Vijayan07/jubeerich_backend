@@ -1,7 +1,7 @@
 const { validationResult, check } = require("express-validator");
 const db = require("../models");
 const { checkIfEntityExists, getStageData } = require("../utils/helper");
-const { addLeadHistory } = require("../utils/academic_query_helper");
+const { addLeadHistory, getRegionDataForHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
 const IdsFromEnv = require("../constants/ids");
 const UserPrimaryInfo = db.userPrimaryInfo;
@@ -125,7 +125,7 @@ exports.createLead = async (req, res) => {
       // Fetch the regional manager for the region
       const region = await db.region.findOne({
         where: { id: region_id },
-        attributes: ["regional_manager_id"], // Fetch regional_manager_id from the region table
+        attributes: ["regional_manager_id","region_name"], // Fetch regional_manager_id from the region table
         include: [
           {
             model: db.adminUsers, // Include associated adminUsers
@@ -252,7 +252,8 @@ exports.createLead = async (req, res) => {
     if (userRole?.role_id == process.env.IT_TEAM_ID && office_type == process.env.CORPORATE_OFFICE_ID) {
       await addLeadHistory(userPrimaryId, `Lead assigned to ${creTl?.access_role.role_name}`, userId, null, transaction);
     } else if (userRole?.role_id == process.env.IT_TEAM_ID && regionalManagerId) {
-      await addLeadHistory(userPrimaryId, `Lead assigned to ${regionMangerRoleName}`, userId, null, transaction);
+      const region = await getRegionDataForHistory(region_id);
+      await addLeadHistory(userPrimaryId, `Lead assigned to ${regionMangerRoleName} - ${region?.region_name}`, userId, null, transaction);
     }
 
     if (preferred_country.length > 0) {
@@ -285,7 +286,13 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    if (userRole?.role_id == process.env.CRE_ID || userRole?.role_id == process.env.COUNSELLOR_ROLE_ID || userRole?.role_id == process.env.BRANCH_COUNSELLOR_ID) {
+    if (
+      userRole?.role_id == process.env.CRE_ID ||
+      userRole?.role_id == process.env.COUNSELLOR_ROLE_ID ||
+      userRole?.role_id == process.env.BRANCH_COUNSELLOR_ID ||
+      userRole?.role_id == process.env.FRANCHISE_COUNSELLOR_ID ||
+      userRole?.role_id == process.env.COUNTRY_MANAGER_ID
+    ) {
       const dueDate = new Date();
 
       // const country = await db.country.findByPk(preferred_country[0]);  // Assuming at least one country is selected
@@ -313,6 +320,7 @@ exports.createLead = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
+          assigned_country: preferred_country[0],
         },
         { transaction }
       );
@@ -382,6 +390,7 @@ exports.createLead = async (req, res) => {
               description: formattedDesc,
               dueDate: dueDate,
               updatedBy: userId,
+              assigned_country: preferred_country[0],
             },
             { transaction }
           );
@@ -452,6 +461,7 @@ exports.createLead = async (req, res) => {
                 description: formattedDesc,
                 dueDate: dueDate,
                 updatedBy: userId,
+                assigned_country: preferred_country[0],
               },
               { transaction }
             );

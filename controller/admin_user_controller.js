@@ -8,16 +8,18 @@ exports.getAllAdminUsers = async (req, res, next) => {
 
   let users = [];
 
-  
-
   try {
     if (role_id == process.env.APPLICATION_MANAGER_ID) {
       const { id } = await db.accessRoles.findOne({
-        where: { id : process.env.APPLICATION_TEAM_ID},
+        where: { id: process.env.APPLICATION_TEAM_ID },
       });
 
       users = await db.adminUsers.findAll({
-        where: { role_id : id },
+        where: {
+          role_id: {
+            [Op.in]: [id, process.env.APPLICATION_MANAGER_ID],
+          },
+        },
         include: [
           {
             model: db.accessRoles,
@@ -25,7 +27,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
             attributes: ["role_name"],
           },
         ],
-        attributes:["id","name"]
+        attributes: ["id", "name"],
       });
     } else {
       users = await db.adminUsers.findAll({
@@ -43,7 +45,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
         ],
       });
     }
-
 
     if (!users || users.length === 0) {
       return res.status(204).json({
@@ -329,20 +330,7 @@ exports.getAdminUsersById = (req, res, next) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
-  const {
-    employee_id,
-    name,
-    email,
-    phone,
-    address,
-    username,
-    updated_by,
-    role_id,
-    branch_id,
-    region_id,
-    country_id,
-    franchise_id,
-  } = req.body;
+  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
 
   const transaction = await db.sequelize.transaction();
 
@@ -452,7 +440,6 @@ exports.addAdminUsers = async (req, res) => {
     });
   }
 };
-
 
 // exports.addAdminUsers = async (req, res) => {
 //   const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;

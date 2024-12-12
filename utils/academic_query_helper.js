@@ -302,7 +302,7 @@ const addLeadHistory = async (
 const getRoleForUserHistory = async (userId) => {
   try {
     const adminUser = await db.adminUsers.findByPk(userId, {
-      attributes: ["country_id"],
+      attributes: ["country_id", "id", "branch_id"],
       include: [
         {
           model: db.accessRoles,
@@ -314,14 +314,91 @@ const getRoleForUserHistory = async (userId) => {
 
     const role_name = adminUser?.["access_role.role_name"] || "User";
     const country_id = adminUser?.country_id || null;
+    const branch_id = adminUser?.branch_id || null;
+    const admin_id = adminUser?.id;
 
     return {
       role_name,
       country_id,
+      admin_id,
+      branch_id,
     };
   } catch (error) {
     console.log(error);
     throw new Error(`Role fetching failed: ${error.message}`);
+  }
+};
+
+const getRegionDataForHistory = async (region_id) => {
+  try {
+    const region = await db.region.findByPk(region_id, {
+      attributes: ["regional_manager_id", "region_name"], // Fetch regional_manager_id from the region table
+    });
+
+    console.log(region);
+
+    const { region_name } = region;
+
+    return {
+      region_name,
+    };
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Role fetching failed: ${error.message}`);
+  }
+};
+
+const getApplicationDetailsForHistory = async (application_id) => {
+  try {
+    const application = await db.application.findByPk(application_id, {
+      attributes: ["studyPrefernceId", "remarks", "counsellor_id"],
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails", // Must match the alias defined in the association
+          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId"],
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              attributes: ["countryId", "userPrimaryInfoId"],
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["id"],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return application ? application : null;
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Application fetching failed: ${error.message}`);
   }
 };
 
@@ -364,4 +441,6 @@ module.exports = {
   getUserDataWithCountry,
   getUniqueCountryData,
   getRoleForUserHistory,
+  getApplicationDetailsForHistory,
+  getRegionDataForHistory,
 };

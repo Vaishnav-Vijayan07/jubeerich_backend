@@ -59,6 +59,14 @@ module.exports = (sequelize, Sequelize) => {
       kyc_remarks: {
         type: Sequelize.JSONB,
         allowNull: true
+      },
+      assigned_country: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "countries",
+          key: "id",
+        },
+        allowNull: true,
       }
     },
     {

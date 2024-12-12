@@ -20,6 +20,8 @@ const IdsFromEnv = {
   APPLICATION_MANAGER_ID: parseInt(process.env.APPLICATION_MANAGER_ID, 10),
   APPLICATION_TEAM_ID: parseInt(process.env.APPLICATION_TEAM_ID, 10),
   NEW_LEAD_STATUS_ID: parseInt(process.env.NEW_LEAD_STATUS_ID, 10),
+  FUTURE_LEAD_STATUS_ID: parseInt(process.env.FUTURE_LEAD_STATUS_ID, 10),
+  SPAM_LEAD_STATUS_ID: parseInt(process.env.SPAM_LEAD_STATUS_ID, 10),
 };
 
 module.exports = IdsFromEnv;

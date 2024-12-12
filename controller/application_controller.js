@@ -1,6 +1,7 @@
 const db = require("../models");
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
+const { getApplicationDetailsForHistory, addLeadHistory } = require("../utils/academic_query_helper");
 
 const types = {
   education: "education",
@@ -121,6 +122,7 @@ exports.assignApplication = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
     const { application_ids, user_id } = req.body;
+    const { userDecodeId, role_name } = req;
 
     // Find the admin user to whom applications will be assigned
     const adminUser = await db.adminUsers.findByPk(user_id, { transaction });
@@ -140,6 +142,22 @@ exports.assignApplication = async (req, res, next) => {
 
     // Use the magic method to assign multiple applications
     await adminUser.addAssigned_applications(applications, { transaction });
+
+    const application = await getApplicationDetailsForHistory(application_ids[0]);
+    const { studyPreferenceDetails } = application;
+
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const student_id = studyPreferenceDetails?.studyPreference?.userPrimaryInfo?.id;
+
+    const isSelf = userDecodeId == user_id;
+
+    const action = `Application for ${courseName} - ${universityName} - ${campusName} assigned to ${
+      isSelf ? "self" : "other members"
+    } by ${role_name}`;
+
+    await addLeadHistory(student_id, action, userDecodeId, null, transaction);
 
     // Commit the transaction
     await transaction.commit();
@@ -327,6 +345,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
     const { application_id, check_type, quality_value } = req.body;
+    const { userDecodeId, role_name } = req;
 
     let updateCheck;
     let updateValues = {};
@@ -348,7 +367,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
         updateValues = { immigration_check: true };
         break;
       case CheckTypes.application_fee:
-        await updateApplication(application_id, transaction);
+        await updateApplication(application_id, userDecodeId, role_name, transaction);
         updateValues = { application_fee_check: true };
         break;
       case CheckTypes.quality:
@@ -423,9 +442,23 @@ exports.getPortalDetails = async (req, res, next) => {
 };
 
 exports.completeApplication = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+  const { id } = req.params;
+  const { ref_id, comment } = req.body;
+  const { userDecodeId, role_name } = req;
   try {
-    const { id } = req.params;
-    const { ref_id, comment } = req.body;
+    const application = await getApplicationDetailsForHistory(id);
+
+    if (!application) {
+      throw new Error("Application not found");
+    }
+
+    const { studyPreferenceDetails } = application;
+
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const student_id = studyPreferenceDetails?.studyPreference?.userPrimaryInfo?.id;
 
     const [completeApplication] = await db.application.update(
       { application_status: "submitted", reference_id: ref_id, comments: comment },
@@ -438,11 +471,17 @@ exports.completeApplication = async (req, res, next) => {
       throw new Error("Application not completed");
     }
 
+    const action = `Application for ${courseName} - ${universityName} - ${campusName} has submitted successfully by ${role_name}`;
+    await addLeadHistory(student_id, action, userDecodeId, null, transaction);
+
+    await transaction.commit();
+
     return res.status(200).json({
       status: true,
       message: "Application completed successfully",
     });
   } catch (error) {
+    await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
@@ -484,9 +523,9 @@ exports.provdeOfferLetter = async (req, res, next) => {
   }
 };
 
-const updateApplication = async (application_id, transaction) => {
+const updateApplication = async (application_id, userDecodeId, role_name, transaction) => {
   try {
-    const application = await db.application.findOne({ where: { id: application_id } });
+    const application = await getApplicationDetailsForHistory(application_id);
     if (!application) {
       throw new Error("Application not found");
     }
@@ -494,6 +533,17 @@ const updateApplication = async (application_id, transaction) => {
       { is_application_checks_passed: true },
       { where: { id: application_id }, transaction } // Correctly apply the transaction
     );
+
+    const { studyPreferenceDetails } = application;
+
+    const courseName = studyPreferenceDetails.preferred_courses?.course_name || "N/A";
+    const campusName = studyPreferenceDetails.preferred_campus?.campus_name || "N/A";
+    const universityName = studyPreferenceDetails.preferred_university?.university_name || "N/A";
+    const student_id = studyPreferenceDetails?.studyPreference?.userPrimaryInfo?.id;
+
+    const action = `Application for ${courseName} - ${universityName} - ${campusName} has passed all eligibility checks by ${role_name}`;
+
+    await addLeadHistory(student_id, action, userDecodeId, null, transaction);
   } catch (error) {
     throw new Error("Application not found");
   }
@@ -514,7 +564,6 @@ exports.getAllRemarks = async (req, res, next) => {
       data: existApplicationRemarks?.remarks || [],
       message: "Application Remarks fetched successfully",
     });
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
@@ -523,4 +572,3 @@ exports.getAllRemarks = async (req, res, next) => {
     });
   }
 };
-
