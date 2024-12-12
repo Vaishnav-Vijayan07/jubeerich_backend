@@ -60,13 +60,14 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
             const adminUser = await db.adminUsers.findByPk(loggedUserId, {
                 include: [{
                     model: db.country,
-                    attributes: ["country_name"]
+                    attributes: ["country_name", "country_code"]
                 }]
             });
 
             if (!adminUser) throw new Error('No User Found');
 
-            countryName = adminUser?.country?.country_name;
+            // countryName = adminUser?.country?.country_name;
+            countryName = adminUser?.country?.country_code;
         } else {
             const existTask = await db.tasks.findAll({
                 where: { studentId: userId, isCompleted: false, is_proceed_to_kyc: false }

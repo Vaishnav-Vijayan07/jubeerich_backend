@@ -298,11 +298,12 @@ exports.bulkUpload = async (req, res) => {
               // const country = await db.country.findByPk(countryIds[0]);
               const countries = await db.country.findAll({
                 where: { id: preferredCountries },
-                attributes: ["country_name"],
+                attributes: ["country_name","country_code"],
               });
 
               if (countries) {
-                countryName = countries.map((country) => country.country_name).join(", ");
+                // countryName = countries.map((country) => country.country_name).join(", ");
+                countryName = countries.map((country) => country.country_code).join(", ");
               }
             }
 
