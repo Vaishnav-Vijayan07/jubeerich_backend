@@ -841,7 +841,8 @@ exports.rejectKYC = async (req, res, next) => {
 
     // Determine country name
     const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
-      ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
+      // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
+      ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
       : existUser?.country?.country_name;
 
     // Update task remarks

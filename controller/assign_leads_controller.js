@@ -70,7 +70,8 @@ exports.assignCres = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        // const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
 
         let formattedDesc = await createTaskDesc(userInfo, user_id);
 
@@ -312,7 +313,8 @@ exports.assignBranchCounselors = async (req, res) => {
         }
 
         // Handle multiple preferred countries
-        const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        // const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+        const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
 
         let formattedDesc = await createTaskDesc(userInfo, user_id);
 
@@ -452,7 +454,8 @@ exports.autoAssignBranchCounselors = async (req, res) => {
         });
       }
 
-      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      // const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
       const currentCounselor = leastCounselor[index % leastCounselor.length].user_id;
 
       const dueDate = new Date();
@@ -612,7 +615,9 @@ exports.autoAssign = async (req, res) => {
         });
       }
 
-      const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      // const countries = userInfo.preferredCountries.map((c) => c.country_name).join(", ") || "Unknown Country";
+      const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
+
       const currentCre = leastCre[index % leastCre.length].user_id;
 
       const dueDate = new Date();

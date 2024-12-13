@@ -299,7 +299,8 @@ exports.createLead = async (req, res) => {
       const country = await db.country.findAll({
         where: { id: preferred_country },
       }); // Assuming at least one country is selected
-      const countryNames = country.map((c) => c.country_name).join(", ");
+      // const countryNames = country.map((c) => c.country_name).join(", ");
+      const countryNames = country.map((c) => c.country_code).join(", ");
 
       let formattedDesc = await createTaskDesc(userPrimaryInfo, userPrimaryInfo.id);
 
@@ -362,11 +363,12 @@ exports.createLead = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: preferred_country },
-            attributes: ["country_name"],
+            attributes: ["country_name","country_code"],
           });
 
           if (countries) {
-            countryName = countries.map((country) => country.country_name).join(", ");
+            // countryName = countries.map((country) => country.country_name).join(", ");
+            countryName = countries.map((country) => country.country_code).join(", ");
           }
         }
 
@@ -433,11 +435,12 @@ exports.createLead = async (req, res) => {
             // const country = await db.country.findByPk(countryIds[0]);
             const countries = await db.country.findAll({
               where: { id: preferred_country },
-              attributes: ["country_name"],
+              attributes: ["country_name","country_code"],
             });
 
             if (countries) {
-              countryName = countries.map((country) => country.country_name).join(", ");
+              // countryName = countries.map((country) => country.country_name).join(", ");
+              countryName = countries.map((country) => country.country_code).join(", ");
             }
           }
 

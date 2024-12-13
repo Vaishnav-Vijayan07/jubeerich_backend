@@ -145,7 +145,9 @@ exports.bulkUpload = async (req, res) => {
                 city: row.getCell(8).value,
                 office_type: officeTypeSlugToId[officeTypeSlug] || null,
                 preferred_country,
+                prefferedCountryCode: row.getCell(11).value,
                 ielts: row.getCell(12).value,
+                region_slug: regionSlug,
                 remarks: row.getCell(13).value,
                 source_slug: sourceSlug,
                 channel_slug: channelSlug,
@@ -296,11 +298,12 @@ exports.bulkUpload = async (req, res) => {
               // const country = await db.country.findByPk(countryIds[0]);
               const countries = await db.country.findAll({
                 where: { id: preferredCountries },
-                attributes: ["country_name"],
+                attributes: ["country_name","country_code"],
               });
 
               if (countries) {
-                countryName = countries.map((country) => country.country_name).join(", ");
+                // countryName = countries.map((country) => country.country_name).join(", ");
+                countryName = countries.map((country) => country.country_code).join(", ");
               }
             }
 
@@ -352,7 +355,8 @@ exports.bulkUpload = async (req, res) => {
           rowData.phone,
           rowData.city,
           rowData.office_type_slug,
-          rowData.preferred_country.join(", "), // Convert array back to comma-separated string for the report
+          rowData.region_slug,
+          rowData.prefferedCountryCode,
           rowData.ielts,
           rowData.remarks,
           errorDetails,
