@@ -184,7 +184,7 @@ exports.getAllLeads = async (req, res) => {
 
     const country_id = adminUser?.country_id;
 
-    if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
+    if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: { is_deleted: false },
         // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
