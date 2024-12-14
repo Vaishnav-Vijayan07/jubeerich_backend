@@ -3,6 +3,448 @@ const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const db = require("../models");
 
+const checkExistingField = async (field, value, excludeId = null) => {
+  const condition = { [field]: value };
+  if (excludeId) condition.id = { [Op.ne]: excludeId }; // Exclude current user during updates
+  return await db.adminUsers.findAll({ where: condition });
+};
+
+const handleConflict = (conflicts) => {
+  const conflictFields = [];
+
+  // Check each field individually
+  if (conflicts.employee_id) conflictFields.push("Employee ID");
+  if (conflicts.email) conflictFields.push("Email");
+  if (conflicts.phone) conflictFields.push("Phone");
+  if (conflicts.username) conflictFields.push("Username");
+
+  if (conflictFields.length > 0) {
+    return `The following already exist: ${conflictFields.join(", ")}`;
+  }
+  return null;
+};
+
+exports.addAdminUsers = async (req, res) => {
+  const {
+    employee_id,
+    name,
+    email,
+    phone,
+    address,
+    username,
+    updated_by,
+    role_id,
+    branch_id,
+    region_id,
+    country_id,
+    franchise_id,
+  } = req.body;
+
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
+    const conflicts = {};
+
+    // Check for each field individually
+    const existingEmployee = await db.adminUsers.findOne({
+      where: { employee_id },
+      transaction,
+    });
+    if (existingEmployee) conflicts.employee_id = true;
+
+    const existingEmail = await db.adminUsers.findOne({
+      where: { email },
+      transaction,
+    });
+    if (existingEmail) conflicts.email = true;
+
+    const existingPhone = await db.adminUsers.findOne({
+      where: { phone },
+      transaction,
+    });
+    if (existingPhone) conflicts.phone = true;
+
+    const existingUsername = await db.adminUsers.findOne({
+      where: { username },
+      transaction,
+    });
+    if (existingUsername) conflicts.username = true;
+
+    // Handle the conflict and generate the error message
+    const conflictMessage = handleConflict(conflicts);
+    if (conflictMessage) {
+      await transaction.rollback();
+      return res.status(409).json({ status: false, message: conflictMessage });
+    }
+
+    // Role-specific checks (as before)
+
+    // Create the new admin user (within the transaction)
+    const newUser = await db.adminUsers.create(
+      {
+        employee_id,
+        name,
+        email,
+        phone,
+        address,
+        username,
+        password,
+        updated_by,
+        role_id,
+        branch_id,
+        region_id,
+        country_id,
+        franchise_id,
+      },
+      { transaction }
+    );
+
+    // Commit the transaction if everything succeeds
+    await transaction.commit();
+    return res.json({ status: true, message: "Admin user added successfully", data: newUser });
+  } catch (error) {
+    // Rollback the transaction on any error
+    await transaction.rollback();
+
+    // Handle unique constraint errors specifically
+    if (error.name === "SequelizeUniqueConstraintError" && error.fields) {
+      const conflictField = Object.keys(error.fields)[0];
+      return res.status(409).json({ status: false, message: `${conflictField} already exists.` });
+    }
+
+    console.error("Error creating admin user:", error);
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+exports.updateAdminUsers = async (req, res) => {
+  const id = parseInt(req.params.id);
+  const {
+    employee_id,
+    name,
+    email,
+    phone,
+    address,
+    username,
+    updated_by,
+    branch_id,
+    role_id,
+    region_id,
+    country_id,
+    franchise_id,
+    password,
+  } = req.body;
+
+  try {
+    const conflicts = {};
+
+    // Check if the email already exists for another user
+    if (email) {
+      const userWithEmail = await checkExistingField("email", email, id);
+      if (userWithEmail.length > 0) conflicts.email = true;
+    }
+
+    // Check if the phone already exists for another user
+    if (phone) {
+      const userWithPhone = await checkExistingField("phone", phone, id);
+      if (userWithPhone.length > 0) conflicts.phone = true;
+    }
+
+    // Check if the employee_id already exists for another user
+    if (employee_id) {
+      const userWithEmployeeId = await checkExistingField("employee_id", employee_id, id);
+      if (userWithEmployeeId.length > 0) conflicts.employee_id = true;
+    }
+
+    // Check if the username already exists for another user
+    if (username) {
+      const userWithUsername = await checkExistingField("username", username, id);
+      if (userWithUsername.length > 0) conflicts.username = true;
+    }
+
+    // If there are conflicts, generate the conflict message
+    if (Object.keys(conflicts).length > 0) {
+      const conflictFields = [];
+      if (conflicts.email) conflictFields.push("Email");
+      if (conflicts.phone) conflictFields.push("Phone");
+      if (conflicts.employee_id) conflictFields.push("Employee ID");
+      if (conflicts.username) conflictFields.push("Username");
+
+      return res.status(409).json({ status: false, message: `The following already exist: ${conflictFields.join(", ")}` });
+    }
+
+    // Find the user and update
+    const user = await db.adminUsers.findByPk(id);
+    if (!user) return res.status(204).json({ status: false, message: "Admin user not found" });
+
+    // Prepare update data
+    const updateData = {
+      employee_id: employee_id ?? user.employee_id,
+      name: name ?? user.name,
+      email: email ?? user.email,
+      phone: phone ?? user.phone,
+      address: address ?? user.address,
+      username: username ?? user.username,
+      updated_by: updated_by ?? user.updated_by,
+      branch_id: branch_id ?? user.branch_id,
+      role_id: role_id ?? user.role_id,
+      region_id: region_id ?? user.region_id,
+      country_id: country_id ?? user.country_id,
+      franchise_id: franchise_id ?? user.franchise_id,
+      password: password ? bcrypt.hashSync(password + process.env.SECRET) : user.password,
+    };
+
+    // Update the admin user
+    await user.update(updateData);
+    return res.json({ status: true, message: "Admin user updated successfully", data: user });
+  } catch (error) {
+    console.error("Error updating admin user:", error);
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// exports.addAdminUsers = async (req, res) => {
+//   const {
+//     employee_id,
+//     name,
+//     email,
+//     phone,
+//     address,
+//     username,
+//     updated_by,
+//     role_id,
+//     branch_id,
+//     region_id,
+//     country_id,
+//     franchise_id,
+//   } = req.body;
+
+//   const transaction = await db.sequelize.transaction();
+
+//   try {
+//     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
+
+//     // Check if employee_id, email, phone, or username already exist
+//     const conflicts = await db.adminUsers.findAll({
+//       where: {
+//         [Op.or]: [{ employee_id }, { email }, { phone }, { username }],
+//       },
+//       transaction,
+//     });
+
+//     if (conflicts.length > 0) {
+//       const conflictFields = [];
+//       if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
+//       if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
+//       if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
+//       if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
+
+//       await transaction.rollback();
+//       return res.status(409).json({
+//         status: false,
+//         message: `${conflictFields.join(", ")} already exists`,
+//       });
+//     }
+
+//     // Check for Franchise Manager in the franchise
+//     if (role_id == process.env.FRANCHISE_MANAGER_ID) {
+//       const existFranchiseTL = await db.adminUsers.findOne({
+//         where: {
+//           [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
+//         },
+//         transaction,
+//       });
+
+//       if (existFranchiseTL) {
+//         await transaction.rollback();
+//         return res.status(409).json({
+//           status: false,
+//           message: `Franchise Manager already exists in the Franchise`,
+//         });
+//       }
+//     }
+
+//     // Check for TL in the branch
+//     if (role_id == process.env.COUNSELLOR_TL_ID) {
+//       const existTL = await db.adminUsers.findOne({
+//         where: {
+//           [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
+//         },
+//         transaction,
+//       });
+
+//       if (existTL) {
+//         await transaction.rollback();
+//         return res.status(409).json({
+//           status: false,
+//           message: `TL already exists in the branch`,
+//         });
+//       }
+//     }
+
+//     // Insert the new admin user
+//     const newUser = await db.adminUsers.create(
+//       {
+//         employee_id,
+//         name,
+//         email,
+//         phone,
+//         address,
+//         username,
+//         password,
+//         updated_by,
+//         role_id,
+//         branch_id,
+//         region_id,
+//         country_id,
+//         franchise_id,
+//       },
+//       { transaction }
+//     );
+
+//     await transaction.commit();
+//     res.json({
+//       status: true,
+//       data: newUser,
+//       message: "Admin user added successfully",
+//     });
+//   } catch (error) {
+//     await transaction.rollback();
+
+//     // Check if the error is a unique constraint violation
+//     if (error.name === "SequelizeUniqueConstraintError" && error.fields) {
+//       const conflictField = Object.keys(error.fields)[0]; // Get the field with the unique constraint error
+//       return res.status(409).json({
+//         status: false,
+//         message: `The ${conflictField} already exists.`,
+//       });
+//     }
+
+//     console.error("Error creating admin user:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
+// exports.updateAdminUsers = async (req, res) => {
+//   const id = parseInt(req.params.id);
+//   const {
+//     employee_id,
+//     name,
+//     email,
+//     phone,
+//     address,
+//     username,
+//     updated_by,
+//     branch_id,
+//     role_id,
+//     region_id,
+//     country_id,
+//     franchise_id,
+//     password, // Include the password field in the request body
+//   } = req.body;
+
+//   try {
+//     // Check if the email already exists for another user
+//     if (email) {
+//       const userWithEmail = await db.adminUsers.findAll({
+//         where: {
+//           email,
+//           id: { [Op.ne]: id },
+//         },
+//       });
+
+//       if (userWithEmail.length > 0) {
+//         return res.status(409).json({
+//           status: false,
+//           message: "Email already exists",
+//         });
+//       }
+//     }
+
+//     // Find the admin user by ID
+//     const user = await db.adminUsers.findByPk(id);
+//     if (!user) {
+//       return res.status(204).json({
+//         status: false,
+//         message: "Admin user not found",
+//       });
+//     }
+
+//     // Prepare update data, retaining existing values if new values are not provided
+//     const updateData = {
+//       employee_id: employee_id ?? user.employee_id,
+//       name: name ?? user.name,
+//       email: email ?? user.email,
+//       phone: phone ?? user.phone,
+//       address: address ?? user.address,
+//       username: username ?? user.username,
+//       updated_by: updated_by ?? user.updated_by,
+//       branch_id: branch_id ?? user.branch_id,
+//       role_id: role_id ?? user.role_id,
+//       region_id: region_id ?? user.region_id,
+//       country_id: country_id ?? user.country_id,
+//       franchise_id: franchise_id ?? user.franchise_id,
+//     };
+
+//     // If password is not null, hash and update it; otherwise, retain the existing password
+//     if (password !== null && password !== undefined) {
+//       updateData.password = bcrypt.hashSync(password + process.env.SECRET);
+//     } else {
+//       updateData.password = user.password; // Retain existing password
+//     }
+
+//     // Update the admin user
+//     await user.update(updateData);
+
+//     res.json({
+//       status: true,
+//       message: "Admin user updated successfully",
+//       data: user,
+//     });
+//   } catch (error) {
+//     console.error("Error updating admin user:", error);
+//     res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
+exports.deleteAdminUsers = async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  try {
+    // Find the admin user by ID
+    const user = await db.adminUsers.findByPk(id);
+    if (!user) {
+      return res.status(204).json({
+        status: false,
+        message: "Admin user not found",
+      });
+    }
+
+    // Update the access_roles table to set updated_by to null where it references the admin user to be deleted
+    await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
+
+    // Delete the admin user
+    await user.destroy();
+
+    res.json({
+      status: true,
+      message: "Admin user deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting admin user:", error);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
 exports.getAllAdminUsers = async (req, res, next) => {
   const { role_id } = req;
 
@@ -327,410 +769,4 @@ exports.getAdminUsersById = (req, res, next) => {
       console.log(`error in getting user ${error.toString()}`);
       res.status(200).send({ message: error.toString() });
     });
-};
-
-exports.addAdminUsers = async (req, res) => {
-  const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
-
-  const transaction = await db.sequelize.transaction();
-
-  try {
-    const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
-
-    // Check if employee_id, email, phone, or username already exist
-    const conflicts = await db.adminUsers.findAll({
-      where: {
-        [Op.or]: [{ employee_id }, { email }, { phone }, { username }],
-      },
-      transaction,
-    });
-
-    if (conflicts.length > 0) {
-      const conflictFields = [];
-      if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
-      if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
-      if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
-      if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
-
-      await transaction.rollback();
-      return res.status(409).json({
-        status: false,
-        message: `${conflictFields.join(", ")} already exists`,
-      });
-    }
-
-    // Check for Franchise Manager in the franchise
-    if (role_id == process.env.FRANCHISE_MANAGER_ID) {
-      const existFranchiseTL = await db.adminUsers.findOne({
-        where: {
-          [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
-        },
-        transaction,
-      });
-
-      if (existFranchiseTL) {
-        await transaction.rollback();
-        return res.status(409).json({
-          status: false,
-          message: `Franchise Manager already exists in the Franchise`,
-        });
-      }
-    }
-
-    // Check for TL in the branch
-    if (role_id == process.env.COUNSELLOR_TL_ID) {
-      const existTL = await db.adminUsers.findOne({
-        where: {
-          [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
-        },
-        transaction,
-      });
-
-      if (existTL) {
-        await transaction.rollback();
-        return res.status(409).json({
-          status: false,
-          message: `TL already exists in the branch`,
-        });
-      }
-    }
-
-    // Insert the new admin user
-    const newUser = await db.adminUsers.create(
-      {
-        employee_id,
-        name,
-        email,
-        phone,
-        address,
-        username,
-        password,
-        updated_by,
-        role_id,
-        branch_id,
-        region_id,
-        country_id,
-        franchise_id,
-      },
-      { transaction }
-    );
-
-    await transaction.commit();
-    res.json({
-      status: true,
-      data: newUser,
-      message: "Admin user added successfully",
-    });
-  } catch (error) {
-    await transaction.rollback();
-
-    // Check if the error is a unique constraint violation
-    if (error.name === "SequelizeUniqueConstraintError" && error.fields) {
-      const conflictField = Object.keys(error.fields)[0]; // Get the field with the unique constraint error
-      return res.status(409).json({
-        status: false,
-        message: `The ${conflictField} already exists.`,
-      });
-    }
-
-    console.error("Error creating admin user:", error);
-    res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// exports.addAdminUsers = async (req, res) => {
-//   const { employee_id, name, email, phone, address, username, updated_by, role_id, branch_id, region_id, country_id, franchise_id } = req.body;
-
-//   try {
-//     const password = bcrypt.hashSync(req.body.password + process.env.SECRET);
-
-//     // Check if employee_id, email, phone, or username already exist
-//     const conflicts = await db.adminUsers.findAll({
-//       where: {
-//         [Op.or]: [{ employee_id }, { email }, { phone }, { username }],
-//       },
-//     });
-
-//     if (conflicts.length > 0) {
-//       const conflictFields = [];
-//       if (conflicts.some((user) => user.employee_id === employee_id)) conflictFields.push("Employee ID");
-//       if (conflicts.some((user) => user.email === email)) conflictFields.push("Email");
-//       if (conflicts.some((user) => user.phone === phone)) conflictFields.push("Phone");
-//       if (conflicts.some((user) => user.username === username)) conflictFields.push("Username");
-
-//       return res.status(409).json({
-//         status: false,
-//         message: `${conflictFields.join(", ")} already exists`,
-//       });
-//     }
-
-//     let existTL;
-//     let existFranchiseTL;
-//     if (role_id == process.env.FRANCHISE_MANAGER_ID) {
-//       existFranchiseTL = await db.adminUsers.findOne({
-//         where: {
-//           [Op.and]: [{ role_id: process.env.FRANCHISE_MANAGER_ID }, { franchise_id }],
-//         },
-//       });
-
-//       console.log("existFranchiseTL", existFranchiseTL);
-//     }
-
-//     if (existFranchiseTL) {
-//       return res.status(409).json({
-//         status: false,
-//         message: `Franchise Manager already exists in the Franchise`,
-//       });
-//     }
-
-//     if (role_id == process.env.COUNSELLOR_TL_ID) {
-//       existTL = await db.adminUsers.findOne({
-//         where: {
-//           [Op.and]: [{ role_id: process.env.COUNSELLOR_TL_ID }, { branch_id }],
-//         },
-//       });
-
-//       console.log("existTL", existTL);
-//     }
-
-//     if (existTL) {
-//       return res.status(409).json({
-//         status: false,
-//         message: `TL already exists in the branch`,
-//       });
-//     }
-
-//     // Insert the new admin user
-//     const newUser = await db.adminUsers.create({
-//       employee_id,
-//       name,
-//       email,
-//       phone,
-//       address,
-//       username,
-//       password,
-//       updated_by,
-//       role_id,
-//       branch_id,
-//       region_id,
-//       country_id,
-//       franchise_id,
-//     });
-
-//     res.json({
-//       status: true,
-//       data: newUser,
-//       message: "Admin user added successfully",
-//     });
-//   } catch (error) {
-//     console.error("Error creating admin user:", error);
-//     res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
-exports.updateAdminUsers = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const {
-    employee_id,
-    name,
-    email,
-    phone,
-    address,
-    username,
-    updated_by,
-    branch_id,
-    role_id,
-    region_id,
-    country_id,
-    franchise_id,
-    password, // Include the password field in the request body
-  } = req.body;
-
-  try {
-    // Check if the email already exists for another user
-    if (email) {
-      const userWithEmail = await db.adminUsers.findAll({
-        where: {
-          email,
-          id: { [Op.ne]: id },
-        },
-      });
-
-      if (userWithEmail.length > 0) {
-        return res.status(409).json({
-          status: false,
-          message: "Email already exists",
-        });
-      }
-    }
-
-    // Find the admin user by ID
-    const user = await db.adminUsers.findByPk(id);
-    if (!user) {
-      return res.status(204).json({
-        status: false,
-        message: "Admin user not found",
-      });
-    }
-
-    // Prepare update data, retaining existing values if new values are not provided
-    const updateData = {
-      employee_id: employee_id ?? user.employee_id,
-      name: name ?? user.name,
-      email: email ?? user.email,
-      phone: phone ?? user.phone,
-      address: address ?? user.address,
-      username: username ?? user.username,
-      updated_by: updated_by ?? user.updated_by,
-      branch_id: branch_id ?? user.branch_id,
-      role_id: role_id ?? user.role_id,
-      region_id: region_id ?? user.region_id,
-      country_id: country_id ?? user.country_id,
-      franchise_id: franchise_id ?? user.franchise_id,
-    };
-
-    // If password is not null, hash and update it; otherwise, retain the existing password
-    if (password !== null && password !== undefined) {
-      updateData.password = bcrypt.hashSync(password + process.env.SECRET);
-    } else {
-      updateData.password = user.password; // Retain existing password
-    }
-
-    // Update the admin user
-    await user.update(updateData);
-
-    res.json({
-      status: true,
-      message: "Admin user updated successfully",
-      data: user,
-    });
-  } catch (error) {
-    console.error("Error updating admin user:", error);
-    res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// exports.updateAdminUsers = async (req, res) => {
-//   const id = parseInt(req.params.id);
-//   const {
-//     employee_id,
-//     name,
-//     email,
-//     phone,
-//     address,
-//     username,
-//     updated_by,
-//     branch_id,
-//     role_id,
-//     region_id,
-//     country_id,
-//   } = req.body;
-//   const profileImage = req.file; // New profile image (if uploaded)
-
-//   try {
-//     const userWithEmail = await db.adminUsers.findAll({
-//       where: {
-//         email,
-//         id: { [Op.ne]: id },
-//       },
-//     });
-
-//     if (userWithEmail.length > 0) {
-//       return res.status(409).json({
-//         status: false,
-//         message: "Email already exists",
-//       });
-//     }
-
-//     const user = await db.adminUsers.findByPk(id);
-//     if (!user) {
-//       return res.status(404).json({
-//         status: false,
-//         message: "Admin user not found",
-//       });
-//     }
-//     // const oldImagePath = user.profile_image_path;
-
-//     // // Delete the old image if it exists
-//     // const deleteOldImage = (oldImagePath) => {
-//     //   if (oldImagePath) {
-//     //     fs.unlink(oldImagePath, (err) => {
-//     //       if (err) {
-//     //         console.error("Error deleting old image:", err);
-//     //       }
-//     //     });
-//     //   }
-//     // };
-//     // deleteOldImage(oldImagePath);
-
-//     // Update the user with the new image path
-//     const updatedUser = await user.update({
-//       employee_id,
-//       name,
-//       email,
-//       phone,
-//       address,
-//       username,
-//       // password,
-//       updated_by,
-//       // profile_image_path: profileImage ? profileImage.path : null,
-//       branch_id,
-//       role_id,
-//       region_id,
-//       country_id,
-//     });
-
-//     res.json({
-//       status: true,
-//       message: "Admin user updated successfully",
-//       data: updatedUser,
-//     });
-//   } catch (error) {
-//     console.error("Error updating admin user:", error);
-//     res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
-exports.deleteAdminUsers = async (req, res) => {
-  const id = parseInt(req.params.id);
-
-  try {
-    // Find the admin user by ID
-    const user = await db.adminUsers.findByPk(id);
-    if (!user) {
-      return res.status(204).json({
-        status: false,
-        message: "Admin user not found",
-      });
-    }
-
-    // Update the access_roles table to set updated_by to null where it references the admin user to be deleted
-    await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
-
-    // Delete the admin user
-    await user.destroy();
-
-    res.json({
-      status: true,
-      message: "Admin user deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting admin user:", error);
-    res.status(500).json({
-      status: false,
-      message: "Internal server error",
-    });
-  }
 };
