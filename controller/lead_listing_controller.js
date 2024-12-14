@@ -45,11 +45,11 @@ exports.getLeads = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -111,40 +111,42 @@ exports.getLeads = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        id: country.id,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-      }));
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
 
-      const counsellorNames = info.counselors?.map((counselor) => ({
-        counselor_name: counselor.name,
-        id: counselor.id,
-      }));
+        const counsellorNames = info.counselors?.map((counselor) => ({
+          counselor_name: counselor.name,
+          id: counselor.id,
+        }));
 
-      const flagDetails = await info?.flag_details;
+        const flagDetails = await info?.flag_details;
 
-      return {
-        ...info.toJSON(),
-        type_name: info.type_name?.name || null,
-        source_name: info.source_name?.source_name || null,
-        channel_name: info.channel_name?.channel_name || null,
-        preferredCountries: preferredCountries,
-        counselors: counsellorNames,
-        office_type_name: info.office_type_name?.office_type_name || null,
-        region_name: info.region_name?.region_name || null,
-        counsiler_name: info.counsiler_name?.name || null,
-        status: info.status?.status_name || null,
-        branch_name: info.branch_name?.branch_name || null,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
-        updated_by_user: info.updated_by_user?.name || null,
-        flag_details: flagDetails
-      };
-    }));
+        return {
+          ...info.toJSON(),
+          type_name: info.type_name?.name || null,
+          source_name: info.source_name?.source_name || null,
+          channel_name: info.channel_name?.channel_name || null,
+          preferredCountries: preferredCountries,
+          counselors: counsellorNames,
+          office_type_name: info.office_type_name?.office_type_name || null,
+          region_name: info.region_name?.region_name || null,
+          counsiler_name: info.counsiler_name?.name || null,
+          status: info.status?.status_name || null,
+          branch_name: info.branch_name?.branch_name || null,
+          assigned_branch_counselor_name: info.assigned_branch_counselor_name?.name || null,
+          updated_by_user: info.updated_by_user?.name || null,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -163,6 +165,10 @@ exports.getLeads = async (req, res) => {
 exports.getAllLeads = async (req, res) => {
   const cre_id = req.userDecodeId;
   const roleId = req.role_id;
+  const { page = 1, limit = 20 } = req.query;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
 
   try {
     let userPrimaryInfos;
@@ -178,11 +184,8 @@ exports.getAllLeads = async (req, res) => {
 
     const country_id = adminUser?.country_id;
 
-    console.log('country_id',country_id);
-
-    // if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID ) {
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
-      userPrimaryInfos = await UserPrimaryInfo.findAll({
+      userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: { is_deleted: false },
         // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
         include: [
@@ -225,11 +228,11 @@ exports.getAllLeads = async (req, res) => {
                 as: "country_status",
                 attributes: ["id", "status_name", "color"],
                 required: false,
-                through: { 
+                through: {
                   model: db.userContries,
                   attributes: [],
                 },
-                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
               },
             ],
           },
@@ -283,9 +286,11 @@ exports.getAllLeads = async (req, res) => {
             foreignKey: "updated_by",
           },
         ],
+        offset,
+        limit: parsedLimit,
       });
     } else {
-      userPrimaryInfos = await UserPrimaryInfo.findAll({
+      userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: {
           [db.Sequelize.Op.or]: [
             { assigned_cre_tl: cre_id },
@@ -346,11 +351,11 @@ exports.getAllLeads = async (req, res) => {
                 as: "country_status",
                 attributes: ["id", "status_name", "color"],
                 required: false,
-                through: { 
+                through: {
                   model: db.userContries,
                   attributes: [],
                 },
-                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+                where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
               },
             ],
           },
@@ -403,11 +408,15 @@ exports.getAllLeads = async (req, res) => {
             required: false,
           },
         ],
+        offset,
+        limit: parsedLimit,
       });
     }
 
+    const { count, rows } = userPrimaryInfos;
+
     const formattedUserPrimaryInfos = await Promise.all(
-      userPrimaryInfos.map(async (info) => {
+      rows.map(async (info) => {
         const preferredCountries = info?.preferredCountries?.map((country) => ({
           country_name: country.country_name,
           status_name: country?.country_status?.[0]?.status_name,
@@ -418,52 +427,55 @@ exports.getAllLeads = async (req, res) => {
           // status_id: country.user_countries?.status_id,
         }));
 
-      const examDetails = info.exams?.map((exam) => ({
-        exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams?.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams?.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams?.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const counsellorNames = info.counselors?.map((counselor) => ({
-        counselor_name: counselor.name,
-        id: counselor.id,
-      }));
+        const counsellorNames = info.counselors?.map((counselor) => ({
+          counselor_name: counselor.name,
+          id: counselor.id,
+        }));
 
-      const flagDetails = await info.flag_details;
+        const flagDetails = await info.flag_details;
 
-      return {
-        ...info.toJSON(),
-        type_name: info.type_name ? info.type_name.name : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        counselors: counsellorNames,
+        return {
+          ...info.toJSON(),
+          type_name: info.type_name ? info.type_name.name : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          counselors: counsellorNames,
 
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        // region_name: info.region_name ? info.region_name.region_name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
-        exam_documents: examDocuments,
-        flag_details: flagDetails,
-      };
-    }));
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          // region_name: info.region_name ? info.region_name.region_name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
+      totalPages: Math.ceil(count / limit),
+      limit: limit,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
@@ -549,11 +561,11 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -614,57 +626,59 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-        id: country.id,
-      }));
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+          id: country.id,
+        }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const counsellorNames = info.counselors?.map((counselor) => ({
-        counselor_name: counselor.name,
-        id: counselor.id,
-      }));
+        const counsellorNames = info.counselors?.map((counselor) => ({
+          counselor_name: counselor.name,
+          id: counselor.id,
+        }));
 
-      const flagDetails = await info.flag_details;
+        const flagDetails = await info.flag_details;
 
-      return {
-        ...info.toJSON(),
-        type_name: info.type_name ? info.type_name.name : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        counselors: counsellorNames,
+        return {
+          ...info.toJSON(),
+          type_name: info.type_name ? info.type_name.name : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          counselors: counsellorNames,
 
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        // region_name: info.region_name ? info.region_name.region_name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
-        exam_documents: examDocuments,
-        flag_details: flagDetails
-      };
-    }));
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          // region_name: info.region_name ? info.region_name.region_name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -742,11 +756,11 @@ exports.geLeadsForCreTl = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -806,59 +820,61 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        id: country.id,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-      }));
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
 
-      // const examDetails = info.exams.map((exam)=> ({
-      //   exam_name: exam.exam_name,
-      //   marks: exam.marks,
-      // }))
+        // const examDetails = info.exams.map((exam)=> ({
+        //   exam_name: exam.exam_name,
+        //   marks: exam.marks,
+        // }))
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const flagDetails = await info.flag_details;      
+        const flagDetails = await info.flag_details;
 
-      return {
-        ...info.toJSON(),
-        // category_name: info.category_name
-        //   ? info.category_name.category_name
-        //   : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        franchise_id: info.franchise_id ? info.franchise_id : null,
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
-        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        exam_documents: examDocuments,
-        flag_details: flagDetails
-      };
-    }));
+        return {
+          ...info.toJSON(),
+          // category_name: info.category_name
+          //   ? info.category_name.category_name
+          //   : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          franchise_id: info.franchise_id ? info.franchise_id : null,
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          region_name: info.region_name ? info.region_name.region_name : null,
+          counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -937,11 +953,11 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -1001,57 +1017,59 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async (info) => {
-      console.log("INFO", info);
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        console.log("INFO", info);
 
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        id: country.id,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-      }));
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_type: exam.exam_type,
-        // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          // exam_date: moment(exam.exam_date).format("YYYY-MM-DD"),
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const flagDetails = await info?.flag_details;
+        const flagDetails = await info?.flag_details;
 
-      return {
-        ...info.toJSON(),
-        // category_name: info.category_name
-        //   ? info.category_name.category_name
-        //   : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        franchise_id: info.franchise_id ? info.franchise_id : null,
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
-        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        exam_documents: examDocuments,
-        flag_details: flagDetails
-      };
-    }));
+        return {
+          ...info.toJSON(),
+          // category_name: info.category_name
+          //   ? info.category_name.category_name
+          //   : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          franchise_id: info.franchise_id ? info.franchise_id : null,
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          region_name: info.region_name ? info.region_name.region_name : null,
+          counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -1129,11 +1147,11 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -1193,56 +1211,58 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos =  await Promise.all(userPrimaryInfos.map(async(info) => {
-      console.log("INFO", info);
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        console.log("INFO", info);
 
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        id: country.id,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-      }));
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const flagDetails = await info?.flag_details;
+        const flagDetails = await info?.flag_details;
 
-      return {
-        ...info.toJSON(),
-        // category_name: info.category_name
-        //   ? info.category_name.category_name
-        //   : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        franchise_id: info.franchise_id ? info.franchise_id : null,
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
-        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        exam_documents: examDocuments,
-        flag_details: flagDetails,
-      };
-    }));
+        return {
+          ...info.toJSON(),
+          // category_name: info.category_name
+          //   ? info.category_name.category_name
+          //   : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          franchise_id: info.franchise_id ? info.franchise_id : null,
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          region_name: info.region_name ? info.region_name.region_name : null,
+          counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -1271,11 +1291,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [
-              { assigned_counsellor_tl: userId },
-              { created_by: userId },
-              { assigned_counsellor_tl: userId },
-            ],
+            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }, { assigned_counsellor_tl: userId }],
           },
           {
             assigned_branch_counselor: {
@@ -1324,11 +1340,11 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
               as: "country_status",
               attributes: ["id", "status_name", "color"],
               required: false,
-              through: { 
+              through: {
                 model: db.userContries,
                 attributes: [],
               },
-              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } }
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
             },
           ],
         },
@@ -1388,54 +1404,56 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       ],
     });
 
-    const formattedUserPrimaryInfos = await Promise.all(userPrimaryInfos.map(async(info) => {
-      const preferredCountries = info.preferredCountries.map((country) => ({
-        country_name: country.country_name,
-        id: country.id,
-        status_name: country?.country_status?.[0]?.status_name,
-        status_color: country?.country_status?.[0]?.color,
-        status_id: country?.country_status?.[0]?.id,
-        followup_date: country.user_countries?.followup_date,
-      }));
+    const formattedUserPrimaryInfos = await Promise.all(
+      userPrimaryInfos.map(async (info) => {
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
 
-      const examDetails = info.exams.map((exam) => ({
-        exam_type: exam.exam_type,
-        exam_date: exam.exam_date,
-        marks: exam.overall_score,
-        listening_score: exam.listening_score,
-        speaking_score: exam.speaking_score,
-        reading_score: exam.reading_score,
-        writing_score: exam.writing_score,
-        updated_by: exam.updated_by,
-      }));
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
 
-      const examDocuments = info.exams.map((exam) => ({
-        exam_documents: exam.score_card,
-      }));
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
 
-      const flagDetails = await info?.flag_details;
+        const flagDetails = await info?.flag_details;
 
-      return {
-        ...info.toJSON(),
-        // category_name: info.category_name
-        //   ? info.category_name.category_name
-        //   : null,
-        source_name: info.source_name ? info.source_name.source_name : null,
-        channel_name: info.channel_name ? info.channel_name.channel_name : null,
-        preferredCountries: preferredCountries,
-        franchise_id: info.franchise_id ? info.franchise_id : null,
-        office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
-        region_name: info.region_name ? info.region_name.region_name : null,
-        counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
-        branch_name: info.branch_name ? info.branch_name.branch_name : null,
-        cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
-        updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
-        status: info.status ? info.status.status_name : null,
-        exam_details: examDetails,
-        exam_documents: examDocuments,
-        flag_details: flagDetails,
-      };
-    }));
+        return {
+          ...info.toJSON(),
+          // category_name: info.category_name
+          //   ? info.category_name.category_name
+          //   : null,
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          franchise_id: info.franchise_id ? info.franchise_id : null,
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          region_name: info.region_name ? info.region_name.region_name : null,
+          counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
+        };
+      })
+    );
 
     res.status(200).json({
       status: true,
@@ -1495,16 +1513,7 @@ exports.getAllUserDocuments = async (req, res) => {
           as: "educationDetails",
           where: { student_id: id },
           required: false,
-          attributes: [
-            "id",
-            "qualification",
-            "percentage",
-            "board_name",
-            "school_name",
-            "mark_sheet",
-            "admit_card",
-            "certificate",
-          ],
+          attributes: ["id", "qualification", "percentage", "board_name", "school_name", "mark_sheet", "admit_card", "certificate"],
         },
         {
           model: db.workInfos,

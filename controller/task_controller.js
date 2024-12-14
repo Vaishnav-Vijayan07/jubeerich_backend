@@ -302,11 +302,12 @@ exports.finishTask = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: countryIds },
-            attributes: ["country_name"],
+            attributes: ["country_name","country_code"],
           });
 
           if (countries) {
-            countryName = countries.map((country) => country.country_name).join(", ");
+            // countryName = countries.map((country) => country.country_name).join(", ");
+            countryName = countries.map((country) => country.country_code).join(", ");
           }
         }
 
@@ -457,7 +458,7 @@ exports.assignNewCountry = async (req, res) => {
 
       // Assign the new lead status to student's preferred countries
       // await student.addPreferredStatus(IdsFromEnv.NEW_LEAD_STATUS_ID, { transaction });
-      
+
       // Assign the new country to student's preferred countries with status
       await db.userContries.create({ user_primary_info_id: student.id, country_id: newCountryId, status_id: IdsFromEnv.NEW_LEAD_STATUS_ID }, { transaction });
 
@@ -471,10 +472,11 @@ exports.assignNewCountry = async (req, res) => {
       );
       // Fetch country name for the task title
       const country = await db.country.findByPk(newCountryId, {
-        attributes: ["country_name"],
+        attributes: ["country_name","country_code"],
         transaction,
       });
-      const countryName = country ? country.country_name : "Unknown";
+      // const countryName = country ? country.country_name : "Unknown";
+      const countryName = country ? country.country_code : "Unknown";
 
       const users = await getLeastAssignedUsers(newCountryId);
       if (users?.leastAssignedUserId) {
@@ -616,7 +618,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
         {
           model: db.country,
           as: "preferredCountries",
-          attributes: ["id", "country_name"],
+          attributes: ["id", "country_name", "country_code"],
           through: {
             model: db.userContries,
             attributes: [],
@@ -631,7 +633,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       countryFilter = {
         model: db.country,
         as: "preferredCountries",
-        attributes: ["id", "country_name"],
+        attributes: ["id", "country_name", "country_code"],
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
@@ -656,7 +658,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       countryFilter = {
         model: db.country,
         as: "preferredCountries",
-        attributes: ["id", "country_name"],
+        attributes: ["id", "country_name", "country_code"],
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
@@ -774,7 +776,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       ...primaryInfoData,
       country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
       // country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
-      country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_name) || [],
+      country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_code) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
