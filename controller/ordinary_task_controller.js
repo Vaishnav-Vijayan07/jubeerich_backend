@@ -172,6 +172,7 @@ exports.getTaskById = async (req, res) => {
     const newTask = await Task.create({
       title,
       user_id: userId,
+      due_date: new Date()
     });
     res.status(201).json({
       status: true,
