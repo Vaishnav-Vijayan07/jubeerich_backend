@@ -502,8 +502,9 @@ exports.getAllAdminUsers = async (req, res, next) => {
           },
           {
             model: db.country,
-            attributes: ["country_name"],
-            required: false, // This makes it a LEFT JOIN (optional relation)
+            attributes: ["country_name", "id"],
+            through: { attributes: [] },
+            required: false,
           },
         ],
       });
@@ -563,8 +564,9 @@ exports.getAllCounsellors = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -586,7 +588,15 @@ exports.getAllCounsellors = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        // country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -628,8 +638,9 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -649,7 +660,14 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -684,8 +702,9 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -705,7 +724,14 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -738,8 +764,9 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -759,7 +786,14 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
