@@ -475,6 +475,7 @@ exports.getAllLeads = async (req, res) => {
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
       totalPages: Math.ceil(count / limit),
+      count,
       limit: limit,
     });
   } catch (error) {
@@ -695,6 +696,11 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
 };
 
 exports.geLeadsForCreTl = async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
+
   try {
     // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
@@ -703,7 +709,7 @@ exports.geLeadsForCreTl = async (req, res) => {
     });
 
     const userId = req.userDecodeId;
-    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+    const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -818,10 +824,12 @@ exports.geLeadsForCreTl = async (req, res) => {
           required: false,
         },
       ],
+      offset,
+      limit: parsedLimit,
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
-      userPrimaryInfos.map(async (info) => {
+      rows.map(async (info) => {
         const preferredCountries = info.preferredCountries.map((country) => ({
           country_name: country.country_name,
           id: country.id,
@@ -880,6 +888,9 @@ exports.geLeadsForCreTl = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
+      totalPages: Math.ceil(count / limit),
+      count,
+      limit: limit,
       allCres,
     });
   } catch (error) {
@@ -892,6 +903,11 @@ exports.geLeadsForCreTl = async (req, res) => {
 };
 
 exports.getAssignedLeadsForCreTl = async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
+
   try {
     // Fetch all CREs (Role ID 3)
     const allCres = await AdminUsers.findAll({
@@ -900,7 +916,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
     });
 
     const userId = req.userDecodeId;
-    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+    const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1015,10 +1031,12 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           required: false,
         },
       ],
+      limit: parsedLimit,
+      offset: offset,
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
-      userPrimaryInfos.map(async (info) => {
+      rows.map(async (info) => {
         console.log("INFO", info);
 
         const preferredCountries = info.preferredCountries.map((country) => ({
@@ -1076,6 +1094,9 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
       allCres,
+      totalPages: Math.ceil(count / limit),
+      count,
+      limit: limit,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
