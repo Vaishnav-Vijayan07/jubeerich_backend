@@ -43,15 +43,15 @@ module.exports = (sequelize, Sequelize) => {
       },
       onDelete: "SET NULL",
     },
-    country_id: {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      references: {
-        model: "countries", // name of the target table
-        key: "id",
-      },
-      onDelete: "SET NULL",
-    },
+    // country_id: {
+    //   type: Sequelize.INTEGER,
+    //   allowNull: true,
+    //   references: {
+    //     model: "countries", // name of the target table
+    //     key: "id",
+    //   },
+    //   onDelete: "SET NULL",
+    // },
     franchise_id: {
       type: Sequelize.INTEGER,
       allowNull: true,

@@ -36,7 +36,7 @@ exports.addAdminUsers = async (req, res) => {
     role_id,
     branch_id,
     region_id,
-    country_id,
+    country_ids,
     franchise_id,
   } = req.body;
 
@@ -94,11 +94,15 @@ exports.addAdminUsers = async (req, res) => {
         role_id,
         branch_id,
         region_id,
-        country_id,
+        // country_id,
         franchise_id,
       },
       { transaction }
     );
+
+    if (country_ids && Array.isArray(country_ids)) {
+      await newUser.addCountries(country_ids, { transaction });
+    }
 
     // Commit the transaction if everything succeeds
     await transaction.commit();
@@ -131,10 +135,12 @@ exports.updateAdminUsers = async (req, res) => {
     branch_id,
     role_id,
     region_id,
-    country_id,
+    country_ids,
     franchise_id,
     password,
   } = req.body;
+
+  const transaction = await db.sequelize.transaction();
 
   try {
     const conflicts = {};
@@ -171,12 +177,16 @@ exports.updateAdminUsers = async (req, res) => {
       if (conflicts.employee_id) conflictFields.push("Employee ID");
       if (conflicts.username) conflictFields.push("Username");
 
+      await transaction.rollback();
       return res.status(409).json({ status: false, message: `The following already exist: ${conflictFields.join(", ")}` });
     }
 
     // Find the user and update
-    const user = await db.adminUsers.findByPk(id);
-    if (!user) return res.status(204).json({ status: false, message: "Admin user not found" });
+    const user = await db.adminUsers.findByPk(id, { transaction });
+    if (!user) {
+      await transaction.rollback(); // Rollback if user not found
+      return res.status(204).json({ status: false, message: "Admin user not found" });
+    }
 
     // Prepare update data
     const updateData = {
@@ -190,15 +200,26 @@ exports.updateAdminUsers = async (req, res) => {
       branch_id: branch_id ?? user.branch_id,
       role_id: role_id ?? user.role_id,
       region_id: region_id ?? user.region_id,
-      country_id: country_id ?? user.country_id,
       franchise_id: franchise_id ?? user.franchise_id,
       password: password ? bcrypt.hashSync(password + process.env.SECRET) : user.password,
     };
 
     // Update the admin user
-    await user.update(updateData);
+    await user.update(updateData, { transaction });
+
+    if (country_ids && Array.isArray(country_ids)) {
+      // First, remove existing countries (this will clear the current relationship)
+      await user.setCountries([], { transaction }); // Assuming the user model has the 'setCountries' method for many-to-many relationship
+
+      // Now, add the new countries
+      await user.addCountries(country_ids, { transaction }); // This will add the countries in the join table
+    }
+
+    await transaction.commit();
+
     return res.json({ status: true, message: "Admin user updated successfully", data: user });
   } catch (error) {
+    await transaction.rollback();
     console.error("Error updating admin user:", error);
     return res.status(500).json({ status: false, message: "Internal server error" });
   }
