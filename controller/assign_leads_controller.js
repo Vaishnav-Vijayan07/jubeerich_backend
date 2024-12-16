@@ -114,7 +114,7 @@ exports.assignCres = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               // description: `${userInfo.full_name} from ${userInfo?.city}, has applied for admission in ${countries}`,
               description: formattedDesc,
-              dueDate: new Date(new Date().setDate(new Date().getDate())),
+              dueDate: new Date(),
               updatedBy: userId,
               assigned_country: userInfo.preferredCountries?.[0]?.id
             },
@@ -338,7 +338,7 @@ exports.assignBranchCounselors = async (req, res) => {
             {
               userId: counselor_id,
               title: `${userInfo.full_name} - ${countries}`,
-              dueDate: new Date(new Date().setDate(new Date())),
+              dueDate: new Date(),
               updatedBy: userId,
               assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
@@ -352,7 +352,7 @@ exports.assignBranchCounselors = async (req, res) => {
               userId: counselor_id,
               title: `${userInfo.full_name} - ${countries}`,
               description: formattedDesc,
-              dueDate: new Date(new Date().setDate(new Date().getDate())),
+              dueDate: new Date(),
               updatedBy: userId,
               assigned_country: userInfo?.preferredCountries?.[0]?.id
             },
