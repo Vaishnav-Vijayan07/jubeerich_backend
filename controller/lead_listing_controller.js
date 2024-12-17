@@ -1,4 +1,5 @@
 const db = require("../models");
+const { Op } = require("sequelize");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const AdminUsers = db.adminUsers;
 
@@ -165,10 +166,59 @@ exports.getLeads = async (req, res) => {
 exports.getAllLeads = async (req, res) => {
   const cre_id = req.userDecodeId;
   const roleId = req.role_id;
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 20, keyword } = req.query;
+
+  console.log("KEYWORD", keyword);
+
+  const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+  const isSearchApplied = keyword ? true : false;
+
+  console.log("KEYWORD", dynamicIlike);
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
+
+  const whereCountryManger = {
+    is_deleted: false,
+    [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+  };
+
+  const where = {
+    is_deleted: false,
+    [Op.and]: [
+      {
+        [Op.or]: [
+          { assigned_cre_tl: cre_id },
+          { created_by: cre_id },
+          { assigned_cre: cre_id },
+          { assigned_regional_manager: cre_id },
+          { assigned_counsellor_tl: cre_id },
+          { assigned_branch_counselor: cre_id },
+          {
+            [Op.and]: [
+              db.Sequelize.literal(`EXISTS (
+                    SELECT 1 FROM "user_counselors" 
+                    WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                    AND "user_counselors"."counselor_id" = ${cre_id}
+                  )`),
+            ],
+          },
+          {
+            [Op.and]: [
+              db.Sequelize.literal(`EXISTS (
+                  SELECT 1 FROM "admin_users"
+                  WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
+                  AND "admin_users"."id" = ${cre_id}
+                )`),
+            ],
+          },
+        ],
+      },
+      {
+        [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+      },
+    ],
+  };
 
   try {
     let userPrimaryInfos;
@@ -182,12 +232,9 @@ exports.getAllLeads = async (req, res) => {
       });
     }
 
-    const country_id = adminUser?.country_id;
-
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
-        where: { is_deleted: false },
-        // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
+        where: whereCountryManger,
         include: [
           {
             model: db.leadSource,
@@ -204,14 +251,6 @@ exports.getAllLeads = async (req, res) => {
             as: "channel_name",
             attributes: ["channel_name"],
           },
-          // {
-          //   model: db.country,
-          //   as: "preferredCountries",
-          //   attributes: ["country_name", "id"],
-          //   through: { attributes: [] },
-          //   required: true,
-          //   where: country_id ? { id: country_id } : {},
-          // },
           {
             model: db.country,
             as: "preferredCountries",
@@ -291,35 +330,7 @@ exports.getAllLeads = async (req, res) => {
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
-        where: {
-          [db.Sequelize.Op.or]: [
-            { assigned_cre_tl: cre_id },
-            { created_by: cre_id },
-            { assigned_cre: cre_id },
-            { assigned_regional_manager: cre_id },
-            { assigned_counsellor_tl: cre_id },
-            { assigned_branch_counselor: cre_id },
-            {
-              [db.Sequelize.Op.and]: [
-                db.Sequelize.literal(`EXISTS (
-                    SELECT 1 FROM "user_counselors" 
-                    WHERE "user_counselors"."user_id" = "user_primary_info"."id"
-                    AND "user_counselors"."counselor_id" = ${cre_id}
-                  )`),
-              ],
-            },
-            {
-              [db.Sequelize.Op.and]: [
-                db.Sequelize.literal(`EXISTS (
-                  SELECT 1 FROM "admin_users"
-                  WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
-                  AND "admin_users"."id" = ${cre_id}
-                )`),
-              ],
-            },
-          ],
-          is_deleted: false,
-        },
+        where,
         include: [
           {
             model: db.leadType,
@@ -477,6 +488,7 @@ exports.getAllLeads = async (req, res) => {
       totalPages: Math.ceil(count / limit),
       count,
       limit: limit,
+      isSearchApplied,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
