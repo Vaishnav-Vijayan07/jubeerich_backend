@@ -102,7 +102,7 @@ exports.getAllCounsellorsByFranchise = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country",
+          as: "countries",
           attributes: ["country_name"],
         },
       ],
@@ -156,7 +156,7 @@ exports.getAllCounsellorsTLByFranchise = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
+          as: "countries", // Ensure this alias matches your association setup
           attributes: ["country_name"],
         },
       ],
