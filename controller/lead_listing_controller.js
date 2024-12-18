@@ -708,10 +708,12 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
 };
 
 exports.geLeadsForCreTl = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 20, keyword } = req.query;
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
+  const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+  const isSearchApplied = keyword ? true : false;
 
   try {
     // Fetch all CREs (Role ID 3)
@@ -734,6 +736,20 @@ exports.geLeadsForCreTl = async (req, res) => {
           },
           {
             is_deleted: false,
+          },
+          {
+            [db.Sequelize.Op.or]: [
+              {
+                full_name: {
+                  [db.Sequelize.Op.iLike]: dynamicIlike,
+                },
+              },
+              {
+                email: {
+                  [db.Sequelize.Op.iLike]: dynamicIlike,
+                },
+              },
+            ],
           },
         ],
       },
@@ -903,6 +919,7 @@ exports.geLeadsForCreTl = async (req, res) => {
       totalPages: Math.ceil(count / limit),
       count,
       limit: limit,
+      isSearchApplied,
       allCres,
     });
   } catch (error) {
@@ -915,10 +932,12 @@ exports.geLeadsForCreTl = async (req, res) => {
 };
 
 exports.getAssignedLeadsForCreTl = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 20, keyword } = req.query;
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
+  const isSearchApplied = keyword ? true : false;
+  const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
 
   try {
     // Fetch all CREs (Role ID 3)
@@ -942,6 +961,21 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
           {
             is_deleted: false,
           },
+          {
+            [db.Sequelize.Op.or]: [
+              {
+                full_name: {
+                  [db.Sequelize.Op.iLike]: dynamicIlike,
+                },
+              },
+              {
+                email: {
+                  [db.Sequelize.Op.iLike]: dynamicIlike,
+                },
+              },
+            ],
+          },
+
         ],
       },
       include: [
@@ -1107,6 +1141,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
       formattedUserPrimaryInfos,
       allCres,
       totalPages: Math.ceil(count / limit),
+      isSearchApplied: isSearchApplied,
       count,
       limit: limit,
     });
