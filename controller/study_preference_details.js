@@ -56,8 +56,9 @@ exports.getStudyPreferenceDetails = async (req, res) => {
         include: [
           {
             model: db.country,
-            as: "country", // alias used in association
-            attributes: ["id", "country_name"], // Only fetch these attributes
+            attributes: ["country_name", "id"],
+            through: { attributes: [] },
+            required: false,
           },
         ],
       })) || {};
@@ -67,11 +68,11 @@ exports.getStudyPreferenceDetails = async (req, res) => {
     };
 
     // Check if the role is a counsellor and set the countryId accordingly
-    if (role_id === process.env.COUNSELLOR_ROLE_ID) {
-      if (country?.id) {
-        where.countryId = country.id; // Set countryId only if it exists
-      }
-    }
+    // if (role_id === process.env.COUNSELLOR_ROLE_ID) {
+    //   if (country?.id) {
+    //     where.countryId = country.id; // Set countryId only if it exists
+    //   }
+    // }
 
     const studyPreferences = await db.studyPreference.findAll({
       where, // Use the defined where object directly
@@ -108,7 +109,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
       studyDetails: preference.studyPreferenceDetails,
       country_name: preference.country.country_name,
       country_id: preference.country.id,
-      isEditable: role_id == process.env.COUNSELLOR_ROLE_ID ? preference.country.id == country?.id : true,
+      // isEditable: role_id == process.env.COUNSELLOR_ROLE_ID ? preference.country.id == country?.id : true,
     }));
 
     res.status(200).json({ data: modifiedResponse });
