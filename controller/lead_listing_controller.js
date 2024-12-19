@@ -173,7 +173,15 @@ exports.getAllLeads = async (req, res) => {
   try {
     let userPrimaryInfos;
 
-    const adminUser = await AdminUsers.findByPk(cre_id); // Await the promise to get the admin user data
+    const adminUser = await AdminUsers.findByPk(cre_id, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id", "country_code"],
+          through: { attributes: [] }
+        },
+      ]
+    }); // Await the promise to get the admin user data
 
     if (!adminUser) {
       return res.status(404).json({
@@ -219,7 +227,8 @@ exports.getAllLeads = async (req, res) => {
             through: {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
-              where: { country_id: adminUser?.country_id },
+              // where: { country_id: adminUser?.country_id },
+              where: { country_id: adminUser?.countries?.[0]?.id },
             },
             required: false,
             include: [
