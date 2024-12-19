@@ -1,4 +1,4 @@
-const { FOLLOWUP_ID } = require("../constants/ids");
+const { FOLLOWUP_ID, APPLICATION_MANAGER_ID, APPLICATION_TEAM_ID } = require("../constants/ids");
 const stageDatas = require("../constants/stage_data");
 const db = require("../models");
 const { addLeadHistory, getRoleForUserHistory } = require("../utils/academic_query_helper");
@@ -8,14 +8,26 @@ exports.getKycDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const { userDecodeId } = req;
+    const { userDecodeId, role_id } = req;
 
-    const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+    // const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+    const { countries } = await db.adminUsers.findByPk(userDecodeId, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }
+        },
+      ],
+    });
 
     const personalDetails = await db.userPrimaryInfo.findOne({
       where: { id: id },
       attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id", "branch_id", "assigned_branch_counselor"],
     });
+
+    let dynamicWhere = role_id == APPLICATION_MANAGER_ID || role_id == APPLICATION_TEAM_ID ? {} : { where: { countryId: countries?.[0]?.id } }
 
     if (!personalDetails) {
       throw new Error("User not found");
@@ -48,7 +60,8 @@ exports.getKycDetails = async (req, res, next) => {
       personalDetails.getCre_name(),
       personalDetails.getEducationDetails({ where: { student_id: id } }),
       personalDetails.getStudyPreferences({
-        where: { countryId: country_id },
+        // where: { countryId: countries?.[0]?.id },
+        ...dynamicWhere,
         include: [
           {
             model: db.studyPreferenceDetails,
@@ -214,16 +227,22 @@ exports.proceedToKyc = async (req, res) => {
       });
     }
 
-    const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
+    // const { country_id } = await db.adminUsers.findByPk(userDecodeId, { transaction });
+
+    // let dynamicWhere = {
+    //   countryId: role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id,
+    //   userPrimaryInfoId: student_id,
+    // };
 
     let dynamicWhere = {
-      countryId: role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id,
+      countryId: assigned_country,
       userPrimaryInfoId: student_id,
     };
     
-    const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
+    // const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
     
-    const statusRes = await updateClosedStatus(student_id, updateStatusCountry);
+    // const statusRes = await updateClosedStatus(student_id, updateStatusCountry);
+    const statusRes = await updateClosedStatus(student_id, assigned_country);
     
     if (!statusRes) {
       return res.status(404).json({
@@ -415,18 +434,39 @@ exports.kycPendingDetails = async (req, res) => {
                         attributes: ["source_name"],
                         required: true, // Set this association as required
                       },
+                      // {
+                      //   model: db.adminUsers,
+                      //   as: "counselors",
+                      //   attributes: ["name", "id", "country_id"],
+                      //   through: { attributes: [] },
+                      //   subquery: false,
+                      //   required: false, // Set this association as required
+                      //   where: {
+                      //     country_id: {
+                      //       [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                      //     },
+                      //   },
+                      // },
                       {
                         model: db.adminUsers,
                         as: "counselors",
-                        attributes: ["name", "id", "country_id"],
+                        attributes: ["name", "id"],
                         through: { attributes: [] },
+                        include: [
+                          {
+                            model: db.country,
+                            attributes: ["country_name", "id"],
+                            through: { attributes: [] },
+                            where: {
+                              id: {
+                                [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"),
+                              },
+                            },
+                            required: false,
+                          },
+                        ],
                         subquery: false,
                         required: false, // Set this association as required
-                        where: {
-                          country_id: {
-                            [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
-                          },
-                        },
                       },
                     ],
                   },
@@ -457,7 +497,18 @@ exports.kycPendingDetails = async (req, res) => {
         where: dynamicWhere,
       });
     } else if (type == "country_manager") {
-      const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+      // const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+      const { countries } = await db.adminUsers.findByPk(userDecodeId, {
+        include: [
+          {
+            model: db.country,
+            attributes: ["country_name", "id"],
+            through: { attributes: [] }
+          },
+        ],
+      });
+      
       applicationData = await db.application.findAll({
         include: [
           {
@@ -469,7 +520,8 @@ exports.kycPendingDetails = async (req, res) => {
               {
                 model: db.studyPreference,
                 as: "studyPreference",
-                where: { countryId: country_id },
+                // where: { countryId: country_id },
+                where: { countryId: countries?.[0]?.id },
                 required: true, // Set this association as required
                 include: [
                   {
@@ -496,18 +548,39 @@ exports.kycPendingDetails = async (req, res) => {
                         attributes: ["source_name"],
                         required: true, // Set this association as required
                       },
+                      // {
+                      //   model: db.adminUsers,
+                      //   as: "counselors",
+                      //   attributes: ["name", "id", "country_id"],
+                      //   through: { attributes: [] },
+                      //   subquery: false,
+                      //   required: false, // Set this association as required
+                      //   where: {
+                      //     country_id: {
+                      //       [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                      //     },
+                      //   },
+                      // },
                       {
                         model: db.adminUsers,
                         as: "counselors",
-                        attributes: ["name", "id", "country_id"],
+                        attributes: ["name", "id"],
                         through: { attributes: [] },
+                        include: [
+                          {
+                            model: db.country,
+                            attributes: ["country_name", "id"],
+                            through: { attributes: [] },
+                            where: {
+                              id: {
+                                [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"),
+                              },
+                            },
+                            required: false,
+                          },
+                        ],
                         subquery: false,
                         required: false, // Set this association as required
-                        where: {
-                          country_id: {
-                            [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
-                          },
-                        },
                       },
                     ],
                   },
@@ -558,7 +631,17 @@ exports.kycPendingDetails = async (req, res) => {
 exports.kycRejectedDetails = async (req, res) => {
   try {
     const { userDecodeId } = req;
-    const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+    // const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+    const { countries } = await db.adminUsers.findByPk(userDecodeId, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }
+        },
+      ],
+    });
 
     const applicationData = await db.application.findAll({
       include: [
@@ -571,7 +654,8 @@ exports.kycRejectedDetails = async (req, res) => {
             {
               model: db.studyPreference,
               as: "studyPreference",
-              where: { countryId: country_id },
+              // where: { countryId: country_id },
+              where: { countryId: countries?.[0]?.id },
               required: true, // Set this association as required
               include: [
                 {
@@ -598,18 +682,39 @@ exports.kycRejectedDetails = async (req, res) => {
                       attributes: ["source_name"],
                       required: true, // Set this association as required
                     },
+                    // {
+                    //   model: db.adminUsers,
+                    //   as: "counselors",
+                    //   attributes: ["name", "id", "country_id"],
+                    //   through: { attributes: [] },
+                    //   subquery: false,
+                    //   required: false, // Set this association as required
+                    //   where: {
+                    //     country_id: {
+                    //       [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                    //     },
+                    //   },
+                    // },
                     {
                       model: db.adminUsers,
                       as: "counselors",
-                      attributes: ["name", "id", "country_id"],
+                      attributes: ["name", "id"],
                       through: { attributes: [] },
+                      include: [
+                        {
+                          model: db.country,
+                          attributes: ["country_name", "id"],
+                          through: { attributes: [] },
+                          where: {
+                            id: {
+                              [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"),
+                            },
+                          },
+                          required: false,
+                        },
+                      ],
                       subquery: false,
                       required: false, // Set this association as required
-                      where: {
-                        country_id: {
-                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
-                        },
-                      },
                     },
                   ],
                 },
@@ -657,7 +762,17 @@ exports.kycRejectedDetails = async (req, res) => {
 exports.kycApprovedDetails = async (req, res) => {
   try {
     const { userDecodeId } = req;
-    const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+    // const { country_id } = await db.adminUsers.findByPk(userDecodeId);
+
+    const { countries } = await db.adminUsers.findByPk(userDecodeId, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }
+        },
+      ],
+    });
 
     const applicationData = await db.application.findAll({
       include: [
@@ -670,7 +785,8 @@ exports.kycApprovedDetails = async (req, res) => {
             {
               model: db.studyPreference,
               as: "studyPreference",
-              where: { countryId: country_id },
+              // where: { countryId: country_id },
+              where: { countryId: countries?.[0]?.id },
               required: true, // Set this association as required
               include: [
                 {
@@ -697,18 +813,39 @@ exports.kycApprovedDetails = async (req, res) => {
                       attributes: ["source_name"],
                       required: true, // Set this association as required
                     },
+                    // {
+                    //   model: db.adminUsers,
+                    //   as: "counselors",
+                    //   attributes: ["name", "id", "country_id"],
+                    //   through: { attributes: [] },
+                    //   subquery: false,
+                    //   required: false, // Set this association as required
+                    //   where: {
+                    //     country_id: {
+                    //       [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                    //     },
+                    //   },
+                    // },
                     {
                       model: db.adminUsers,
                       as: "counselors",
-                      attributes: ["name", "id", "country_id"],
+                      attributes: ["name", "id"],
                       through: { attributes: [] },
+                      include: [
+                        {
+                          model: db.country,
+                          attributes: ["country_name", "id"],
+                          through: { attributes: [] },
+                          where: {
+                            id: {
+                              [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"),
+                            },
+                          },
+                          required: false,
+                        },
+                      ],
                       subquery: false,
                       required: false, // Set this association as required
-                      where: {
-                        country_id: {
-                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
-                        },
-                      },
                     },
                   ],
                 },
@@ -761,14 +898,22 @@ exports.rejectKYC = async (req, res, next) => {
 
     // Fetch user details
     const existUser = await db.adminUsers.findByPk(userDecodeId, {
-      attributes: ["name", "country_id"],
+      // attributes: ["name", "country_id"],
+      attributes: ["name"],
       include: [
+        // {
+        //   model: db.country,
+        //   attributes: ["country_name"],
+        // },
         {
           model: db.country,
-          attributes: ["country_name"],
+          attributes: ["country_name", "id", "country_code"],
+          through: { attributes: [] }
         },
       ],
     });
+
+    console.log(JSON.stringify(existUser, 0, 2));
 
     // Fetch application details
     const existApplication = await db.application.findByPk(application_id, {
@@ -823,7 +968,8 @@ exports.rejectKYC = async (req, res, next) => {
     // Fetch existing task details
     const assignedCountry = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString())
       ? assigned_country_id
-      : existUser?.country_id;
+      // : existUser?.country_id;
+      : existUser?.countries?.[0]?.id;
 
     const existTask = await db.tasks.findOne({
       attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
@@ -843,7 +989,8 @@ exports.rejectKYC = async (req, res, next) => {
     const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
       // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
       ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
-      : existUser?.country?.country_name;
+      // : existUser?.country?.country_name;
+      : existUser?.countries?.[0]?.country_code;
 
     // Update task remarks
     const formattedTaskRemark = [
@@ -1077,18 +1224,39 @@ exports.getAllKycByUser = async (req, res) => {
                       attributes: ["source_name"],
                       required: true, // Set this association as required
                     },
+                    // {
+                    //   model: db.adminUsers,
+                    //   as: "counselors",
+                    //   attributes: ["name", "id", "country_id"],
+                    //   through: { attributes: [] },
+                    //   subquery: false,
+                    //   required: false, // Set this association as required
+                    //   where: {
+                    //     country_id: {
+                    //       [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
+                    //     },
+                    //   },
+                    // },
                     {
                       model: db.adminUsers,
                       as: "counselors",
-                      attributes: ["name", "id", "country_id"],
+                      attributes: ["name", "id"],
                       through: { attributes: [] },
+                      include: [
+                        {
+                          model: db.country,
+                          attributes: ["country_name", "id"],
+                          through: { attributes: [] },
+                          where: {
+                            id: {
+                              [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"),
+                            },
+                          },
+                          required: false,
+                        },
+                      ],
                       subquery: false,
                       required: false, // Set this association as required
-                      where: {
-                        country_id: {
-                          [db.Sequelize.Op.eq]: db.Sequelize.col("studyPreferenceDetails.studyPreference.countryId"), // Use the full alias path
-                        },
-                      },
                     },
                   ],
                 },

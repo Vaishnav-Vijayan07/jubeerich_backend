@@ -15,7 +15,18 @@ exports.getTasks = async (req, res) => {
   try {
     const userId = req.userDecodeId;
 
-    const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+    const adminUser = await db.adminUsers.findByPk(userId, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }
+        },
+      ],
+    });
+
+    console.log('adminUser',JSON.stringify(adminUser,0,2));
+    let countryIds = adminUser?.countries?.map((data) => data?.id)
 
     if (!adminUser) {
       return res.status(404).json({
@@ -35,13 +46,14 @@ exports.getTasks = async (req, res) => {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
           // where: { country_id: adminUser?.country_id },
-          where: {
-            country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(
-                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-              ),
-            },
-          },
+          where: { country_id: { [Op.in]: countryIds } },
+          // where: {
+          //   country_id: {
+          //     [db.Sequelize.Op.in]: db.sequelize.literal(
+          //       `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+          //     ),
+          //   },
+          // },
         },
         required: false,
         include: [

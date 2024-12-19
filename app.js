@@ -45,7 +45,3 @@ db.sequelize
   .catch((err) => {
     console.log(err.toString());
   });
-
-// app.listen(port, () => {
-//   console.log(`Backend listens to ${port}`);
-// });
