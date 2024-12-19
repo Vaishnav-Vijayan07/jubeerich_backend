@@ -85,6 +85,7 @@ const {
   updateTaskConfig,
   createOrUpdateTaskConfig,
 } = require("../controller/master_data_controller");
+const { importAdminUsers } = require("../controller/data_import_controller");
 
 const router = express.Router();
 
@@ -468,5 +469,7 @@ router.get("/master_data/:id", [authMiddleware.checkUserAuth], getTaskConfig);
 router.get("/master_data", [authMiddleware.checkUserAuth], getAllTaskConfig);
 
 router.post("/master_data", [authMiddleware.checkUserAuth], createOrUpdateTaskConfig);
+
+router.post('/import_admin_users', upload.single('file'), importAdminUsers);
 
 module.exports = router;
