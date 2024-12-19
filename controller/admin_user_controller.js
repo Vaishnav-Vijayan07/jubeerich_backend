@@ -38,6 +38,7 @@ exports.addAdminUsers = async (req, res) => {
     region_id,
     country_ids,
     franchise_id,
+    status
   } = req.body;
 
   const transaction = await db.sequelize.transaction();
@@ -96,6 +97,7 @@ exports.addAdminUsers = async (req, res) => {
         region_id,
         // country_id,
         franchise_id,
+        status
       },
       { transaction }
     );
@@ -138,6 +140,7 @@ exports.updateAdminUsers = async (req, res) => {
     country_ids,
     franchise_id,
     password,
+    status
   } = req.body;
 
   const transaction = await db.sequelize.transaction();
@@ -201,6 +204,7 @@ exports.updateAdminUsers = async (req, res) => {
       role_id: role_id ?? user.role_id,
       region_id: region_id ?? user.region_id,
       franchise_id: franchise_id ?? user.franchise_id,
+      status: status ?? user.status,
       password: password ? bcrypt.hashSync(password + process.env.SECRET) : user.password,
     };
 
