@@ -306,7 +306,13 @@ exports.getAllLeads = async (req, res) => {
             { created_by: cre_id },
             { assigned_cre: cre_id },
             { assigned_regional_manager: cre_id },
-            { assigned_counsellor_tl: cre_id },
+            // { assigned_counsellor_tl: cre_id },
+            { 
+              [db.Sequelize.Op.and]: [
+                { assigned_counsellor_tl: cre_id },
+                { assigned_branch_counselor: null }
+              ]
+            },
             { assigned_branch_counselor: cre_id },
             {
               [db.Sequelize.Op.and]: [
