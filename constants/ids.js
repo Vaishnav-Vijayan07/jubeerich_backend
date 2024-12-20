@@ -22,6 +22,9 @@ const IdsFromEnv = {
   NEW_LEAD_STATUS_ID: parseInt(process.env.NEW_LEAD_STATUS_ID, 10),
   FUTURE_LEAD_STATUS_ID: parseInt(process.env.FUTURE_LEAD_STATUS_ID, 10),
   SPAM_LEAD_STATUS_ID: parseInt(process.env.SPAM_LEAD_STATUS_ID, 10),
+  FAILED_LEAD_STATUS_ID: parseInt(process.env.FAILED_LEAD_STATUS_ID, 10),
+  SPAM_LEAD_STATUS_ID: parseInt(process.env.SPAM_LEAD_STATUS_ID, 10),
+  CLOSED_LEAD_STATUS_ID : parseInt(process.env.CLOSED_LEAD_STATUS_ID, 10),
 };
 
 module.exports = IdsFromEnv;

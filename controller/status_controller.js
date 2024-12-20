@@ -1,7 +1,7 @@
 const db = require("../models");
 const Status = db.status;
+const StatusType = db.statusType;
 const { validationResult, check } = require("express-validator");
-
 
 // Validation rules for Status
 const statusValidationRules = [
@@ -161,5 +161,73 @@ exports.deleteStatus = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  }
+};
+
+// Fetch all status types
+exports.getStatusTypes = async (req, res) => {
+  try {
+    const statusTypes = await StatusType.findAll({
+      attributes: ["id", "type_name", "priority"],
+    });
+    res.status(200).json({ success: true, data: statusTypes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error fetching status types", error: error.message });
+  }
+};
+
+// Add a new status type
+exports.addStatusType = async (req, res) => {
+  try {
+    const { type_name, priority } = req.body;
+
+    if (!type_name || priority === undefined) {
+      res.status(400).json({ success: false, message: "type_name and priority are required" });
+      return;
+    }
+
+    const newStatusType = await StatusType.create({ type_name, priority });
+    res.status(201).json({ success: true, data: newStatusType });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error adding status type", error: error.message });
+  }
+};
+
+// Update an existing status type
+exports.updateStatusType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type_name, priority } = req.body;
+
+    const statusType = await StatusType.findByPk(id);
+
+    if (!statusType) {
+      res.status(404).json({ success: false, message: "Status type not found" });
+      return;
+    }
+
+    await statusType.update({ type_name, priority });
+    res.status(200).json({ success: true, data: statusType });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error updating status type", error: error.message });
+  }
+};
+
+// Delete a status type
+exports.deleteStatusType = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const statusType = await StatusType.findByPk(id);
+
+    if (!statusType) {
+      res.status(404).json({ success: false, message: "Status type not found" });
+      return;
+    }
+
+    await statusType.destroy();
+    res.status(200).json({ success: true, message: "Status type deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error deleting status type", error: error.message });
   }
 };

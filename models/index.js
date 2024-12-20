@@ -66,13 +66,24 @@ db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
 db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 db.masterData = require("./masterData")(sequelize, Sequelize);
+db.statusType = require("./statusTypes")(sequelize, Sequelize);
 
 //Associations
 
-db.application.belongsTo(db.adminUsers,{
+db.statusType.hasMany(db.status, {
+  foreignKey: "type_id",
+  as: "status",
+});
+
+db.status.belongsTo(db.statusType, {
+  foreignKey: "type_id",
+  as: "statusType",
+});
+
+db.application.belongsTo(db.adminUsers, {
   foreignKey: "counsellor_id",
-  as: "counsellor"
-})
+  as: "counsellor",
+});
 
 db.adminUsers.hasMany(db.application, {
   foreignKey: "counsellor_id",

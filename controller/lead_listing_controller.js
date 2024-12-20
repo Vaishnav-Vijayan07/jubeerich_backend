@@ -168,12 +168,8 @@ exports.getAllLeads = async (req, res) => {
   const roleId = req.role_id;
   const { page = 1, limit = 20, keyword } = req.query;
 
-  console.log("KEYWORD", keyword);
-
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
-
-  console.log("KEYWORD", dynamicIlike);
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
@@ -975,7 +971,6 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
               },
             ],
           },
-
         ],
       },
       include: [
@@ -1155,6 +1150,13 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 };
 
 exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
+  const { page = 1, limit = 20, keyword } = req.query;
+  const isSearchApplied = keyword ? true : false;
+  const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
+
   try {
     const allCounsellorTLs = await AdminUsers.findAll({
       where: { role_id: process.env.COUNSELLOR_TL_ID },
@@ -1162,7 +1164,7 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
     });
 
     const userId = req.userDecodeId;
-    const userPrimaryInfos = await UserPrimaryInfo.findAll({
+    const { rows, count } = await UserPrimaryInfo.findAndCountAll({
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1175,6 +1177,16 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           },
           {
             is_deleted: false,
+          },
+          {
+            [db.Sequelize.Op.or]: [
+              {
+                full_name: { [db.Sequelize.Op.iLike]: dynamicIlike },
+              },
+              {
+                email: { [db.Sequelize.Op.iLike]: dynamicIlike },
+              },
+            ],
           },
         ],
       },
@@ -1277,12 +1289,12 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
           required: false,
         },
       ],
+      offset: offset,
+      limit: parsedLimit,
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
-      userPrimaryInfos.map(async (info) => {
-        console.log("INFO", info);
-
+      rows.map(async (info) => {
         const preferredCountries = info.preferredCountries.map((country) => ({
           country_name: country.country_name,
           id: country.id,
@@ -1336,6 +1348,10 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
       status: true,
       message: "User primary info retrieved successfully",
       formattedUserPrimaryInfos,
+      totalPages: Math.ceil(count / limit),
+      count,
+      limit: limit,
+      isSearchApplied,
       allCounsellorTLs,
     });
   } catch (error) {
