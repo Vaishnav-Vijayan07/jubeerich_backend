@@ -5,13 +5,42 @@ const { leadStatusWiseCountQuery, leadStatusOfficeWiseCountQuery } = require("..
 
 exports.getDashboard = async (req, res) => {
   const { role_id } = req;
+  const { filterType, year, month, week, fromDate, toDate } = req.query;
+  let filterArgs = {};
+
+  console.log("filter", filterType);
+  console.log("year", year);
+  console.log("month", month);
+  console.log("week", week);
+  console.log("fromDate", fromDate);
+  console.log("toDate", toDate);
+
+  switch (filterType) {
+    case "monthly":
+      filterArgs = { type: filterType, year, month };
+      break;
+
+    case "weekly":
+      filterArgs = { type: filterType, year, month, week };
+      break;
+
+    case "custom":
+      filterArgs = { type: filterType, fromDate, toDate };
+      break;
+
+    default:
+      const today = new Date();
+      const tomorrow = new Date(today.setDate(today.getDate() + 1));
+      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split('T')[0] };
+      break;
+  }
 
   let result;
 
   try {
     switch (role_id) {
       case IdsFromEnv.IT_TEAM_ID:
-        result = await getDataForItTeam();
+        result = await getDataForItTeam(filterArgs);
         break;
       case IdsFromEnv.CRE_TL_ID:
         result = await getDataForCreTl();
@@ -47,7 +76,34 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
-const getDataForItTeam = async () => {
+const getDataForItTeam = async (filterArgs) => {
+
+  console.log("filterArgs", filterArgs);
+  const {filterType} = filterArgs;
+  let whereClause = {};
+
+  switch (filterType) {
+    case "monthly":
+      filterArgs = { type: filterType, year, month };
+      break;
+
+    case "weekly":
+      filterArgs = { type: filterType, year, month, week };
+      break;
+
+    case "custom":
+      filterArgs = { type: filterType, fromDate, toDate };
+      break;
+
+    default:
+      const today = new Date();
+      const tomorrow = new Date(today.setDate(today.getDate() + 1));
+      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split('T')[0] };
+      break;
+  }
+
+  return
+
   try {
     const officeTypes = await db.officeType.findAll({
       attributes: ["office_type_name"],
@@ -60,19 +116,19 @@ const getDataForItTeam = async () => {
     });
 
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
-      attributes: ["id", "office_type", "stage","full_name"],
+      attributes: ["id", "office_type", "stage", "full_name"],
       include: [
         {
           model: db.status,
           as: "preferredStatus",
           attributes: ["status_name"],
-          through: {attributes: []}
+          through: { attributes: [] },
         },
         {
           model: db.country,
           as: "preferredCountries",
           attributes: ["country_name"],
-          through: {attributes: []}
+          through: { attributes: [] },
         },
         {
           model: db.officeType,

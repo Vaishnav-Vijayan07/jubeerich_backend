@@ -86,6 +86,7 @@ const {
   createOrUpdateTaskConfig,
 } = require("../controller/master_data_controller");
 const { getDashboard } = require("../controller/dashboard_controller");
+const validateDateParams = require("../middleware/validateFilterParams");
 
 const router = express.Router();
 
@@ -100,7 +101,7 @@ router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 router.post("/login", authController.login);
 
 //Dashboard Routes
-router.get("/dashboard", [authMiddleware.checkUserAuth], getDashboard);
+router.get("/dashboard",validateDateParams, [authMiddleware.checkUserAuth], getDashboard);
 
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
