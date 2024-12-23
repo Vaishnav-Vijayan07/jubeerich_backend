@@ -1,5 +1,5 @@
 const validateDateParams = (req, res, next) => {
-  const { filterType, year, month, week, fromDate, toDate } = req.query;
+  const { filterType, year, month, fromDate, toDate } = req.query;
 
   try {
     switch (filterType) {
@@ -13,20 +13,14 @@ const validateDateParams = (req, res, next) => {
         break;
 
       case "weekly":
-        if (!year || !month || !week) {
-          return res.status(400).json({ error: "Year, month and week are required for weekly filter" });
-        }
-        if (isNaN(week) || week < 1 || week > 53) {
-          return res.status(400).json({ error: "Invalid week number" });
+        if (!year || !month || !fromDate) {
+          return res.status(400).json({ error: "Year, month and week are required for week start date filter" });
         }
         break;
 
       case "custom":
         if (!fromDate || !toDate) {
           return res.status(400).json({ error: "From date and to date are required for custom filter" });
-        }
-        if (!moment(fromDate, "YYYY-MM-DD", true).isValid() || !moment(toDate, "YYYY-MM-DD", true).isValid()) {
-          return res.status(400).json({ error: "Invalid date format. Use YYYY-MM-DD" });
         }
         break;
 

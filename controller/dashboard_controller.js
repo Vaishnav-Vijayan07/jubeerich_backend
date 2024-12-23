@@ -1,17 +1,17 @@
 const { QueryTypes } = require("sequelize");
 const IdsFromEnv = require("../constants/ids");
 const db = require("../models");
-const { leadStatusWiseCountQuery, leadStatusOfficeWiseCountQuery } = require("../raw/queries");
+const { getLeadStatusOfficeWiseCountQuery, getLeadStatusWiseCountQuery } = require("../raw/queries");
+const { formatToDbDate, getWeeklyDateRange, getDateRangeCondition } = require("../utils/date_helpers");
 
 exports.getDashboard = async (req, res) => {
   const { role_id } = req;
-  const { filterType, year, month, week, fromDate, toDate } = req.query;
+  const { filterType, year, month, fromDate, toDate } = req.query;
   let filterArgs = {};
 
   console.log("filter", filterType);
   console.log("year", year);
   console.log("month", month);
-  console.log("week", week);
   console.log("fromDate", fromDate);
   console.log("toDate", toDate);
 
@@ -21,7 +21,7 @@ exports.getDashboard = async (req, res) => {
       break;
 
     case "weekly":
-      filterArgs = { type: filterType, year, month, week };
+      filterArgs = { type: filterType, year, month, fromDate };
       break;
 
     case "custom":
@@ -31,7 +31,7 @@ exports.getDashboard = async (req, res) => {
     default:
       const today = new Date();
       const tomorrow = new Date(today.setDate(today.getDate() + 1));
-      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split('T')[0] };
+      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split("T")[0] };
       break;
   }
 
@@ -77,32 +77,13 @@ exports.getDashboard = async (req, res) => {
 };
 
 const getDataForItTeam = async (filterArgs) => {
+  const { type } = filterArgs;
+  const { whereRaw} = getDateRangeCondition(filterArgs, type);
 
-  console.log("filterArgs", filterArgs);
-  const {filterType} = filterArgs;
-  let whereClause = {};
+  console.log("whereClause", whereRaw);
 
-  switch (filterType) {
-    case "monthly":
-      filterArgs = { type: filterType, year, month };
-      break;
-
-    case "weekly":
-      filterArgs = { type: filterType, year, month, week };
-      break;
-
-    case "custom":
-      filterArgs = { type: filterType, fromDate, toDate };
-      break;
-
-    default:
-      const today = new Date();
-      const tomorrow = new Date(today.setDate(today.getDate() + 1));
-      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split('T')[0] };
-      break;
-  }
-
-  return
+  const leadWiseQuery = getLeadStatusWiseCountQuery(whereRaw);
+  const leadStatusOfficeWiseCountQuery = getLeadStatusOfficeWiseCountQuery(whereRaw);
 
   try {
     const officeTypes = await db.officeType.findAll({
@@ -139,7 +120,7 @@ const getDataForItTeam = async (filterArgs) => {
       limit: 6,
     });
 
-    const leadCount = await db.sequelize.query(leadStatusWiseCountQuery, {
+    const leadCount = await db.sequelize.query(leadWiseQuery, {
       type: QueryTypes.SELECT,
     });
 
@@ -213,5 +194,8 @@ const transformOfficeWiseCountToChartData = (officeWiseCount, officeTypes, statu
     data,
   }));
 
-  return { categories, series };
+
+  console.log("office==>",officeWiseCount)
+
+  return { categories, series : officeWiseCount.length > 0 ? series : [] };
 };
