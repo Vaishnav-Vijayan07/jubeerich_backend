@@ -1,7 +1,7 @@
 const { QueryTypes } = require("sequelize");
 const IdsFromEnv = require("../constants/ids");
 const db = require("../models");
-const { transformOfficeWiseCountToChartData, processCardData } = require("../utils/dashboard_controller_helpers");
+const { transformOfficeWiseCountToChartData, processCardData, getDataForItTeam } = require("../utils/dashboard_controller_helpers");
 
 exports.getDashboard = async (req, res) => {
   const { role_id } = req;
