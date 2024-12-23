@@ -7,11 +7,11 @@ module.exports = (sequelize, Sequelize) => {
                 primaryKey: true,
             },
             campus_name: {
-                type: Sequelize.STRING(100),
+                type: Sequelize.STRING(500),
                 allowNull: false,
             },
             location: {
-                type: Sequelize.STRING(100),
+                type: Sequelize.STRING(500),
                 allowNull: false,
             },
             university_id: {

@@ -8,7 +8,7 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
       },
       course_name: {
-        type: Sequelize.STRING(100),
+        type: Sequelize.STRING(500),
         allowNull: false,
       },
       course_description: {
