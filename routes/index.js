@@ -85,6 +85,8 @@ const {
   updateTaskConfig,
   createOrUpdateTaskConfig,
 } = require("../controller/master_data_controller");
+const { getDashboard } = require("../controller/dashboard_controller");
+const validateDateParams = require("../middleware/validateFilterParams");
 const { importAdminUsers } = require("../controller/data_import_controller");
 
 const router = express.Router();
@@ -99,6 +101,8 @@ router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);
 // Auth routes
 router.post("/login", authController.login);
 
+//Dashboard Routes
+router.get("/dashboard",validateDateParams, [authMiddleware.checkUserAuth], getDashboard);
 
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
@@ -228,6 +232,11 @@ router.get("/status/:id", [authMiddleware.checkUserAuth], StatusController.getSt
 router.post("/status", [authMiddleware.checkUserAuth], StatusController.addStatus);
 router.put("/status/:id", [authMiddleware.checkUserAuth], StatusController.updateStatus);
 router.delete("/status/:id", [authMiddleware.checkUserAuth], StatusController.deleteStatus);
+
+router.get("/status_type", [authMiddleware.checkUserAuth], StatusController.getStatusTypes);
+router.post("/status_type", [authMiddleware.checkUserAuth], StatusController.addStatusType);
+router.put("/status_type/:id", [authMiddleware.checkUserAuth], StatusController.updateStatusType);
+router.delete("/status_type/:id", [authMiddleware.checkUserAuth], StatusController.deleteStatusType);
 
 // Leads routes
 router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);

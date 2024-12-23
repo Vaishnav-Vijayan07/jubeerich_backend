@@ -8,6 +8,14 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
+      type_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "status_type",
+          key: "id",
+        },
+      },
       status_name: {
         type: Sequelize.STRING(255),
         allowNull: false,
