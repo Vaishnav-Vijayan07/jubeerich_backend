@@ -9,14 +9,24 @@ const { createTaskDesc, updateTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
 const IdsFromEnv = require("../constants/ids");
 
-
 exports.getTasks = async (req, res) => {
   const { date } = req.query;
 
   try {
     const userId = req.userDecodeId;
 
-    const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
+    const adminUser = await db.adminUsers.findByPk(userId, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id"],
+          through: { attributes: [] }
+        },
+      ],
+    });
+
+    console.log('adminUser',JSON.stringify(adminUser,0,2));
+    let countryIds = adminUser?.countries?.map((data) => data?.id)
 
     if (!adminUser) {
       return res.status(404).json({
@@ -35,7 +45,15 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id },
+          // where: { country_id: adminUser?.country_id },
+          where: { country_id: { [Op.in]: countryIds } },
+          // where: {
+          //   country_id: {
+          //     [db.Sequelize.Op.in]: db.sequelize.literal(
+          //       `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+          //     ),
+          //   },
+          // },
         },
         required: false,
         include: [
@@ -132,7 +150,7 @@ exports.getTasks = async (req, res) => {
 exports.getTaskById = async (req, res) => {
   try {
     const { id } = req.params; // Get task ID from URL parameters
-    const userId = req.userDecodeId; // Get user ID from decoded JWT or session
+    const userId = req.userDecodeId;
 
     const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
 
@@ -142,6 +160,9 @@ exports.getTaskById = async (req, res) => {
         message: "Admin user not found",
       });
     }
+
+    console.log("adminUser ===>", adminUser);
+    console.log("userId ====>", userId);
 
     let countryFilter;
 
@@ -153,7 +174,14 @@ exports.getTaskById = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id },
+          // where: { country_id: adminUser?.country_id },
+          where: {
+            country_id: {
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
+            },
+          },
         },
         required: false,
         include: [
@@ -302,12 +330,12 @@ exports.finishTask = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: countryIds },
-            attributes: ["country_name","country_code"],
+            attributes: ["country_name", "country_code"],
           });
 
           if (countries) {
             // countryName = countries.map((country) => country.country_name).join(", ");
-            countryName = countries.map((country) => country.country_code).join(", ");
+            countryName = countries?.map((country) => country.country_code).join(", ");
           }
         }
 
@@ -330,7 +358,7 @@ exports.finishTask = async (req, res) => {
             description: formattedDesc,
             dueDate: dueDate,
             updatedBy: req.userDecodeId,
-            assigned_country: preferredCountries?.[0]?.country_id
+            assigned_country: preferredCountries?.[0]?.country_id,
           });
         }
         const { role_name: role } = await getRoleForUserHistory(leastAssignedUsers[0]);
@@ -460,7 +488,10 @@ exports.assignNewCountry = async (req, res) => {
       // await student.addPreferredStatus(IdsFromEnv.NEW_LEAD_STATUS_ID, { transaction });
 
       // Assign the new country to student's preferred countries with status
-      await db.userContries.create({ user_primary_info_id: student.id, country_id: newCountryId, status_id: IdsFromEnv.NEW_LEAD_STATUS_ID }, { transaction });
+      await db.userContries.create(
+        { user_primary_info_id: student.id, country_id: newCountryId, status_id: IdsFromEnv.NEW_LEAD_STATUS_ID },
+        { transaction }
+      );
 
       // Create study preference for the student
       await db.studyPreference.create(
@@ -472,25 +503,29 @@ exports.assignNewCountry = async (req, res) => {
       );
       // Fetch country name for the task title
       const country = await db.country.findByPk(newCountryId, {
-        attributes: ["country_name","country_code"],
+        attributes: ["country_name", "country_code"],
         transaction,
       });
       // const countryName = country ? country.country_name : "Unknown";
       const countryName = country ? country.country_code : "Unknown";
 
       const users = await getLeastAssignedUsers(newCountryId);
+      
       if (users?.leastAssignedUserId) {
         const leastAssignedUserId = users.leastAssignedUserId;
 
-        // Assign the new counselor to the student
-        await db.userCounselors.create(
-          {
-            user_id: studentId,
-            counselor_id: leastAssignedUserId,
-          },
-          { transaction }
-        );
+        console.log("leastAssignedUserId ====>", leastAssignedUserId);
 
+        // Assign the new counselor to the student
+        if (userId != leastAssignedUserId) {
+          await db.userCounselors.create(
+            {
+              user_id: studentId,
+              counselor_id: leastAssignedUserId,
+            },
+            { transaction }
+          );
+        }
         // Prepare due date and task creation details
         const dueDate = new Date();
 
@@ -502,6 +537,9 @@ exports.assignNewCountry = async (req, res) => {
             message: "Description error",
           });
         }
+
+        console.log("here it isssssssss");
+        
 
         // Create task for the least assigned user
         if (role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID) {
@@ -533,19 +571,25 @@ exports.assignNewCountry = async (req, res) => {
             { transaction }
           );
         }
+
         const { role_name } = await getRoleForUserHistory(leastAssignedUserId);
-        const { country_id, branch_id } = await db.adminUsers.findByPk(userId, {
-          attributes: ["country_id", "branch_id"], // Fetch only required attributes
-        });
+        const { branch_id } = await db.adminUsers.findByPk(userId);
 
         let region_name = null;
 
         if (role_id == process.env.COUNSELLOR_ROLE_ID) {
-          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, country_id, transaction);
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
+          console.log("error is here after ===============");
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           const region = await getRegionDataForHistory(branch_id);
           region_name = region.region_name;
-          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
+          await addLeadHistory(
+            studentId,
+            `Country ${countryName} added by ${current_user_role} - ${region_name}`,
+            userId,
+            null,
+            transaction
+          );
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
@@ -553,7 +597,7 @@ exports.assignNewCountry = async (req, res) => {
         if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           await addLeadHistory(studentId, `Task assigned to ${current_user_role} - ${region_name}`, userId, null, transaction);
         } else {
-          await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, country_id, transaction);
+          await addLeadHistory(studentId, `Task assigned to ${countryName}'s ${role_name}`, userId, null, transaction);
         }
       }
     }
@@ -571,7 +615,7 @@ exports.assignNewCountry = async (req, res) => {
     // Rollback transaction in case of errors
     if (transaction) await transaction.rollback();
 
-    console.error(`Error assigning new country: ${error.message}`);
+    console.error(`Error assigning new country: ${error}`);
     return res.status(500).json({
       status: false,
       message: "Internal server error",
@@ -637,7 +681,14 @@ exports.getStudentBasicInfoById = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: adminUser?.country_id },
+          // where: { country_id: adminUser?.country_id },
+          where: {
+            country_id: {
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
+            },
+          },
         },
         required: false,
         include: [
@@ -1180,10 +1231,68 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
   }
 };
 
+// const getLeastAssignedUsers = async (countryId) => {
+//   const roleId = process.env.COUNSELLOR_ROLE_ID;
+//   try {
+//     // Use raw SQL to execute the query
+//     const [results] = await db.sequelize.query(
+//       `
+//       WITH user_assignments AS (
+//         SELECT
+//           "admin_users"."id" AS "user_id",
+//           COUNT("user_counselors"."counselor_id") AS "assignment_count"
+//         FROM "admin_users"
+//         LEFT JOIN "user_counselors"
+//           ON "admin_users"."id" = "user_counselors"."counselor_id"
+//         WHERE "admin_users"."role_id" = :roleId
+//           AND "admin_users"."country_id" = :countryId
+//         GROUP BY "admin_users"."id"
+//       )
+//       SELECT "user_id"
+//       FROM user_assignments
+//       ORDER BY "assignment_count" ASC, "user_id" ASC
+//       LIMIT 1;
+//     `,
+//       {
+//         replacements: { roleId, countryId },
+//         type: db.Sequelize.QueryTypes.SELECT,
+//       }
+//     );
+
+//     console.log("results ===>", results);
+
+//     // Check if results is defined and not null
+//     if (!results || Object.keys(results).length === 0) {
+//       return {
+//         leastAssignedUserId: null,
+//       };
+//     }
+
+//     // Extract user_id if results has user_id
+//     const leastAssignedUserId = results.user_id;
+
+//     // If user_id is undefined, return an error response
+//     if (leastAssignedUserId === undefined) {
+//       return {
+//         leastAssignedUserId: null,
+//       };
+//     }
+
+//     return {
+//       leastAssignedUserId,
+//     };
+//   } catch (error) {
+//     console.error(`Error finding least assigned users: ${error}`);
+//     return {
+//       leastAssignedUserId: null,
+//     };
+//   }
+// };
+
 const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
+
   try {
-    // Use raw SQL to execute the query
     const [results] = await db.sequelize.query(
       `
       WITH user_assignments AS (
@@ -1191,41 +1300,31 @@ const getLeastAssignedUsers = async (countryId) => {
           "admin_users"."id" AS "user_id", 
           COUNT("user_counselors"."counselor_id") AS "assignment_count"
         FROM "admin_users"
+        -- Join the admin_user_countries table to filter users by country
+        INNER JOIN "admin_user_countries" 
+          ON "admin_users"."id" = "admin_user_countries"."admin_user_id"
         LEFT JOIN "user_counselors" 
           ON "admin_users"."id" = "user_counselors"."counselor_id"
         WHERE "admin_users"."role_id" = :roleId 
-          AND "admin_users"."country_id" = :countryId
+          AND "admin_user_countries"."country_id" = :countryId
         GROUP BY "admin_users"."id"
       )
-      SELECT "user_id"
+      SELECT "user_id" AS "least_assigned_user_id"
       FROM user_assignments
       ORDER BY "assignment_count" ASC, "user_id" ASC
       LIMIT 1;
-    `,
+      `,
       {
         replacements: { roleId, countryId },
         type: db.Sequelize.QueryTypes.SELECT,
       }
     );
 
-    console.log("results ===>", results);
+    console.log("results ============================>", results);
 
-    // Check if results is defined and not null
-    if (!results || Object.keys(results).length === 0) {
-      return {
-        leastAssignedUserId: null,
-      };
-    }
-
-    // Extract user_id if results has user_id
-    const leastAssignedUserId = results.user_id;
-
-    // If user_id is undefined, return an error response
-    if (leastAssignedUserId === undefined) {
-      return {
-        leastAssignedUserId: null,
-      };
-    }
+    // Extract least assigned user ID
+    const leastAssignedUserId = results?.least_assigned_user_id || null;
+    console.log("leastAssignedUserId ==========================>", leastAssignedUserId);
 
     return {
       leastAssignedUserId,

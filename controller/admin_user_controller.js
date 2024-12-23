@@ -36,8 +36,9 @@ exports.addAdminUsers = async (req, res) => {
     role_id,
     branch_id,
     region_id,
-    country_id,
+    country_ids,
     franchise_id,
+    status
   } = req.body;
 
   const transaction = await db.sequelize.transaction();
@@ -94,11 +95,16 @@ exports.addAdminUsers = async (req, res) => {
         role_id,
         branch_id,
         region_id,
-        country_id,
+        // country_id,
         franchise_id,
+        status
       },
       { transaction }
     );
+
+    if (country_ids && Array.isArray(country_ids)) {
+      await newUser.addCountries(country_ids, { transaction });
+    }
 
     // Commit the transaction if everything succeeds
     await transaction.commit();
@@ -131,10 +137,13 @@ exports.updateAdminUsers = async (req, res) => {
     branch_id,
     role_id,
     region_id,
-    country_id,
+    country_ids,
     franchise_id,
     password,
+    status
   } = req.body;
+
+  const transaction = await db.sequelize.transaction();
 
   try {
     const conflicts = {};
@@ -171,12 +180,16 @@ exports.updateAdminUsers = async (req, res) => {
       if (conflicts.employee_id) conflictFields.push("Employee ID");
       if (conflicts.username) conflictFields.push("Username");
 
+      await transaction.rollback();
       return res.status(409).json({ status: false, message: `The following already exist: ${conflictFields.join(", ")}` });
     }
 
     // Find the user and update
-    const user = await db.adminUsers.findByPk(id);
-    if (!user) return res.status(204).json({ status: false, message: "Admin user not found" });
+    const user = await db.adminUsers.findByPk(id, { transaction });
+    if (!user) {
+      await transaction.rollback(); // Rollback if user not found
+      return res.status(204).json({ status: false, message: "Admin user not found" });
+    }
 
     // Prepare update data
     const updateData = {
@@ -190,15 +203,27 @@ exports.updateAdminUsers = async (req, res) => {
       branch_id: branch_id ?? user.branch_id,
       role_id: role_id ?? user.role_id,
       region_id: region_id ?? user.region_id,
-      country_id: country_id ?? user.country_id,
       franchise_id: franchise_id ?? user.franchise_id,
+      status: status ?? user.status,
       password: password ? bcrypt.hashSync(password + process.env.SECRET) : user.password,
     };
 
     // Update the admin user
-    await user.update(updateData);
+    await user.update(updateData, { transaction });
+
+    if (country_ids && Array.isArray(country_ids)) {
+      // First, remove existing countries (this will clear the current relationship)
+      await user.setCountries([], { transaction }); // Assuming the user model has the 'setCountries' method for many-to-many relationship
+
+      // Now, add the new countries
+      await user.addCountries(country_ids, { transaction }); // This will add the countries in the join table
+    }
+
+    await transaction.commit();
+
     return res.json({ status: true, message: "Admin user updated successfully", data: user });
   } catch (error) {
+    await transaction.rollback();
     console.error("Error updating admin user:", error);
     return res.status(500).json({ status: false, message: "Internal server error" });
   }
@@ -481,8 +506,9 @@ exports.getAllAdminUsers = async (req, res, next) => {
           },
           {
             model: db.country,
-            attributes: ["country_name"],
-            required: false, // This makes it a LEFT JOIN (optional relation)
+            attributes: ["country_name", "id"],
+            through: { attributes: [] },
+            required: false,
           },
         ],
       });
@@ -542,8 +568,9 @@ exports.getAllCounsellors = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -565,7 +592,15 @@ exports.getAllCounsellors = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        // country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -607,8 +642,9 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -628,7 +664,14 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -663,8 +706,9 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -684,7 +728,14 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };
@@ -717,8 +768,9 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
         },
         {
           model: db.country,
-          as: "country", // Ensure this alias matches your association setup
-          attributes: ["country_name"],
+          attributes: ["country_name", "id"],
+          through: { attributes: [] },
+          required: false,
         },
       ],
     });
@@ -738,7 +790,14 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       return {
         ...userJson,
         role: userJson.access_role ? userJson.access_role.role_name : null,
-        country_name: userJson.country ? userJson.country.country_name : null, // Include country name
+        countries: userJson.countries
+          ? userJson.countries.map((country) => {
+              return {
+                value: country?.id,
+                label: country?.country_name,
+              };
+            })
+          : [],
         access_role: undefined, // Remove the access_role object
         country: undefined, // Remove the country object
       };

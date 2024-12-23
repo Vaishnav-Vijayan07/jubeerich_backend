@@ -66,13 +66,13 @@ db.userHistory = require("./history")(sequelize, Sequelize);
 db.application = require("./application")(sequelize, Sequelize);
 db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 db.masterData = require("./masterData")(sequelize, Sequelize);
+db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
 
 //Associations
-
-db.application.belongsTo(db.adminUsers,{
+db.application.belongsTo(db.adminUsers, {
   foreignKey: "counsellor_id",
-  as: "counsellor"
-})
+  as: "counsellor",
+});
 
 db.adminUsers.hasMany(db.application, {
   foreignKey: "counsellor_id",
@@ -258,7 +258,20 @@ db.accessRoles.belongsTo(db.adminUsers, {
 });
 
 // AdminUser model
-db.adminUsers.belongsTo(db.country, { foreignKey: "country_id" });
+// db.adminUsers.belongsTo(db.country, { foreignKey: "country_id" });
+
+// admin_user_countries join table
+db.adminUsers.belongsToMany(db.country, {
+  through: "admin_user_countries", // Name of the join table
+  foreignKey: "admin_user_id",
+  otherKey: "country_id",
+});
+
+db.country.belongsToMany(db.adminUsers, {
+  through: "admin_user_countries", // Name of the join table
+  foreignKey: "country_id",
+  otherKey: "admin_user_id",
+});
 
 // comments
 db.comments.belongsTo(db.adminUsers, { foreignKey: "user_id", as: "user" });
@@ -268,7 +281,7 @@ db.comments.belongsTo(db.userPrimaryInfo, {
 });
 
 // Country model
-db.country.hasMany(db.adminUsers, { foreignKey: "country_id" });
+// db.country.hasMany(db.adminUsers, { foreignKey: "country_id" });
 
 db.userPrimaryInfo.hasMany(db.userExams, {
   foreignKey: "student_id",

@@ -223,7 +223,15 @@ exports.getAllLeads = async (req, res) => {
   try {
     let userPrimaryInfos;
 
-    const adminUser = await AdminUsers.findByPk(cre_id); // Await the promise to get the admin user data
+    const adminUser = await AdminUsers.findByPk(cre_id, {
+      include: [
+        {
+          model: db.country,
+          attributes: ["country_name", "id", "country_code"],
+          through: { attributes: [] }
+        },
+      ]
+    }); // Await the promise to get the admin user data
 
     if (!adminUser) {
       return res.status(404).json({
@@ -258,7 +266,8 @@ exports.getAllLeads = async (req, res) => {
             through: {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
-              where: { country_id: adminUser?.country_id },
+              // where: { country_id: adminUser?.country_id },
+              where: { country_id: adminUser?.countries?.[0]?.id },
             },
             required: false,
             include: [
@@ -330,7 +339,41 @@ exports.getAllLeads = async (req, res) => {
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
-        where,
+        where: {
+          [db.Sequelize.Op.or]: [
+            { assigned_cre_tl: cre_id },
+            { created_by: cre_id },
+            { assigned_cre: cre_id },
+            { assigned_regional_manager: cre_id },
+            // { assigned_counsellor_tl: cre_id },
+            { 
+              [db.Sequelize.Op.and]: [
+                { assigned_counsellor_tl: cre_id },
+                { assigned_branch_counselor: null }
+              ]
+            },
+            { assigned_branch_counselor: cre_id },
+            {
+              [db.Sequelize.Op.and]: [
+                db.Sequelize.literal(`EXISTS (
+                    SELECT 1 FROM "user_counselors" 
+                    WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                    AND "user_counselors"."counselor_id" = ${cre_id}
+                  )`),
+              ],
+            },
+            {
+              [db.Sequelize.Op.and]: [
+                db.Sequelize.literal(`EXISTS (
+                  SELECT 1 FROM "admin_users"
+                  WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
+                  AND "admin_users"."id" = ${cre_id}
+                )`),
+              ],
+            },
+          ],
+          is_deleted: false,
+        },
         include: [
           {
             model: db.leadType,
