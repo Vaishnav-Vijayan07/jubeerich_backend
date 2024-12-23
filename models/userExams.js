@@ -17,22 +17,10 @@ module.exports = (sequelize, Sequelize) => {
           },
           onDelete: "CASCADE",
         },
-        // exam_name: {
-        //   type: Sequelize.STRING(100),
-        //   allowNull: false,
-        // },
         exam_type: {
           type: Sequelize.STRING(100),
           allowNull: false,
-        },        
-        // marks: {
-        //   type: Sequelize.FLOAT,
-        //   allowNull: true,
-        // },
-        // document: {
-        //   type: Sequelize.STRING,
-        //   allowNull: true,
-        // },
+        },
         score_card: {
           type: Sequelize.STRING,
           allowNull: true,
@@ -42,23 +30,23 @@ module.exports = (sequelize, Sequelize) => {
           allowNull: false,
         },
         listening_score: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(5, 2),
           allowNull: false,
         },
         speaking_score: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(5, 2),
           allowNull: false
         },
         reading_score: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(5, 2),
           allowNull: false,
         },
         writing_score: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(5, 2),
           allowNull: false
         },
         overall_score: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DECIMAL(5, 2),
           allowNull: false,
         },
         updated_by: {
