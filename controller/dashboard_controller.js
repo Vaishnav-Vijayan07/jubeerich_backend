@@ -1,7 +1,12 @@
-const { QueryTypes } = require("sequelize");
 const IdsFromEnv = require("../constants/ids");
-const db = require("../models");
-const { transformOfficeWiseCountToChartData, processCardData, getDataForItTeam, getDataForCreTl } = require("../utils/dashboard_controller_helpers");
+const {
+  transformOfficeToStackData,
+  processCardData,
+  getDataForItTeam,
+  getDataForCreTl,
+  getDataForCre,
+  transformOfficeToBarData,
+} = require("../utils/dashboard_controller_helpers");
 
 exports.getDashboard = async (req, res) => {
   const { role_id, userDecodeId } = req;
@@ -35,6 +40,8 @@ exports.getDashboard = async (req, res) => {
   }
 
   let result;
+  let categories;
+  let series;
 
   try {
     switch (role_id) {
@@ -45,7 +52,7 @@ exports.getDashboard = async (req, res) => {
         result = await getDataForCreTl(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_ID:
-        result = await getDataForCre();
+        result = await getDataForCre(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.COUNTRY_MANAGER_ID:
         result = await getDataForCountryManager();
@@ -59,7 +66,15 @@ exports.getDashboard = async (req, res) => {
 
     const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount } = result;
     const { statCards } = processCardData(leadCount);
-    const { categories, series } = transformOfficeWiseCountToChartData(roleWiseData, graphCategory, statustyps);
+    if (role_id === IdsFromEnv.CRE_ID) {
+      const { barCategories, barSeries } = transformOfficeToBarData(roleWiseData, statustyps);
+      categories = barCategories;
+      series = barSeries;
+    } else {
+      const { stackCategories, stackSeries } = transformOfficeToStackData(roleWiseData, graphCategory, statustyps);
+      categories = stackCategories;
+      series = stackSeries;
+    }
 
     res.status(200).json({
       message: "Dashboard data fetched successfully",

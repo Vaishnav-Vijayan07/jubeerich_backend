@@ -60,15 +60,15 @@ const formatToDbDate = (date) => {
   return formattedDate;
 };
 
-const getDateRangeCondition = (filterArgs, type, role_id, user_id) => {
+const getDateRangeCondition = (filterArgs, type, role_id, user_id,creids = []) => {
   let whereRaw = "";
 
   switch (role_id) {
     case IdsFromEnv.CRE_TL_ID:
-      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      whereRaw = `WHERE rn = 1 AND created_by IN (${creids.join(", ")}, ${user_id})`;
       break;
     case IdsFromEnv.CRE_ID:
-      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      whereRaw = `WHERE rn = 1 AND created_by = ${user_id} OR assigned_cre = ${user_id}`;
       break;
     case IdsFromEnv.COUNTRY_MANAGER_ID:
       whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
@@ -77,6 +77,7 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id) => {
       whereRaw = "WHERE rn = 1";
   }
 
+  
   switch (type) {
     case "monthly":
       // Get the start and end dates for the month

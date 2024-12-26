@@ -91,7 +91,13 @@ module.exports = (sequelize, Sequelize) => {
       },
       created_by: {
         type: Sequelize.INTEGER,
+        references: {
+          model: "admin_users",
+          key: "id",
+        },
         allowNull: true,
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       assigned_cre_tl: {
         type: Sequelize.INTEGER,

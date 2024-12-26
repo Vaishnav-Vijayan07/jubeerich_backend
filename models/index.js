@@ -360,6 +360,10 @@ db.userPrimaryInfo.belongsTo(db.adminUsers, {
   as: "cre_name",
   foreignKey: "assigned_cre",
 });
+db.userPrimaryInfo.belongsTo(db.adminUsers, {
+  as: "created_admin",
+  foreignKey: "created_by",
+});
 db.userPrimaryInfo.belongsTo(db.branches, {
   as: "branch_name",
   foreignKey: "branch_id",
