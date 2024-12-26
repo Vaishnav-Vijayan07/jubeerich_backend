@@ -79,22 +79,27 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
 
   try {
     const cres = await db.adminUsers.findAll({
-      attributes: ["name"],
+      attributes: ["name","id"],
       where: {
         role_id: IdsFromEnv.CRE_ID,
       },
       raw: true,
     });
 
+    const credids = cres.map((cre) => cre.id);
+
     const statustyps = await db.statusType.findAll({
       attributes: ["type_name"],
       raw: true,
     });
 
+
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
       attributes: ["id", "office_type", "stage", "full_name"],
       where: {
-        created_by: userDecodeId,
+        created_by:{
+          [db.Sequelize.Op.in]: [...credids,userDecodeId],
+        }
       },
       include: [
         {
@@ -113,6 +118,11 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
           model: db.officeType,
           as: "office_type_name",
           attributes: ["office_type_name"],
+        },
+        {
+          model: db.adminUsers,
+          as: "cre_name",
+          attributes: ["name", "role_id"],
         },
       ],
       limit: 6,
