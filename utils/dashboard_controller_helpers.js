@@ -1,11 +1,17 @@
 const { QueryTypes } = require("sequelize");
 const db = require("../models");
-const { getLeadStatusWiseCountQuery, getLeadStatusOfficeWiseCountQuery } = require("../raw/queries");
+const {
+  getLeadStatusWiseCountQuery,
+  getLeadStatusOfficeWiseCountQuery,
+  getLeadStatusWiseCountCreTlQuery,
+  getLeadStatusCreWiseQuery,
+} = require("../raw/queries");
 const { getDateRangeCondition } = require("./date_helpers");
+const IdsFromEnv = require("../constants/ids");
 
-const getDataForItTeam = async (filterArgs) => {
+const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
-  const { whereRaw } = getDateRangeCondition(filterArgs, type);
+  const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
   console.log("whereClause", whereRaw);
 
@@ -55,7 +61,72 @@ const getDataForItTeam = async (filterArgs) => {
       type: QueryTypes.SELECT,
     });
 
-    return { leadCount, officeWiseCount, officeTypes, statustyps, latestLeadsCount };
+    return { leadCount, roleWiseData: officeWiseCount, graphCategory: officeTypes, statustyps, latestLeadsCount };
+  } catch (error) {
+    console.error("Error in getDataForItTeam:", error.message);
+    throw new Error("Failed to fetch IT team data");
+  }
+};
+
+const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
+  const { type } = filterArgs;
+  const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
+
+  console.log("whereClause", whereRaw);
+
+  const leadWiseQuery = getLeadStatusWiseCountCreTlQuery(whereRaw);
+  const leadStatusCreWiseCountQuery = getLeadStatusCreWiseQuery(whereRaw);
+
+  try {
+    const cres = await db.adminUsers.findAll({
+      attributes: ["name"],
+      where: {
+        role_id: IdsFromEnv.CRE_ID,
+      },
+      raw: true,
+    });
+
+    const statustyps = await db.statusType.findAll({
+      attributes: ["type_name"],
+      raw: true,
+    });
+
+    const latestLeadsCount = await db.userPrimaryInfo.findAll({
+      attributes: ["id", "office_type", "stage", "full_name"],
+      where: {
+        created_by: userDecodeId,
+      },
+      include: [
+        {
+          model: db.status,
+          as: "preferredStatus",
+          attributes: ["status_name"],
+          through: { attributes: [] },
+        },
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: ["country_name"],
+          through: { attributes: [] },
+        },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+      ],
+      limit: 6,
+    });
+
+    const leadCount = await db.sequelize.query(leadWiseQuery, {
+      type: QueryTypes.SELECT,
+    });
+
+    const creWiseCount = await db.sequelize.query(leadStatusCreWiseCountQuery, {
+      type: QueryTypes.SELECT,
+    });
+
+    return { leadCount, roleWiseData: creWiseCount, graphCategory: cres, statustyps, latestLeadsCount };
   } catch (error) {
     console.error("Error in getDataForItTeam:", error.message);
     throw new Error("Failed to fetch IT team data");
@@ -108,26 +179,35 @@ const processCardData = (counts) => {
   return { statCards };
 };
 
-const transformOfficeWiseCountToChartData = (officeWiseCount, officeTypes, statustyps) => {
+const transformOfficeWiseCountToChartData = (roleWiseData, graphCategory, statustyps) => {
+  console.log("roleWiseData", roleWiseData);
+  console.log("graphCategory", graphCategory);
+  console.log("statustyps", statustyps);
+
   const seriesMap = new Map(statustyps.map((type) => [type.type_name, []]));
 
-  officeWiseCount.forEach((item) => {
+  roleWiseData.forEach((item) => {
     seriesMap.get(item.type_name).push(parseInt(item.count, 10));
   });
 
-  const categories = officeTypes.map((office) => office.office_type_name);
+  const categories = graphCategory.map((office) => {
+    const nameKey = Object.keys(office).find((key) => key.toLowerCase().includes("name"));
+    return nameKey ? office[nameKey] : null;
+  });
+
   const series = Array.from(seriesMap.entries()).map(([name, data]) => ({
     name: name.replace(/_/g, " ").replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
     data,
   }));
 
-  console.log("office==>", officeWiseCount);
+  console.log("office==>", roleWiseData);
 
-  return { categories, series: officeWiseCount.length > 0 ? series : [] };
+  return { categories, series: roleWiseData.length > 0 ? series : [] };
 };
 
 module.exports = {
   getDataForItTeam,
   processCardData,
   transformOfficeWiseCountToChartData,
+  getDataForCreTl,
 };

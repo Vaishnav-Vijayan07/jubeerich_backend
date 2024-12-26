@@ -1,10 +1,10 @@
 const { QueryTypes } = require("sequelize");
 const IdsFromEnv = require("../constants/ids");
 const db = require("../models");
-const { transformOfficeWiseCountToChartData, processCardData, getDataForItTeam } = require("../utils/dashboard_controller_helpers");
+const { transformOfficeWiseCountToChartData, processCardData, getDataForItTeam, getDataForCreTl } = require("../utils/dashboard_controller_helpers");
 
 exports.getDashboard = async (req, res) => {
-  const { role_id } = req;
+  const { role_id, userDecodeId } = req;
   const { filterType, year, month, fromDate, toDate } = req.query;
   let filterArgs = {};
 
@@ -39,10 +39,10 @@ exports.getDashboard = async (req, res) => {
   try {
     switch (role_id) {
       case IdsFromEnv.IT_TEAM_ID:
-        result = await getDataForItTeam(filterArgs);
+        result = await getDataForItTeam(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_TL_ID:
-        result = await getDataForCreTl();
+        result = await getDataForCreTl(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_ID:
         result = await getDataForCre();
@@ -57,9 +57,9 @@ exports.getDashboard = async (req, res) => {
         });
     }
 
-    const { officeWiseCount, leadCount, officeTypes, statustyps, latestLeadsCount } = result;
+    const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount } = result;
     const { statCards } = processCardData(leadCount);
-    const { categories, series } = transformOfficeWiseCountToChartData(officeWiseCount, officeTypes, statustyps);
+    const { categories, series } = transformOfficeWiseCountToChartData(roleWiseData, graphCategory, statustyps);
 
     res.status(200).json({
       message: "Dashboard data fetched successfully",
@@ -74,5 +74,3 @@ exports.getDashboard = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-

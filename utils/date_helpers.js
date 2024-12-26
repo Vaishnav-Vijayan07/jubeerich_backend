@@ -1,3 +1,5 @@
+const IdsFromEnv = require("../constants/ids");
+
 const getWeeklyDateRange = (year, month, day) => {
   const dateFromDay = (dateString) => {
     const day = new Date(dateString).getDate();
@@ -58,8 +60,22 @@ const formatToDbDate = (date) => {
   return formattedDate;
 };
 
-const getDateRangeCondition = (filterArgs, type) => {
-  let whereRaw = "WHERE rn = 1";
+const getDateRangeCondition = (filterArgs, type, role_id, user_id) => {
+  let whereRaw = "";
+
+  switch (role_id) {
+    case IdsFromEnv.CRE_TL_ID:
+      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      break;
+    case IdsFromEnv.CRE_ID:
+      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      break;
+    case IdsFromEnv.COUNTRY_MANAGER_ID:
+      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      break;
+    default:
+      whereRaw = "WHERE rn = 1";
+  }
 
   switch (type) {
     case "monthly":
