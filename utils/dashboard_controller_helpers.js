@@ -103,6 +103,7 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
         created_by: {
           [db.Sequelize.Op.in]: [...credids, userDecodeId],
         },
+        
       },
       include: [
         {
@@ -356,7 +357,7 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
     data,
   }));
 
-  return { stackCategories: categories, stackSeries: series };
+  return { stackCategories: categories, stackSeries: roleWiseData.length > 0 ? series : [] };
 };
 
 const transformOfficeToBarData = (roleWiseData, statustyps) => {

@@ -194,6 +194,7 @@ const getLeadStatusWiseCountCounselorQuery = (where) => {
     SELECT 
         uc.user_primary_info_id,
         uc.country_id,
+        ucs.counselor_id,
         upi.created_at,
         upi.created_by,
         s.status_name,
@@ -203,10 +204,9 @@ const getLeadStatusWiseCountCounselorQuery = (where) => {
     FROM 
         user_countries uc
     LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
-    LEFT JOIN user_counselors uc2 ON upi.id = uc2.user_id  -- Added counselors join
+    LEFT JOIN user_counselors ucs ON upi.id = ucs.user_id
     LEFT JOIN status s ON uc.status_id = s.id
     LEFT JOIN status_type st ON s.type_id = st.id
-    WHERE uc2.counselor_id = 10  -- Filter for specific counselor
 )
 SELECT 
     type_name,
@@ -221,12 +221,13 @@ GROUP BY
 };
 
 const getLeadStatusCounselorWiseQuery = (where) => {
-    return `
+  return `
     WITH RankedStatuses AS (
         SELECT 
             uc.user_primary_info_id,
             uc.country_id,
             c.country_name as country_name,
+            ucs.counselor_id,
             s.status_name,
             st.type_name,
             st.priority,
@@ -238,6 +239,7 @@ const getLeadStatusCounselorWiseQuery = (where) => {
             user_countries uc
         LEFT JOIN countries c ON uc.country_id = c.id  -- Join with countries table
         LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+        LEFT JOIN user_counselors ucs ON upi.id = ucs.user_id
         LEFT JOIN admin_users au ON upi.created_by = au.id
         LEFT JOIN status s ON uc.status_id = s.id
         LEFT JOIN status_type st ON s.type_id = st.id
@@ -253,7 +255,7 @@ const getLeadStatusCounselorWiseQuery = (where) => {
         country_name, type_name  -- Change grouping to country_name
     ORDER BY 
         country_name, type_name;`;
-}
+};
 
 module.exports = {
   getLeadStatusWiseCountQuery,
