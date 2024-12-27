@@ -66,6 +66,7 @@ const getLeadStatusWiseCountCreTlQuery = (where) => {
           uc.country_id,
           upi.created_at,
           upi.created_by,
+          upi.assigned_cre_tl,
           s.status_name,
           st.type_name,
           st.priority,
@@ -99,6 +100,7 @@ const getLeadStatusCreTlWiseQuery = (where) => {
           st.priority,
           upi.assigned_cre,
           upi.created_at,
+          upi.assigned_cre_tl,
           upi.created_by,
           COALESCE(au1.name, au2.name) as admin_name,
           ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn

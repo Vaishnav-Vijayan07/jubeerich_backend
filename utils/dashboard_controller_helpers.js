@@ -34,7 +34,7 @@ const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
     });
 
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
-      attributes: ["id", "office_type", "stage", "full_name"],
+      attributes: ["id", "office_type", "stage", "full_name","created_at"],
       include: [
         {
           model: db.status,
@@ -55,6 +55,7 @@ const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
         },
       ],
       limit: 6,
+      order: [["created_at", "DESC"]],
     });
 
     const leadCount = await db.sequelize.query(leadWiseQuery, {
@@ -98,13 +99,20 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
     });
 
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
-      attributes: ["id", "office_type", "stage", "full_name"],
+      attributes: ["id", "office_type", "stage", "full_name", "created_at"],
       where: {
-        created_by: {
-          [db.Sequelize.Op.in]: [...credids, userDecodeId],
-        },
-        
+        [db.Sequelize.Op.or]: [
+          {
+            created_by: {
+              [db.Sequelize.Op.in]: [...credids, userDecodeId],
+            },
+          },
+          {
+            assigned_cre_tl: userDecodeId,
+          },
+        ],
       },
+
       include: [
         {
           model: db.status,
@@ -130,6 +138,7 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
         },
       ],
       limit: 6,
+      order: [["created_at", "DESC"]],
     });
 
     const leadCount = await db.sequelize.query(leadWiseQuery, {
@@ -163,7 +172,7 @@ const getDataForCre = async (filterArgs, role_id, userDecodeId) => {
     });
 
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
-      attributes: ["id", "office_type", "stage", "full_name"],
+      attributes: ["id", "office_type", "stage", "full_name","created_at"],
       where: {
         [db.Sequelize.Op.or]: [{ created_by: userDecodeId }, { assigned_cre: userDecodeId }],
       },
@@ -187,6 +196,7 @@ const getDataForCre = async (filterArgs, role_id, userDecodeId) => {
         },
       ],
       limit: 6,
+      order: [["created_at", "DESC"]],
     });
 
     const leadCount = await db.sequelize.query(leadCreWiseQuery, {
@@ -222,7 +232,7 @@ const getDataForCounselor = async (filterArgs, role_id, userDecodeId) => {
       attributes: ["id", "name"],
       include: {
         model: db.country,
-        attributes: ["country_name","id"],
+        attributes: ["country_name", "id"],
         through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
       },
     });
@@ -254,11 +264,11 @@ const getDataForCounselor = async (filterArgs, role_id, userDecodeId) => {
           as: "counselors",
           through: {
             model: db.userCounselors,
-            attributes: []
+            attributes: [],
           },
           attributes: ["name", "id"],
-          where: { id: userDecodeId }  
-        }
+          where: { id: userDecodeId },
+        },
       ],
       limit: 6,
     });
