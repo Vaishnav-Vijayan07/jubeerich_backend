@@ -1,4 +1,4 @@
-const { QueryTypes } = require("sequelize");
+const { QueryTypes, where } = require("sequelize");
 const db = require("../models");
 const {
   getLeadStatusWiseCountQuery,
@@ -7,6 +7,8 @@ const {
   getLeadStatusCreTlWiseQuery,
   getLeadStatusWiseCountCreQuery,
   getLeadStatusCreWiseQuery,
+  getLeadStatusWiseCountCounselorQuery,
+  getLeadStatusCounselorWiseQuery,
 } = require("../raw/queries");
 const { getDateRangeCondition } = require("./date_helpers");
 const IdsFromEnv = require("../constants/ids");
@@ -200,6 +202,80 @@ const getDataForCre = async (filterArgs, role_id, userDecodeId) => {
     throw new Error("Failed to fetch IT team data");
   }
 };
+const getDataForCounselor = async (filterArgs, role_id, userDecodeId) => {
+  const { type } = filterArgs;
+  const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
+
+  console.log("whereClause", whereRaw);
+
+  const leadCounselorWiseQuery = getLeadStatusWiseCountCounselorQuery(whereRaw);
+  const leadStatusCounselorWiseCountQuery = getLeadStatusCounselorWiseQuery(whereRaw);
+
+  try {
+    const statustyps = await db.statusType.findAll({
+      attributes: ["type_name"],
+      raw: true,
+    });
+
+    const admin = await db.adminUsers.findByPk(userDecodeId, {
+      attributes: ["id", "name"],
+      include: {
+        model: db.country,
+        attributes: ["country_name","id"],
+        through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
+      },
+    });
+
+    const adminCountries = admin.countries.map((country) => country.get({ plain: true }));
+
+    const latestLeadsCount = await db.userPrimaryInfo.findAll({
+      attributes: ["id", "office_type", "stage", "full_name"],
+      include: [
+        {
+          model: db.status,
+          as: "preferredStatus",
+          attributes: ["status_name"],
+          through: { attributes: [] },
+        },
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: ["country_name"],
+          through: { attributes: [] },
+        },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.adminUsers,
+          as: "counselors",
+          through: {
+            model: db.userCounselors,
+            attributes: []
+          },
+          attributes: ["name", "id"],
+          where: { id: userDecodeId }  
+        }
+      ],
+      limit: 6,
+    });
+
+    const leadCount = await db.sequelize.query(leadCounselorWiseQuery, {
+      type: QueryTypes.SELECT,
+    });
+
+    const creWiseCount = await db.sequelize.query(leadStatusCounselorWiseCountQuery, {
+      type: QueryTypes.SELECT,
+    });
+
+    return { leadCount, roleWiseData: creWiseCount, graphCategory: adminCountries, statustyps, latestLeadsCount };
+  } catch (error) {
+    console.error("Error in getDataForItTeam:", error.message);
+    throw new Error("Failed to fetch IT team data");
+  }
+};
 
 const processCardData = (counts) => {
   const totalLeads = counts[0]?.total_lead_count || 0;
@@ -263,12 +339,12 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
 
   // Populate the series data based on roleWiseData
   roleWiseData.forEach((item) => {
-    const adminName = item.admin_name;
+    const name = item.name;
     const typeName = item.type_name;
     const count = parseInt(item.count, 10);
 
     // Find the index of the admin name in categories
-    const categoryIndex = categories.indexOf(adminName);
+    const categoryIndex = categories.indexOf(name);
     if (categoryIndex !== -1 && seriesMap.has(typeName)) {
       seriesMap.get(typeName)[categoryIndex] += count;
     }
@@ -283,9 +359,9 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
   return { stackCategories: categories, stackSeries: series };
 };
 
-
 const transformOfficeToBarData = (roleWiseData, statustyps) => {
   console.log("roleWiseData", statustyps);
+  console.log("roleWiseData", roleWiseData);
 
   // Create a map for roleWiseData counts for easy lookup
   const roleWiseDataMap = roleWiseData.reduce((map, item) => {
@@ -310,6 +386,9 @@ const transformOfficeToBarData = (roleWiseData, statustyps) => {
         .join(" ") // Join words with a space
   );
 
+  console.log("categories", categories);
+  console.log("series", series);
+
   return { barCategories: categories, barSeries: roleWiseData.length > 0 ? series : [] };
 };
 
@@ -320,4 +399,5 @@ module.exports = {
   getDataForCreTl,
   getDataForCre,
   transformOfficeToBarData,
+  getDataForCounselor,
 };

@@ -47,7 +47,7 @@ WITH RankedStatuses AS (
     LEFT JOIN status_type st ON s.type_id = st.id
 )
 SELECT 
-    office_type_name,
+    office_type_name as name,
     type_name,
     COUNT(*) as count
 FROM 
@@ -111,7 +111,7 @@ const getLeadStatusCreTlWiseQuery = (where) => {
       LEFT JOIN status_type st ON s.type_id = st.id
   )
   SELECT 
-    admin_name,
+    admin_name as name,
     type_name,
     COUNT(*) as count
   FROM 
@@ -131,6 +131,7 @@ const getLeadStatusWiseCountCreQuery = (where) => {
           uc.country_id,
           upi.created_at,
           upi.created_by,
+          upi.assigned_cre,
           s.status_name,
           st.type_name,
           st.priority,
@@ -165,27 +166,94 @@ const getLeadStatusCreWiseQuery = (where) => {
           upi.assigned_cre,
           upi.created_at,
           upi.created_by,
-          au.name,
+         COALESCE(au1.name, au2.name) as admin_name,
           ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
       FROM 
           user_countries uc
       LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
-      LEFT JOIN admin_users au ON upi.assigned_cre = au.id
+    LEFT JOIN admin_users au1 ON upi.assigned_cre = au1.id
+    LEFT JOIN admin_users au2 ON upi.created_by = au2.id
       LEFT JOIN status s ON uc.status_id = s.id
       LEFT JOIN status_type st ON s.type_id = st.id
   )
   SELECT 
-      name,
+       admin_name as name,
       type_name,
       COUNT(*) as count
   FROM 
       RankedStatuses
   ${where}
   GROUP BY 
-      name, type_name
+      admin_name, type_name
   ORDER BY 
-      name, type_name;`;
+      admin_name, type_name;`;
 };
+
+const getLeadStatusWiseCountCounselorQuery = (where) => {
+  return ` WITH RankedStatuses AS (
+    SELECT 
+        uc.user_primary_info_id,
+        uc.country_id,
+        upi.created_at,
+        upi.created_by,
+        s.status_name,
+        st.type_name,
+        st.priority,
+        ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
+    FROM 
+        user_countries uc
+    LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+    LEFT JOIN user_counselors uc2 ON upi.id = uc2.user_id  -- Added counselors join
+    LEFT JOIN status s ON uc.status_id = s.id
+    LEFT JOIN status_type st ON s.type_id = st.id
+    WHERE uc2.counselor_id = 10  -- Filter for specific counselor
+)
+SELECT 
+    type_name,
+    COUNT(*) as count,
+    SUM(COUNT(*)) OVER() as total_lead_count
+FROM 
+    RankedStatuses
+${where}
+GROUP BY 
+    type_name;
+  `;
+};
+
+const getLeadStatusCounselorWiseQuery = (where) => {
+    return `
+    WITH RankedStatuses AS (
+        SELECT 
+            uc.user_primary_info_id,
+            uc.country_id,
+            c.country_name as country_name,
+            s.status_name,
+            st.type_name,
+            st.priority,
+            upi.created_at,
+            upi.created_by,
+            au.name as admin_name,
+            ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
+        FROM 
+            user_countries uc
+        LEFT JOIN countries c ON uc.country_id = c.id  -- Join with countries table
+        LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+        LEFT JOIN admin_users au ON upi.created_by = au.id
+        LEFT JOIN status s ON uc.status_id = s.id
+        LEFT JOIN status_type st ON s.type_id = st.id
+    )
+    SELECT 
+        country_name as name,  -- Change grouping to country_name
+        type_name,
+        COUNT(*) as count
+    FROM 
+        RankedStatuses
+    ${where}
+    GROUP BY 
+        country_name, type_name  -- Change grouping to country_name
+    ORDER BY 
+        country_name, type_name;`;
+}
 
 module.exports = {
   getLeadStatusWiseCountQuery,
@@ -194,4 +262,6 @@ module.exports = {
   getLeadStatusCreTlWiseQuery,
   getLeadStatusWiseCountCreQuery,
   getLeadStatusCreWiseQuery,
+  getLeadStatusWiseCountCounselorQuery,
+  getLeadStatusCounselorWiseQuery,
 };

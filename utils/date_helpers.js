@@ -70,6 +70,9 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id,creids = []) =
     case IdsFromEnv.CRE_ID:
       whereRaw = `WHERE rn = 1 AND created_by = ${user_id} OR assigned_cre = ${user_id}`;
       break;
+    case IdsFromEnv.COUNSELLOR_ROLE_ID:
+      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      break;
     case IdsFromEnv.COUNTRY_MANAGER_ID:
       whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
       break;
