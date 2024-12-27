@@ -241,6 +241,7 @@ exports.bulkUpload = async (req, res) => {
           .map((countryId) => ({
             user_primary_info_id: userId,
             country_id: countryId,
+            status_id: process.env.NEW_LEAD_STATUS_ID
           }));
 
         if (userCountries.length > 0) {
