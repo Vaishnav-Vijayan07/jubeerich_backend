@@ -177,6 +177,7 @@ exports.getAllLeads = async (req, res) => {
   const whereCountryManger = {
     is_deleted: false,
     [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+    created_by: cre_id,
   };
 
   const where = {
@@ -250,6 +251,7 @@ exports.getAllLeads = async (req, res) => {
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: whereCountryManger,
+        distint: true,
         include: [
           {
             model: db.leadSource,
@@ -377,6 +379,7 @@ exports.getAllLeads = async (req, res) => {
           ],
           is_deleted: false,
         },
+        distinct: true,
         include: [
           {
             model: db.leadType,

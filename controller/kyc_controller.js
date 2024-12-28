@@ -241,8 +241,8 @@ exports.proceedToKyc = async (req, res) => {
     
     // const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
     
-    // const statusRes = await updateClosedStatus(student_id, updateStatusCountry);
-    const statusRes = await updateClosedStatus(student_id, assigned_country);
+    // const statusRes = await updateKYCProceedStatus(student_id, updateStatusCountry);
+    const statusRes = await updateKYCProceedStatus(student_id, assigned_country);
     
     if (!statusRes) {
       return res.status(404).json({
@@ -1299,17 +1299,17 @@ exports.getAllKycByUser = async (req, res) => {
   }
 };
 
-const updateClosedStatus = async (studentId, countryId) => {
-  const [updatedClosedStatus] = await db.userContries.update(
+const updateKYCProceedStatus = async (studentId, countryId) => {
+  const [updatedKYCProceedStatus] = await db.userContries.update(
     {
-      status_id: process.env.CLOSED_LEAD_STATUS_ID,
+      status_id: process.env.KYC_PROCEEDED_STATUS_ID,
     },
     {
       where: { user_primary_info_id: studentId, country_id: countryId },
     }
   );
 
-  return updatedClosedStatus != 0;
+  return updatedKYCProceedStatus != 0;
 };
 
 const updateFollowUpStatus = async (studentId, countryId) => {
