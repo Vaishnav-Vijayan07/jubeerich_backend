@@ -67,6 +67,7 @@ const getLeadStatusWiseCountCreTlQuery = (where) => {
           upi.created_at,
           upi.created_by,
           upi.assigned_cre_tl,
+          upi.assigned_cre,
           s.status_name,
           st.type_name,
           st.priority,
@@ -98,17 +99,22 @@ const getLeadStatusCreTlWiseQuery = (where) => {
           s.status_name,
           st.type_name,
           st.priority,
-          upi.assigned_cre,
           upi.created_at,
+          upi.assigned_cre,
           upi.assigned_cre_tl,
           upi.created_by,
-          COALESCE(au1.name, au2.name) as admin_name,
-          ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
+          CASE 
+            WHEN upi.assigned_cre_tl IS NOT NULL THEN au1.name
+            WHEN upi.assigned_cre IS NOT NULL THEN au3.name
+            ELSE au2.name
+        END as admin_name,
+        ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
       FROM 
           user_countries uc
       LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
-      LEFT JOIN admin_users au1 ON upi.assigned_cre = au1.id
+      LEFT JOIN admin_users au1 ON upi.assigned_cre_tl = au1.id
     LEFT JOIN admin_users au2 ON upi.created_by = au2.id
+    LEFT JOIN admin_users au3 ON upi.assigned_cre = au3.id
       LEFT JOIN status s ON uc.status_id = s.id
       LEFT JOIN status_type st ON s.type_id = st.id
   )

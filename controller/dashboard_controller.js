@@ -14,12 +14,6 @@ exports.getDashboard = async (req, res) => {
   const { filterType, year, month, fromDate, toDate } = req.query;
   let filterArgs = {};
 
-  console.log("filter", filterType);
-  console.log("year", year);
-  console.log("month", month);
-  console.log("fromDate", fromDate);
-  console.log("toDate", toDate);
-
   switch (filterType) {
     case "monthly":
       filterArgs = { type: filterType, year, month };
@@ -47,19 +41,19 @@ exports.getDashboard = async (req, res) => {
   try {
     switch (role_id) {
       case IdsFromEnv.IT_TEAM_ID:
-        console.log("<===============it IT_TEAM==============>")
+        console.log("<===============it IT_TEAM==============>");
         result = await getDataForItTeam(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_TL_ID:
-        console.log("<===============it CRE_TL_ID==============>")
+        console.log("<===============it CRE_TL_ID==============>");
         result = await getDataForCreTl(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_ID:
-        console.log("<===============it CRE_ID==============>")
+        console.log("<===============it CRE_ID==============>");
         result = await getDataForCre(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.COUNSELLOR_ROLE_ID:
-        console.log("<===============it COUNSELLOR_ROLE_ID==============>")
+        console.log("<===============it COUNSELLOR_ROLE_ID==============>");
         result = await getDataForCounselor(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.COUNTRY_MANAGER_ID:

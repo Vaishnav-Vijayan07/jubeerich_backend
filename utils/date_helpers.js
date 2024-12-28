@@ -69,6 +69,7 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
       AND (
         created_by IN (${creids.join(", ")}, ${user_id}) 
         OR assigned_cre_tl = ${user_id}
+        OR assigned_cre IN (${creids.join(", ")})
       )`;
       break;
     case IdsFromEnv.CRE_ID:
