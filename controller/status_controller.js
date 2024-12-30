@@ -66,13 +66,14 @@ exports.addStatus = [
       });
     }
 
-    const { status_name, status_description, color, updated_by } = req.body;
+    const { status_name, status_description, color, type_id, updated_by } = req.body;
 
     try {
       const newStatus = await Status.create({
         status_name,
         status_description,
         color,
+        type_id,
         updated_by,
       });
       res.status(201).json({
@@ -119,6 +120,7 @@ exports.updateStatus = [
         status_name: req.body.status_name ?? status.status_name,
         status_description: req.body.status_description ?? status.status_description,
         color: req.body.color ?? status.color,
+        type_id: req.body.type_id ?? status.type_id,
         updated_by: req.body.updated_by ?? status.updated_by,
       });
 
