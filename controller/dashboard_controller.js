@@ -1,18 +1,18 @@
-const { QueryTypes } = require("sequelize");
 const IdsFromEnv = require("../constants/ids");
-const db = require("../models");
-const { transformOfficeWiseCountToChartData, processCardData, getDataForItTeam } = require("../utils/dashboard_controller_helpers");
+const {
+  transformOfficeToStackData,
+  processCardData,
+  getDataForItTeam,
+  getDataForCreTl,
+  getDataForCre,
+  transformOfficeToBarData,
+  getDataForCounselor,
+} = require("../utils/dashboard_controller_helpers");
 
 exports.getDashboard = async (req, res) => {
-  const { role_id } = req;
+  const { role_id, userDecodeId } = req;
   const { filterType, year, month, fromDate, toDate } = req.query;
   let filterArgs = {};
-
-  console.log("filter", filterType);
-  console.log("year", year);
-  console.log("month", month);
-  console.log("fromDate", fromDate);
-  console.log("toDate", toDate);
 
   switch (filterType) {
     case "monthly":
@@ -35,17 +35,26 @@ exports.getDashboard = async (req, res) => {
   }
 
   let result;
+  let categories;
+  let series;
 
   try {
     switch (role_id) {
       case IdsFromEnv.IT_TEAM_ID:
-        result = await getDataForItTeam(filterArgs);
+        console.log("<===============it IT_TEAM==============>");
+        result = await getDataForItTeam(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_TL_ID:
-        result = await getDataForCreTl();
+        console.log("<===============it CRE_TL_ID==============>");
+        result = await getDataForCreTl(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.CRE_ID:
-        result = await getDataForCre();
+        console.log("<===============it CRE_ID==============>");
+        result = await getDataForCre(filterArgs, role_id, userDecodeId);
+        break;
+      case IdsFromEnv.COUNSELLOR_ROLE_ID:
+        console.log("<===============it COUNSELLOR_ROLE_ID==============>");
+        result = await getDataForCounselor(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.COUNTRY_MANAGER_ID:
         result = await getDataForCountryManager();
@@ -57,9 +66,17 @@ exports.getDashboard = async (req, res) => {
         });
     }
 
-    const { officeWiseCount, leadCount, officeTypes, statustyps, latestLeadsCount } = result;
+    const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount } = result;
     const { statCards } = processCardData(leadCount);
-    const { categories, series } = transformOfficeWiseCountToChartData(officeWiseCount, officeTypes, statustyps);
+    if (role_id === IdsFromEnv.CRE_ID) {
+      const { barCategories, barSeries } = transformOfficeToBarData(roleWiseData, statustyps);
+      categories = barCategories;
+      series = barSeries;
+    } else {
+      const { stackCategories, stackSeries } = transformOfficeToStackData(roleWiseData, graphCategory, statustyps);
+      categories = stackCategories;
+      series = stackSeries;
+    }
 
     res.status(200).json({
       message: "Dashboard data fetched successfully",
@@ -74,5 +91,3 @@ exports.getDashboard = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-

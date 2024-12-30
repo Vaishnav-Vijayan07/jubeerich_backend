@@ -14,6 +14,7 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
+const stageDatas = require("../constants/stage_data");
 
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -157,6 +158,7 @@ exports.bulkUpload = async (req, res) => {
                 region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
                 franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
                 assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
+                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
               };
 
               const errors = validateRowData(rowData);
@@ -241,6 +243,7 @@ exports.bulkUpload = async (req, res) => {
           .map((countryId) => ({
             user_primary_info_id: userId,
             country_id: countryId,
+            status_id: process.env.NEW_LEAD_STATUS_ID
           }));
 
         if (userCountries.length > 0) {

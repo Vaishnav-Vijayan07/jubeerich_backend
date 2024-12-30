@@ -177,6 +177,7 @@ exports.getAllLeads = async (req, res) => {
   const whereCountryManger = {
     is_deleted: false,
     [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+    created_by: cre_id,
   };
 
   const where = {
@@ -219,15 +220,26 @@ exports.getAllLeads = async (req, res) => {
   try {
     let userPrimaryInfos;
 
-    const adminUser = await AdminUsers.findByPk(cre_id, {
-      include: [
-        {
-          model: db.country,
-          attributes: ["country_name", "id", "country_code"],
-          through: { attributes: [] }
-        },
-      ]
-    }); // Await the promise to get the admin user data
+     const adminUser = await db.adminUsers.findByPk(cre_id, {
+          attributes: ["id", "name"],
+          include: {
+            model: db.country,
+            attributes: ["country_name", "id", "country_code"],
+            through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
+          },
+        });
+
+    // const adminUser = await AdminUsers.findByPk(cre_id, {
+    //   include: [
+    //     {
+    //       model: db.country,
+    //       attributes: ["country_name", "id", "country_code"],
+    //       through: { model: db.userContries, attributes: ["country_id"] },
+    //     },
+    //   ],
+    // }); // Await the promise to get the admin user data
+
+    console.log("Admin User======>", JSON.stringify(adminUser, null, 2));
 
     if (!adminUser) {
       return res.status(404).json({
@@ -239,6 +251,7 @@ exports.getAllLeads = async (req, res) => {
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: whereCountryManger,
+        distint: true,
         include: [
           {
             model: db.leadSource,
@@ -262,7 +275,6 @@ exports.getAllLeads = async (req, res) => {
             through: {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
-              // where: { country_id: adminUser?.country_id },
               where: { country_id: adminUser?.countries?.[0]?.id },
             },
             required: false,
@@ -288,7 +300,7 @@ exports.getAllLeads = async (req, res) => {
             required: false,
           },
           {
-            model: db.officeType,
+            model: db.officeTTRUNCATEype,
             as: "office_type_name",
             attributes: ["office_type_name"],
           },
@@ -342,11 +354,8 @@ exports.getAllLeads = async (req, res) => {
             { assigned_cre: cre_id },
             { assigned_regional_manager: cre_id },
             // { assigned_counsellor_tl: cre_id },
-            { 
-              [db.Sequelize.Op.and]: [
-                { assigned_counsellor_tl: cre_id },
-                { assigned_branch_counselor: null }
-              ]
+            {
+              [db.Sequelize.Op.and]: [{ assigned_counsellor_tl: cre_id }, { assigned_branch_counselor: null }],
             },
             { assigned_branch_counselor: cre_id },
             {
@@ -370,6 +379,7 @@ exports.getAllLeads = async (req, res) => {
           ],
           is_deleted: false,
         },
+        distinct: true,
         include: [
           {
             model: db.leadType,
