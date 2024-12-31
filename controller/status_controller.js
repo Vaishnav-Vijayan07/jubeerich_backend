@@ -14,10 +14,22 @@ const statusValidationRules = [
 // Get all statuses
 exports.getAllStatuses = async (req, res) => {
   try {
-    const statuses = await Status.findAll();
+    const statuses = await Status.findAll({
+      include: [
+        {
+          model: StatusType,
+          attributes: ["type_name"],
+          as: "statusType",
+        },
+      ],
+    });
+    const transformedStatuses = statuses.map((status) => ({
+      ...status.toJSON(),
+      statusType: status.statusType?.type_name, // Add a new field with fallback
+    }));
     res.status(200).json({
       status: true,
-      data: statuses,
+      data: transformedStatuses,
     });
   } catch (error) {
     console.error(`Error retrieving statuses: ${error}`);
