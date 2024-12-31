@@ -4,7 +4,6 @@ const { addOrUpdateFundData } = require("../utils/academic_query_helper");
 exports.getStudentFundPlanDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Fetching info for studentId:", id);
     const student = await db.userPrimaryInfo.findByPk(id);
 
     if (!student) {
@@ -27,9 +26,7 @@ exports.getStudentFundPlanDetails = async (req, res) => {
         relation_with_sponsor: plan.relation_with_sponsor,
         sponsorship_amount: plan.sponsorship_amount,
         name_of_bank: plan.name_of_bank,
-        supporting_document: plan.supporting_document
-          ? plan.supporting_document
-          : null,
+        supporting_document: plan.supporting_document ? plan.supporting_document : null,
         has_min_6_months_backup: plan.has_min_6_months_backup ? "yes" : "no",
         source_of_funds: plan.source_of_funds,
       };
@@ -75,8 +72,7 @@ exports.saveStudentPlanDetails = async (req, res) => {
       relation_with_sponsor: item.relation_with_sponsor,
       name_of_bank: item.name_of_bank,
       student_id: Number(student_id),
-      has_min_6_months_backup:
-        item.has_min_6_months_backup == "yes" ? true : false,
+      has_min_6_months_backup: item.has_min_6_months_backup == "yes" ? true : false,
       source_of_funds: item.source_of_funds,
     };
 

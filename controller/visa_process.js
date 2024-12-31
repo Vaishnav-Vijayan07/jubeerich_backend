@@ -15,9 +15,6 @@ exports.saveVisaDeclineProcess = async (req, res, next) => {
 
     let declinedDocs = req?.files ?? null
 
-    console.log('declinedDocs', declinedDocs);
-
-
     const saveVisaDecline = await addOrUpdateVisaDecline(
       visaDecline,
       userId,
@@ -224,8 +221,7 @@ exports.deleteVisaProcessItem = async (req, res, next) => {
       default:
         throw new Error("Invalid type specified");
     }
-    console.log('visaData', visaData);
-    console.log('existFile', existFile);
+  
 
     if (!visaData) {
       await transaction.rollback();

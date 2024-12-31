@@ -102,7 +102,6 @@ const batchUpsertVisaProcess = async (model, records, transaction, files, dbName
 
 const addOrUpdateVisaDecline = async (visaDecline, userId, transaction, declinedDocs) => {
     try {
-        console.log('declinedDocs', declinedDocs);
 
         const visaDeclineData = visaDecline.map((visaRecord) => ({
             ...visaRecord,

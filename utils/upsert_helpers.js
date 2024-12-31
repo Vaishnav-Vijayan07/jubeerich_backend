@@ -10,11 +10,9 @@ const batchUpsertData = async (
   fileFields,
   fileDirectory
 ) => {
-  console.log(records);
 
   const ids = records.map((record) => record.id).filter((id) => id !== "0");
 
-  console.log(ids);
 
   // Fetch all existing records that need updating
   const existingRecords = await model.findAll({
@@ -22,12 +20,10 @@ const batchUpsertData = async (
     transaction,
   });
 
-  console.log(existingRecords);
 
   const updatePromises = [];
   const addPromises = [];
 
-  console.log("RECORDS =====>", records);
 
   records.forEach((record) => {
     if (record.id === "0") {
@@ -54,7 +50,6 @@ const batchUpsertData = async (
           }
         });
 
-        console.log("UPDATE FIELDS", updateFields);
 
         if (Object.keys(updateFields).length > 0) {
           // Loop through each file-related field

@@ -17,7 +17,6 @@ const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
   const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
-  console.log("whereClause", whereRaw);
 
   const leadWiseQuery = getLeadStatusWiseCountQuery(whereRaw);
   const leadStatusOfficeWiseCountQuery = getLeadStatusOfficeWiseCountQuery(whereRaw);
@@ -88,7 +87,6 @@ const getDataForCreTl = async (filterArgs, role_id, userDecodeId) => {
     const credids = cres.map((cre) => cre.id);
     const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId, credids);
 
-    console.log("whereClause", whereRaw);
 
     const leadWiseQuery = getLeadStatusWiseCountCreTlQuery(whereRaw);
     const leadStatusCreWiseCountQuery = getLeadStatusCreTlWiseQuery(whereRaw);
@@ -160,7 +158,6 @@ const getDataForCre = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
   const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
-  console.log("whereClause", whereRaw);
 
   const leadCreWiseQuery = getLeadStatusWiseCountCreQuery(whereRaw);
   const leadStatusCreWiseCountQuery = getLeadStatusCreWiseQuery(whereRaw);
@@ -217,7 +214,6 @@ const getDataForCounselor = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
   const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
-  console.log("whereClause", whereRaw);
 
   const leadCounselorWiseQuery = getLeadStatusWiseCountCounselorQuery(whereRaw);
   const leadStatusCounselorWiseCountQuery = getLeadStatusCounselorWiseQuery(whereRaw);
@@ -335,9 +331,7 @@ const processCardData = (counts) => {
 };
 
 const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => {
-  console.log("roleWiseData", roleWiseData);
-  console.log("graphCategory", graphCategory);
-  console.log("statustyps", statustyps);
+
 
   // Map categories from graphCategory
   const categories = graphCategory.map((office) => {
@@ -371,8 +365,7 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
 };
 
 const transformOfficeToBarData = (roleWiseData, statustyps) => {
-  console.log("roleWiseData", statustyps);
-  console.log("roleWiseData", roleWiseData);
+
 
   // Create a map for roleWiseData counts for easy lookup
   const roleWiseDataMap = roleWiseData.reduce((map, item) => {
@@ -397,8 +390,7 @@ const transformOfficeToBarData = (roleWiseData, statustyps) => {
         .join(" ") // Join words with a space
   );
 
-  console.log("categories", categories);
-  console.log("series", series);
+  
 
   return { barCategories: categories, barSeries: roleWiseData.length > 0 ? series : [] };
 };

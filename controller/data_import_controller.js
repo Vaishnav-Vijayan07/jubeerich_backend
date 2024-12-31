@@ -1,15 +1,12 @@
 const csvParser = require("csv-parser"); // to parse CSV files
 const fs = require("fs");
-const stream = require('stream');
+const stream = require("stream");
 const db = require("../models");
 const bcrypt = require("bcryptjs");
-
 
 // Set up multer for file upload
 
 exports.importAdminUsers = (req, res) => {
-  console.log("FILE ==============>", req.file);
-
   // Check if a file is uploaded
   if (!req.file) {
     return res.status(400).json({ status: false, message: "No file uploaded" });
@@ -54,15 +51,7 @@ async function processAdminUsers(users, res) {
     const conflicts = [];
 
     for (const user of users) {
-      const {
-        "Employee ID": employee_id,
-        Name: name,
-        Email: email,
-        Phone: phone,
-        Username: username,
-        Password: password,
-        "Role Id": role_id,
-      } = user;
+      const { "Employee ID": employee_id, Name: name, Email: email, Phone: phone, Username: username, Password: password, "Role Id": role_id } = user;
 
       // Check for conflicts (existing records)
       const existingEmployee = await db.adminUsers.findOne({ where: { employee_id }, transaction });

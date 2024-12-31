@@ -100,9 +100,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
       return res.status(404).json({ message: "No study preferences found for this student" });
     }
 
-    console.log(role_id == process.env.COUNSELLOR_ROLE_ID);
-    console.log(role_id);
-    console.log(process.env.COUNSELLOR_ROLE_ID);
+  
 
     const modifiedResponse = studyPreferences.map((preference) => ({
       studyPreferenceId: preference.id,
