@@ -79,7 +79,15 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
       whereRaw = `WHERE rn = 1 AND  (created_by = ${user_id} OR counselor_id = ${user_id})`;
       break;
     case IdsFromEnv.COUNTRY_MANAGER_ID:
-      whereRaw = `WHERE rn = 1 AND created_by = ${user_id}`;
+      whereRaw = `WHERE rn = 1 AND (
+        created_by = ${user_id}
+        OR EXISTS (
+            SELECT 1 
+            FROM user_counselors uc2
+            WHERE uc2.user_id = user_primary_info_id
+            AND uc2.counselor_id = ${user_id}
+        )
+    )`;
       break;
     default:
       whereRaw = "WHERE rn = 1";

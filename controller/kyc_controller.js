@@ -17,7 +17,7 @@ exports.getKycDetails = async (req, res, next) => {
         {
           model: db.country,
           attributes: ["country_name", "id"],
-          through: { attributes: [] }
+          through: { attributes: [] },
         },
       ],
     });
@@ -27,7 +27,7 @@ exports.getKycDetails = async (req, res, next) => {
       attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id", "branch_id", "assigned_branch_counselor"],
     });
 
-    let dynamicWhere = role_id == APPLICATION_MANAGER_ID || role_id == APPLICATION_TEAM_ID ? {} : { where: { countryId: countries?.[0]?.id } }
+    let dynamicWhere = role_id == APPLICATION_MANAGER_ID || role_id == APPLICATION_TEAM_ID ? {} : { where: { countryId: countries?.[0]?.id } };
 
     if (!personalDetails) {
       throw new Error("User not found");
@@ -238,12 +238,12 @@ exports.proceedToKyc = async (req, res) => {
       countryId: assigned_country,
       userPrimaryInfoId: student_id,
     };
-    
+
     // const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
-    
+
     // const statusRes = await updateKYCProceedStatus(student_id, updateStatusCountry);
     const statusRes = await updateKYCProceedStatus(student_id, assigned_country);
-    
+
     if (!statusRes) {
       return res.status(404).json({
         status: false,
@@ -504,11 +504,13 @@ exports.kycPendingDetails = async (req, res) => {
           {
             model: db.country,
             attributes: ["country_name", "id"],
-            through: { attributes: [] }
+            through: { attributes: [] },
           },
         ],
       });
-      
+
+      const countryId = countries.map((country) => country.id);
+
       applicationData = await db.application.findAll({
         include: [
           {
@@ -521,7 +523,7 @@ exports.kycPendingDetails = async (req, res) => {
                 model: db.studyPreference,
                 as: "studyPreference",
                 // where: { countryId: country_id },
-                where: { countryId: countries?.[0]?.id },
+                where: { countryId },
                 required: true, // Set this association as required
                 include: [
                   {
@@ -638,7 +640,7 @@ exports.kycRejectedDetails = async (req, res) => {
         {
           model: db.country,
           attributes: ["country_name", "id"],
-          through: { attributes: [] }
+          through: { attributes: [] },
         },
       ],
     });
@@ -769,7 +771,7 @@ exports.kycApprovedDetails = async (req, res) => {
         {
           model: db.country,
           attributes: ["country_name", "id"],
-          through: { attributes: [] }
+          through: { attributes: [] },
         },
       ],
     });
@@ -908,7 +910,7 @@ exports.rejectKYC = async (req, res, next) => {
         {
           model: db.country,
           attributes: ["country_name", "id", "country_code"],
-          through: { attributes: [] }
+          through: { attributes: [] },
         },
       ],
     });
@@ -968,8 +970,8 @@ exports.rejectKYC = async (req, res, next) => {
     // Fetch existing task details
     const assignedCountry = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString())
       ? assigned_country_id
-      // : existUser?.country_id;
-      : existUser?.countries?.[0]?.id;
+      : // : existUser?.country_id;
+        existUser?.countries?.[0]?.id;
 
     const existTask = await db.tasks.findOne({
       attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
@@ -987,10 +989,10 @@ exports.rejectKYC = async (req, res, next) => {
 
     // Determine country name
     const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
-      // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
-      ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
-      // : existUser?.country?.country_name;
-      : existUser?.countries?.[0]?.country_code;
+      ? // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
+        (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
+      : // : existUser?.country?.country_name;
+        existUser?.countries?.[0]?.country_code;
 
     // Update task remarks
     const formattedTaskRemark = [
@@ -1315,7 +1317,8 @@ const updateKYCProceedStatus = async (studentId, countryId) => {
 const updateFollowUpStatus = async (studentId, countryId) => {
   const [updatedFollowUpStatus] = await db.userContries.update(
     {
-      status_id: FOLLOWUP_ID, dueDate: new Date()
+      status_id: FOLLOWUP_ID,
+      dueDate: new Date(),
     },
     {
       where: { user_primary_info_id: studentId, country_id: countryId },
@@ -1324,5 +1327,3 @@ const updateFollowUpStatus = async (studentId, countryId) => {
 
   return updatedFollowUpStatus != 0;
 };
-
-
