@@ -25,7 +25,7 @@ exports.getAllStatuses = async (req, res) => {
     });
     const transformedStatuses = statuses.map((status) => ({
       ...status.toJSON(),
-      statusType: status.statusType?.type_name, // Add a new field with fallback
+      statusType: status.statusType?.type_name || null, // Add a new field with fallback
     }));
     res.status(200).json({
       status: true,
