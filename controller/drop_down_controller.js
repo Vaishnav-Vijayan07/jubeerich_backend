@@ -5,22 +5,16 @@ const getDropdownData = async (req, res) => {
     const { types } = req.query; // e.g., types=universities,countries,courses
     const requestedTypes = types ? types.split(",") : []; // convert to array
 
-    console.log(requestedTypes);
-
     const promises = [];
 
     if (!types || requestedTypes.includes("universities")) {
-      promises.push(
-        db.university.findAll({ attributes: ["id", "university_name"] })
-      );
+      promises.push(db.university.findAll({ attributes: ["id", "university_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
 
     if (!types || requestedTypes.includes("marital")) {
-      promises.push(
-        db.maritalStatus.findAll({ attributes: ["id", "marital_status_name"] })
-      );
+      promises.push(db.maritalStatus.findAll({ attributes: ["id", "marital_status_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -76,9 +70,7 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("officeType")) {
-      promises.push(
-        db.officeType.findAll({ attributes: ["id", "office_type_name"] })
-      );
+      promises.push(db.officeType.findAll({ attributes: ["id", "office_type_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -140,9 +132,7 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("access_powers")) {
-      promises.push(
-        db.accessPowers.findAll({ attributes: ["id", "power_name"] })
-      );
+      promises.push(db.accessPowers.findAll({ attributes: ["id", "power_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -154,22 +144,16 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("access_roles")) {
-      promises.push(
-        db.accessRoles.findAll({ attributes: ["id", "role_name"] })
-      );
+      promises.push(db.accessRoles.findAll({ attributes: ["id", "role_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
 
     if (!types || requestedTypes.includes("flags")) {
-      promises.push(
-        db.flag.findAll({ attributes: ["id", "flag_name"] })
-      );
+      promises.push(db.flag.findAll({ attributes: ["id", "flag_name"] }));
     } else {
       promises.push(Promise.resolve(null));
     }
-
-
 
     const [
       universityDetails,
@@ -192,7 +176,7 @@ const getDropdownData = async (req, res) => {
       accessPowerDetails,
       branchDetails,
       accessRoleDetails,
-      flagDetails
+      flagDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -230,7 +214,7 @@ const getDropdownData = async (req, res) => {
         accessPowers: formatData(accessPowerDetails, "power_name"),
         branches: formatData(branchDetails, "branch_name"),
         accessRoles: formatData(accessRoleDetails, "role_name"),
-        flags : formatData(flagDetails, "flag_name")
+        flags: formatData(flagDetails, "flag_name"),
       },
     });
   } catch (error) {

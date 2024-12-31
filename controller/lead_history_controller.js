@@ -51,9 +51,6 @@ exports.getLeadHistory = async (req, res) => {
     }
     
 
-    console.log("finalisedHistory", finalisedHistory.length);
-    console.log("leadHistory", leadHistory.length);
-
     // Send the response
     res.status(200).json({
       success: true,

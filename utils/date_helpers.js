@@ -98,8 +98,6 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
     case "weekly":
       // Get the start and end dates for the week
       const { startDate: weekStart, endDate: weekEnd } = getWeeklyDateRange(filterArgs.year, filterArgs.month, filterArgs.fromDate);
-      console.log("weekStart", weekStart);
-      console.log("weekEnd", weekEnd);
       const formattedStartDateWeek = formatToDbDate(weekStart);
       const formattedEndDateWeek = formatToDbDate(weekEnd);
       whereRaw += ` AND created_at BETWEEN '${formattedStartDateWeek}' AND '${formattedEndDateWeek}'`;

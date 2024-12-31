@@ -147,7 +147,6 @@ exports.createLead = async (req, res) => {
       regionalManagerId = region ? region.regional_manager_id : null;
       regionMangerRoleName = region?.adminUsers?.accessRoles?.role_name || "Region Manager";
 
-      console.log(regionalManagerId, region?.adminUsers);
     }
 
     if (counsiler_id !== "null") {
@@ -272,7 +271,6 @@ exports.createLead = async (req, res) => {
 
     // Associate the preferred countries with the user
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-      console.log("<=== preferred_country ===>", preferred_country);
 
       const countryAssociations = preferred_country.map((countryId) => ({
         user_primary_info_id: userPrimaryInfo.id, // Assuming this is defined earlier
@@ -401,7 +399,6 @@ exports.createLead = async (req, res) => {
         await addLeadHistory(userPrimaryInfo.id, `Task assigned to Counsellors`, userId, null, transaction);
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
-      console.log("IT TEAM ID ==>", userRole?.role_id);
 
       if (franchise_id) {
         let leastAssignedUsers = [];
@@ -531,18 +528,12 @@ exports.updateLead = async (req, res) => {
     franchise_id,
   } = req.body;
 
-  console.log(branch_id);
-  console.log(counsiler_id);
-  console.log(region_id);
-  console.log(office_type);
+
 
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
 
-  console.log("preferred_country ====>", preferred_country);
 
-  console.log("Controller Files", req.files);
-  console.log("body =========>", req.body);
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -884,7 +875,6 @@ const getLeastAssignedUsers = async (countryId) => {
       }
     );
 
-    console.log("results ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
@@ -942,7 +932,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
       }
     );
 
-    console.log("count results  ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
@@ -1006,7 +995,6 @@ exports.deleteExams = async (req, res) => {
 exports.getRemarkDetails = async (req, res) => {
   const { id } = req.params;
 
-  console.log("id", id);
 
   try {
     const existLead = await UserPrimaryInfo.findByPk(id);
@@ -1127,12 +1115,10 @@ exports.updateRemarkDetails = async (req, res) => {
     const remarkIndex = existLead?.remark_details.findIndex((data) => data.id == remark_id);
     const remarkArray = existLead.remark_details;
 
-    console.log("index", remarkIndex);
 
     remarkArray.splice(remarkIndex, 1, formattedOneRemark);
 
-    console.log("remarkArray", remarkArray);
-    console.log("remarkArray", typeof remarkArray);
+  
 
     const updateRemark = await UserPrimaryInfo.update(
       {
@@ -1182,7 +1168,6 @@ exports.updateFlagStatus = async (req, res) => {
     }
 
     const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] });
-    console.log("existFlag===>", existFlag);
 
     const newFlagArr = [...(existFlag?.flag_id || []), flag_id];
 
@@ -1242,7 +1227,6 @@ exports.removeFlagStatus = async (req, res) => {
 
     const existFlag = await db.userPrimaryInfo.findByPk(id, { attributes: ["id", "flag_id"] });
     const removedFlagArr = existFlag?.flag_id?.filter((flagId) => flagId != flag_id);
-    console.log("removedFlagArr ===================>", removedFlagArr);
 
     const [affectedRows] = await db.userPrimaryInfo.update({ flag_id: removedFlagArr }, { where: { id: id }, transaction });
 

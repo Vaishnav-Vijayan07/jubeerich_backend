@@ -20,13 +20,12 @@ exports.getTasks = async (req, res) => {
         {
           model: db.country,
           attributes: ["country_name", "id"],
-          through: { attributes: [] }
+          through: { attributes: [] },
         },
       ],
     });
 
-    console.log('adminUser',JSON.stringify(adminUser,0,2));
-    let countryIds = adminUser?.countries?.map((data) => data?.id)
+    let countryIds = adminUser?.countries?.map((data) => data?.id);
 
     if (!adminUser) {
       return res.status(404).json({
@@ -161,9 +160,6 @@ exports.getTaskById = async (req, res) => {
       });
     }
 
-    console.log("adminUser ===>", adminUser);
-    console.log("userId ====>", userId);
-
     let countryFilter;
 
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
@@ -177,9 +173,7 @@ exports.getTaskById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(
-                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-              ),
+              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
             },
           },
         },
@@ -305,8 +299,14 @@ exports.finishTask = async (req, res) => {
       if (users?.leastAssignedUserId) {
         leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
       }
-      console.log("users ==========>", users.leastAssignedUserId);
     }
+
+
+
+    console.log("LEASE USERS",leastAssignedUsers)
+
+   
+
 
     if (leastAssignedUsers.length > 0) {
       // Remove existing counselors for the student
@@ -406,8 +406,6 @@ exports.completeTask = async (req, res) => {
     const { role_name, userDecodeId: userId } = req;
 
     const task = await db.tasks.findByPk(id);
-
-    console.log("task ======>", task);
 
     if (!task) {
       return res.status(404).json({
@@ -510,11 +508,9 @@ exports.assignNewCountry = async (req, res) => {
       const countryName = country ? country.country_code : "Unknown";
 
       const users = await getLeastAssignedUsers(newCountryId);
-      
+
       if (users?.leastAssignedUserId) {
         const leastAssignedUserId = users.leastAssignedUserId;
-
-        console.log("leastAssignedUserId ====>", leastAssignedUserId);
 
         // Assign the new counselor to the student
         if (userId != leastAssignedUserId) {
@@ -537,9 +533,6 @@ exports.assignNewCountry = async (req, res) => {
             message: "Description error",
           });
         }
-
-        console.log("here it isssssssss");
-        
 
         // Create task for the least assigned user
         if (role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.FRANCHISE_COUNSELLOR_ID) {
@@ -579,17 +572,10 @@ exports.assignNewCountry = async (req, res) => {
 
         if (role_id == process.env.COUNSELLOR_ROLE_ID) {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
-          console.log("error is here after ===============");
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           const region = await getRegionDataForHistory(branch_id);
           region_name = region.region_name;
-          await addLeadHistory(
-            studentId,
-            `Country ${countryName} added by ${current_user_role} - ${region_name}`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
@@ -627,7 +613,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;
     const userId = req.userDecodeId;
-    console.log("Fetching info for studentId:", studentId);
 
     const adminUser = await db.adminUsers.findByPk(userId); // Await the promise to get the admin user data
 
@@ -671,8 +656,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
       ],
     });
 
-    console.log("unfilteredCountries", JSON.stringify(unfilteredCountries, 0, 2));
-
     if (adminUser?.role_id == process.env.COUNSELLOR_ROLE_ID || adminUser?.role_id == process.env.COUNTRY_MANAGER_ID) {
       countryFilter = {
         model: db.country,
@@ -684,9 +667,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(
-                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-              ),
+              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
             },
           },
         },
@@ -808,8 +789,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
       nest: true,
     });
 
-    console.log("primaryInfo", JSON.stringify(primaryInfo, 0, 2));
-
     const flagDetails = await primaryInfo?.flag_details;
 
     // Extract data values or use default empty object if no data
@@ -857,7 +836,6 @@ exports.getStudentBasicInfoById = async (req, res) => {
 exports.getBasicInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;
-    console.log("Fetching info for studentId:", studentId);
 
     // Fetch basic information for the student
     const basicInfo = await db.userBasicInfo.findOne({
@@ -867,18 +845,7 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: [
-        "id",
-        "full_name",
-        "email",
-        "phone",
-        "city",
-        "office_type",
-        "remarks",
-        "branch_id",
-        "franchise_id",
-        "region_id",
-      ],
+      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
       include: [
         {
           model: db.country,
@@ -916,7 +883,6 @@ exports.saveBasicInfo = async (req, res) => {
     const { role_id } = req;
 
     const policeDocs = [];
-    console.log("role_id", role_id);
 
     if (role_id != process.env.IT_TEAM_ID && role_id != process.env.CRE_TL_ID) {
       const updatedTask = await updateTaskDesc(primaryInfo, basicInfo, student_id, userId, role_id);
@@ -945,13 +911,9 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs
-            ? existingBasicData.police_clearance_docs[index]?.certificate
-            : null;
+          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
 
         if (previousCertificatePath) {
-          console.log(previousCertificatePath);
-
           await deleteFile("policeClearenceDocuments", previousCertificatePath);
         }
       } else {
@@ -965,8 +927,6 @@ exports.saveBasicInfo = async (req, res) => {
         country_name: req.body.police_clearance_docs[index].country_name,
       });
     });
-
-    console.log(policeDocs);
 
     const parsedPrimaryInfo = {
       ...primaryInfo,
@@ -1037,9 +997,6 @@ exports.deletePoliceClearenceDocuments = async (req, res) => {
   try {
     const { id } = req.params;
     const { itemId } = req.body;
-
-    console.log(id);
-    console.log(itemId);
 
     const basicInfo = await db.userBasicInfo.findByPk(id);
 
@@ -1156,7 +1113,6 @@ exports.getStudentExamInfoById = async (req, res) => {
 exports.getStudentWorkInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;
-    console.log("Fetching info for studentId:", studentId);
 
     // Find the user by their primary key (studentId)
     const user = await db.userPrimaryInfo.findByPk(studentId);
@@ -1206,7 +1162,6 @@ exports.getStudentWorkInfoById = async (req, res) => {
 exports.getStudentStudyPreferenceInfoById = async (req, res) => {
   try {
     const studentId = req.params.id;
-    console.log("Fetching info for studentId:", studentId);
 
     // Fetch basic information for the student
     const studyPreferenceInfo = await db.userStudyPreference.findOne({
@@ -1291,6 +1246,7 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
 
 const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
+  const country_manager_id = process.env.COUNTRY_MANAGER_ID
 
   try {
     const [results] = await db.sequelize.query(
@@ -1305,7 +1261,7 @@ const getLeastAssignedUsers = async (countryId) => {
           ON "admin_users"."id" = "admin_user_countries"."admin_user_id"
         LEFT JOIN "user_counselors" 
           ON "admin_users"."id" = "user_counselors"."counselor_id"
-        WHERE "admin_users"."role_id" = :roleId 
+        WHERE "admin_users"."role_id" = :roleId OR "admin_users"."role_id" = :country_manager_id
           AND "admin_user_countries"."country_id" = :countryId
         GROUP BY "admin_users"."id"
       )
@@ -1315,16 +1271,13 @@ const getLeastAssignedUsers = async (countryId) => {
       LIMIT 1;
       `,
       {
-        replacements: { roleId, countryId },
+        replacements: { roleId, countryId, country_manager_id },
         type: db.Sequelize.QueryTypes.SELECT,
       }
     );
 
-    console.log("results ============================>", results);
-
     // Extract least assigned user ID
     const leastAssignedUserId = results?.least_assigned_user_id || null;
-    console.log("leastAssignedUserId ==========================>", leastAssignedUserId);
 
     return {
       leastAssignedUserId,
