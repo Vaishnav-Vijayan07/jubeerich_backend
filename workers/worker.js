@@ -4,6 +4,7 @@ const { createTaskDesc } = require('../utils/task_description');
 
 module.exports = async function processBatch(batch) {
   const { rows, meta, userDecodeId, role, creTLrole } = batch;
+  const transaction = await db.sequelize.transaction();
 
   const errors = [];
   const validData = [];
@@ -26,6 +27,7 @@ module.exports = async function processBatch(batch) {
       // Bulk create users from the valid data
       const createdUsers = await db.userPrimaryInfo.bulkCreate(formattedData, {
         returning: true,
+        transaction
       });
 
       for (const user of createdUsers) {
@@ -38,11 +40,11 @@ module.exports = async function processBatch(batch) {
         const franchiseId = user.franchise_id;
 
         if (user.id) {
-          await addLeadHistory(user.id, `Lead created by ${role}`, userDecodeId, null, null);
+          await addLeadHistory(user.id, `Lead created by ${role}`, userDecodeId, null, transaction);
         }
 
         if (userRole?.role_id == process.env.IT_TEAM_ID && user.office_type == process.env.CORPORATE_OFFICE_ID) {
-          await addLeadHistory(user.id, `Lead assigned to ${creTLrole}`, userDecodeId, null, null);
+          await addLeadHistory(user.id, `Lead assigned to ${creTLrole}`, userDecodeId, null, transaction);
         }
 
         // Retrieve existing user-country associations
@@ -67,7 +69,7 @@ module.exports = async function processBatch(batch) {
           }));
 
         if (userCountries.length > 0) {
-          await db.userContries.bulkCreate(userCountries);
+          await db.userContries.bulkCreate(userCountries, { transaction });
         }
 
         // Create study preferences for the user
@@ -77,7 +79,7 @@ module.exports = async function processBatch(batch) {
               await db.studyPreference.create({
                 userPrimaryInfoId: userId,
                 countryId,
-              });
+              }, { transaction });
             })
           );
         }
@@ -104,7 +106,7 @@ module.exports = async function processBatch(batch) {
               counselor_id: counsellorId,
             }));
 
-            await db.userCounselors.bulkCreate(userCounselorsData);
+            await db.userCounselors.bulkCreate(userCounselorsData, { transaction });
 
             const dueDate = new Date();
 
@@ -135,16 +137,21 @@ module.exports = async function processBatch(batch) {
                 description: formattedDesc,
                 dueDate: dueDate,
                 updatedBy: userId,
-              });
+              }, { transaction });
             }
           }
         }
       }
+
+      await transaction.commit();
+
     } catch (error) {
       console.error("Error in processing batch", error);
+      await transaction.rollback();
       errors.push({ rowNumber: meta.startRow, errors: [`Database error: ${error.message}`] });
     }
   }
+  console.log('errors', errors);
 
   return { errors };
 };
