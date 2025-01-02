@@ -220,14 +220,14 @@ exports.getAllLeads = async (req, res) => {
   try {
     let userPrimaryInfos;
 
-     const adminUser = await db.adminUsers.findByPk(cre_id, {
-          attributes: ["id", "name"],
-          include: {
-            model: db.country,
-            attributes: ["country_name", "id", "country_code"],
-            through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
-          },
-        });
+    const adminUser = await db.adminUsers.findByPk(cre_id, {
+      attributes: ["id", "name"],
+      include: {
+        model: db.country,
+        attributes: ["country_name", "id", "country_code"],
+        through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
+      },
+    });
 
     // const adminUser = await AdminUsers.findByPk(cre_id, {
     //   include: [
@@ -774,6 +774,7 @@ exports.geLeadsForCreTl = async (req, res) => {
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       where: {
+        distint: true,
         [db.Sequelize.Op.and]: [
           {
             [db.Sequelize.Op.or]: [{ assigned_cre_tl: userId }, { created_by: userId }],
@@ -1428,7 +1429,11 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }, { assigned_counsellor_tl: userId }],
+            [db.Sequelize.Op.or]: [
+              { assigned_counsellor_tl: userId },
+              { created_by: userId },
+              { assigned_counsellor_tl: userId },
+            ],
           },
           {
             assigned_branch_counselor: {
@@ -1650,7 +1655,16 @@ exports.getAllUserDocuments = async (req, res) => {
           as: "educationDetails",
           where: { student_id: id },
           required: false,
-          attributes: ["id", "qualification", "percentage", "board_name", "school_name", "mark_sheet", "admit_card", "certificate"],
+          attributes: [
+            "id",
+            "qualification",
+            "percentage",
+            "board_name",
+            "school_name",
+            "mark_sheet",
+            "admit_card",
+            "certificate",
+          ],
         },
         {
           model: db.workInfos,
