@@ -803,7 +803,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           },
         ],
       },
-      distint: true,
+      // distint: true,
       include: [
         // {
         //   model: db.leadCategory,
