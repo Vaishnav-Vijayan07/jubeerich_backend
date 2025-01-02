@@ -264,7 +264,7 @@ exports.getAllLeads = async (req, res) => {
     if (roleId == process.env.COUNTRY_MANAGER_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: whereCountryManger,
-        // distint: true,
+        distint: true,
         include: [
           {
             model: db.leadSource,
@@ -756,6 +756,7 @@ exports.geLeadsForCreTl = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -981,6 +982,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1200,6 +1202,7 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { rows, count } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {

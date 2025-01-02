@@ -491,11 +491,6 @@ const transformOfficeToBarData = (roleWiseData, statustyps) => {
 };
 
 const generatePieData = (applicationData) => {
-  const labs = [];
-  const series = [];
-
-  console.log(Object.entries(applicationData));
-
   const labels = Object.keys(applicationData).map((label) => label.charAt(0).toUpperCase() + label.slice(1));
   const pieSeries = Object.values(applicationData).map((series) => Number(series));
   return {
