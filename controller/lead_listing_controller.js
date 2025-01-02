@@ -774,7 +774,6 @@ exports.geLeadsForCreTl = async (req, res) => {
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       where: {
-        distint: true,
         [db.Sequelize.Op.and]: [
           {
             [db.Sequelize.Op.or]: [{ assigned_cre_tl: userId }, { created_by: userId }],
@@ -803,6 +802,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           },
         ],
       },
+      distint: true,
       include: [
         // {
         //   model: db.leadCategory,
