@@ -543,7 +543,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
     const rows = [];
     const errors = [];
-    const batchSize = 1000;
+    const batchSize = 500;
     let batchPromises = [];
 
     // Load mappings
