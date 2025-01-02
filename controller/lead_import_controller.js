@@ -15,6 +15,16 @@ const { v4: uuidv4 } = require("uuid");
 const { addLeadHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
+const Piscina = require("piscina");
+
+let piscina = null;
+if (!piscina) {
+  console.log("Creating new piscina instance"); 
+  piscina = new Piscina({
+    filename: path.resolve(__dirname, '../workers/worker.js'),
+    maxThreads: require('os').cpus().length,
+  });
+}
 
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -516,5 +526,191 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
     return {
       leastAssignedUserId: null,
     };
+  }
+};
+
+exports.bulkUploadMultiCore = async (req, res) => {
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    const userId = req.userDecodeId;
+    const role = req.role_name;
+    const workbook = new Excel.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+
+    const rows = [];
+    const errors = [];
+    const batchSize = 500;
+    let batchPromises = [];
+
+    // Load mappings
+    const sources = await Source.findAll({ attributes: ["id", "slug"] });
+    const channels = await Channel.findAll({ attributes: ["id", "slug"] });
+    const officeTypes = await OfficeType.findAll({ attributes: ["id", "slug"] });
+    const countries = await Country.findAll({ attributes: ["id", "country_code"] });
+    const regions = await Region.findAll({ attributes: ["id", "slug", "regional_manager_id"] });
+    const franchises = await Franchise.findAll({ attributes: ["id", "slug"] });
+
+    const creTl = await AdminUsers.findOne({
+      where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
+    });
+
+    const sourceSlugToId = sources.reduce((acc, source) => {
+      acc[source.slug] = source.id;
+      return acc;
+    }, {});
+
+    const channelSlugToId = channels.reduce((acc, channel) => {
+      acc[channel.slug] = channel.id;
+      return acc;
+    }, {});
+
+    const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
+      acc[officeType.slug] = officeType.id;
+      return acc;
+    }, {});
+
+    const countryCodeToId = countries.reduce((acc, country) => {
+      acc[country.country_code] = country.id;
+      return acc;
+    }, {});
+
+    const regionSlugToId = regions.reduce((acc, region) => {
+      acc[region.slug] = region.id;
+      return acc;
+    }, {});
+
+    const regionSlugToManagerId = regions.reduce((acc, region) => {
+      acc[region.slug] = region.regional_manager_id;
+      return acc;
+    }, {});
+
+    const franchiseSlugToId = franchises.reduce((acc, franchise) => {
+      acc[franchise.slug] = franchise.id;
+      return acc;
+    }, {});
+
+    // Load rows into memory
+    workbook.eachSheet((worksheet) => {
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) { // Skip header row
+          rows.push({
+            lead_received_date: row.getCell(2).value,
+            source_slug: row.getCell(3).value,
+            channel_slug: row.getCell(4).value,
+            full_name: row.getCell(5).value,
+            email: row.getCell(6).value,
+            phone: row.getCell(7).value,
+            city: row.getCell(8).value,
+            office_type_slug: row.getCell(9).value,
+            region_or_franchise_slug: row.getCell(10).value,
+            preferred_country_code: row.getCell(11).value,
+            ielts: row.getCell(12).value,
+            remarks: row.getCell(13).value,
+          });
+        }
+      });
+    });
+
+    // Process rows in batches
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = {
+        rows: rows.slice(i, i + batchSize).map((row, index) => {
+          const rowNumber = i + index + 2; // Account for header row
+          const officeTypeSlug = row.office_type_slug;
+
+          const processedRow = {
+            lead_received_date: row.lead_received_date,
+            source_id: sourceSlugToId[row.source_slug] || null,
+            channel_id: channelSlugToId[row.channel_slug] || null,
+            full_name: row.full_name,
+            email: row.email,
+            phone: row.phone,
+            city: row.city,
+            office_type: officeTypeSlugToId[officeTypeSlug] || null,
+            preferred_country: countryCodeToId[row.preferred_country_code] || null,
+            // prefferedCountryCode: row.getCell(11).value,
+            ielts: row.ielts,
+            remarks: row.remarks,
+            assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
+            created_by: userId,
+            region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
+            franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+            assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+            stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
+          };
+
+          const errors = validateRowData(processedRow);
+
+          return {
+            rowNumber,
+            rowData: processedRow,
+            errors,
+          };
+        }),
+        meta: { startRow: i + 2 },
+        userDecodeId: userId,
+        role: role,
+        creTLrole: creTl.access_role.role_name,
+      };
+
+      console.log('Piscina initialized:', piscina);
+      batchPromises.push(piscina.run(batch));
+    }
+
+    const results = await Promise.all(batchPromises);
+
+    // Collect errors from all batches
+    results.forEach((result) => {
+      if (result.errors) {
+        errors.push(...result.errors);
+      }
+    });
+    console.log('errors', errors);
+
+    // Save errors to an error file if any exist
+    if (errors.length > 0) {
+      const errorWorkbook = new Excel.Workbook();
+      const errorSheet = errorWorkbook.addWorksheet("Errors");
+
+      // Add headers
+      errorSheet.addRow(["Row Number", "Errors"]);
+
+      errors.forEach(({ rowNumber, errors: rowErrors }) => {
+        errorSheet.addRow([rowNumber, rowErrors.join("; ")]);
+      });
+
+      const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
+      const errorFilePath = path.join("uploads", errorFileName);
+      await errorWorkbook.xlsx.writeFile(errorFilePath);
+
+      await transaction.rollback();
+
+      return res.status(400).json({
+        status: false,
+        message: "Some rows contain invalid data",
+        invalidFileLink: errorFilePath,
+      });
+    }
+
+    await transaction.commit();
+
+    res.status(200).json({
+      status: true,
+      message: "File uploaded successfully",
+    });
+  } catch (error) {
+    console.error("Error processing bulk upload:", error);
+    await transaction.rollback();
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
   }
 };
