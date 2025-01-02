@@ -19,7 +19,6 @@ const Piscina = require("piscina");
 
 let piscina = null;
 if (!piscina) {
-  console.log("Creating new piscina instance"); 
   piscina = new Piscina({
     filename: path.resolve(__dirname, '../workers/worker.js'),
     maxThreads: require('os').cpus().length,
@@ -533,7 +532,7 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 };
 
 exports.bulkUploadMultiCore = async (req, res) => {
-  const transaction = await db.sequelize.transaction();
+  // const transaction = await db.sequelize.transaction();
 
   try {
     const userId = req.userDecodeId;
@@ -563,6 +562,13 @@ exports.bulkUploadMultiCore = async (req, res) => {
         },
       ],
     });
+
+    const existingRecords = await UserPrimaryInfo.findAll({
+      attributes: ["email", "phone"],
+    });
+
+    const existingEmails = new Set(existingRecords.map((record) => record.email));
+    const existingPhones = new Set(existingRecords.map((record) => record.phone));
 
     const sourceSlugToId = sources.reduce((acc, source) => {
       acc[source.slug] = source.id;
@@ -638,7 +644,6 @@ exports.bulkUploadMultiCore = async (req, res) => {
             city: row.city,
             office_type: officeTypeSlugToId[officeTypeSlug] || null,
             preferred_country: countryCodeToId[row.preferred_country_code] || null,
-            // prefferedCountryCode: row.getCell(11).value,
             ielts: row.ielts,
             remarks: row.remarks,
             assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
@@ -649,21 +654,23 @@ exports.bulkUploadMultiCore = async (req, res) => {
             stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
           };
 
-          const errors = validateRowData(processedRow);
+          // Check if the email or phone already exists in the existing records
+          if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
+            errors.push({ rowNumber, rowData: processedRow ,errors: ["Email or phone already exists in Database"] });
+            return null; // Skip this row if email or phone already exists
+          }
 
           return {
             rowNumber,
             rowData: processedRow,
-            errors,
           };
-        }),
+        })?.filter(row => row != null),
         meta: { startRow: i + 2 },
         userDecodeId: userId,
         role: role,
-        creTLrole: creTl.access_role.role_name,
+        creTLrole: creTl?.access_role?.role_name,
       };
 
-      console.log('Piscina initialized:', piscina);
       batchPromises.push(piscina.run(batch));
     }
 
@@ -675,43 +682,66 @@ exports.bulkUploadMultiCore = async (req, res) => {
         errors.push(...result.errors);
       }
     });
-    console.log('errors', errors);
-
+    
     // Save errors to an error file if any exist
     if (errors.length > 0) {
+      // Assuming `invalidRows` is an array with rows that have validation errors
+      const invalidRows = errors; // Or the array where your rows with errors are stored
+
+      // Create a new Excel Workbook
       const errorWorkbook = new Excel.Workbook();
       const errorSheet = errorWorkbook.addWorksheet("Errors");
 
-      // Add headers
-      errorSheet.addRow(["Row Number", "Errors"]);
+      // Assuming the first sheet is the original sheet you're working with
+      const originalSheet = workbook.getWorksheet(1);
 
-      errors.forEach(({ rowNumber, errors: rowErrors }) => {
-        errorSheet.addRow([rowNumber, rowErrors.join("; ")]);
+      // Add "Errors" to the header of the new error sheet
+      const headerRow = originalSheet.getRow(1).values;
+      headerRow.push("Errors"); // Add 'Errors' to the end of the header row for the new sheet
+      errorSheet.addRow(headerRow); // Write the header row to the error sheet
+
+      // Iterate over invalid rows and add them to the error sheet
+      invalidRows.forEach(({ rowNumber, rowData, errors }, index) => {
+        const errorDetails = Array.isArray(errors) ? errors?.join("; ") : [errors]?.join("; "); // Join all errors with a semicolon
+
+        const worksheet = workbook.getWorksheet(1);
+        const existRow = worksheet.getRow(rowNumber);
+
+        const rowWithErrors = [
+          rowNumber, // Serial Number (1-based index for user-friendly display)
+          existRow.getCell(2).value, // Lead Received Date
+          existRow.getCell(3).value, // Source Slug
+          existRow.getCell(4).value, // Channel Slug
+          existRow.getCell(5).value, // Full Name
+          existRow.getCell(6).value, // Email
+          existRow.getCell(7).value, // Phone
+          existRow.getCell(8).value, // City
+          existRow.getCell(9).value, // Office Type Slug
+          existRow.getCell(10).value, // Region or Franchise Slug
+          existRow.getCell(11).value, // Preferred Country Code
+          existRow.getCell(12).value, // IELTS
+          existRow.getCell(13).value, // Remarks
+          errorDetails, // The error message(s)
+        ];
+
+        // Add the row with errors to the error sheet
+        errorSheet.addRow(rowWithErrors);
       });
 
+      // Generate a unique file name and save the errors to the file
       const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
       const errorFilePath = path.join("uploads", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
-
-      await transaction.rollback();
-
-      return res.status(400).json({
-        status: false,
-        message: "Some rows contain invalid data",
-        invalidFileLink: errorFilePath,
-      });
     }
 
-    await transaction.commit();
-
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "File uploaded successfully",
     });
   } catch (error) {
     console.error("Error processing bulk upload:", error);
-    await transaction.rollback();
-    res.status(500).json({
+    // await transaction.rollback();
+    return res.status(500).json({
       status: false,
       message: "Internal server error",
     });
