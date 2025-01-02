@@ -759,10 +759,11 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
 exports.geLeadsForCreTl = async (req, res) => {
   const { page = 1, limit = 20, keyword } = req.query;
 
-  const offset = (page - 1) * limit;
-  const parsedLimit = parseInt(limit, 10);
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
 
   try {
     // Fetch all CREs (Role ID 3)
