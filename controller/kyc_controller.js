@@ -24,10 +24,21 @@ exports.getKycDetails = async (req, res, next) => {
 
     const personalDetails = await db.userPrimaryInfo.findOne({
       where: { id: id },
-      attributes: ["id", "full_name", "email", "phone", "source_id", "city", "channel_id", "branch_id", "assigned_branch_counselor"],
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "source_id",
+        "city",
+        "channel_id",
+        "branch_id",
+        "assigned_branch_counselor",
+      ],
     });
 
-    let dynamicWhere = role_id == APPLICATION_MANAGER_ID || role_id == APPLICATION_TEAM_ID ? {} : { where: { countryId: countries?.[0]?.id } };
+    let dynamicWhere =
+      role_id == APPLICATION_MANAGER_ID || role_id == APPLICATION_TEAM_ID ? {} : { where: { countryId: countries?.[0]?.id } };
 
     if (!personalDetails) {
       throw new Error("User not found");
@@ -242,14 +253,6 @@ exports.proceedToKyc = async (req, res) => {
     // const updateStatusCountry = role_id == process.env.FRANCHISE_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID || role_id == process.env.BRANCH_COUNSELLOR_ID ? assigned_country : country_id;
 
     // const statusRes = await updateKYCProceedStatus(student_id, updateStatusCountry);
-    const statusRes = await updateKYCProceedStatus(student_id, assigned_country);
-
-    if (!statusRes) {
-      return res.status(404).json({
-        status: false,
-        message: "Status not updated",
-      });
-    }
 
     const studyPrefDetails = await db.studyPreferenceDetails.findAll({
       include: [
@@ -287,6 +290,14 @@ exports.proceedToKyc = async (req, res) => {
       console.log("applicationsToUpdate ======>", applicationsToUpdate);
 
       if (applicationsToCreate.length > 0) {
+        const statusRes = await updateKYCProceedStatus(student_id, assigned_country);
+
+        if (!statusRes) {
+          return res.status(404).json({
+            status: false,
+            message: "Status not updated",
+          });
+        }
         // Insert new applications and retrieve the newly created records
         const createdApplications = await db.application.bulkCreate(applicationsToCreate, {
           transaction,
@@ -968,7 +979,9 @@ exports.rejectKYC = async (req, res, next) => {
     ];
 
     // Fetch existing task details
-    const assignedCountry = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(role_id.toString())
+    const assignedCountry = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID.toString()].includes(
+      role_id.toString()
+    )
       ? assigned_country_id
       : // : existUser?.country_id;
         existUser?.countries?.[0]?.id;
@@ -988,7 +1001,9 @@ exports.rejectKYC = async (req, res, next) => {
     const { kyc_remarks, description } = existTask;
 
     // Determine country name
-    const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(role_id.toString())
+    const resolvedCountryName = [process.env.APPLICATION_MANAGER_ID.toString(), process.env.APPLICATION_TEAM_ID].includes(
+      role_id.toString()
+    )
       ? // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
         (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
       : // : existUser?.country?.country_name;
@@ -1181,7 +1196,11 @@ exports.getAllKycByUser = async (req, res) => {
 
     let applicationData = await db.application.findAll({
       where: {
-        [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: userDecodeId }, { application_status: status }],
+        [db.Sequelize.Op.and]: [
+          { proceed_to_application_manager: true },
+          { assigned_user: userDecodeId },
+          { application_status: status },
+        ],
       },
 
       include: [
@@ -1285,7 +1304,15 @@ exports.getAllKycByUser = async (req, res) => {
           ],
         },
       ],
-      attributes: ["id", "kyc_status", "application_status", "offer_letter", "is_application_checks_passed", "comments", "reference_id"],
+      attributes: [
+        "id",
+        "kyc_status",
+        "application_status",
+        "offer_letter",
+        "is_application_checks_passed",
+        "comments",
+        "reference_id",
+      ],
     });
 
     return res.status(200).json({

@@ -300,14 +300,7 @@ exports.finishTask = async (req, res) => {
         leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
       }
     }
-
-
-
-    console.log("LEASE USERS",leastAssignedUsers)
-
-   
-
-
+    
     if (leastAssignedUsers.length > 0) {
       // Remove existing counselors for the student
       await db.userCounselors.destroy({
