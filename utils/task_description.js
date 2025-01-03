@@ -117,7 +117,8 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
         const title = `${primaryInfo?.['full_name']} - ${countryName}`;
 
         const [updateTask] = await db.tasks.update(
-            { description: desc, title: title },
+            // { description: desc, title: title },
+            { description: desc },
             { where: { studentId: userId, isCompleted: false, is_proceed_to_kyc: false, userId: loggedUserId } }
         );
 
