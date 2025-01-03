@@ -8,6 +8,7 @@ const sequelize = new Sequelize(process.env.DB_dbname, process.env.DB_user, proc
   host: process.env.DB_host,
   port: process.env.DB_port, // Ensure you have DB_port in your .env file for PostgreSQL
   minifyAliases: true,
+  // dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
 const db = {};

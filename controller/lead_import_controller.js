@@ -143,7 +143,6 @@ exports.bulkUpload = async (req, res) => {
                 preferred_country = [];
               }
 
-              console.log("preferred_country after processing ====>", preferred_country);
 
               const rowData = {
                 lead_received_date: row.getCell(2).value,
@@ -224,7 +223,6 @@ exports.bulkUpload = async (req, res) => {
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id;
         
-        console.log('USERRRRRR ======>', user.office_type);
             
         if (user.id) {
           await addLeadHistory(user.id, `Lead created by ${role}`, req.userDecodeId, null, transaction);
@@ -501,7 +499,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
       }
     );
 
-    console.log("count results  ===>", results);
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {

@@ -511,6 +511,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
             required: false,
           },
         ],
+        order: [["id", "ASC"]],
       });
     }
 

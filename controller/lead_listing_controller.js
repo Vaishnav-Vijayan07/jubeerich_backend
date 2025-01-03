@@ -177,7 +177,18 @@ exports.getAllLeads = async (req, res) => {
   const whereCountryManger = {
     is_deleted: false,
     [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
-    created_by: cre_id,
+    [Op.or]: [
+      { created_by: cre_id },
+      {
+        [db.Sequelize.Op.and]: [
+          db.Sequelize.literal(`EXISTS (
+            SELECT 1 FROM "user_counselors" 
+            WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+            AND "user_counselors"."counselor_id" = ${cre_id}
+          )`),
+        ],
+      },
+    ],
   };
 
   const where = {
@@ -189,30 +200,34 @@ exports.getAllLeads = async (req, res) => {
           { created_by: cre_id },
           { assigned_cre: cre_id },
           { assigned_regional_manager: cre_id },
-          { assigned_counsellor_tl: cre_id },
+          {
+            [Op.and]: [{ assigned_counsellor_tl: cre_id }, { assigned_branch_counselor: null }],
+          },
           { assigned_branch_counselor: cre_id },
-          {
-            [Op.and]: [
-              db.Sequelize.literal(`EXISTS (
-                    SELECT 1 FROM "user_counselors" 
-                    WHERE "user_counselors"."user_id" = "user_primary_info"."id"
-                    AND "user_counselors"."counselor_id" = ${cre_id}
-                  )`),
-            ],
-          },
-          {
-            [Op.and]: [
-              db.Sequelize.literal(`EXISTS (
-                  SELECT 1 FROM "admin_users"
-                  WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
-                  AND "admin_users"."id" = ${cre_id}
-                )`),
-            ],
-          },
+          db.Sequelize.where(
+            db.Sequelize.literal(`
+              EXISTS (
+                SELECT 1 FROM "user_counselors" 
+                WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                AND "user_counselors"."counselor_id" = ${cre_id}
+              )
+            `),
+            true
+          ),
+          db.Sequelize.where(
+            db.Sequelize.literal(`
+              EXISTS (
+                SELECT 1 FROM "admin_users"
+                WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
+                AND "admin_users"."id" = ${cre_id}
+              )
+            `),
+            true
+          ),
         ],
       },
       {
-        [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+        [Op.or]: [{ full_name: { [Op.iLike]: `%${dynamicIlike}%` } }, { email: { [Op.iLike]: `%${dynamicIlike}%` } }],
       },
     ],
   };
@@ -220,14 +235,14 @@ exports.getAllLeads = async (req, res) => {
   try {
     let userPrimaryInfos;
 
-     const adminUser = await db.adminUsers.findByPk(cre_id, {
-          attributes: ["id", "name"],
-          include: {
-            model: db.country,
-            attributes: ["country_name", "id", "country_code"],
-            through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
-          },
-        });
+    const adminUser = await db.adminUsers.findByPk(cre_id, {
+      attributes: ["id", "name"],
+      include: {
+        model: db.country,
+        attributes: ["country_name", "id", "country_code"],
+        through: { model: db.adminUserCountries, attributes: [] }, // Exclude join table attributes if not needed
+      },
+    });
 
     // const adminUser = await AdminUsers.findByPk(cre_id, {
     //   include: [
@@ -238,8 +253,6 @@ exports.getAllLeads = async (req, res) => {
     //     },
     //   ],
     // }); // Await the promise to get the admin user data
-
-    console.log("Admin User======>", JSON.stringify(adminUser, null, 2));
 
     if (!adminUser) {
       return res.status(404).json({
@@ -300,7 +313,7 @@ exports.getAllLeads = async (req, res) => {
             required: false,
           },
           {
-            model: db.officeTTRUNCATEype,
+            model: db.officeType,
             as: "office_type_name",
             attributes: ["office_type_name"],
           },
@@ -347,38 +360,7 @@ exports.getAllLeads = async (req, res) => {
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
-        where: {
-          [db.Sequelize.Op.or]: [
-            { assigned_cre_tl: cre_id },
-            { created_by: cre_id },
-            { assigned_cre: cre_id },
-            { assigned_regional_manager: cre_id },
-            // { assigned_counsellor_tl: cre_id },
-            {
-              [db.Sequelize.Op.and]: [{ assigned_counsellor_tl: cre_id }, { assigned_branch_counselor: null }],
-            },
-            { assigned_branch_counselor: cre_id },
-            {
-              [db.Sequelize.Op.and]: [
-                db.Sequelize.literal(`EXISTS (
-                    SELECT 1 FROM "user_counselors" 
-                    WHERE "user_counselors"."user_id" = "user_primary_info"."id"
-                    AND "user_counselors"."counselor_id" = ${cre_id}
-                  )`),
-              ],
-            },
-            {
-              [db.Sequelize.Op.and]: [
-                db.Sequelize.literal(`EXISTS (
-                  SELECT 1 FROM "admin_users"
-                  WHERE "admin_users"."region_id" = "user_primary_info"."region_id"
-                  AND "admin_users"."id" = ${cre_id}
-                )`),
-              ],
-            },
-          ],
-          is_deleted: false,
-        },
+        where,
         distinct: true,
         include: [
           {
@@ -759,10 +741,11 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
 exports.geLeadsForCreTl = async (req, res) => {
   const { page = 1, limit = 20, keyword } = req.query;
 
-  const offset = (page - 1) * limit;
-  const parsedLimit = parseInt(limit, 10);
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
 
   try {
     // Fetch all CREs (Role ID 3)
@@ -773,6 +756,7 @@ exports.geLeadsForCreTl = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -802,6 +786,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           },
         ],
       },
+      // distint: true,
       include: [
         // {
         //   model: db.leadCategory,
@@ -997,6 +982,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1131,8 +1117,6 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
     const formattedUserPrimaryInfos = await Promise.all(
       rows.map(async (info) => {
-        console.log("INFO", info);
-
         const preferredCountries = info.preferredCountries.map((country) => ({
           country_name: country.country_name,
           id: country.id,
@@ -1218,6 +1202,7 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
 
     const userId = req.userDecodeId;
     const { rows, count } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1428,7 +1413,11 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }, { assigned_counsellor_tl: userId }],
+            [db.Sequelize.Op.or]: [
+              { assigned_counsellor_tl: userId },
+              { created_by: userId },
+              { assigned_counsellor_tl: userId },
+            ],
           },
           {
             assigned_branch_counselor: {
@@ -1650,7 +1639,16 @@ exports.getAllUserDocuments = async (req, res) => {
           as: "educationDetails",
           where: { student_id: id },
           required: false,
-          attributes: ["id", "qualification", "percentage", "board_name", "school_name", "mark_sheet", "admit_card", "certificate"],
+          attributes: [
+            "id",
+            "qualification",
+            "percentage",
+            "board_name",
+            "school_name",
+            "mark_sheet",
+            "admit_card",
+            "certificate",
+          ],
         },
         {
           model: db.workInfos,
@@ -1691,8 +1689,6 @@ exports.getAllUserDocuments = async (req, res) => {
         },
       ],
     });
-
-    console.log("AllDocs =========>", AllDocs);
 
     res.status(200).json({
       status: true,

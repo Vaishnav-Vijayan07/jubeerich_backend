@@ -7,6 +7,7 @@ const {
   getDataForCre,
   transformOfficeToBarData,
   getDataForCounselor,
+  getDataForCountryManager,
 } = require("../utils/dashboard_controller_helpers");
 
 exports.getDashboard = async (req, res) => {
@@ -57,7 +58,8 @@ exports.getDashboard = async (req, res) => {
         result = await getDataForCounselor(filterArgs, role_id, userDecodeId);
         break;
       case IdsFromEnv.COUNTRY_MANAGER_ID:
-        result = await getDataForCountryManager();
+        console.log("<===============it COUNSELLOR_ROLE_ID==============>");
+        result = await getDataForCountryManager(filterArgs, role_id, userDecodeId);
         break;
       default:
         return res.status(403).json({
@@ -66,7 +68,8 @@ exports.getDashboard = async (req, res) => {
         });
     }
 
-    const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount } = result;
+    const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount, applicationData } = result;
+
     const { statCards } = processCardData(leadCount);
     if (role_id === IdsFromEnv.CRE_ID) {
       const { barCategories, barSeries } = transformOfficeToBarData(roleWiseData, statustyps);
@@ -85,6 +88,7 @@ exports.getDashboard = async (req, res) => {
       series,
       statCards,
       latestLeadsCount,
+      applicationData: applicationData ? applicationData : null,
     });
   } catch (error) {
     console.error(error);

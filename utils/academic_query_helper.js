@@ -50,7 +50,6 @@ const batchUpsertStudyPreference = async (model, records, transaction) => {
           }
         });
 
-        console.log("UPDATE FIELDS: ", updateFields);
 
         // Add update logic if there are changes
         if (Object.keys(updateFields).length > 0) {
@@ -77,7 +76,6 @@ const batchUpsertExamDocs = async (model, records, transaction) => {
     transaction,
   });
 
-  console.log(existingRecords);
 
   const updatePromises = [];
   const addPromises = [];
@@ -96,12 +94,10 @@ const batchUpsertExamDocs = async (model, records, transaction) => {
           }
         });
 
-        console.log("UPDATE FILEDS", updateFields);
 
         if (Object.keys(updateFields).length > 0) {
           if (Object.keys(updateFields).includes("score_card")) {
             const docName = existingRecord.score_card;
-            console.log(docName);
             deleteFile("examDocuments", docName);
           }
 
@@ -163,7 +159,6 @@ const addOrUpdateAcademic = async (academicRecords, transaction) => {
 };
 
 const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
-  console.log("files ==>", files);
 
   const records = examRecords.map((record) => {
     // Find the file associated with the current record
@@ -172,8 +167,6 @@ const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
       (file) => file.originalname === record.score_card
     );
 
-    console.log(files);
-    console.log("fileitem===>", fileitem);
 
     // If a file is found, update the document field with the file's filename
     if (fileitem) {
@@ -190,7 +183,6 @@ const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
     };
   });
 
-  console.log("Exam Record", records);
 
   try {
     await batchUpsertExamDocs(db.userExams, records, transaction);
@@ -203,7 +195,6 @@ const addOrUpdateExamDocs = async (examRecords, userId, files, transaction) => {
 };
 
 const addOrUpdateWork = async (workRecords, transaction) => {
-  console.log("WORK Record", workRecords);
   try {
     await batchUpsertWorkData(db.workInfos, workRecords, transaction);
     return { success: true };
@@ -220,7 +211,6 @@ const addOrUpdateStudyPreference = async (studyPreferenceRecords, studyPreferenc
     studyPreferenceId,
   }));
 
-  console.log("STUDY RECORDS", records);
 
   try {
     await batchUpsertStudyPreference(db.studyPreferenceDetails, records, transaction);

@@ -4,7 +4,6 @@ const fs = require("fs");
 
 const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("Inside multer destination ->", file);
 
     // Map specific fields to corresponding folders
     const folder = {
@@ -41,7 +40,6 @@ const multerStorage = multer.diskStorage({
     cb(null, uploadFolder);
   },
   filename: (req, file, cb) => {
-    console.log("Inside multer filename ->", file);
     const ext = path.extname(file.originalname);
     const basename = path.basename(file.originalname, ext);
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

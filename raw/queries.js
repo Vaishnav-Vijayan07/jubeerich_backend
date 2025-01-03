@@ -265,6 +265,74 @@ const getLeadStatusCounselorWiseQuery = (where) => {
         country_name, type_name;`;
 };
 
+const getLeadStatusWiseCountCountryMangerQuery = (where) => {
+    return ` WITH RankedStatuses AS (
+      SELECT 
+          uc.user_primary_info_id,
+          uc.country_id,
+          ucs.counselor_id,
+          upi.created_at,
+          upi.created_by,
+          s.status_name,
+          st.type_name,
+          st.priority,
+          ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
+      FROM 
+          user_countries uc
+      LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+      LEFT JOIN user_counselors ucs ON upi.id = ucs.user_id
+      LEFT JOIN status s ON uc.status_id = s.id
+      LEFT JOIN status_type st ON s.type_id = st.id
+  )
+  SELECT 
+      type_name,
+      COUNT(*) as count,
+      SUM(COUNT(*)) OVER() as total_lead_count
+  FROM 
+      RankedStatuses
+  ${where}
+  GROUP BY 
+      type_name;
+    `;
+  };
+  
+  const getLeadStatusCountryManagerWiseQuery = (where) => {
+    return `
+      WITH RankedStatuses AS (
+          SELECT 
+              uc.user_primary_info_id,
+              uc.country_id,
+              c.country_name as country_name,
+              ucs.counselor_id,
+              s.status_name,
+              st.type_name,
+              st.priority,
+              upi.created_at,
+              upi.created_by,
+              au.name as admin_name,
+              ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
+          FROM 
+              user_countries uc
+          LEFT JOIN countries c ON uc.country_id = c.id  -- Join with countries table
+          LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+          LEFT JOIN user_counselors ucs ON upi.id = ucs.user_id
+          LEFT JOIN admin_users au ON upi.created_by = au.id
+          LEFT JOIN status s ON uc.status_id = s.id
+          LEFT JOIN status_type st ON s.type_id = st.id
+      )
+      SELECT 
+          country_name as name,  -- Change grouping to country_name
+          type_name,
+          COUNT(*) as count
+      FROM 
+          RankedStatuses
+      ${where}
+      GROUP BY 
+          country_name, type_name  -- Change grouping to country_name
+      ORDER BY 
+          country_name, type_name;`;
+  };
+
 module.exports = {
   getLeadStatusWiseCountQuery,
   getLeadStatusOfficeWiseCountQuery,
@@ -274,4 +342,6 @@ module.exports = {
   getLeadStatusCreWiseQuery,
   getLeadStatusWiseCountCounselorQuery,
   getLeadStatusCounselorWiseQuery,
+  getLeadStatusWiseCountCountryMangerQuery,
+  getLeadStatusCountryManagerWiseQuery
 };

@@ -172,7 +172,7 @@ exports.getTaskById = async (req, res) => {
     const newTask = await Task.create({
       title,
       user_id: userId,
-      due_date: new Date()
+      due_date: new Date(),
     });
     res.status(201).json({
       status: true,
@@ -256,8 +256,6 @@ exports.getTaskById = async (req, res) => {
         priority: req?.body?.priority || null,
       };
 
-      console.log("updatedData", updatedData);
-
       const updatedTask = await task.update(updatedData);
 
       res.status(200).json({
@@ -276,7 +274,6 @@ exports.getTaskById = async (req, res) => {
   // Delete a task
   (exports.deleteTask = async (req, res) => {
     const id = parseInt(req.params.id);
-    console.log("id", id);
 
     try {
       const task = await Task.findByPk(id);
