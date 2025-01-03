@@ -194,6 +194,7 @@ router.get("/university/:id", [authMiddleware.checkUserAuth], UniversityControll
 router.post("/university", [authMiddleware.checkUserAuth], UniversityController.addUniversity);
 router.put("/university/:id", [authMiddleware.checkUserAuth], UniversityController.updateUniversity);
 router.delete("/university/:id", [authMiddleware.checkUserAuth], UniversityController.deleteUniversity);
+router.get("/university_by_country/:id", [authMiddleware.checkUserAuth], UniversityController.getAllUniversityByCountryId);
 
 // Tasks routes
 router.get("/ordinary_task", [authMiddleware.checkUserAuth], OrdinaryTaskController.getAllTasks);
@@ -299,6 +300,7 @@ router.get("/get_all_counsellors_tl/:id", [authMiddleware.checkUserAuth], AdminU
 // Campus routes
 router.get("/campuses", [authMiddleware.checkUserAuth], CampusController.getAllCampuses);
 router.get("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.getCampusById);
+router.get("/campuses_by_university/:id", [authMiddleware.checkUserAuth], CampusController.getAllCampusesByUniversity);
 router.post("/campuses", [authMiddleware.checkUserAuth], CampusController.addCampus);
 router.put("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.updateCampus);
 router.delete("/campuses/:id", [authMiddleware.checkUserAuth], CampusController.deleteCampus);
@@ -309,6 +311,7 @@ router.delete("/configure_courses/", [authMiddleware.checkUserAuth], CampusContr
 // Course routes
 router.get("/courses", [authMiddleware.checkUserAuth], CourseController.getAllCourses);
 router.get("/courses/:id", [authMiddleware.checkUserAuth], CourseController.getCourseById);
+router.get("/courses_by_type_stream", [authMiddleware.checkUserAuth], CourseController.getAllCourseByTypeAndStream);
 router.post("/courses", [authMiddleware.checkUserAuth], CourseController.addCourse);
 router.put("/courses/:id", [authMiddleware.checkUserAuth], CourseController.updateCourse);
 router.delete("/courses/:id", [authMiddleware.checkUserAuth], CourseController.deleteCourse);

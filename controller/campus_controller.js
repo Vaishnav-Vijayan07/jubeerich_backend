@@ -62,6 +62,28 @@ exports.getAllCampuses = async (req, res) => {
   }
 };
 
+// Get all campuses by university
+exports.getAllCampusesByUniversity = async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const campuses = await Campus.findAll({ where: { university_id: id }, attributes: ["id", "campus_name"] });
+
+    console.log('campuses', campuses);
+
+    const formatttedCampus = campuses.map((course) => {
+      return {
+        value: course.id,
+        label: course.campus_name,
+      };
+    })
+
+    return res.status(200).json({ status: true, data: formatttedCampus });
+  } catch (error) {
+    console.error(`Error retrieving campuses: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
 exports.getCoursesWithDetails = async (req, res) => {
   const { campus_id } = req.params;
 

@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const db = require("../models");
 const Course = db.course;
 const { validationResult, check } = require("express-validator");
@@ -62,6 +63,31 @@ exports.getCourseById = async (req, res) => {
       return res.status(404).json({ status: false, message: "Course not found" });
     }
     res.status(200).json({ status: true, data: course });
+  } catch (error) {
+    console.error(`Error retrieving course: ${error}`);
+    res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// Get course by course type and stream
+exports.getAllCourseByTypeAndStream = async (req, res) => {
+  const type_id = req.query.type_id;
+  const stream_id = req.query.stream_id;
+  try {
+    const course = await Course.findAll({ where: { course_type_id: type_id, stream_id: stream_id  }, attributes: ["id", "course_name"] });
+    
+    if (!course) {
+      return res.status(404).json({ status: false, message: "Course not found" });
+    }
+
+    const formatttedCourse = course.map((course) => {
+      return {
+        value: course.id,
+        label: course.course_name,
+      };
+    });
+
+    return res.status(200).json({ status: true, data: formatttedCourse });
   } catch (error) {
     console.error(`Error retrieving course: ${error}`);
     res.status(500).json({ status: false, message: "Internal server error" });
