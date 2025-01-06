@@ -3,6 +3,7 @@ const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 const { getApplicationDetailsForHistory, addLeadHistory } = require("../utils/academic_query_helper");
 const { getAvailabilityData } = require("../utils/check_helpers");
+const { deleteFile } = require("../utils/upsert_helpers");
 
 const types = {
   education: "education",
@@ -562,6 +563,11 @@ exports.updateApplicationReceipt = async (req, res, next) => {
         status: false,
         message: "Application not found",
       });
+    }
+
+    const existingReceipt = application?.application_receipt;
+    if (existingReceipt) {
+      await deleteFile("application_receipts", existingReceipt);
     }
 
     // Update the application with the receipt file path
