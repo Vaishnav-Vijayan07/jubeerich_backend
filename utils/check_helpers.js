@@ -64,6 +64,7 @@ const getAvailabilityData = async (application_id) => {
 
     const checks = {
       id: existApplication?.id,
+      isCheckPassed: eligibilityChecks?.availability_check,
       country_name: studyPreferDetails?.studyPreference?.country?.country_name || "N/A",
       university_name: studyPreferDetails?.preferred_university?.university_name || "N/A",
       stream_name: studyPreferDetails?.preferred_stream?.stream_name || "N/A",
@@ -121,6 +122,7 @@ const getCampusData = async (application_id) => {
     const checks = {
       id: existApplication?.id,
       campus_name: studyPreferDetails?.preferred_campus?.campus_name || "N/A",
+      isCheckPassed: eligibilityChecks?.campus_check,
     };
 
     const remarks = {
@@ -179,10 +181,10 @@ const getApplicationData = async (application_id) => {
       }),
     ]);
 
-
     const checks = {
       id: existApplication?.id,
       fee: studyPreferDetails?.preferred_courses?.campuses?.[0]?.campus_course?.application_fee || 0,
+      isCheckPassed: eligibilityChecks?.application_fee_check,
     };
 
     const remarks = {
@@ -223,10 +225,14 @@ const getCheckDataTypeWise = async (application_id, type) => {
       }),
     ]);
 
+    const checkpass = type === "quality_check" ? Object.values(eligibilityChecks?.[type]).some((value) => value) : eligibilityChecks?.[type];
+
     const remarks = {
       id: eligibilityChecks?.eligibility_remarks?.id,
       application_id,
       remarks: eligibilityChecks?.eligibility_remarks?.[type],
+      isCheckPassed: checkpass,
+      qualityForm : eligibilityChecks?.[type]
     };
 
     return {
