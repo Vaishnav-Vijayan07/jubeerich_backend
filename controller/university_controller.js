@@ -76,6 +76,30 @@ exports.getUniversityById = async (req, res) => {
   }
 };
 
+// Get all universities by country ID
+exports.getAllUniversityByCountryId = async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const university = await University.findAll({ where: { country_id: id }, attributes: ['id', 'university_name'] });
+    if (!university) {
+      return res.status(404).json({
+        status: false,
+        message: "University not found",
+      });
+    }
+    res.status(200).json({
+      status: true,
+      data: university,
+    });
+  } catch (error) {
+    console.error(`Error retrieving university: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // Add a new university
 exports.addUniversity = [
   // Validation middleware
