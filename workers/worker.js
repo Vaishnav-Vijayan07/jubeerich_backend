@@ -8,17 +8,24 @@ module.exports = async function processBatch(batch) {
 
   const errors = [];
   const validData = [];
+  const seen = new Set();
 
   const userRole = await db.adminUsers.findOne({ where: { id: userDecodeId } });
 
   rows.forEach((row, index) => {
     const validationErrors = validateRowData(row);
+    const rowNumber = meta.startRow + index;
+  
     if (validationErrors.length > 0) {
-      errors.push({ rowNumber: meta.startRow + index, errors: validationErrors });
-    } else {
+      errors.push({ rowNumber, rowData: row?.rowData, errors: validationErrors });
+    } else if (!seen.has(row?.rowData?.email) && !seen.has(row?.rowData?.phone)) {
+      seen.add(row?.rowData?.email);
+      seen.add(row?.rowData?.phone);
       validData.push(row);
+    } else {
+      errors.push({ rowNumber, rowData: row?.rowData, errors: 'Duplicate email or phone found on the sheet' });
     }
-  });
+  });  
 
   if (validData.length > 0) {
     try {
@@ -152,232 +159,9 @@ module.exports = async function processBatch(batch) {
       throw error;
     }
   }
-  console.log('errors', errors);
 
   return { errors };
 };
-
-// module.exports = async function processBatch(batch) {
-//   const { rows, meta, userDecodeId, role, creTLrole } = batch;
-//   const transaction = await db.sequelize.transaction();
-
-//   const errors = [];
-//   const validData = [];
-
-//   const userRole = await db.adminUsers.findOne({ where: { id: userDecodeId } });
-
-//   const emailSet = new Set();
-//   const phoneSet = new Set();
-//   const duplicateEmailRows = new Map();
-//   const duplicatePhoneRows = new Map();
-
-//   rows.forEach((row, index) => {
-//     const { email, phone } = row.rowData;
-//     const rowNumber = meta.startRow + index;
-
-//     // Check for duplicates within the file
-//     if (email) {
-//       if (emailSet.has(email)) {
-//         if (!duplicateEmailRows.has(email)) {
-//           duplicateEmailRows.set(email, []);
-//         }
-//         duplicateEmailRows.get(email).push(rowNumber);
-//       } else {
-//         emailSet.add(email);
-//       }
-//     }
-
-//     if (phone) {
-//       if (phoneSet.has(phone)) {
-//         if (!duplicatePhoneRows.has(phone)) {
-//           duplicatePhoneRows.set(phone, []);
-//         }
-//         duplicatePhoneRows.get(phone).push(rowNumber);
-//       } else {
-//         phoneSet.add(phone);
-//       }
-//     }
-//   });
-
-//   // Step 2: Check for duplicates against the database
-//   const dbExistingEmails = await db.userPrimaryInfo.findAll({
-//     where: { email: Array.from(emailSet) },
-//     attributes: ["email"],
-//   });
-
-//   const dbExistingPhones = await db.userPrimaryInfo.findAll({
-//     where: { phone: Array.from(phoneSet) },
-//     attributes: ["phone"],
-//   });
-
-//   const dbEmailSet = new Set(dbExistingEmails.map((record) => record.email));
-//   const dbPhoneSet = new Set(dbExistingPhones.map((record) => record.phone));
-
-//   // Step 3: Add errors for duplicates and validate rows
-//   rows.forEach((row, index) => {
-//     const { email, phone } = row.rowData;
-//     const rowNumber = meta.startRow + index;
-//     const rowErrors = validateRowData(row.rowData);
-
-//     if (email && duplicateEmailRows.has(email)) {
-//       rowErrors.push(`Duplicate email within file at rows: ${duplicateEmailRows.get(email).join(", ")}`);
-//     }
-
-//     if (phone && duplicatePhoneRows.has(phone)) {
-//       rowErrors.push(`Duplicate phone within file at rows: ${duplicatePhoneRows.get(phone).join(", ")}`);
-//     }
-
-//     if (email && dbEmailSet.has(email)) {
-//       rowErrors.push(`Email already exists in the database: ${email}`);
-//     }
-
-//     if (phone && dbPhoneSet.has(phone)) {
-//       rowErrors.push(`Phone already exists in the database: ${phone}`);
-//     }
-
-//     if (rowErrors.length > 0) {
-//       errors.push({ rowNumber, errors: rowErrors });
-//     } else {
-//       validData.push(row);
-//     }
-//   });
-
-//   if (validData.length > 0) {
-//     try {
-//       let formattedData = validData.map((data) => data?.rowData);
-
-//       // Bulk create users from the valid data
-//       const createdUsers = await db.userPrimaryInfo.bulkCreate(formattedData, {
-//         returning: true,
-//         transaction
-//       });
-
-//       for (const user of createdUsers) {
-
-//         const userId = user.id;
-//         const userJsonData = validData.find((data) => data.rowData.email == user.email);
-
-//         let preferredCountries = userJsonData.rowData.preferred_country;
-
-//         const franchiseId = user.franchise_id;
-
-//         if (user.id) {
-//           await addLeadHistory(user.id, `Lead created by ${role}`, userDecodeId, null, transaction);
-//         }
-
-//         if (userRole?.role_id == process.env.IT_TEAM_ID && user.office_type == process.env.CORPORATE_OFFICE_ID) {
-//           await addLeadHistory(user.id, `Lead assigned to ${creTLrole}`, userDecodeId, null, transaction);
-//         }
-
-//         // Retrieve existing user-country associations
-//         const existingUserCountries = await db.userContries.findAll({
-//           where: {
-//             user_primary_info_id: userId,
-//           },
-//           attributes: ["country_id"],
-//         });
-
-//         const existingCountryIds = new Set(existingUserCountries.map((uc) => uc.country_id));
-        
-//         preferredCountries = Array.isArray(preferredCountries) ? preferredCountries : [preferredCountries]
-        
-//         // Collect preferred countries excluding duplicates
-//         const userCountries = preferredCountries
-//           ?.filter((countryId) => !existingCountryIds.has(countryId))
-//           .map((countryId) => ({
-//             user_primary_info_id: userId,
-//             country_id: countryId,
-//             status_id: process.env.NEW_LEAD_STATUS_ID,
-//           }));
-
-//         if (userCountries.length > 0) {
-//           await db.userContries.bulkCreate(userCountries, { transaction });
-//         }
-
-//         // Create study preferences for the user
-//         if (preferredCountries.length > 0) {
-//           await Promise.all(
-//             preferredCountries.map(async (countryId) => {
-//               await db.studyPreference.create({
-//                 userPrimaryInfoId: userId,
-//                 countryId,
-//               }, { transaction });
-//             })
-//           );
-//         }
-
-//         // Handle franchise-specific logic
-//         if (franchiseId) {
-//           let leastAssignedUsers = [];
-//           for (const countryId of preferredCountries) {
-//             const users = await getLeastAssignedCounsellor(countryId, franchiseId);
-//             if (users?.leastAssignedUserId) {
-//               leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
-//             }
-//           }
-
-//           if (leastAssignedUsers.length > 0) {
-//             // Remove existing counselors for the student
-//             await db.userCounselors.destroy({
-//               where: { user_id: userId },
-//             });
-
-//             // Add new counselors
-//             const userCounselorsData = leastAssignedUsers.map((counsellorId) => ({
-//               user_id: userId,
-//               counselor_id: counsellorId,
-//             }));
-
-//             await db.userCounselors.bulkCreate(userCounselorsData, { transaction });
-
-//             const dueDate = new Date();
-
-//             let countryName = "Unknown";
-//             if (preferredCountries.length > 0) {
-//               const countries = await db.country.findAll({
-//                 where: { id: preferredCountries },
-//                 attributes: ["country_name", "country_code"],
-//               });
-
-//               if (countries) {
-//                 countryName = countries.map((country) => country.country_code).join(", ");
-//               }
-//             }
-
-//             let formattedDesc = await createTaskDesc(user, user.id);
-
-//             if (!formattedDesc) {
-//               throw new Error("Description error while creating task");
-//             }
-
-//             // Create tasks for each least assigned user
-//             for (const leastUserId of leastAssignedUsers) {
-//               await db.tasks.create({
-//                 studentId: user.id,
-//                 userId: leastUserId,
-//                 title: `${user.full_name} - ${countryName}`,
-//                 description: formattedDesc,
-//                 dueDate: dueDate,
-//                 updatedBy: userId,
-//               }, { transaction });
-//             }
-//           }
-//         }
-//       }
-
-//       await transaction.commit();
-
-//     } catch (error) {
-//       console.error("Error in processing batch", error);
-//       errors.push({ rowNumber: meta.startRow, errors: [`Database error: ${error.message}`] });
-//       await transaction.rollback();
-//       throw error;
-//     }
-//   }
-//   console.log('errors', errors);
-
-//   return { errors };
-// };
 
 // Validation function to check row data
 const validateRowData = (data) => {

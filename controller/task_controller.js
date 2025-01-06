@@ -44,17 +44,9 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          // where: { country_id: adminUser?.country_id },
-          where: { country_id: { [Op.in]: countryIds } },
-          // where: {
-          //   country_id: {
-          //     [db.Sequelize.Op.in]: db.sequelize.literal(
-          //       `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-          //     ),
-          //   },
-          // },
+          where: { country_id: { [Op.in]: countryIds }, status_id: { [Op.ne]: process.env.SPAM_LEAD_STATUS_ID } },
         },
-        required: false,
+        required: true,
         include: [
           {
             model: db.status,
@@ -77,8 +69,9 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
+          where: { status_id: { [Op.ne]: process.env.SPAM_LEAD_STATUS_ID } },
         },
-        required: false,
+        required: true,
         include: [
           {
             model: db.status,
@@ -130,6 +123,9 @@ exports.getTasks = async (req, res) => {
       },
       order: [["createdAt", "DESC"]],
     });
+
+    console.log('Tasks', JSON.stringify(tasks, null, 2));
+    
 
     res.status(200).json({
       status: true,
