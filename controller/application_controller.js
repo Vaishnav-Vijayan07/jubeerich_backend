@@ -126,7 +126,6 @@ exports.getApplicationById = async (req, res, next) => {
   }
 };
 
-
 exports.assignApplication = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
@@ -522,6 +521,55 @@ exports.provdeOfferLetter = async (req, res, next) => {
     return res.status(200).json({
       status: true,
       message: "Offer accepted successfully",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.updateApplicationReceipt = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    console.log("FILES ======>", req.file);
+
+    const receipt = req?.file || null;
+
+    // Validate the receipt file
+    if (!receipt) {
+      return res.status(400).json({
+        status: false,
+        message: "No receipt file uploaded",
+      });
+    }
+
+    if (receipt.mimetype !== "application/pdf") {
+      return res.status(400).json({
+        status: false,
+        message: "Only PDF files are allowed for receipt upload",
+      });
+    }
+
+    // Find application by ID
+    const application = await db.application.findByPk(id);
+
+    if (!application) {
+      return res.status(404).json({
+        status: false,
+        message: "Application not found",
+      });
+    }
+
+    // Update the application with the receipt file path
+    await application.update({ application_receipt: receipt.filename });
+
+    return res.status(200).json({
+      status: true,
+      message: "Receipt uploaded successfully",
     });
   } catch (error) {
     console.error(`Error: ${error.message}`);

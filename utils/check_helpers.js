@@ -185,6 +185,7 @@ const getApplicationData = async (application_id) => {
       id: existApplication?.id,
       fee: studyPreferDetails?.preferred_courses?.campuses?.[0]?.campus_course?.application_fee || 0,
       isCheckPassed: eligibilityChecks?.application_fee_check,
+      application_reciept: existApplication?.application_receipt,
     };
 
     const remarks = {
@@ -232,7 +233,7 @@ const getCheckDataTypeWise = async (application_id, type) => {
       application_id,
       remarks: eligibilityChecks?.eligibility_remarks?.[type],
       isCheckPassed: checkpass,
-      qualityForm : eligibilityChecks?.[type]
+      qualityForm: eligibilityChecks?.[type],
     };
 
     return {
