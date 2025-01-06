@@ -309,7 +309,21 @@ exports.proceedToKyc = async (req, res) => {
           application_id: app.id,
         }));
 
-        await db.eligibilityChecks.bulkCreate(eligibilityData, { transaction });
+        // First, bulk create eligibilityChecks
+        const createdEligibilityChecks = await db.eligibilityChecks.bulkCreate(eligibilityData, {
+          transaction,
+          returning: true, // Ensure the created records are returned
+        });
+
+        // Map the created IDs to the eligibilityRemarks data
+        const eligibilityRemarksData = createdEligibilityChecks.map((record, index) => {
+          return {
+            eligibilty_id: record.id, // Use the ID from the created eligibilityChecks
+          };
+        });
+
+        // Bulk create eligibilityRemarks
+        await db.eligibilityRemarks.bulkCreate(eligibilityRemarksData, { transaction });
       }
 
       if (applicationsToUpdate.length > 0) {
@@ -925,8 +939,6 @@ exports.rejectKYC = async (req, res, next) => {
         },
       ],
     });
-
-    console.log(JSON.stringify(existUser, 0, 2));
 
     // Fetch application details
     const existApplication = await db.application.findByPk(application_id, {

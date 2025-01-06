@@ -2,6 +2,7 @@ const db = require("../models");
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 const { getApplicationDetailsForHistory, addLeadHistory } = require("../utils/academic_query_helper");
+const { getAvailabilityData } = require("../utils/check_helpers");
 
 const types = {
   education: "education",
@@ -96,7 +97,14 @@ exports.getApplicationById = async (req, res, next) => {
           },
         ],
       }),
-      existApplication.getEligibilityChecks(),
+      existApplication.getEligibilityChecks({
+        include: [
+          {
+            model: db.eligibilityRemarks,
+            as: "eligibility_remarks",
+          },
+        ],
+      }),
     ]);
 
     return res.status(200).json({
@@ -117,6 +125,7 @@ exports.getApplicationById = async (req, res, next) => {
     });
   }
 };
+
 
 exports.assignApplication = async (req, res, next) => {
   const transaction = await sequelize.transaction();
