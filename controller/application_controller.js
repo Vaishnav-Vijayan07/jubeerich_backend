@@ -4,20 +4,74 @@ const { Sequelize } = require("sequelize");
 const { getApplicationDetailsForHistory, addLeadHistory } = require("../utils/academic_query_helper");
 const { getAvailabilityData } = require("../utils/check_helpers");
 const { deleteFile } = require("../utils/upsert_helpers");
+const CheckTypes = require("../constants/checkTypes");
 
 const types = {
   education: "education",
   visa: "visa",
 };
 
-const CheckTypes = {
-  availability: "availability",
-  campus: "campus",
-  entry_requirement: "entry_requirement",
-  quantity: "quantity",
-  quality: "quality",
-  immigration: "immigration",
-  application_fee: "application_fee",
+exports.getStepperData = async (req, res, next) => {
+  try {
+    const { application_id } = req.params;
+
+    const application = await db.application.findByPk(application_id);
+    if (!application) {
+      return res.status(404).json({
+        status: false,
+        message: "Application not found",
+      });
+    }
+
+    const checks = await application.getEligibilityChecks({
+      attributes: [
+        "availability_check",
+        "campus_check",
+        "entry_requirement_check",
+        "quantity_check",
+        "quality_check",
+        "immigration_check",
+        "application_fee_check",
+      ],
+    });
+
+    const checksModified = {
+      availability_check: checks?.availability_check,
+      campus_check: checks?.campus_check,
+      entry_requirement_check: checks?.entry_requirement_check,
+      quantity_check: checks?.quantity_check,
+      quality_check: Object.values(checks?.quality_check).some((value) => value),
+      immigration_check: checks?.immigration_check,
+      application_fee_check: checks?.application_fee_check,
+    };
+
+    const stepperLabels = {
+      availability_check: "Program Availbilty",
+      campus_check: "Campus",
+      entry_requirement_check: "Entry Requirement",
+      quantity_check: "Document Quantity",
+      quality_check: "Document Quality",
+      immigration_check: "Immigration History",
+      application_fee_check: "Application Fee",
+    };
+
+    const stepperData = Object.keys(stepperLabels).map((key) => ({
+      label: stepperLabels[key],
+      isCompleted: checksModified[key],
+    }));
+
+
+    return res.status(200).json({
+      status: true,
+      data: stepperData,
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
 };
 
 exports.getApplicationById = async (req, res, next) => {

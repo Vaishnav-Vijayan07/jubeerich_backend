@@ -78,6 +78,7 @@ const {
   provdeOfferLetter,
   getAllRemarks,
   updateApplicationReceipt,
+  getStepperData,
 } = require("../controller/application_controller");
 const {
   createTaskConfig,
@@ -460,6 +461,7 @@ router.get("/kyc_pending_by_user", [authMiddleware.checkUserAuth], getAllKycByUs
 router.get("/fetch_all_user_docs/:id", [authMiddleware.checkUserAuth], LeadListingController.getAllUserDocuments);
 
 router.get("/application/:id", [authMiddleware.checkUserAuth], getApplicationById);
+router.get("/stepper_data/:application_id", [authMiddleware.checkUserAuth], getStepperData);
 router.patch("/application_receipt/:id",[authMiddleware.checkUserAuth],uploadMultiple.uploadApplicationReciept, updateApplicationReceipt)
 router.get("/checks/:type/:application_id", [authMiddleware.checkUserAuth], getChecksById);
 router.post("/checks_remarks/:type/:application_id", [authMiddleware.checkUserAuth], updateCheckRemarks);

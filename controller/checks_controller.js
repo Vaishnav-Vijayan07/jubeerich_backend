@@ -1,3 +1,4 @@
+const CheckTypes = require("../constants/checkTypes");
 const {
   getAvailabilityData,
   updateEligibiltyRemark,
@@ -12,16 +13,6 @@ const {
 const types = {
   education: "education",
   visa: "visa",
-};
-
-const CheckTypes = {
-  availability: "availability",
-  campus: "campus",
-  entry_requirement: "entry_requirement",
-  quantity: "quantity",
-  quality: "quality",
-  immigration: "immigration",
-  application_fee: "application_fee",
 };
 
 exports.getChecksById = async (req, res, next) => {
