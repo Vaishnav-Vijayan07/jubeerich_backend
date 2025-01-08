@@ -60,7 +60,6 @@ exports.getStepperData = async (req, res, next) => {
       isCompleted: checksModified[key],
     }));
 
-
     return res.status(200).json({
       status: true,
       data: stepperData,
@@ -488,11 +487,30 @@ exports.getPortalDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const portalDetails = await db.university.findByPk(id, { attributes: ["id", "portal_link", "username", "password"] });
+    const portalDetails = await db.university.findByPk(id, {
+      attributes: ["id", "portal_link", "username", "password"],
+    });
+
+    const portalData = portalDetails
+      ? [
+          {
+            title: "Portal Link",
+            value: portalDetails.portal_link || "N/A",
+          },
+          {
+            title: "Username",
+            value: portalDetails.username || "N/A",
+          },
+          {
+            title: "Password",
+            value: portalDetails.password || "N/A",
+          },
+        ]
+      : [];
 
     return res.status(200).json({
       status: true,
-      data: portalDetails,
+      data: portalData,
       message: "Portal Details fetched Successfully",
     });
   } catch (error) {
