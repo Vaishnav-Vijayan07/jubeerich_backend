@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const { FOLLOWUP_ID, APPLICATION_MANAGER_ID, APPLICATION_TEAM_ID } = require("../constants/ids");
 const stageDatas = require("../constants/stage_data");
 const db = require("../models");
@@ -670,6 +671,8 @@ exports.kycRejectedDetails = async (req, res) => {
       ],
     });
 
+    let adminUserCountryIds = countries.map((country) => country.id);
+
     const applicationData = await db.application.findAll({
       include: [
         {
@@ -682,7 +685,8 @@ exports.kycRejectedDetails = async (req, res) => {
               model: db.studyPreference,
               as: "studyPreference",
               // where: { countryId: country_id },
-              where: { countryId: countries?.[0]?.id },
+              // where: { countryId: countries?.[0]?.id },
+              where: { countryId: { [db.Op.in]: adminUserCountryIds } },
               required: true, // Set this association as required
               include: [
                 {
@@ -801,6 +805,8 @@ exports.kycApprovedDetails = async (req, res) => {
       ],
     });
 
+    let adminUserCountryIds = countries.map((country) => country.id);
+
     const applicationData = await db.application.findAll({
       include: [
         {
@@ -813,7 +819,8 @@ exports.kycApprovedDetails = async (req, res) => {
               model: db.studyPreference,
               as: "studyPreference",
               // where: { countryId: country_id },
-              where: { countryId: countries?.[0]?.id },
+              // where: { countryId: countries?.[0]?.id },
+              where: { countryId: { [db.Op.in]: adminUserCountryIds } },
               required: true, // Set this association as required
               include: [
                 {
@@ -956,7 +963,7 @@ exports.rejectKYC = async (req, res, next) => {
               {
                 model: db.country,
                 as: "country",
-                attributes: ["country_name"],
+                attributes: ["country_name", "country_code"],
               },
               {
                 model: db.userPrimaryInfo,
@@ -996,7 +1003,8 @@ exports.rejectKYC = async (req, res, next) => {
     )
       ? assigned_country_id
       : // : existUser?.country_id;
-        existUser?.countries?.[0]?.id;
+        // existUser?.countries?.[0]?.id;
+        studyPreferenceDetails?.studyPreference?.countryId;
 
     const existTask = await db.tasks.findOne({
       attributes: ["id", "studentId", "title", "userId", "kyc_remarks", "description", "assigned_country"],
@@ -1019,7 +1027,7 @@ exports.rejectKYC = async (req, res, next) => {
       ? // ? (await db.country.findByPk(assigned_country_id, { attributes: ["country_name"] }))?.country_name
         (await db.country.findByPk(assigned_country_id, { attributes: ["country_name", "country_code"] }))?.country_code
       : // : existUser?.country?.country_name;
-        existUser?.countries?.[0]?.country_code;
+      studyPreferenceDetails?.studyPreference?.country?.country_code;
 
     // Update task remarks
     const formattedTaskRemark = [
