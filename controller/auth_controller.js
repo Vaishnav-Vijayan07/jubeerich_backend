@@ -5,7 +5,6 @@ const { Op } = require("sequelize");
 const AdminUsers = db.adminUsers;
 const AccessRoles = db.accessRoles;
 const AccessPowers = db.accessPowers;
-const Branches = db.branches;
 
 exports.login = async (req, res) => {
   try {
@@ -29,13 +28,17 @@ exports.login = async (req, res) => {
             },
           ],
         },
-        //   {
-        //     model: Branches,
-        //     as: "branches",
-        //     through: { attributes: [] },
-        //   },
+        {
+          model: db.country,
+          as: "countries",
+          through: { attributes: ['id'] },
+        },
       ],
     });
+
+    console.log('user', JSON.stringify(user, null, 2));
+
+    let userCountries = user?.countries?.map(country => country.id.toString());
 
     if (!user || !bcrypt.compareSync(password + secret, user.password)) {
       return res.status(401).json({
@@ -79,14 +82,7 @@ exports.login = async (req, res) => {
       power_names: powerNames,
       franchise_id: user?.franchise_id,
       branch_id: user?.branch_id,
-      //   branches: user.branches.map((branch) => ({
-      //     id: branch.id,
-      //     branch_name: branch.branch_name,
-      //     branch_address: branch.branch_address,
-      //     branch_city: branch.branch_city,
-      //     branch_country: branch.branch_country,
-      //     currency: branch.currency,
-      //   })),
+      countries: userCountries || [],
       message: "Login successful",
     });
   } catch (error) {
