@@ -56,19 +56,8 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
     try {
         let countryName;
 
-        if ([process.env.COUNSELLOR_ROLE_ID.toString(), process.env.COUNTRY_MANAGER_ID.toString()].includes(roleId.toString())) {
-            const adminUser = await db.adminUsers.findByPk(loggedUserId, {
-                include: [{
-                    model: db.country,
-                    attributes: ["country_name", "country_code"]
-                }]
-            });
+        if (![process.env.COUNSELLOR_ROLE_ID.toString(), process.env.COUNTRY_MANAGER_ID.toString()].includes(roleId.toString())) {
 
-            if (!adminUser) throw new Error('No User Found');
-
-            // countryName = adminUser?.country?.country_name;
-            countryName = adminUser?.country?.country_code;
-        } else {
             const existTask = await db.tasks.findAll({
                 where: { studentId: userId, isCompleted: false, is_proceed_to_kyc: false }
             });
@@ -116,13 +105,44 @@ const updateTaskDesc = async (primaryInfo, basicInfo, userId, loggedUserId, role
         const desc = `${formattedGender} ${primaryInfo?.['full_name']} ${age}, ${maritalStatus} from ${city} ${studyPref}`;
         const title = `${primaryInfo?.['full_name']} - ${countryName}`;
 
-        const [updateTask] = await db.tasks.update(
-            // { description: desc, title: title },
-            { description: desc },
-            { where: { studentId: userId, isCompleted: false, is_proceed_to_kyc: false, userId: loggedUserId } }
-        );
+        if ([process.env.COUNSELLOR_ROLE_ID.toString(), process.env.COUNTRY_MANAGER_ID.toString()].includes(roleId.toString())) {
+            let updatedRows = 0;
 
-        return !!updateTask;
+            const existTasks = await db.tasks.findAll({
+                where: { studentId: userId },
+                include: [{ model: db.country, as: 'task_countries', attributes: ["country_name", "country_code"] }]
+            });
+        
+            for (const task of existTasks) {
+                const { id, task_countries } = task;
+        
+                const [affectedRows] = await db.tasks.update(
+                    { title: `${primaryInfo?.['full_name']} - ${task_countries?.country_code}`, description: desc },
+                    { where: { id } }
+                );
+        
+                updatedRows += affectedRows;
+            }
+        
+            if (updatedRows === 0) {
+                throw new Error('No tasks were updated.');
+            }
+        
+            return updatedRows > 0;
+        } else {
+            const [affectedRows] = await db.tasks.update(
+                { description: desc, title: title },
+                { where: { studentId: userId, isCompleted: false, is_proceed_to_kyc: false, userId: loggedUserId } }
+            );
+        
+            if (affectedRows === 0) {
+                throw new Error('No tasks matched the criteria or were updated.');
+            }
+        
+            return affectedRows > 0;
+        }
+        
+        // return !!updateTask;
     } catch (error) {
         throw error;
     }
