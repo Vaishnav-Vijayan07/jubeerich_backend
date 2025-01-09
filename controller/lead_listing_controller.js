@@ -244,16 +244,6 @@ exports.getAllLeads = async (req, res) => {
       },
     });
 
-    // const adminUser = await AdminUsers.findByPk(cre_id, {
-    //   include: [
-    //     {
-    //       model: db.country,
-    //       attributes: ["country_name", "id", "country_code"],
-    //       through: { model: db.userContries, attributes: ["country_id"] },
-    //     },
-    //   ],
-    // }); // Await the promise to get the admin user data
-
     if (!adminUser) {
       return res.status(404).json({
         status: false,
@@ -261,7 +251,9 @@ exports.getAllLeads = async (req, res) => {
       });
     }
 
-    if (roleId == process.env.COUNTRY_MANAGER_ID) {
+    let adminUserCountryIds = adminUser?.countries?.map((country) => country?.id);
+
+    if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: whereCountryManger,
         distint: true,
@@ -288,9 +280,9 @@ exports.getAllLeads = async (req, res) => {
             through: {
               model: db.userContries,
               attributes: ["country_id", "followup_date", "status_id"],
-              where: { country_id: adminUser?.countries?.[0]?.id },
+              where: { country_id: { [Op.in]: adminUserCountryIds } },
             },
-            required: false,
+            required: true,
             include: [
               {
                 model: db.status,
