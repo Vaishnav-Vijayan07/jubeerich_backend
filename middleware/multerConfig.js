@@ -229,6 +229,33 @@ const uploadPoliceClearenceDocs = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
 }).any();
 
+
+const multerStorageApplicationReciept = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("Inside multer destination ->", file);
+    const uploadFolder = "uploads/application_receipts";
+
+    // Check if the folder exists, if not create it
+    if (!fs.existsSync(uploadFolder)) {
+      fs.mkdirSync(uploadFolder, { recursive: true });
+      console.log(`Created folder: ${uploadFolder}`);
+    }
+
+    cb(null, uploadFolder);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${basename}-${uniqueSuffix}${ext}`);
+  },
+});
+
+const uploadApplicationReciept = multer({
+  storage: multerStorageApplicationReciept,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+}).single("application_reciept");
+
 module.exports = {
   uploadMultiple,
   uploadGraduationDocs,
@@ -236,5 +263,6 @@ module.exports = {
   uploadFundDocs,
   uploadGapDocs,
   uploadExamDocs,
-  uploadPoliceClearenceDocs
+  uploadPoliceClearenceDocs,
+  uploadApplicationReciept
 };

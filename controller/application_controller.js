@@ -2,20 +2,75 @@ const db = require("../models");
 const sequelize = db.sequelize;
 const { Sequelize } = require("sequelize");
 const { getApplicationDetailsForHistory, addLeadHistory } = require("../utils/academic_query_helper");
+const { getAvailabilityData } = require("../utils/check_helpers");
+const { deleteFile } = require("../utils/upsert_helpers");
+const CheckTypes = require("../constants/checkTypes");
 
 const types = {
   education: "education",
   visa: "visa",
 };
 
-const CheckTypes = {
-  availability: "availability",
-  campus: "campus",
-  entry_requirement: "entry_requirement",
-  quantity: "quantity",
-  quality: "quality",
-  immigration: "immigration",
-  application_fee: "application_fee",
+exports.getStepperData = async (req, res, next) => {
+  try {
+    const { application_id } = req.params;
+
+    const application = await db.application.findByPk(application_id);
+    if (!application) {
+      return res.status(404).json({
+        status: false,
+        message: "Application not found",
+      });
+    }
+
+    const checks = await application.getEligibilityChecks({
+      attributes: [
+        "availability_check",
+        "campus_check",
+        "entry_requirement_check",
+        "quantity_check",
+        "quality_check",
+        "immigration_check",
+        "application_fee_check",
+      ],
+    });
+
+    const checksModified = {
+      availability_check: checks?.availability_check,
+      campus_check: checks?.campus_check,
+      entry_requirement_check: checks?.entry_requirement_check,
+      quantity_check: checks?.quantity_check,
+      quality_check: Object.values(checks?.quality_check).some((value) => value),
+      immigration_check: checks?.immigration_check,
+      application_fee_check: checks?.application_fee_check,
+    };
+
+    const stepperLabels = {
+      availability_check: "Program Availbilty",
+      campus_check: "Campus",
+      entry_requirement_check: "Entry Requirement",
+      quantity_check: "Document Quantity",
+      quality_check: "Document Quality",
+      immigration_check: "Immigration History",
+      application_fee_check: "Application Fee",
+    };
+
+    const stepperData = Object.keys(stepperLabels).map((key) => ({
+      label: stepperLabels[key],
+      isCompleted: checksModified[key],
+    }));
+
+    return res.status(200).json({
+      status: true,
+      data: stepperData,
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
 };
 
 exports.getApplicationById = async (req, res, next) => {
@@ -96,7 +151,14 @@ exports.getApplicationById = async (req, res, next) => {
           },
         ],
       }),
-      existApplication.getEligibilityChecks(),
+      existApplication.getEligibilityChecks({
+        include: [
+          {
+            model: db.eligibilityRemarks,
+            as: "eligibility_remarks",
+          },
+        ],
+      }),
     ]);
 
     return res.status(200).json({
@@ -425,11 +487,30 @@ exports.getPortalDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const portalDetails = await db.university.findByPk(id, { attributes: ["id", "portal_link", "username", "password"] });
+    const portalDetails = await db.university.findByPk(id, {
+      attributes: ["id", "portal_link", "username", "password"],
+    });
+
+    const portalData = portalDetails
+      ? [
+          {
+            title: "Portal Link",
+            value: portalDetails.portal_link || "N/A",
+          },
+          {
+            title: "Username",
+            value: portalDetails.username || "N/A",
+          },
+          {
+            title: "Password",
+            value: portalDetails.password || "N/A",
+          },
+        ]
+      : [];
 
     return res.status(200).json({
       status: true,
-      data: portalDetails,
+      data: portalData,
       message: "Portal Details fetched Successfully",
     });
   } catch (error) {
@@ -513,6 +594,60 @@ exports.provdeOfferLetter = async (req, res, next) => {
     return res.status(200).json({
       status: true,
       message: "Offer accepted successfully",
+    });
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+exports.updateApplicationReceipt = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    console.log("FILES ======>", req.file);
+
+    const receipt = req?.file || null;
+
+    // Validate the receipt file
+    if (!receipt) {
+      return res.status(400).json({
+        status: false,
+        message: "No receipt file uploaded",
+      });
+    }
+
+    if (receipt.mimetype !== "application/pdf") {
+      return res.status(400).json({
+        status: false,
+        message: "Only PDF files are allowed for receipt upload",
+      });
+    }
+
+    // Find application by ID
+    const application = await db.application.findByPk(id);
+
+    if (!application) {
+      return res.status(404).json({
+        status: false,
+        message: "Application not found",
+      });
+    }
+
+    const existingReceipt = application?.application_receipt;
+    if (existingReceipt) {
+      await deleteFile("application_receipts", existingReceipt);
+    }
+
+    // Update the application with the receipt file path
+    await application.update({ application_receipt: receipt.filename });
+
+    return res.status(200).json({
+      status: true,
+      message: "Receipt uploaded successfully",
     });
   } catch (error) {
     console.error(`Error: ${error.message}`);

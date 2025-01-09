@@ -64,6 +64,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(500),
         allowNull: true,
       },
+      application_receipt: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
       offer_letter_type: {
         type: Sequelize.ENUM("conditional", "unconditional"),
         allowNull: true,

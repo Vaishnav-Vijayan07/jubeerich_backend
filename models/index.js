@@ -69,8 +69,20 @@ db.eligibilityChecks = require("./eligibility_checks")(sequelize, Sequelize);
 db.masterData = require("./masterData")(sequelize, Sequelize);
 db.statusType = require("./statusTypes")(sequelize, Sequelize);
 db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
+db.eligibilityRemarks = require("./eligibilityRemarks")(sequelize, Sequelize);
 
 //Associations
+
+db.eligibilityChecks.hasOne(db.eligibilityRemarks, {
+  foreignKey: "eligibilty_id",
+  as: "eligibility_remarks",
+});
+
+db.eligibilityRemarks.belongsTo(db.eligibilityChecks, {
+  foreignKey: "eligibilty_id",
+  as: "eligibility_checks",
+});
+
 db.statusType.hasMany(db.status, {
   foreignKey: "type_id",
   as: "status",
@@ -81,7 +93,7 @@ db.status.belongsTo(db.statusType, {
   as: "statusType",
 });
 
-db.application.belongsTo(db.adminUsers,  {
+db.application.belongsTo(db.adminUsers, {
   foreignKey: "counsellor_id",
   as: "counsellor",
 });

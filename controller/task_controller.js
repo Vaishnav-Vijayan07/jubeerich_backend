@@ -124,8 +124,7 @@ exports.getTasks = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
-    console.log('Tasks', JSON.stringify(tasks, null, 2));
-    
+    console.log("Tasks", JSON.stringify(tasks, null, 2));
 
     res.status(200).json({
       status: true,
@@ -169,7 +168,9 @@ exports.getTaskById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
             },
           },
         },
@@ -288,6 +289,8 @@ exports.finishTask = async (req, res) => {
 
     const countryIds = preferredCountries.map((entry) => entry.country_id);
 
+    console.log("countryIds ===>", countryIds);
+
     // Fetch least assigned users for each country
     let leastAssignedUsers = [];
     for (const countryId of countryIds) {
@@ -296,13 +299,6 @@ exports.finishTask = async (req, res) => {
         leastAssignedUsers = leastAssignedUsers.concat(users.leastAssignedUserId);
       }
     }
-
-
-
-    console.log("LEASE USERS",leastAssignedUsers)
-
-   
-
 
     if (leastAssignedUsers.length > 0) {
       // Remove existing counselors for the student
@@ -319,6 +315,14 @@ exports.finishTask = async (req, res) => {
       await db.userCounselors.bulkCreate(userCounselorsData);
 
       if (isCompleted) {
+        const statusRes = await updateStatus(studentId, preferredCountries?.[0]?.country_id);
+
+        if (!statusRes) {
+          return res.status(404).json({
+            status: false,
+            message: "Status not updated",
+          });
+        }
         const dueDate = new Date();
 
         let countryName = "Unknown";
@@ -571,7 +575,13 @@ exports.assignNewCountry = async (req, res) => {
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           const region = await getRegionDataForHistory(branch_id);
           region_name = region.region_name;
-          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
+          await addLeadHistory(
+            studentId,
+            `Country ${countryName} added by ${current_user_role} - ${region_name}`,
+            userId,
+            null,
+            transaction
+          );
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
@@ -663,7 +673,9 @@ exports.getStudentBasicInfoById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
             },
           },
         },
@@ -841,7 +853,18 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "branch_id",
+        "franchise_id",
+        "region_id",
+      ],
       include: [
         {
           model: db.country,
@@ -907,7 +930,9 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
+          existingBasicData && existingBasicData.police_clearance_docs
+            ? existingBasicData.police_clearance_docs[index]?.certificate
+            : null;
 
         if (previousCertificatePath) {
           await deleteFile("policeClearenceDocuments", previousCertificatePath);
@@ -1242,7 +1267,7 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
 
 const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
-  const country_manager_id = process.env.COUNTRY_MANAGER_ID
+  const country_manager_id = process.env.COUNTRY_MANAGER_ID;
 
   try {
     const [results] = await db.sequelize.query(
@@ -1284,4 +1309,19 @@ const getLeastAssignedUsers = async (countryId) => {
       leastAssignedUserId: null,
     };
   }
+};
+
+const updateStatus = async (studentId, countryId) => {
+  const date = new Date();
+  const [updatedStatus] = await db.userContries.update(
+    {
+      status_id: process.env.FOLLOWUP_ID,
+      followup_date: date,
+    },
+    {
+      where: { user_primary_info_id: studentId, country_id: countryId },
+    }
+  );
+
+  return updatedStatus != 0;
 };
