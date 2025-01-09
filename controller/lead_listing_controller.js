@@ -1413,11 +1413,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [
-              { assigned_counsellor_tl: userId },
-              { created_by: userId },
-              { assigned_counsellor_tl: userId },
-            ],
+            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }, { assigned_counsellor_tl: userId }],
           },
           {
             assigned_branch_counselor: {
@@ -1639,15 +1635,25 @@ exports.getAllUserDocuments = async (req, res) => {
           as: "educationDetails",
           where: { student_id: id },
           required: false,
+          attributes: ["id", "qualification", "board_name", "school_name", "mark_sheet", "admit_card", "certificate"],
+        },
+        {
+          model: db.graduationDetails,
+          as: "graduationDetails",
+          where: { student_id: id },
+          required: false,
           attributes: [
             "id",
             "qualification",
-            "percentage",
-            "board_name",
-            "school_name",
-            "mark_sheet",
+            "university_name",
+            "college_name",
             "admit_card",
             "certificate",
+            "backlog_certificate",
+            "registration_certificate",
+            "grading_scale_info",
+            "transcript",
+            "individual_marksheet",
           ],
         },
         {
@@ -1690,10 +1696,44 @@ exports.getAllUserDocuments = async (req, res) => {
       ],
     });
 
+    const groupedByCompany = AllDocs[0]?.userWorkInfos.reduce((acc, item) => {
+      if (!acc[item.company]) {
+        acc[item.company] = [];
+      }
+      acc[item.company].push({
+        id: item.id,
+        designation: item.designation,
+        bank_statement: item.bank_statement,
+        job_offer_document: item.job_offer_document,
+        experience_certificate: item.experience_certificate,
+        appointment_document: item.appointment_document,
+        payslip_document: item.payslip_document,
+      });
+      return acc;
+    }, {});
+
+    const groupedByQualification = AllDocs[0]?.educationDetails.reduce((acc, item) => {
+      if (!acc[item.school_name]) {
+        acc[item.school_name] = [];
+      }
+      acc[item.school_name].push({
+        id: item.id,
+        qualification: item.qualification,
+        board_name: item.board_name,
+        school_name: item.school_name,
+        mark_sheet: item.mark_sheet,
+        admit_card: item.admit_card,
+        certificate: item.certificate,
+      });
+      return acc;
+    }, {});
+
     res.status(200).json({
       status: true,
       message: "User documents retrieved successfully",
       data: AllDocs[0],
+      workInfo: groupedByCompany,
+      educationInfo: groupedByQualification,
     });
   } catch (error) {
     console.error(`Error fetching user documents: ${error}`);
