@@ -401,9 +401,14 @@ db.tasks.belongsTo(db.adminUsers, { as: "user_name", foreignKey: "userId" });
 db.tasks.belongsTo(db.country, {
   as: "task_countries",
   foreignKey: "assigned_country",
+  onDelete: "CASCADE",
 });
 
-db.country.belongsTo(db.tasks, { as: "country_wise_tasks", foreignKey: "assigned_country" });
+db.country.hasMany(db.tasks, {
+  as: "country_wise_tasks",
+  foreignKey: "assigned_country",
+  onDelete: "SET NULL",
+});
 
 db.userPrimaryInfo.belongsTo(db.status, {
   as: "status",
