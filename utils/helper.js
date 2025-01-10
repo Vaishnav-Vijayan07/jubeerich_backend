@@ -3,8 +3,6 @@ const db = require("../models");
 
 const sequelize = db.sequelize;
 
-
-
 exports.checkIfEntityExists = async (modelName, id) => {
   const Model = sequelize.models[modelName];
   if (!Model) {
@@ -36,4 +34,21 @@ exports.getStageData = (office_type, role_id) => {
   }
 
   return stageDatas.unknown;
+};
+
+exports.getEnumValue = async (tableName, field) => {
+
+  console.log(tableName, field);
+
+  const query = `
+    SELECT enumlabel AS value
+    FROM pg_enum
+    WHERE enumtypid = (
+      SELECT atttypid
+      FROM pg_attribute
+      WHERE attrelid = '${tableName}'::regclass
+        AND attname = '${field}'
+    );
+  `;
+  return sequelize.query(query, { type: sequelize.QueryTypes.SELECT });
 };

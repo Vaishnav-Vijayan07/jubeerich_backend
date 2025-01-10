@@ -1,5 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const { getEnumValue } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const AdminUsers = db.adminUsers;
 
@@ -1685,47 +1686,34 @@ exports.getAllUserDocuments = async (req, res) => {
           required: false,
           attributes: ["id", "visa_page", "permit_card", "salary_account_statement", "supporting_documents"],
         },
+        {
+          model: db.gapReason,
+          required: false,
+          as: "gapReasons",
+          attributes: ["id", "start_date", "end_date", "type", "supporting_document"],
+        },
       ],
     });
 
-    const groupedByCompany = AllDocs[0]?.userWorkInfos.reduce((acc, item) => {
-      if (!acc[item.company]) {
-        acc[item.company] = [];
-      }
-      acc[item.company].push({
-        id: item.id,
-        designation: item.designation,
-        bank_statement: item.bank_statement,
-        job_offer_document: item.job_offer_document,
-        experience_certificate: item.experience_certificate,
-        appointment_document: item.appointment_document,
-        payslip_document: item.payslip_document,
-      });
-      return acc;
-    }, {});
 
-    const groupedByQualification = AllDocs[0]?.educationDetails.reduce((acc, item) => {
-      if (!acc[item.school_name]) {
-        acc[item.school_name] = [];
+
+    let educationGaps = [];
+    let workGaps = [];
+
+    AllDocs[0]?.gapReasons?.forEach((doc) => {
+      if (doc.type === "education") {
+        educationGaps.push(doc);
+      } else {
+        workGaps.push(doc);
       }
-      acc[item.school_name].push({
-        id: item.id,
-        qualification: item.qualification,
-        board_name: item.board_name,
-        school_name: item.school_name,
-        mark_sheet: item.mark_sheet,
-        admit_card: item.admit_card,
-        certificate: item.certificate,
-      });
-      return acc;
-    }, {});
+    });
 
     res.status(200).json({
       status: true,
       message: "User documents retrieved successfully",
       data: AllDocs[0],
-      workInfo: groupedByCompany,
-      educationInfo: groupedByQualification,
+      educationGaps: educationGaps,
+      workGaps: workGaps,
     });
   } catch (error) {
     console.error(`Error fetching user documents: ${error}`);
