@@ -294,24 +294,24 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
         include: [
           {
             model: db.educationDetails,
-            required: true,
             as: "educationDetails",
             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "board_name", "school_name"],
           },
           {
             model: db.graduationDetails,
-            required: true,
             as: "graduationDetails",
             attributes: ["id", "qualification", "start_date", "end_date", "percentage", "university_name", "college_name"],
           },
           {
             model: db.gapReason,
-            required: true,
             as: "gapReasons",
             attributes: ["id", "reason", "start_date", "end_date", "type"],
           },
         ],
       });
+
+      console.log("EDUCATION", educationalDetails )
+
       response.data = educationalDetails;
     } else if (type == types.visa) {
       const visaDetails = await db.userPrimaryInfo.findByPk(id, {
