@@ -92,6 +92,8 @@ const validateDateParams = require("../middleware/validateFilterParams");
 const { importAdminUsers } = require("../controller/data_import_controller");
 const { getChecksById, updateCheckRemarks } = require("../controller/checks_controller");
 
+const { addVisaChecklist, getAllVisaChecklists, updateVisaChecklist, deleteVisaChecklist } = require("../controller/visa_checklist_controller");
+
 const router = express.Router();
 
 //Lead histoy routes
@@ -490,6 +492,12 @@ router.get("/master_data/:id", [authMiddleware.checkUserAuth], getTaskConfig);
 router.get("/master_data", [authMiddleware.checkUserAuth], getAllTaskConfig);
 
 router.post("/master_data", [authMiddleware.checkUserAuth], createOrUpdateTaskConfig);
+
+router.get("/visa_ckecklist_master", [authMiddleware.checkUserAuth], getAllVisaChecklists);
+router.post("/visa_ckecklist_master", [authMiddleware.checkUserAuth], addVisaChecklist);
+router.put("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], updateVisaChecklist);
+router.put("/visa_ckecklist_master", [authMiddleware.checkUserAuth], updateVisaChecklist);
+router.delete("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], deleteVisaChecklist);
 
 router.post('/import_admin_users', upload.single('file'), importAdminUsers);
 
