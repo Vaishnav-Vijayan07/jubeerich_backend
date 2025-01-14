@@ -228,7 +228,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id, task_id, assigned_country } = req.body;
+    const { student_id, task_id, assigned_country, study_pref_id } = req.body;
     const { userDecodeId, role_id } = req;
 
     const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
@@ -327,6 +327,8 @@ exports.proceedToKyc = async (req, res) => {
         await db.eligibilityRemarks.bulkCreate(eligibilityRemarksData, { transaction });
       }
 
+      console.log('study_pref_id',study_pref_id);
+      
       if (applicationsToUpdate.length > 0) {
         await db.application.update(
           { is_rejected_kyc: false, application_status: "pending" },
@@ -978,6 +980,8 @@ exports.rejectKYC = async (req, res, next) => {
         ],
       },
     });
+
+    console.log('existApplication',JSON.stringify(existApplication, 0, 2));
 
     const { studyPreferenceDetails } = existApplication;
     const { studyPreference } = studyPreferenceDetails || {};

@@ -1884,6 +1884,159 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
   }
 };
 
+exports.getAssignedLeadsForCounsellorTLOptiimised = async (req, res) => {
+  const { page = 1, limit = 20, keyword } = req.query;
+  const isSearchApplied = keyword ? true : false;
+  const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+
+  const offset = (page - 1) * limit;
+  const parsedLimit = parseInt(limit, 10);
+
+  try {
+    const allCounsellorTLs = await AdminUsers.findAll({
+      where: { role_id: process.env.COUNSELLOR_TL_ID },
+      attributes: ["id", "name"],
+    });
+
+    const userId = req.userDecodeId;
+    const { rows, count } = await UserPrimaryInfo.findAndCountAll({
+      distinct: true,
+      where: {
+        [db.Sequelize.Op.and]: [
+          {
+            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }],
+          },
+          {
+            assigned_branch_counselor: {
+              [db.Sequelize.Op.ne]: null,
+            },
+          },
+          {
+            is_deleted: false,
+          },
+          {
+            [db.Sequelize.Op.or]: [
+              {
+                full_name: { [db.Sequelize.Op.iLike]: dynamicIlike },
+              },
+              {
+                email: { [db.Sequelize.Op.iLike]: dynamicIlike },
+              },
+            ],
+          },
+        ],
+      },
+      include: [
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+        },
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: ["id", "country_name"],
+          through: {
+            model: db.userContries,
+            attributes: ["country_id", "followup_date", "status_id"],
+          },
+          required: false,
+          include: [
+            {
+              model: db.status,
+              as: "country_status",
+              attributes: ["id", "status_name", "color"],
+              required: false,
+              through: {
+                model: db.userContries,
+                attributes: [],
+              },
+              where: { id: { [db.Op.eq]: db.sequelize.col("preferredCountries.user_countries.status_id") } },
+            },
+          ],
+        },
+        {
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+        },
+        {
+          model: db.adminUsers,
+          as: "counsiler_name",
+          attributes: ["name"],
+          required: false,
+        },
+        {
+          model: db.branches,
+          as: "branch_name",
+          attributes: ["branch_name"],
+          required: false,
+        },
+        {
+          model: db.adminUsers,
+          as: "updated_by_user",
+          attributes: ["name"],
+          required: false,
+          foreignKey: "updated_by",
+        },
+        {
+          model: db.status,
+          as: "status",
+          attributes: ["status_name"],
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: parsedLimit,
+    });
+
+    const formattedUserPrimaryInfos = await Promise.all(
+      rows.map(async (info) => {
+        const preferredCountries = info.preferredCountries.map((country) => ({
+          country_name: country.country_name,
+          id: country.id,
+          status_name: country?.country_status?.[0]?.status_name,
+          status_color: country?.country_status?.[0]?.color,
+          status_id: country?.country_status?.[0]?.id,
+          followup_date: country.user_countries?.followup_date,
+        }));
+
+        return {
+          ...info.toJSON(),
+          source_name: info.source_name ? info.source_name.source_name : null,
+          channel_name: info.channel_name ? info.channel_name.channel_name : null,
+          preferredCountries: preferredCountries,
+          franchise_id: info.franchise_id ? info.franchise_id : null,
+          office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+          region_name: info.region_name ? info.region_name.region_name : null,
+          counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+          branch_name: info.branch_name ? info.branch_name.branch_name : null,
+          cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+          updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+          status: info.status ? info.status.status_name : null,
+        };
+      })
+    );
+
+    res.status(200).json({
+      status: true,
+      message: "User primary info retrieved successfully",
+      formattedUserPrimaryInfos,
+      totalPages: Math.ceil(count / limit),
+      count,
+      limit: limit,
+      isSearchApplied,
+      allCounsellorTLs,
+    });
+  } catch (error) {
+    console.error(`Error fetching user primary info: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 exports.geLeadsForCounsellorTL = async (req, res) => {
   try {
     const allCounsellors = await AdminUsers.findAll({

@@ -1,3 +1,5 @@
+const { all } = require("../routes");
+
 module.exports = (sequelize, Sequelize) => {
   const Task = sequelize.define(
     "task",
@@ -64,6 +66,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         references: {
           model: "countries",
+          key: "id",
+        },
+        allowNull: true,
+      },
+      study_preference_detail_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "study_preference_details",
           key: "id",
         },
         allowNull: true,
