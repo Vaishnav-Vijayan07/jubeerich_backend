@@ -14,8 +14,8 @@ const {
 } = require("../raw/queries");
 const { getDateRangeCondition } = require("./date_helpers");
 const IdsFromEnv = require("../constants/ids");
-const { getCheckWiseData, getMemberWiseChecks } = require("../raw/application_queries");
-const { generatePieData, generateCardForApplication, generateStackDataForApplication } = require("./dashboard_data_transform_helpers");
+const { getCheckWiseData, getMemberWiseChecks, getCountryWisePieData, getApplications } = require("../raw/application_queries");
+const { generatePieData, generatePieForApplication } = require("./dashboard_data_transform_helpers");
 
 const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
@@ -394,10 +394,9 @@ const getDataForApplicationManger = async (filterArgs, role_id, userDecodeId) =>
   const { type } = filterArgs;
   const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
-
-
   const checkWiseData = getCheckWiseData(whereRaw);
   const checkWiseDataMembers = getMemberWiseChecks(whereRaw);
+  const officeWiseChecksData = getCountryWisePieData(whereRaw);
 
   const checkData = await db.sequelize.query(checkWiseData, {
     type: QueryTypes.SELECT,
@@ -407,17 +406,21 @@ const getDataForApplicationManger = async (filterArgs, role_id, userDecodeId) =>
     type: QueryTypes.SELECT,
   });
 
-  console.log("checkDataForMembers", checkDataForMembers);
+  const officeChecksData = await db.sequelize.query(officeWiseChecksData, {
+    type: QueryTypes.SELECT,
+  });
 
-  console.log("checkData", checkData);
+  const { applications } = await getApplications(userDecodeId);
+
+  const pieData = generatePieForApplication(officeChecksData);
 
   return {
     leadCount: checkData,
     roleWiseData: checkDataForMembers,
     graphCategory: [],
     statustyps: [],
-    latestLeadsCount: [],
-    applicationData: null,
+    latestLeadsCount: applications,
+    applicationData: pieData,
   };
 };
 

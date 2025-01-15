@@ -1,3 +1,5 @@
+const db = require("../models");
+
 const getCheckWiseData = (where) => {
   return `
   WITH all_checks AS (
@@ -27,7 +29,13 @@ failed_checks AS (
         eligibility_checks ec
     JOIN 
         application_details a ON ec.application_id = a.id
-    ${where}
+    JOIN 
+        study_preference_details spd ON a.study_prefernce_id = spd.id
+    JOIN 
+        study_preferences sp ON spd."studyPreferenceId" = sp.id
+    JOIN 
+        countries c ON sp."countryId" = c.id
+    ${where}    
     GROUP BY 
         first_false_check
 )
@@ -64,7 +72,13 @@ const getMemberWiseChecks = (where) => {
         eligibility_checks ec
     JOIN 
         application_details a ON ec.application_id = a.id
-    ${where}
+    JOIN 
+        study_preference_details spd ON a.study_prefernce_id = spd.id
+    JOIN 
+        study_preferences sp ON spd."studyPreferenceId" = sp.id
+    JOIN 
+        countries c ON sp."countryId" = c.id
+    ${where}    
   )
 SELECT 
     au.name AS "user",
@@ -90,7 +104,114 @@ ORDER BY
   `;
 };
 
+const getCountryWisePieData = (where) => {
+  console.log("WHEREINSIDE", where);
+
+  return `
+   SELECT 
+    ot.office_type_name,
+    COALESCE(app_counts.application_count, 0) AS application_count
+FROM 
+    office_types ot
+LEFT JOIN (
+    SELECT 
+        upi.office_type AS office_type_id,
+        COUNT(a.id) AS application_count
+    FROM 
+        application_details a
+    JOIN 
+        study_preference_details spd ON a.study_prefernce_id = spd.id
+    JOIN 
+        study_preferences sp ON spd."studyPreferenceId" = sp.id
+    JOIN 
+        countries c ON sp."countryId" = c.id    
+    JOIN 
+        user_primary_info upi ON sp."userPrimaryInfoId" = upi.id
+    ${where}    
+    GROUP BY 
+        upi.office_type
+) app_counts ON ot.id = app_counts.office_type_id
+ORDER BY 
+    ot.office_type_name; `;
+};
+
+const getApplications = async (userId) => {
+  try {
+    const applicationData = await db.application.findAll({
+      where: {
+        [db.Sequelize.Op.and]: [{ proceed_to_application_manager: true }, { assigned_user: userId }],
+      },
+
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails",
+          attributes: ["id"],
+          required: true, // Set this association as required
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              required: true, // Set this association as required
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                  required: true, // Set this association as required
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["full_name"],
+                  required: true, // Set this association as required
+                  include: [
+                    {
+                      model: db.officeType,
+                      as: "office_type_name",
+                      attributes: ["office_type_name"],
+                      required: true, // Set this association as required
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["course_name"],
+              required: true, // Set this association as required
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["campus_name"],
+              required: true, // Set this association as required
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["university_name", "id"],
+              required: true, // Set this association as required
+            },
+          ],
+        },
+      ],
+      attributes: ["id", "kyc_status", "application_status", "offer_letter", "is_application_checks_passed", "comments", "reference_id"],
+    });
+
+    return {
+      applications: applicationData.length == 0 ? [] : applicationData,
+    };
+  } catch (error) {
+    console.log("Error in getting latest data for application team",error);
+    throw new Error("Error in getting latest data for application team");
+  }
+};
+
 module.exports = {
   getCheckWiseData,
   getMemberWiseChecks,
+  getCountryWisePieData,
+  getApplications
 };
