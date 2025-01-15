@@ -62,6 +62,7 @@ const formatToDbDate = (date) => {
 
 const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) => {
   let whereRaw = "";
+  let country = null
 
   switch (role_id) {
     case IdsFromEnv.CRE_TL_ID:
@@ -88,6 +89,17 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
             AND uc2.counselor_id = ${user_id}
         )
     )`;
+      break;
+    case IdsFromEnv.APPLICATION_MANAGER_ID:
+      country = filterArgs.country_id
+      whereRaw = `JOIN 
+        study_preference_details spd ON a.study_prefernce_id = spd.id
+    JOIN 
+        study_preferences sp ON spd."studyPreferenceId" = sp.id
+    JOIN 
+        countries c ON sp."countryId" = c.id
+    WHERE 
+        c.id = ${country}`;
       break;
     default:
       whereRaw = "WHERE rn = 1";
@@ -132,3 +144,5 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
 };
 
 module.exports = { getWeeklyDateRange, formatToDbDate, getMonthStartAndEndDates, getDateRangeCondition };
+
+
