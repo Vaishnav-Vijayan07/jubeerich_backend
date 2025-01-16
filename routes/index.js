@@ -4,7 +4,18 @@ const path = require("path");
 const uploadMultiple = require("../middleware/multerConfig");
 
 // Configure multer for memory storage
-const storage = multer.memoryStorage();
+// const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  // Specify the destination folder
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/imported_files'); // Replace with your custom folder path
+  },
+  // Specify the file name (optional)
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9); // To avoid filename collisions
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)); // You can customize the filename here
+  }
+});
 const upload = multer({ storage: storage });
 const parseData = multer();
 
