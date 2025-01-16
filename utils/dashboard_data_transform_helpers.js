@@ -179,7 +179,7 @@ const generateStackDataForApplication = (applicationData) => {
   }
 
   // Extract categories (users)
-  const applicationCategories = applicationData.map((item) => item.user);
+  const applicationCategories = applicationData.map((item) => item.data);
 
   // Initialize series data structure
   const checkKeys = Object.keys(applicationData[0]?.check_counts); // Get all check keys from the first item

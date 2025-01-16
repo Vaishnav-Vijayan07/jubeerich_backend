@@ -7,6 +7,7 @@ const {
   getDataForCounselor,
   getDataForCountryManager,
   getDataForApplicationManger,
+  getDataForApplicationTeam,
 } = require("../utils/dashboard_controller_helpers");
 const {
   processCardData,
@@ -20,28 +21,27 @@ exports.getDashboard = async (req, res) => {
   const { role_id, userDecodeId } = req;
   const { filterType, year, month, fromDate, toDate, country_id } = req.query;
   let filterArgs = {};
+  const isApplicationSide = role_id == IdsFromEnv.APPLICATION_MANAGER_ID;
 
   switch (filterType) {
     case "monthly":
-      filterArgs = { type: filterType, year, month,country_id };
+      filterArgs = { type: filterType, year, month, country_id };
       break;
 
     case "weekly":
-      filterArgs = { type: filterType, year, month, fromDate,country_id };
+      filterArgs = { type: filterType, year, month, fromDate, country_id };
       break;
 
     case "custom":
-      filterArgs = { type: filterType, fromDate, toDate,country_id };
+      filterArgs = { type: filterType, fromDate, toDate, country_id };
       break;
 
     default:
       const today = new Date();
       const tomorrow = new Date(today.setDate(today.getDate() + 1));
-      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split("T")[0],country_id };
+      filterArgs = { type: filterType, toDate: tomorrow.toISOString().split("T")[0], country_id };
       break;
   }
-
-  console.log("COUNTRYID", country_id);
 
   let result;
 
@@ -71,6 +71,10 @@ exports.getDashboard = async (req, res) => {
         console.log("<=============== APPLICATION_MANAGER==============>");
         result = await getDataForApplicationManger(filterArgs, role_id, userDecodeId);
         break;
+      case IdsFromEnv.APPLICATION_TEAM_ID:
+        console.log("<=============== APPLICATION_TEAM ==============>");
+        result = await getDataForApplicationTeam(filterArgs, role_id, userDecodeId);
+        break;
       default:
         return res.status(403).json({
           message: "Unauthorized role",
@@ -81,18 +85,20 @@ exports.getDashboard = async (req, res) => {
     const { roleWiseData, leadCount, graphCategory, statustyps, latestLeadsCount, applicationData } = result;
 
     const cards =
-      role_id === IdsFromEnv.APPLICATION_MANAGER_ID ? generateCardForApplication(leadCount).cardData : processCardData(leadCount).statCards;
+      role_id === IdsFromEnv.APPLICATION_MANAGER_ID || role_id === IdsFromEnv.APPLICATION_TEAM_ID
+        ? generateCardForApplication(leadCount).cardData
+        : processCardData(leadCount).statCards;
 
     let categories, series;
     if (role_id === IdsFromEnv.CRE_ID) {
       ({ barCategories: categories, barSeries: series } = transformOfficeToBarData(roleWiseData, statustyps));
-    } else if (role_id === IdsFromEnv.APPLICATION_MANAGER_ID) {
+    } else if (role_id === IdsFromEnv.APPLICATION_MANAGER_ID || role_id === IdsFromEnv.APPLICATION_TEAM_ID) {
       ({ applicationSeries: series, applicationCategories: categories } = generateStackDataForApplication(roleWiseData));
     } else {
       ({ stackCategories: categories, stackSeries: series } = transformOfficeToStackData(roleWiseData, graphCategory, statustyps));
     }
 
-    const countries = role_id === IdsFromEnv.APPLICATION_MANAGER_ID ? await db.country.findAll({ attributes: ["id", "country_name"] }) : [];
+    const countries = isApplicationSide ? await db.country.findAll({ attributes: ["id", "country_name"] }) : [];
 
     res.status(200).json({
       message: "Dashboard data fetched successfully",
