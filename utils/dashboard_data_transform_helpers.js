@@ -101,6 +101,8 @@ const transformOfficeToBarData = (roleWiseData, statustyps) => {
 };
 
 const generatePieData = (applicationData) => {
+  console.log("applicationData", applicationData);
+
   const labels = Object.keys(applicationData).map((label) => label.charAt(0).toUpperCase() + label.slice(1));
   const pieSeries = Object.values(applicationData).map((series) => Number(series));
   return {
@@ -148,7 +150,6 @@ const generateCardForApplication = (applicationData) => {
   const cardData = Object.keys(colors)
     .filter((key) => key !== "total_application_count") // Exclude total_application_count for now
     .map((key, index) => {
-
       const data = applicationData.find((item) => item.title === key);
 
       return {
@@ -173,9 +174,7 @@ const generateCardForApplication = (applicationData) => {
 };
 
 const generateStackDataForApplication = (applicationData) => {
-
-
-  if(applicationData.length == 0){
+  if (applicationData.length == 0) {
     return { applicationCategories: [], applicationSeries: [] };
   }
 
@@ -190,6 +189,12 @@ const generateStackDataForApplication = (applicationData) => {
   }));
 
   return { applicationCategories, applicationSeries };
+};
+
+const generatePieForApplication = (applicationData) => {
+  const categories = applicationData.map((data) => data.office_type_name);
+  const series = applicationData.map((data) => parseInt(data.application_count, 10));
+  return { pieCategories: categories, pieSeries: series };
 };
 
 const formatString = (str) => {
@@ -207,49 +212,5 @@ module.exports = {
   generatePieData,
   generateCardForApplication,
   generateStackDataForApplication,
+  generatePieForApplication,
 };
-
-[
-  {
-    user: "Application Manager",
-    check_counts: {
-      availability_check: 1,
-      campus_check: 0,
-      entry_requirement_check: 0,
-      quantity_check: 0,
-      quality_check_clarity: 0,
-      quality_check_scanning: 0,
-      quality_check_formatting: 0,
-      immigration_check: 0,
-      application_fee_check: 0,
-    },
-  },
-  {
-    user: "Application Team",
-    check_counts: {
-      availability_check: 1,
-      campus_check: 0,
-      entry_requirement_check: 0,
-      quantity_check: 0,
-      quality_check_clarity: 0,
-      quality_check_scanning: 0,
-      quality_check_formatting: 0,
-      immigration_check: 0,
-      application_fee_check: 0,
-    },
-  },
-  {
-    user: "Application Team 2",
-    check_counts: {
-      availability_check: 1,
-      campus_check: 0,
-      entry_requirement_check: 0,
-      quantity_check: 0,
-      quality_check_clarity: 0,
-      quality_check_scanning: 0,
-      quality_check_formatting: 0,
-      immigration_check: 0,
-      application_fee_check: 0,
-    },
-  },
-];
