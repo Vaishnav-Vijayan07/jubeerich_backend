@@ -14,7 +14,13 @@ const {
 } = require("../raw/queries");
 const { getDateRangeCondition } = require("./date_helpers");
 const IdsFromEnv = require("../constants/ids");
-const { getCheckWiseData, getMemberWiseChecks, getCountryWisePieData, getApplications } = require("../raw/application_queries");
+const {
+  getCheckWiseData,
+  getMemberWiseChecks,
+  getCountryWisePieData,
+  getApplications,
+  getCountryWiseDataForApplicationTeam,
+} = require("../raw/application_queries");
 const { generatePieData, generatePieForApplication } = require("./dashboard_data_transform_helpers");
 
 const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
@@ -424,6 +430,33 @@ const getDataForApplicationManger = async (filterArgs, role_id, userDecodeId) =>
   };
 };
 
+const getDataForApplicationTeam = async (filterArgs, role_id, userDecodeId) => {
+  const { type } = filterArgs;
+  const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
+
+  const checkWiseData = getCheckWiseData(whereRaw);
+  const checkWiseDataCountries = getCountryWiseDataForApplicationTeam(whereRaw);
+
+  const checkData = await db.sequelize.query(checkWiseData, {
+    type: QueryTypes.SELECT,
+  });
+
+  const checkDataForCountries = await db.sequelize.query(checkWiseDataCountries, {
+    type: QueryTypes.SELECT,
+  });
+
+  const { applications } = await getApplications(userDecodeId);
+
+  return {
+    leadCount: checkData,
+    roleWiseData: checkDataForCountries,
+    graphCategory: [],
+    statustyps: [],
+    latestLeadsCount: applications,
+    applicationData: [],
+  };
+};
+
 module.exports = {
   getDataForItTeam,
   getDataForCreTl,
@@ -431,4 +464,5 @@ module.exports = {
   getDataForCounselor,
   getDataForCountryManager,
   getDataForApplicationManger,
+  getDataForApplicationTeam,
 };
