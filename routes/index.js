@@ -247,12 +247,14 @@ router.delete("/status_type/:id", [authMiddleware.checkUserAuth], StatusControll
 // Leads routes
 router.post("/leads", uploadMultiple.uploadMultiple, [authMiddleware.checkUserAuth], UserController.createLead);
 router.get("/getAllleads", [authMiddleware.checkUserAuth], LeadListingController.getLeads);
-router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
+// router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeads);
+router.get("/leads", [authMiddleware.checkUserAuth], LeadListingController.getAllLeadsOptimized);
 // router.get("/leads_by_user", [authMiddleware.checkUserAuth], LeadListingController.getLeadsByCreatedUser);
 router.get("/leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCreTl);
 router.get("/assigned_leads_regional_managers", [authMiddleware.checkUserAuth], LeadListingController.getAllAssignedLeadsRegionalMangers);
 router.get("/leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.geLeadsForCounsellorTL);
-router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
+// router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTl);
+router.get("/assigned_leads_cre_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCreTlOptimised);
 router.get("/assigned_leads_counsellor_tl", [authMiddleware.checkUserAuth], LeadListingController.getAssignedLeadsForCounsellorTL);
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);

@@ -79,6 +79,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     {
       tableName: "application_details",
+      underscored: true,
       timestamps: true,
     }
   );

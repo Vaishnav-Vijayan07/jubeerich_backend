@@ -14,6 +14,8 @@ const {
 } = require("../raw/queries");
 const { getDateRangeCondition } = require("./date_helpers");
 const IdsFromEnv = require("../constants/ids");
+const { getCheckWiseData, getMemberWiseChecks, getCountryWisePieData, getApplications } = require("../raw/application_queries");
+const { generatePieData, generatePieForApplication } = require("./dashboard_data_transform_helpers");
 
 const getDataForItTeam = async (filterArgs, role_id, userDecodeId) => {
   const { type } = filterArgs;
@@ -388,124 +390,45 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
   }
 };
 
-const processCardData = (counts) => {
-  const totalLeads = counts[0]?.total_lead_count || 0;
-  // Define the base structure of the cards
-  const defaultCards = [
-    { id: 1, title: "total leads", stats: totalLeads, icon: "fe-users", bgColor: "#5bc0de" }, // Blue for general data
-    { id: 2, title: "spam leads", stats: "0", icon: "fe-alert-triangle", bgColor: "#f0ad4e" }, // Orange for warnings
-    { id: 3, title: "closed leads", stats: "0", icon: "fe-check-circle", bgColor: "#5cb85c" }, // Green for success
-    { id: 4, title: "prospective leads", stats: "0", icon: "fe-briefcase", bgColor: "#5bc0de" }, // Green for success
-    { id: 5, title: "failed Leads", stats: "0", icon: "fe-x-circle", bgColor: "#d9534f" }, // Red for errors
-  ];
+const getDataForApplicationManger = async (filterArgs, role_id, userDecodeId) => {
+  const { type } = filterArgs;
+  const { whereRaw } = getDateRangeCondition(filterArgs, type, role_id, userDecodeId);
 
-  const metaData = {
-    spam_leads: {
-      id: 2,
-      icon: "fe-alert-triangle",
-      bgColor: "#f0ad4e",
-    },
-    closed_leads: {
-      id: 3,
-      icon: "fe-check-circle",
-      bgColor: "#5cb85c",
-    },
-    prospective_leads: {
-      id: 4,
-      icon: "fe-check-circle",
-      bgColor: "#5cb85c",
-    },
-    failed_leads: {
-      id: 5,
-      icon: "fe-x-circle",
-      bgColor: "#d9534f",
-    },
-  };
+  const checkWiseData = getCheckWiseData(whereRaw);
+  const checkWiseDataMembers = getMemberWiseChecks(whereRaw);
+  const officeWiseChecksData = getCountryWisePieData(whereRaw);
 
-  let statCards = [...defaultCards];
-
-  counts.forEach((count) => {
-    const card = metaData[count.type_name];
-    if (card) {
-      statCards[card.id - 1].stats = count.count;
-    }
+  const checkData = await db.sequelize.query(checkWiseData, {
+    type: QueryTypes.SELECT,
   });
 
-  return { statCards };
-};
-
-const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => {
-  // Map categories from graphCategory
-  const categories = graphCategory.map((office) => {
-    const nameKey = Object.keys(office).find((key) => key.toLowerCase().includes("name"));
-    return nameKey ? office[nameKey] : null;
+  const checkDataForMembers = await db.sequelize.query(checkWiseDataMembers, {
+    type: QueryTypes.SELECT,
   });
 
-  // Create a map to track series data for each status type
-  const seriesMap = new Map(statustyps.map((type) => [type.type_name, Array(categories.length).fill(0)]));
-
-  // Populate the series data based on roleWiseData
-  roleWiseData.forEach((item) => {
-    const name = item.name;
-    const typeName = item.type_name;
-    const count = parseInt(item.count, 10);
-
-    // Find the index of the admin name in categories
-    const categoryIndex = categories.indexOf(name);
-    if (categoryIndex !== -1 && seriesMap.has(typeName)) {
-      seriesMap.get(typeName)[categoryIndex] += count;
-    }
+  const officeChecksData = await db.sequelize.query(officeWiseChecksData, {
+    type: QueryTypes.SELECT,
   });
 
-  // Format series data
-  const series = Array.from(seriesMap.entries()).map(([name, data]) => ({
-    name: name.replace(/_/g, " ").replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
-    data,
-  }));
+  const { applications } = await getApplications(userDecodeId);
 
-  return { stackCategories: categories, stackSeries: roleWiseData.length > 0 ? series : [] };
-};
+  const pieData = generatePieForApplication(officeChecksData);
 
-const transformOfficeToBarData = (roleWiseData, statustyps) => {
-  // Create a map for roleWiseData counts for easy lookup
-  const roleWiseDataMap = roleWiseData.reduce((map, item) => {
-    map[item.type_name] = parseInt(item.count, 10) || 0;
-    return map;
-  }, {});
-  // Build the series data using the categories
-  const seriesData = statustyps.map((category) => roleWiseDataMap[category.type_name] || 0);
-  const series = [
-    {
-      name: "Count",
-      data: seriesData,
-    },
-  ];
-  const categories = statustyps.map(
-    (category) =>
-      category.type_name
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
-        .join(" ") // Join words with a space
-  );
-  return { barCategories: categories, barSeries: roleWiseData.length > 0 ? series : [] };
-};
-
-const generatePieData = (applicationData) => {
-  const labels = Object.keys(applicationData).map((label) => label.charAt(0).toUpperCase() + label.slice(1));
-  const pieSeries = Object.values(applicationData).map((series) => Number(series));
   return {
-    pieCategories: labels,
-    pieSeries: pieSeries,
+    leadCount: checkData,
+    roleWiseData: checkDataForMembers,
+    graphCategory: [],
+    statustyps: [],
+    latestLeadsCount: applications,
+    applicationData: pieData,
   };
 };
 
 module.exports = {
   getDataForItTeam,
-  processCardData,
-  transformOfficeToStackData,
   getDataForCreTl,
   getDataForCre,
-  transformOfficeToBarData,
   getDataForCounselor,
   getDataForCountryManager,
+  getDataForApplicationManger,
 };

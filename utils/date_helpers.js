@@ -62,6 +62,8 @@ const formatToDbDate = (date) => {
 
 const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) => {
   let whereRaw = "";
+  let country = null;
+  const isApplicationSide = role_id == IdsFromEnv.APPLICATION_MANAGER_ID;
 
   switch (role_id) {
     case IdsFromEnv.CRE_TL_ID:
@@ -89,6 +91,12 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
         )
     )`;
       break;
+    case IdsFromEnv.APPLICATION_MANAGER_ID:
+      country = filterArgs.country_id;
+      whereRaw = `
+    WHERE 
+        c.id = ${country} AND a.proceed_to_application_manager = true`;
+      break;
     default:
       whereRaw = "WHERE rn = 1";
   }
@@ -100,7 +108,7 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
 
       const formattedStartDateMonth = formatToDbDate(monthStart);
       const formattedEndDateMonth = formatToDbDate(monthEnd);
-      whereRaw += ` AND created_at BETWEEN '${formattedStartDateMonth}' AND '${formattedEndDateMonth}'`;
+      whereRaw += ` AND ${isApplicationSide ? "a.created_at" : "created_at"} BETWEEN '${formattedStartDateMonth}' AND '${formattedEndDateMonth}'`;
       break;
 
     case "weekly":
@@ -108,14 +116,14 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
       const { startDate: weekStart, endDate: weekEnd } = getWeeklyDateRange(filterArgs.year, filterArgs.month, filterArgs.fromDate);
       const formattedStartDateWeek = formatToDbDate(weekStart);
       const formattedEndDateWeek = formatToDbDate(weekEnd);
-      whereRaw += ` AND created_at BETWEEN '${formattedStartDateWeek}' AND '${formattedEndDateWeek}'`;
+      whereRaw += ` AND ${isApplicationSide ? "a.created_at" : "created_at"} BETWEEN '${formattedStartDateWeek}' AND '${formattedEndDateWeek}'`;
       break;
 
     case "custom":
       // For custom, directly format the provided from and to dates
       const formattedFromDate = formatToDbDate(filterArgs.fromDate);
       const formattedToDate = formatToDbDate(filterArgs.toDate);
-      whereRaw += ` AND created_at BETWEEN '${formattedFromDate}' AND '${formattedToDate}'`;
+      whereRaw += ` AND ${isApplicationSide ? "a.created_at" : "created_at"} BETWEEN '${formattedFromDate}' AND '${formattedToDate}'`;
       break;
 
     default:
@@ -124,7 +132,7 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
       const formattedTomorrow = formatToDbDate(tomorrow);
-      whereRaw += ` AND created_at <= '${formattedTomorrow}'`;
+      whereRaw += ` AND ${isApplicationSide ? "a.created_at" : "created_at"} <= '${formattedTomorrow}'`;
       break;
   }
 

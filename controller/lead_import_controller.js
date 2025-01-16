@@ -17,14 +17,6 @@ const { createTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
 const Piscina = require("piscina");
 
-let piscina = null;
-if (!piscina) {
-  piscina = new Piscina({
-    filename: path.resolve(__dirname, '../workers/worker.js'),
-    maxThreads: require('os').cpus().length,
-  });
-}
-
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
 
@@ -143,7 +135,6 @@ exports.bulkUpload = async (req, res) => {
                 preferred_country = [];
               }
 
-
               const rowData = {
                 lead_received_date: row.getCell(2).value,
                 source_id: sourceSlugToId[sourceSlug] || null,
@@ -166,7 +157,7 @@ exports.bulkUpload = async (req, res) => {
                 region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
                 franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
                 assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
-                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
+                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
               };
 
               const errors = validateRowData(rowData);
@@ -222,12 +213,11 @@ exports.bulkUpload = async (req, res) => {
         const userJsonData = jsonData.find((data) => data.email === user.email);
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id;
-        
-            
+
         if (user.id) {
           await addLeadHistory(user.id, `Lead created by ${role}`, req.userDecodeId, null, transaction);
         }
-    
+
         if (userRole?.role_id == process.env.IT_TEAM_ID && user.office_type == process.env.CORPORATE_OFFICE_ID) {
           await addLeadHistory(user.id, `Lead assigned to ${creTl?.access_role.role_name}`, req.userDecodeId, null, transaction);
         }
@@ -250,7 +240,7 @@ exports.bulkUpload = async (req, res) => {
           .map((countryId) => ({
             user_primary_info_id: userId,
             country_id: countryId,
-            status_id: process.env.NEW_LEAD_STATUS_ID
+            status_id: process.env.NEW_LEAD_STATUS_ID,
           }));
 
         if (userCountries.length > 0) {
@@ -308,7 +298,7 @@ exports.bulkUpload = async (req, res) => {
               // const country = await db.country.findByPk(countryIds[0]);
               const countries = await db.country.findAll({
                 where: { id: preferredCountries },
-                attributes: ["country_name","country_code"],
+                attributes: ["country_name", "country_code"],
               });
 
               if (countries) {
@@ -319,7 +309,7 @@ exports.bulkUpload = async (req, res) => {
 
             let formattedDesc = await createTaskDesc(user, user.id);
 
-            if(!formattedDesc){
+            if (!formattedDesc) {
               return res.status(500).json({
                 status: false,
                 message: "Description error",
@@ -386,7 +376,7 @@ exports.bulkUpload = async (req, res) => {
         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
       });
     } else {
-    await transaction.commit();
+      await transaction.commit();
       res.status(200).json({
         status: true,
         message: "Data processed and saved successfully",
@@ -499,7 +489,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
       }
     );
 
-
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
@@ -530,6 +519,14 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 
 exports.bulkUploadMultiCore = async (req, res) => {
   // const transaction = await db.sequelize.transaction();
+
+  let piscina = null;
+  if (!piscina) {
+    piscina = new Piscina({
+      filename: path.resolve(__dirname, "../workers/worker.js"),
+      maxThreads: require("os").cpus().length,
+    });
+  }
 
   try {
     const userId = req.userDecodeId;
@@ -605,7 +602,8 @@ exports.bulkUploadMultiCore = async (req, res) => {
     // Load rows into memory
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) { // Skip header row
+        if (rowNumber > 1) {
+          // Skip header row
           rows.push({
             lead_received_date: row.getCell(2).value,
             source_slug: row.getCell(3).value,
@@ -627,41 +625,44 @@ exports.bulkUploadMultiCore = async (req, res) => {
     // Process rows in batches
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = {
-        rows: rows.slice(i, i + batchSize).map((row, index) => {
-          const rowNumber = i + index + 2; // Account for header row
-          const officeTypeSlug = row.office_type_slug;
+        rows: rows
+          .slice(i, i + batchSize)
+          .map((row, index) => {
+            const rowNumber = i + index + 2; // Account for header row
+            const officeTypeSlug = row.office_type_slug;
 
-          const processedRow = {
-            lead_received_date: row.lead_received_date,
-            source_id: sourceSlugToId[row.source_slug] || null,
-            channel_id: channelSlugToId[row.channel_slug] || null,
-            full_name: row.full_name,
-            email: row.email,
-            phone: row.phone,
-            city: row.city,
-            office_type: officeTypeSlugToId[officeTypeSlug] || null,
-            preferred_country: countryCodeToId[row.preferred_country_code] || null,
-            ielts: row.ielts,
-            remarks: row.remarks,
-            assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
-            created_by: userId,
-            region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
-            franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
-            assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
-            stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
-          };
+            const processedRow = {
+              lead_received_date: row.lead_received_date,
+              source_id: sourceSlugToId[row.source_slug] || null,
+              channel_id: channelSlugToId[row.channel_slug] || null,
+              full_name: row.full_name,
+              email: row.email,
+              phone: row.phone,
+              city: row.city,
+              office_type: officeTypeSlugToId[officeTypeSlug] || null,
+              preferred_country: countryCodeToId[row.preferred_country_code] || null,
+              ielts: row.ielts,
+              remarks: row.remarks,
+              assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
+              created_by: userId,
+              region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
+              franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+              assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+              stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
+            };
 
-          // Check if the email or phone already exists in the existing records
-          if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
-            errors.push({ rowNumber, rowData: processedRow ,errors: ["Email or phone already exists in Database"] });
-            return null; // Skip this row if email or phone already exists
-          }
+            // Check if the email or phone already exists in the existing records
+            if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
+              errors.push({ rowNumber, rowData: processedRow, errors: ["Email or phone already exists in Database"] });
+              return null; // Skip this row if email or phone already exists
+            }
 
-          return {
-            rowNumber,
-            rowData: processedRow,
-          };
-        })?.filter(row => row != null),
+            return {
+              rowNumber,
+              rowData: processedRow,
+            };
+          })
+          ?.filter((row) => row != null),
         meta: { startRow: i + 2 },
         userDecodeId: userId,
         role: role,
@@ -679,7 +680,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
         errors.push(...result.errors);
       }
     });
-    
+
     // Save errors to an error file if any exist
     if (errors.length > 0) {
       // Assuming `invalidRows` is an array with rows that have validation errors
@@ -742,5 +743,8 @@ exports.bulkUploadMultiCore = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  } finally {
+    piscina.close();
+    console.log("piscina closed ==========>");
   }
 };
