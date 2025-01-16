@@ -1,5 +1,6 @@
 const IdsFromEnv = require("../constants/ids");
 const db = require("../models");
+const { getCountriesByType } = require("../raw/queries");
 const {
   getDataForItTeam,
   getDataForCreTl,
@@ -8,6 +9,7 @@ const {
   getDataForCountryManager,
   getDataForApplicationManger,
   getDataForApplicationTeam,
+  getCountryData,
 } = require("../utils/dashboard_controller_helpers");
 const {
   processCardData,
@@ -21,7 +23,6 @@ exports.getDashboard = async (req, res) => {
   const { role_id, userDecodeId } = req;
   const { filterType, year, month, fromDate, toDate, country_id } = req.query;
   let filterArgs = {};
-  const isApplicationSide = role_id == IdsFromEnv.APPLICATION_MANAGER_ID;
 
   switch (filterType) {
     case "monthly":
@@ -44,6 +45,7 @@ exports.getDashboard = async (req, res) => {
   }
 
   let result;
+  let countries = [];
 
   try {
     switch (role_id) {
@@ -98,8 +100,6 @@ exports.getDashboard = async (req, res) => {
       ({ stackCategories: categories, stackSeries: series } = transformOfficeToStackData(roleWiseData, graphCategory, statustyps));
     }
 
-    const countries = isApplicationSide ? await db.country.findAll({ attributes: ["id", "country_name"] }) : [];
-
     res.status(200).json({
       message: "Dashboard data fetched successfully",
       status: true,
@@ -108,7 +108,6 @@ exports.getDashboard = async (req, res) => {
       statCards: cards,
       latestLeadsCount: latestLeadsCount,
       applicationData: applicationData || null,
-      countries,
     });
   } catch (error) {
     console.error(error);

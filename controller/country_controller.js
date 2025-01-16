@@ -1,16 +1,36 @@
 const db = require("../models");
 const Country = db.country;
 const { validationResult, check } = require("express-validator");
+const { getCountriesByType } = require("../raw/queries");
+const { getCountryData } = require("../utils/dashboard_controller_helpers");
 
 // Validation rules for Country
-const countryValidationRules = [
-  check("country_name").not().isEmpty().withMessage("Country name is required"),
-];
+const countryValidationRules = [check("country_name").not().isEmpty().withMessage("Country name is required")];
 
 // Get all countries
 exports.getAllCountries = async (req, res) => {
   try {
     const countries = await Country.findAll();
+    res.status(200).json({
+      status: true,
+      data: countries,
+    });
+  } catch (error) {
+    console.error(`Error retrieving countries: ${error}`);
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+exports.getAllCountriesByAdmin = async (req, res) => {
+  const { role_id, userDecodeId } = req;
+
+  try {
+    const countryData = getCountriesByType(userDecodeId, role_id);
+    const countries = await getCountryData(countryData);
+
     res.status(200).json({
       status: true,
       data: countries,
@@ -153,7 +173,6 @@ exports.deleteCountry = async (req, res) => {
         message: "Country not found",
       });
     }
-
 
     await country.destroy();
     res.status(200).json({
