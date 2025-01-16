@@ -6,10 +6,7 @@ const { validationResult, check } = require("express-validator");
 // Validation rules for VisaChecklist
 const visaChecklistValidationRules = [
   check("step_name").not().isEmpty().withMessage("Step name is required"),
-  check("description")
-    .optional()
-    .isString()
-    .withMessage("Description must be a string"),
+  check("description").optional().isString().withMessage("Description must be a string"),
 ];
 
 // Get all visa checklists
@@ -45,9 +42,7 @@ exports.getVisaChecklistById = async (req, res) => {
       ],
     });
     if (!visaChecklist) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Visa checklist not found" });
+      return res.status(404).json({ status: false, message: "Visa checklist not found" });
     }
     res.status(200).json({ status: true, data: visaChecklist });
   } catch (error) {
@@ -81,7 +76,7 @@ exports.addVisaChecklist = [
 
       // Create multiple visa checklist fields (if any)
       if (fields && fields.length > 0) {
-        const formattedFields = fields.map(field => ({
+        const formattedFields = fields.map((field) => ({
           visa_checklist_id: newVisaChecklist.id,
           field_name: field.field_name,
           field_type: field.field_type,
@@ -89,14 +84,13 @@ exports.addVisaChecklist = [
 
         await VisaChecklistField.bulkCreate(formattedFields);
       }
- 
+
       res.status(201).json({
         status: true,
         message: "Visa checklist created successfully",
         data: newVisaChecklist,
       });
     } catch (error) {
-
       console.error(`Error creating visa checklist: ${error}`);
       res.status(500).json({ status: false, message: "Internal server error" });
     }
@@ -123,9 +117,7 @@ exports.updateVisaChecklist = [
     try {
       const visaChecklist = await VisaChecklist.findByPk(id);
       if (!visaChecklist) {
-        return res
-          .status(404)
-          .json({ status: false, message: "Visa checklist not found" });
+        return res.status(404).json({ status: false, message: "Visa checklist not found" });
       }
 
       // Update the visa checklist
@@ -142,14 +134,13 @@ exports.updateVisaChecklist = [
         });
 
         // Insert new fields
-        const formattedFields = fields.map(field => ({
+        const formattedFields = fields.map((field) => ({
           visa_checklist_id: updatedVisaChecklist.id,
           field_name: field.field_name,
           field_type: field.field_type,
         }));
 
         console.log("Formatted Fields");
-        
 
         await VisaChecklistField.bulkCreate(formattedFields);
       }
@@ -173,15 +164,11 @@ exports.deleteVisaChecklist = async (req, res) => {
   try {
     const visaChecklist = await VisaChecklist.findByPk(id);
     if (!visaChecklist) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Visa checklist not found" });
+      return res.status(404).json({ status: false, message: "Visa checklist not found" });
     }
 
     await visaChecklist.destroy();
-    res
-      .status(200)
-      .json({ status: true, message: "Visa checklist deleted successfully" });
+    res.status(200).json({ status: true, message: "Visa checklist deleted successfully" });
   } catch (error) {
     console.error(`Error deleting visa checklist: ${error}`);
     res.status(500).json({ status: false, message: "Internal server error" });
