@@ -355,7 +355,7 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
           COALESCE(SUM(CASE WHEN kyc_status = 'approved' THEN 1 ELSE 0 END), 0) as approved
        FROM application_details ad
        INNER JOIN study_preference_details spd 
-           ON ad."studyPrefernceId" = spd.id
+           ON ad.study_prefernce_id = spd.id
        INNER JOIN study_preferences sp 
            ON spd."studyPreferenceId" = sp.id
        WHERE 
