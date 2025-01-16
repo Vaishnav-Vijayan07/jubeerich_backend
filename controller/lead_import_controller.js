@@ -17,14 +17,6 @@ const { createTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
 const Piscina = require("piscina");
 
-let piscina = null;
-if (!piscina) {
-  piscina = new Piscina({
-    filename: path.resolve(__dirname, "../workers/worker.js"),
-    maxThreads: require("os").cpus().length,
-  });
-}
-
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
 
