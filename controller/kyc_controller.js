@@ -228,7 +228,7 @@ exports.getKycDetails = async (req, res, next) => {
 exports.proceedToKyc = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { student_id, task_id, assigned_country } = req.body;
+    const { student_id, task_id, assigned_country, study_pref_id } = req.body;
     const { userDecodeId, role_id } = req;
 
     const student = await db.userPrimaryInfo.findByPk(student_id, { transaction });
@@ -331,7 +331,7 @@ exports.proceedToKyc = async (req, res) => {
         await db.application.update(
           { is_rejected_kyc: false, application_status: "pending" },
           {
-            where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate } },
+            where: { id: { [db.Sequelize.Op.in]: applicationsToUpdate }, studyPrefernceId: study_pref_id },
             transaction,
           }
         );
@@ -932,13 +932,8 @@ exports.rejectKYC = async (req, res, next) => {
 
     // Fetch user details
     const existUser = await db.adminUsers.findByPk(userDecodeId, {
-      // attributes: ["name", "country_id"],
       attributes: ["name"],
       include: [
-        // {
-        //   model: db.country,
-        //   attributes: ["country_name"],
-        // },
         {
           model: db.country,
           attributes: ["country_name", "id", "country_code"],
@@ -979,7 +974,11 @@ exports.rejectKYC = async (req, res, next) => {
       },
     });
 
-    const { studyPreferenceDetails } = existApplication;
+    console.log('existApplication',JSON.stringify(existApplication, 0, 2));
+
+    // throw new Error('Errror');
+
+    const { studyPreferenceDetails, studyPrefernceId } = existApplication;
     const { studyPreference } = studyPreferenceDetails || {};
     const courseName = studyPreferenceDetails?.preferred_courses?.course_name || "N/A";
     const campusName = studyPreferenceDetails?.preferred_campus?.campus_name || "N/A";
@@ -1050,6 +1049,7 @@ exports.rejectKYC = async (req, res, next) => {
         isCompleted: false,
         is_proceed_to_kyc: false,
         assigned_country: existTask?.assigned_country,
+        study_preference_detail_id: studyPrefernceId
       },
       { transaction }
     );

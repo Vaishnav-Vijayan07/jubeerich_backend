@@ -728,14 +728,22 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
       // Generate a unique file name and save the errors to the file
       const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
-      const errorFilePath = path.join("uploads", errorFileName);
+      const errorFilePath = path.join("uploads/rejected_files", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
+
+      return res.status(201).json({
+        status: false,
+        message: "Some rows contain invalid data",
+        // errors: rowWithErrors,
+        invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
+      });
+    } else {
+      return res.status(200).json({
+        status: true,
+        message: "File uploaded successfully",
+      });
     }
 
-    return res.status(200).json({
-      status: true,
-      message: "File uploaded successfully",
-    });
   } catch (error) {
     console.error("Error processing bulk upload:", error);
     // await transaction.rollback();
