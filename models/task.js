@@ -1,5 +1,3 @@
-const { all } = require("../routes");
-
 module.exports = (sequelize, Sequelize) => {
   const Task = sequelize.define(
     "task",
