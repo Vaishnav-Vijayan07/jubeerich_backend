@@ -70,6 +70,8 @@ db.masterData = require("./masterData")(sequelize, Sequelize);
 db.statusType = require("./statusTypes")(sequelize, Sequelize);
 db.adminUserCountries = require("./adminUserCountries")(sequelize, Sequelize);
 db.eligibilityRemarks = require("./eligibilityRemarks")(sequelize, Sequelize);
+db.visaChecklistsMaster = require("./visa_checklists_master")(sequelize, Sequelize);
+db.visaChecklistFields = require("./visa_checklist_fields")(sequelize, Sequelize);
 
 //Associations
 
@@ -769,6 +771,18 @@ db.country.addHook("beforeDestroy", async (country) => {
   await db.userContries.destroy({
     where: { country_id: country.id },
   });
+});
+
+// checklists association
+
+db.visaChecklistsMaster.hasMany(db.visaChecklistFields, {
+  foreignKey: "visa_checklist_id",
+  as: "fields",
+  onDelete: "CASCADE",
+});
+db.visaChecklistFields.belongsTo(db.visaChecklistsMaster, {
+  foreignKey: "visa_checklist_id",
+  as: "checklist",
 });
 
 module.exports = db;
