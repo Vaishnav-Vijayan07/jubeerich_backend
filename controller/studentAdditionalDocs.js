@@ -98,15 +98,6 @@ exports.getAdditionalDocs = async (req, res, next) => {
             where: { student_id: id },
         })
 
-        console.log('existDocs', existDocs);
-
-        if (!existDocs) {
-            return res.status(500).json({
-                status: false,
-                message: "Documents not found",
-            });
-        }
-
         return res.status(200).json({ status: true, data: existDocs, message: "Documents fetched successfully." });
 
     } catch (error) {
