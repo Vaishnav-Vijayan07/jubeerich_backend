@@ -63,7 +63,7 @@ const formatToDbDate = (date) => {
 const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) => {
   let whereRaw = "";
   let country = null;
-  const isApplicationSide = role_id == IdsFromEnv.APPLICATION_MANAGER_ID;
+  const isApplicationSide = role_id == IdsFromEnv.APPLICATION_MANAGER_ID || IdsFromEnv.APPLICATION_TEAM_ID;
 
   switch (role_id) {
     case IdsFromEnv.CRE_TL_ID:
@@ -96,6 +96,11 @@ const getDateRangeCondition = (filterArgs, type, role_id, user_id, creids = []) 
       whereRaw = `
     WHERE 
         c.id = ${country} AND a.proceed_to_application_manager = true`;
+      break;
+    case IdsFromEnv.APPLICATION_TEAM_ID:
+      whereRaw = `
+    WHERE 
+      a.proceed_to_application_manager = true AND a.assigned_user = ${user_id}`;
       break;
     default:
       whereRaw = "WHERE rn = 1";
