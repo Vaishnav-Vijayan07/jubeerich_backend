@@ -158,7 +158,7 @@ exports.bulkUpload = async (req, res) => {
                 region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
                 franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
                 assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
-                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : 'Unknown',
+                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
               };
 
               const errors = validateRowData(rowData);
@@ -214,13 +214,13 @@ exports.bulkUpload = async (req, res) => {
         const userJsonData = jsonData.find((data) => data.email === user.email);
         const preferredCountries = userJsonData.preferred_country;
         const franchiseId = user.franchise_id;
-        
-        console.log('USERRRRRR ======>', user.office_type);
-            
+
+        console.log("USERRRRRR ======>", user.office_type);
+
         if (user.id) {
           await addLeadHistory(user.id, `Lead created by ${role}`, req.userDecodeId, null, transaction);
         }
-    
+
         if (userRole?.role_id == process.env.IT_TEAM_ID && user.office_type == process.env.CORPORATE_OFFICE_ID) {
           await addLeadHistory(user.id, `Lead assigned to ${creTl?.access_role.role_name}`, req.userDecodeId, null, transaction);
         }
@@ -243,7 +243,7 @@ exports.bulkUpload = async (req, res) => {
           .map((countryId) => ({
             user_primary_info_id: userId,
             country_id: countryId,
-            status_id: process.env.NEW_LEAD_STATUS_ID
+            status_id: process.env.NEW_LEAD_STATUS_ID,
           }));
 
         if (userCountries.length > 0) {
@@ -301,7 +301,7 @@ exports.bulkUpload = async (req, res) => {
               // const country = await db.country.findByPk(countryIds[0]);
               const countries = await db.country.findAll({
                 where: { id: preferredCountries },
-                attributes: ["country_name","country_code"],
+                attributes: ["country_name", "country_code"],
               });
 
               if (countries) {
@@ -312,7 +312,7 @@ exports.bulkUpload = async (req, res) => {
 
             let formattedDesc = await createTaskDesc(user, user.id);
 
-            if(!formattedDesc){
+            if (!formattedDesc) {
               return res.status(500).json({
                 status: false,
                 message: "Description error",
@@ -379,7 +379,7 @@ exports.bulkUpload = async (req, res) => {
         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
       });
     } else {
-    await transaction.commit();
+      await transaction.commit();
       res.status(200).json({
         status: true,
         message: "Data processed and saved successfully",
@@ -392,6 +392,8 @@ exports.bulkUpload = async (req, res) => {
       status: false,
       message: "Internal server error",
     });
+  } finally {
+    await transaction.rollback();
   }
 };
 
