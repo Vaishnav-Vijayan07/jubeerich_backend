@@ -33,11 +33,11 @@ exports.getStageData = (office_type, role_id) => {
     }
   }
 
-  if (office_type === branch) {
+  if (office_type == branch) {
     return stageDatas.regional_manager;
   }
 
-  if (office_type === franchise) {
+  if (office_type == franchise) {
     return stageDatas.counsellor;
   }
 
