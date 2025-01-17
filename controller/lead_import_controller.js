@@ -673,6 +673,10 @@ exports.bulkUploadMultiCore = async (req, res) => {
             const rowNumber = i + index + 2; // Account for header row
             const officeTypeSlug = row.office_type_slug;
 
+            const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
+            const isRegion = officeTypeSlug == "REGION";
+            const isFranchise = officeTypeSlug == "FRANCHISE";
+            
             const processedRow = {
               lead_received_date: row.lead_received_date,
               source_id: sourceSlugToId[row.source_slug] || null,
@@ -690,7 +694,14 @@ exports.bulkUploadMultiCore = async (req, res) => {
               region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
               franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
               assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
-              stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
+              // stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
+              stage: isCorporateOffice
+                ? stageDatas.cre
+                : isRegion
+                ? stageDatas.regional_manager
+                : isFranchise
+                ? stageDatas.counsellor
+                : stageDatas.unknown,
             };
 
             // Check if the email or phone already exists in the existing records
