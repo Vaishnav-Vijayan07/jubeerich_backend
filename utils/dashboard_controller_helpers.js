@@ -360,7 +360,6 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
            ON spd."studyPreferenceId" = sp.id
        WHERE 
            ad.is_rejected_kyc = false 
-           AND ad.proceed_to_application_manager = false 
            AND ad.counsellor_id = :counsellorId
            AND sp."countryId" IN :countryId`,
       {
@@ -457,6 +456,12 @@ const getDataForApplicationTeam = async (filterArgs, role_id, userDecodeId) => {
   };
 };
 
+const getCountryData = async (query) => {
+  return db.sequelize.query(query, {
+    type: QueryTypes.SELECT,
+  });
+};
+
 module.exports = {
   getDataForItTeam,
   getDataForCreTl,
@@ -465,4 +470,5 @@ module.exports = {
   getDataForCountryManager,
   getDataForApplicationManger,
   getDataForApplicationTeam,
+  getCountryData
 };

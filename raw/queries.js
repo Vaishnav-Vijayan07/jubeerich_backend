@@ -1,3 +1,5 @@
+const IdsFromEnv = require("../constants/ids");
+
 const getLeadStatusWiseCountQuery = (where) => {
   return ` WITH RankedStatuses AS (
     SELECT 
@@ -266,7 +268,7 @@ const getLeadStatusCounselorWiseQuery = (where) => {
 };
 
 const getLeadStatusWiseCountCountryMangerQuery = (where) => {
-    return ` WITH RankedStatuses AS (
+  return ` WITH RankedStatuses AS (
       SELECT 
           uc.user_primary_info_id,
           uc.country_id,
@@ -294,10 +296,10 @@ const getLeadStatusWiseCountCountryMangerQuery = (where) => {
   GROUP BY 
       type_name;
     `;
-  };
-  
-  const getLeadStatusCountryManagerWiseQuery = (where) => {
-    return `
+};
+
+const getLeadStatusCountryManagerWiseQuery = (where) => {
+  return `
       WITH RankedStatuses AS (
           SELECT 
               uc.user_primary_info_id,
@@ -331,7 +333,19 @@ const getLeadStatusWiseCountCountryMangerQuery = (where) => {
           country_name, type_name  -- Change grouping to country_name
       ORDER BY 
           country_name, type_name;`;
-  };
+};
+
+const getCountriesByType = (userId, role_id) => {
+  if (role_id == IdsFromEnv.APPLICATION_MANAGER_ID) {
+    return `
+      SELECT id,country_name FROM countries;
+      `;
+  } else {
+    return `
+          SELECT c.country_name,c.id FROM admin_user_countries auc JOIN countries c ON auc.country_id = c.id JOIN admin_users ad ON auc.admin_user_id = ad.id WHERE ad.id = ${userId};
+          `;
+  }
+};
 
 module.exports = {
   getLeadStatusWiseCountQuery,
@@ -343,5 +357,6 @@ module.exports = {
   getLeadStatusWiseCountCounselorQuery,
   getLeadStatusCounselorWiseQuery,
   getLeadStatusWiseCountCountryMangerQuery,
-  getLeadStatusCountryManagerWiseQuery
+  getLeadStatusCountryManagerWiseQuery,
+  getCountriesByType,
 };

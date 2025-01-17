@@ -192,6 +192,7 @@ router.get("/country/:id", [authMiddleware.checkUserAuth], CountryController.get
 router.post("/country", [authMiddleware.checkUserAuth], CountryController.addCountry);
 router.put("/country/:id", [authMiddleware.checkUserAuth], CountryController.updateCountry);
 router.delete("/country/:id", [authMiddleware.checkUserAuth], CountryController.deleteCountry);
+router.get("/countries_by_admin", [authMiddleware.checkUserAuth], CountryController.getAllCountriesByAdmin);
 
 // Universities routes
 router.get("/university", [authMiddleware.checkUserAuth], UniversityController.getAllUniversities);
