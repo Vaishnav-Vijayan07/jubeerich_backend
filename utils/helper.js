@@ -33,11 +33,18 @@ exports.getStageData = (office_type, role_id) => {
     }
   }
 
+  if (office_type === branch) {
+    return stageDatas.regional_manager;
+  }
+
+  if (office_type === franchise) {
+    return stageDatas.counsellor;
+  }
+
   return stageDatas.unknown;
 };
 
 exports.getEnumValue = async (tableName, field) => {
-
   console.log(tableName, field);
 
   const query = `

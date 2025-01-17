@@ -3,7 +3,9 @@ const stageDatas = {
   counsellor: "Counselling",
   kyc: "KYC Verification",
   application: "Application",
-  vis: "Visa",
+  visa: "Visa",
+  regional_manager: "Regional Manager",
+  counselor_tl: "Counselor TL",
   unknown: "Unknown",
 };
 

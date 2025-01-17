@@ -157,7 +157,14 @@ exports.bulkUpload = async (req, res) => {
                 region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
                 franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
                 assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
-                stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
+                stage:
+                  officeTypeSlug == "CORPORATE_OFFICE"
+                    ? stageDatas.cre
+                    : officeTypeSlug == "REGION"
+                    ? stageDatas.regional_manager
+                    : officeTypeSlug == "FRANCHISE"
+                    ? stageDatas.counsellor
+                    : stageDatas.unknown,
               };
 
               const errors = validateRowData(rowData);
@@ -743,7 +750,6 @@ exports.bulkUploadMultiCore = async (req, res) => {
         message: "File uploaded successfully",
       });
     }
-
   } catch (error) {
     console.error("Error processing bulk upload:", error);
     // await transaction.rollback();
