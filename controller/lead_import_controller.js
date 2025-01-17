@@ -135,6 +135,42 @@ exports.bulkUpload = async (req, res) => {
                 preferred_country = [];
               }
 
+              // const rowData = {
+              //   lead_received_date: row.getCell(2).value,
+              //   source_id: sourceSlugToId[sourceSlug] || null,
+              //   channel_id: channelSlugToId[channelSlug] || null,
+              //   full_name: row.getCell(5).value,
+              //   email,
+              //   phone,
+              //   city: row.getCell(8).value,
+              //   office_type: officeTypeSlugToId[officeTypeSlug] || null,
+              //   preferred_country,
+              //   prefferedCountryCode: row.getCell(11).value,
+              //   ielts: row.getCell(12).value,
+              //   region_slug: regionSlug,
+              //   remarks: row.getCell(13).value,
+              //   source_slug: sourceSlug,
+              //   channel_slug: channelSlug,
+              //   office_type_slug: officeTypeSlug,
+              //   assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
+              //   created_by: userId,
+              //   region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
+              //   franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
+              //   assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
+              //   stage:
+              //     officeTypeSlug == "CORPORATE_OFFICE"
+              //       ? stageDatas.cre
+              //       : officeTypeSlug == "REGION"
+              //       ? stageDatas.regional_manager
+              //       : officeTypeSlug == "FRANCHISE"
+              //       ? stageDatas.counsellor
+              //       : stageDatas.unknown,
+              // };
+
+              const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
+              const isRegion = officeTypeSlug == "REGION";
+              const isFranchise = officeTypeSlug == "FRANCHISE";
+
               const rowData = {
                 lead_received_date: row.getCell(2).value,
                 source_id: sourceSlugToId[sourceSlug] || null,
@@ -152,19 +188,18 @@ exports.bulkUpload = async (req, res) => {
                 source_slug: sourceSlug,
                 channel_slug: channelSlug,
                 office_type_slug: officeTypeSlug,
-                assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
+                assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
                 created_by: userId,
-                region_id: officeTypeSlug == "REGION" ? regionSlugToId[regionSlug] : null,
-                franchise_id: officeTypeSlug == "FRANCHISE" ? franchiseSlugToId[franchiseSlug] : null,
-                assigned_regional_manager: officeTypeSlug == "REGION" ? regionSlugToManagerId[regionSlug] : null,
-                stage:
-                  officeTypeSlug == "CORPORATE_OFFICE"
-                    ? stageDatas.cre
-                    : officeTypeSlug == "REGION"
-                    ? stageDatas.regional_manager
-                    : officeTypeSlug == "FRANCHISE"
-                    ? stageDatas.counsellor
-                    : stageDatas.unknown,
+                region_id: isRegion ? regionSlugToId[regionSlug] : null,
+                franchise_id: isFranchise ? franchiseSlugToId[franchiseSlug] : null,
+                assigned_regional_manager: isRegion ? regionSlugToManagerId[regionSlug] : null,
+                stage: isCorporateOffice
+                  ? stageDatas.cre
+                  : isRegion
+                  ? stageDatas.regional_manager
+                  : isFranchise
+                  ? stageDatas.counsellor
+                  : stageDatas.unknown,
               };
 
               const errors = validateRowData(rowData);
