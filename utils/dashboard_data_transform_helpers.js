@@ -113,6 +113,10 @@ const generatePieData = (applicationData) => {
 
 const generateCardForApplication = (applicationData) => {
   const colors = {
+    checks_completed: {
+      bgColor: "#B0BEC5", // Bright Gray
+      icon: "fe-check-circle",
+    },
     availability_check: {
       bgColor: "#FFCDD2", // Bright Red
       icon: "fe-check-circle", // Represents general checks

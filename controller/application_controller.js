@@ -406,7 +406,7 @@ const getLeastAssignedApplicationMember = async () => {
 exports.updateApplicationChecks = async (req, res, next) => {
   const transaction = await sequelize.transaction();
   try {
-    const { application_id, check_type, quality_value } = req.body;
+    const { application_id, check_type, quality_value} = req.body;
     const { userDecodeId, role_name } = req;
 
     let updateCheck;
