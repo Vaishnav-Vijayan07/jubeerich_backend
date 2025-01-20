@@ -351,7 +351,7 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
 
     const applicationCounts = await db.sequelize.query(
       `SELECT 
-          COALESCE(SUM(CASE WHEN kyc_status = 'pending' THEN 1 ELSE 0 END), 0) as pending,
+          COALESCE(SUM(CASE WHEN kyc_status = 'pending' OR kyc_status = 'rejected' THEN 1 ELSE 0 END), 0) as pending,
           COALESCE(SUM(CASE WHEN kyc_status = 'approved' THEN 1 ELSE 0 END), 0) as approved
        FROM application_details ad
        INNER JOIN study_preference_details spd 
