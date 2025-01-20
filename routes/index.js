@@ -79,6 +79,7 @@ const {
   getAllRemarks,
   updateApplicationReceipt,
   getStepperData,
+  viewSummary,
 } = require("../controller/application_controller");
 const {
   createTaskConfig,
@@ -504,5 +505,7 @@ router.put("/visa_ckecklist_master", [authMiddleware.checkUserAuth], updateVisaC
 router.delete("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], deleteVisaChecklist);
 
 router.post('/import_admin_users', upload.single('file'), importAdminUsers);
+
+router.get('/view_summary/:id', [authMiddleware.checkUserAuth], viewSummary);
 
 module.exports = router;

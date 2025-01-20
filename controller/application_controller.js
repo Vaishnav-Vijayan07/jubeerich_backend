@@ -707,3 +707,247 @@ exports.getAllRemarks = async (req, res, next) => {
     });
   }
 };
+
+exports.viewSummary = async (req, res, next) => {
+  let gapReasonFilter = 'education';
+  try {
+    const { id } = req.params;
+
+    const existApplication = await db.application.findByPk(id, {
+      attributes: ['id','studyPrefernceId'],
+      include: [
+        {
+          model: db.studyPreferenceDetails,
+          as: "studyPreferenceDetails",
+          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId", 'streamId', 'intakeYear', 'intakeMonth'],
+          include: [
+            {
+              model: db.studyPreference,
+              as: "studyPreference",
+              attributes: ["countryId", "userPrimaryInfoId"],
+              include: [
+                {
+                  model: db.country,
+                  as: "country",
+                  attributes: ["country_name"],
+                },
+                {
+                  model: db.userPrimaryInfo,
+                  as: "userPrimaryInfo",
+                  attributes: ["id", "full_name", "email"],
+                  include: [
+                    {
+                      model: db.educationDetails,
+                      as: "educationDetails",
+                      attributes: ["id", "qualification", "school_name", "start_date","end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
+                    },
+                    {
+                      model: db.graduationDetails,
+                      as: "graduationDetails",
+                      attributes: ["id", "qualification", "college_name", "start_date","end_date", "percentage", "university_name", "admit_card", "certificate", "registration_certificate", "backlog_certificate", "grading_scale_info", "transcript", "individual_marksheet"],
+                    },
+                    {
+                      model: db.studentAdditionalDocs,
+                      as: "additional_docs",
+                      attributes: ["id","passport_doc","updated_cv","profile_assessment_doc","pte_cred", "lor", "sop","gte_form"]
+                    },
+                    {
+                      model: db.previousVisaApprove,
+                      as: "previousVisaApprovals",
+                      attributes: ["id", "visa_type", "approved_letter", "country_id"],
+                      include: [
+                        {
+                          model: db.country,
+                          as: "approved_country",
+                          attributes: ["country_name"]
+                        }
+                      ]
+                    },
+                    {
+                      model: db.previousVisaDecline,
+                      as: "previousVisaDeclines",
+                      attributes: ["id", "visa_type", "declined_letter", "country_id"],
+                      include: [
+                        {
+                          model: db.country,
+                          as: "declined_country",
+                          attributes: ["country_name"]
+                        }
+                      ]
+                    },
+                    {
+                      model: db.gapReason,
+                      as: "gapReasons",
+                      where: { type: gapReasonFilter },
+                      attributes: ["id", "reason", "start_date","end_date", "type"],
+                    },
+                    {
+                      model: db.fundPlan,
+                      as: "fundPlan",
+                      attributes: ["id", "type", "supporting_document"],
+                    },
+                    {
+                      model: db.workInfos,
+                      as: "userWorkInfos",
+                      attributes: ["id", "company", "from", "to", "designation", "bank_statement", "job_offer_document", "appointment_document", "payslip_document", "experience_certificate"],
+                    },
+                    {
+                      model: db.EmploymentHistory,
+                      as: "userEmploymentHistories",
+                      attributes: ["id", "visa_page", "permit_card","salary_account_statement", "supporting_documents"],
+                    }
+                  ]
+                }
+              ],
+            },
+            {
+              model: db.course,
+              as: "preferred_courses",
+              attributes: ["id", "course_name"],
+              include: [
+                {
+                  model: db.campus,
+                  through: "campus_course",
+                  as: "campuses",
+                  attributes: ["id", "campus_name"],
+                  through: {
+                    attributes: ["course_link", "course_fee", "application_fee"],
+                  },
+                },
+              ],
+            },
+            {
+              model: db.campus,
+              as: "preferred_campus",
+              attributes: ["id", "campus_name"],
+            },
+            {
+              model: db.university,
+              as: "preferred_university",
+              attributes: ["id", "university_name"],
+            },
+            {
+              model: db.stream,
+              as: "preferred_stream",
+              attributes: ["id", "stream_name"],
+            },
+          ]
+        },
+        {
+          model: db.eligibilityChecks,
+          as: "eligibilityChecks",
+          attributes: ["id","quality_check"]
+        }
+      ]
+    });
+
+    if (!existApplication) {
+      throw new Error("Application not found");
+    }
+
+    console.log('existApplication',JSON.stringify(existApplication, 0,2));
+
+    const formattedResponse = {
+      AvailabilityCheck: {
+          country: existApplication.studyPreferenceDetails.studyPreference.country.country_name,
+          university: existApplication.studyPreferenceDetails.preferred_university.university_name,
+          intake: `${existApplication.studyPreferenceDetails.intakeMonth}/${existApplication.studyPreferenceDetails.intakeYear}`,
+          course_link: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.course_link,
+          stream: existApplication.studyPreferenceDetails.preferred_stream.stream_name,
+          program: existApplication.studyPreferenceDetails.preferred_courses.course_name,
+      },
+      campusCheck: {
+          university: existApplication.studyPreferenceDetails.preferred_university.university_name,
+      },
+      educationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map((education) => ({
+          qualification: education.qualification,
+          school_name: education.school_name,
+          start_date: new Date(education.start_date).toLocaleDateString(),
+          end_date: new Date(education.end_date).toLocaleDateString(),
+          percentage: `${education.percentage}%`,
+          board_name: "N/A",
+      })),
+      graduationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.graduationDetails.map((graduation) => ({
+          qualification: graduation.qualification,
+          school_name: graduation.college_name,
+          start_date: new Date(graduation.start_date).toLocaleDateString(),
+          end_date: new Date(graduation.end_date).toLocaleDateString(),
+          percentage: `${graduation.percentage}%`,
+          board_name: graduation.university_name,
+      })),
+      gapCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.gapReasons.map((gap) => ({
+          from: new Date(gap.start_date).toLocaleDateString(),
+          reason: gap.reason,
+          to: new Date(gap.end_date).toLocaleDateString(),
+      })),
+      qualityCheck: existApplication.eligibilityChecks.quality_check,
+      applicationFeeCheck: {
+          fee: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.application_fee,
+      },
+      visaApproved: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.previousVisaApprovals.map((visa) => ({
+          id: visa.id,
+          visa_type: visa.visa_type,
+          approved_letter: visa.approved_letter,
+          approved_country: visa.approved_country,
+      })),
+      visaDeclined: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.previousVisaDeclines.map((visa) => ({
+          id: visa.id,
+          visa_type: visa.visa_type,
+          declined_letter: visa.declined_letter,
+          declined_country: visa.declined_country,
+      })),
+      additionalDocs: {
+          id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.id,
+          passport_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.passport_doc,
+          updated_cv: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.updated_cv,
+          profile_assessment_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.profile_assessment_doc,
+          pte_cred: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.pte_cred,
+          lor: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.lor,
+          sop: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.sop,
+          gte_form: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.gte_form
+      },
+      fundPlan: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.fundPlan.map((fund) => ({
+          id: fund.id,
+          type: fund.type,
+          supporting_document: fund.supporting_document,
+      })),
+      educationDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map((doc) => ({
+          id: doc.id,
+          qualification: doc.qualification,
+          percentage: `${doc.percentage}%`,
+          board_name: "N/A",
+          school_name: doc.school_name,
+          mark_sheet: doc.mark_sheet,
+          admit_card: doc.admit_card,
+          certificate: doc.certificate,
+      })),
+      workInfoDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userWorkInfos.map((work) => ({
+          id: work.id,
+          designation: work.designation,
+          company: work.company,
+          bank_statement: work.bank_statement,
+          job_offer_document: work.job_offer_document,
+          experience_certificate: work.experience_certificate,
+          appointment_document: work.appointment_document,
+          payslip_document: work.payslip_document,
+      })),
+      empHistories: {
+          ...existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories,
+      },
+  };
+    
+    return res.status(200).json({
+      status: true,
+      data: formattedResponse,
+      message: "Application fetched successfully",
+    });
+
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
