@@ -2,6 +2,8 @@ const db = require("../models");
 const VisaChecklist = db.visaChecklistsMaster;
 const VisaChecklistField = db.visaChecklistFields;
 const { validationResult, check } = require("express-validator");
+const VisaConfiguration = db.visaConfiguration;
+const Country = db.country;
 
 // Validation rules for VisaChecklist
 const visaChecklistValidationRules = [
@@ -172,5 +174,91 @@ exports.deleteVisaChecklist = async (req, res) => {
   } catch (error) {
     console.error(`Error deleting visa checklist: ${error}`);
     res.status(500).json({ status: false, message: "Internal server error" });
+  }
+};
+
+// ============== visa Configuration ==============
+
+// Create or Update VisaConfiguration entries
+exports.configureVisa = async (req, res) => {
+  const { country_id, visa_checklist_ids } = req.body;
+
+  // Validate request
+  if (!country_id || !visa_checklist_ids || !Array.isArray(visa_checklist_ids)) {
+    return res.status(400).send({
+      message:
+        "Invalid input data. 'country_id' and 'visa_checklist_ids' are required, and 'visa_checklist_ids' should be an array.",
+    });
+  }
+
+  try {
+    // Ensure the country exists
+    const country = await Country.findByPk(country_id);
+    if (!country) {
+      return res.status(404).send({
+        message: `Country with id ${country_id} not found.`,
+      });
+    }
+
+    // Ensure the visa checklists exist
+    const visaChecklists = await VisaChecklist.findAll({
+      where: {
+        id: visa_checklist_ids,
+      },
+    });
+
+    if (visaChecklists.length !== visa_checklist_ids.length) {
+      return res.status(404).send({
+        message: "Some visa checklists were not found.",
+      });
+    }
+
+    // Delete existing configurations for this country
+    await VisaConfiguration.destroy({
+      where: { country_id },
+    });
+
+    // Create new entries in the VisaConfiguration table
+    const visaConfigurationEntries = visa_checklist_ids.map((visa_checklist_id) => ({
+      visa_checklist_id,
+      country_id,
+    }));
+
+    await VisaConfiguration.bulkCreate(visaConfigurationEntries);
+
+    res.send({
+      message: "Visa configurations were updated successfully.",
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Some error occurred while updating the visa configurations.",
+    });
+  }
+};
+
+// List all countries with their associated visa checklists
+exports.getVisaConfiguration = async (req, res) => {
+  try {
+    // Retrieve all countries with their associated visa checklists
+    const countries = await Country.findAll({
+      attributes: ["id", "country_name", "country_code"],
+      include: [
+        {
+          model: VisaChecklist,
+          through: {
+            attributes: [], // Exclude join table attributes
+          },
+          attributes: ["id", "step_name"], // Adjust attributes as needed
+        },
+      ],
+    });
+    res.send({
+      message: "Countries with associated Visa Checklists retrieved successfully.",
+      data: countries,
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Some error occurred while retrieving the countries with visa checklists.",
+    });
   }
 };
