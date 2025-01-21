@@ -8,7 +8,7 @@ exports.getLeads = async (req, res) => {
   try {
     const userPrimaryInfos = await UserPrimaryInfo.findAll({
       where: { is_deleted: false },
-      // attributes: ['id', 'full_name', 'email'], // Only select necessary columns
+      // attributes: ["id", "full_name", "email", "city", "source_id", "lead_received_date", "stage", "status_id", "office_type"],
       include: [
         {
           model: db.leadSource,
@@ -353,24 +353,25 @@ exports.getAllLeads = async (req, res) => {
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
+        attributes: ["id", "full_name", "email", "city", "source_id", "lead_received_date", "stage", "status_id", "office_type"],
         where,
         distinct: true,
         include: [
-          {
-            model: db.leadType,
-            as: "type_name",
-            attributes: ["name"],
-          },
+          // {
+          //   model: db.leadType,
+          //   as: "type_name",
+          //   attributes: ["name"],
+          // },
           {
             model: db.leadSource,
             as: "source_name",
             attributes: ["source_name"],
           },
-          {
-            model: db.leadChannel,
-            as: "channel_name",
-            attributes: ["channel_name"],
-          },
+          // {
+          //   model: db.leadChannel,
+          //   as: "channel_name",
+          //   attributes: ["channel_name"],
+          // },
           {
             model: db.country,
             as: "preferredCountries",
@@ -526,8 +527,8 @@ exports.getAllLeads = async (req, res) => {
 exports.getAllLeadsOptimized = async (req, res) => {
   const cre_id = req.userDecodeId;
   const roleId = req.role_id.toString();
-  console.log('roleId', typeof roleId);
-  
+  console.log("roleId", typeof roleId);
+
   const { page = 1, limit = 20, keyword } = req.query;
 
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
@@ -544,11 +545,9 @@ exports.getAllLeadsOptimized = async (req, res) => {
   // Dynamic OR inside Main Where Conditions
   switch (roleId) {
     case process.env.CRE_ID:
-      
       dynamicDependancy = { assigned_cre: cre_id };
       break;
     case process.env.REGIONAL_MANAGER_ID:
-      
       dynamicDependancy = { assigned_regional_manager: cre_id };
       dynamicDependancyLiteral = db.Sequelize.where(
         db.Sequelize.literal(`
@@ -562,7 +561,6 @@ exports.getAllLeadsOptimized = async (req, res) => {
       );
       break;
     case process.env.COUNSELLOR_TL_ID:
-
       dynamicDependancy = {
         [Op.and]: [{ assigned_counsellor_tl: cre_id }, { assigned_branch_counselor: null }],
       };
@@ -578,7 +576,6 @@ exports.getAllLeadsOptimized = async (req, res) => {
       );
       break;
     case process.env.BRANCH_COUNSELLOR_ID:
-
       dynamicDependancy = { assigned_branch_counselor: cre_id };
       dynamicDependancyLiteral = db.Sequelize.where(
         db.Sequelize.literal(`
@@ -594,19 +591,15 @@ exports.getAllLeadsOptimized = async (req, res) => {
     default:
       break;
   }
-  
+
   // Dynamic Main Where Condition
   switch (roleId) {
     case process.env.IT_TEAM_ID:
-
       mainWhereCondition = {
         is_deleted: false,
         [Op.and]: [
           {
-            [Op.or]: [
-              { full_name: { [Op.iLike]: `%${dynamicIlike}%` } },
-              { email: { [Op.iLike]: `%${dynamicIlike}%` } },
-            ],
+            [Op.or]: [{ full_name: { [Op.iLike]: `%${dynamicIlike}%` } }, { email: { [Op.iLike]: `%${dynamicIlike}%` } }],
           },
         ],
       };
@@ -614,13 +607,9 @@ exports.getAllLeadsOptimized = async (req, res) => {
     case process.env.COUNSELLOR_ROLE_ID:
     case process.env.FRANCHISE_COUNSELLOR_ID:
     case process.env.COUNTRY_MANAGER_ID:
-
       mainWhereCondition = {
         is_deleted: false,
-        [Op.or]: [
-          { full_name: { [Op.iLike]: dynamicIlike } },
-          { email: { [Op.iLike]: dynamicIlike } },
-        ],
+        [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
         [Op.or]: [
           dynamicDependancy,
           { created_by: cre_id },
@@ -638,22 +627,14 @@ exports.getAllLeadsOptimized = async (req, res) => {
       };
       break;
     default:
-
-    mainWhereCondition = {
+      mainWhereCondition = {
         is_deleted: false,
         [Op.and]: [
           {
-            [Op.or]: [
-              dynamicDependancy,
-              { created_by: cre_id },
-              dynamicDependancyLiteral,
-            ],
+            [Op.or]: [dynamicDependancy, { created_by: cre_id }, dynamicDependancyLiteral],
           },
           {
-            [Op.or]: [
-              { full_name: { [Op.iLike]: `%${dynamicIlike}%` } },
-              { email: { [Op.iLike]: `%${dynamicIlike}%` } },
-            ],
+            [Op.or]: [{ full_name: { [Op.iLike]: `%${dynamicIlike}%` } }, { email: { [Op.iLike]: `%${dynamicIlike}%` } }],
           },
         ],
       };
@@ -661,7 +642,11 @@ exports.getAllLeadsOptimized = async (req, res) => {
   }
 
   // Dynamic Include
-  if(roleId == process.env.COUNSELLOR_TL_ID || roleId == process.env.BRANCH_COUNSELLOR_ID || roleId == process.env.REGIONAL_MANAGER_ID) {
+  if (
+    roleId == process.env.COUNSELLOR_TL_ID ||
+    roleId == process.env.BRANCH_COUNSELLOR_ID ||
+    roleId == process.env.REGIONAL_MANAGER_ID
+  ) {
     dynamicInclude = [
       {
         model: db.region,
@@ -681,7 +666,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         attributes: ["branch_name"],
         required: false,
       },
-    ]
+    ];
   }
 
   try {
@@ -706,7 +691,6 @@ exports.getAllLeadsOptimized = async (req, res) => {
     let adminUserCountryIds = adminUser?.countries?.map((country) => country?.id);
 
     if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
-      
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: mainWhereCondition,
         distint: true,
@@ -2050,7 +2034,11 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [{ assigned_counsellor_tl: userId }, { created_by: userId }, { assigned_counsellor_tl: userId }],
+            [db.Sequelize.Op.or]: [
+              { assigned_counsellor_tl: userId },
+              { created_by: userId },
+              { assigned_counsellor_tl: userId },
+            ],
           },
           {
             assigned_branch_counselor: {
@@ -2338,8 +2326,6 @@ exports.getAllUserDocuments = async (req, res) => {
         },
       ],
     });
-
-
 
     let educationGaps = [];
     let workGaps = [];
