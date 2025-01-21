@@ -714,7 +714,7 @@ exports.viewSummary = async (req, res, next) => {
     const { id } = req.params;
 
     const existApplication = await db.application.findByPk(id, {
-      attributes: ['id','studyPrefernceId'],
+      attributes: ['id', 'studyPrefernceId'],
       include: [
         {
           model: db.studyPreferenceDetails,
@@ -739,17 +739,17 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.educationDetails,
                       as: "educationDetails",
-                      attributes: ["id", "qualification", "school_name", "board_name", "start_date","end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
+                      attributes: ["id", "qualification", "school_name", "board_name", "start_date", "end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
                     },
                     {
                       model: db.graduationDetails,
                       as: "graduationDetails",
-                      attributes: ["id", "qualification", "college_name", "start_date","end_date", "percentage", "university_name", "admit_card", "certificate", "registration_certificate", "backlog_certificate", "grading_scale_info", "transcript", "individual_marksheet"],
+                      attributes: ["id", "qualification", "college_name", "start_date", "end_date", "percentage", "university_name", "admit_card", "certificate", "registration_certificate", "backlog_certificate", "grading_scale_info", "transcript", "individual_marksheet"],
                     },
                     {
                       model: db.studentAdditionalDocs,
                       as: "additional_docs",
-                      attributes: ["id","passport_doc","updated_cv","profile_assessment_doc","pte_cred", "lor", "sop","gte_form"]
+                      attributes: ["id", "passport_doc", "updated_cv", "profile_assessment_doc", "pte_cred", "lor", "sop", "gte_form"]
                     },
                     {
                       model: db.previousVisaApprove,
@@ -779,7 +779,7 @@ exports.viewSummary = async (req, res, next) => {
                       model: db.gapReason,
                       as: "gapReasons",
                       where: { type: gapReasonFilter },
-                      attributes: ["id", "reason", "start_date","end_date", "type"],
+                      attributes: ["id", "reason", "start_date", "end_date", "type"],
                     },
                     {
                       model: db.fundPlan,
@@ -794,12 +794,12 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.EmploymentHistory,
                       as: "userEmploymentHistories",
-                      attributes: ["id", "visa_page", "permit_card","salary_account_statement", "supporting_documents"],
+                      attributes: ["id", "visa_page", "permit_card", "salary_account_statement", "supporting_documents"],
                     },
                     {
                       model: db.userExams,
                       as: 'exams',
-                      attributes: ["exam_type", "score_card","overall_score"]
+                      attributes: ["exam_type", "score_card", "overall_score"]
                     }
                   ]
                 }
@@ -841,7 +841,14 @@ exports.viewSummary = async (req, res, next) => {
         {
           model: db.eligibilityChecks,
           as: "eligibilityChecks",
-          attributes: ["id","quality_check"]
+          attributes: ["id", "quality_check"],
+          include: [
+            {
+              model: db.eligibilityRemarks,
+              as: "eligibility_remarks",
+              attributes: ["availability_check", "campus_check", "entry_requirement_check", "quantity_check", "quality_check", "immigration_check", "application_fee_check"],
+            },
+          ]
         }
       ]
     });
@@ -850,101 +857,102 @@ exports.viewSummary = async (req, res, next) => {
       throw new Error("Application not found");
     }
 
-    console.log('existApplication',JSON.stringify(existApplication, 0,2));
+    console.log('existApplication', JSON.stringify(existApplication, 0, 2));
 
     const formattedResponse = {
       AvailabilityCheck: {
-          country: existApplication.studyPreferenceDetails.studyPreference.country.country_name,
-          university: existApplication.studyPreferenceDetails.preferred_university.university_name,
-          intake: `${existApplication.studyPreferenceDetails.intakeMonth}/${existApplication.studyPreferenceDetails.intakeYear}`,
-          course_link: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.course_link,
-          stream: existApplication.studyPreferenceDetails.preferred_stream.stream_name,
-          program: existApplication.studyPreferenceDetails.preferred_courses.course_name,
+        country: existApplication.studyPreferenceDetails.studyPreference.country.country_name,
+        university: existApplication.studyPreferenceDetails.preferred_university.university_name,
+        intake: `${existApplication.studyPreferenceDetails.intakeMonth}/${existApplication.studyPreferenceDetails.intakeYear}`,
+        course_link: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.course_link,
+        stream: existApplication.studyPreferenceDetails.preferred_stream.stream_name,
+        program: existApplication.studyPreferenceDetails.preferred_courses.course_name,
       },
       campusCheck: {
-          university: existApplication.studyPreferenceDetails.preferred_university.university_name,
+        university: existApplication.studyPreferenceDetails.preferred_university.university_name,
       },
       educationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map((education) => ({
-          qualification: education.qualification,
-          school_name: education.school_name,
-          start_date: new Date(education.start_date).toLocaleDateString(),
-          end_date: new Date(education.end_date).toLocaleDateString(),
-          percentage: `${education.percentage} %`,
-          board_name: education.board_name,
+        qualification: education.qualification,
+        school_name: education.school_name,
+        start_date: new Date(education.start_date).toLocaleDateString(),
+        end_date: new Date(education.end_date).toLocaleDateString(),
+        percentage: `${education.percentage} %`,
+        board_name: education.board_name,
       })),
       graduationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.graduationDetails.map((graduation) => ({
-          qualification: graduation.qualification,
-          school_name: graduation.college_name,
-          start_date: new Date(graduation.start_date).toLocaleDateString(),
-          end_date: new Date(graduation.end_date).toLocaleDateString(),
-          percentage: `${graduation.percentage} %`,
-          board_name: graduation.university_name,
+        qualification: graduation.qualification,
+        school_name: graduation.college_name,
+        start_date: new Date(graduation.start_date).toLocaleDateString(),
+        end_date: new Date(graduation.end_date).toLocaleDateString(),
+        percentage: `${graduation.percentage} %`,
+        board_name: graduation.university_name,
       })),
       gapCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.gapReasons.map((gap) => ({
-          from: new Date(gap.start_date).toLocaleDateString(),
-          reason: gap.reason,
-          to: new Date(gap.end_date).toLocaleDateString(),
+        from: new Date(gap.start_date).toLocaleDateString(),
+        reason: gap.reason,
+        to: new Date(gap.end_date).toLocaleDateString(),
       })),
       qualityCheck: existApplication.eligibilityChecks.quality_check,
       applicationFeeCheck: {
-          fee: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.application_fee,
+        fee: existApplication.studyPreferenceDetails.preferred_courses.campuses[0].campus_course.application_fee,
       },
       visaApproved: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.previousVisaApprovals.map((visa) => ({
-          id: visa.id,
-          visa_type: visa.visa_type,
-          approved_letter: visa.approved_letter,
-          approved_country: visa.approved_country,
+        id: visa.id,
+        visa_type: visa.visa_type,
+        approved_letter: visa.approved_letter,
+        approved_country: visa.approved_country,
       })),
       visaDeclined: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.previousVisaDeclines.map((visa) => ({
-          id: visa.id,
-          visa_type: visa.visa_type,
-          declined_letter: visa.declined_letter,
-          declined_country: visa.declined_country,
+        id: visa.id,
+        visa_type: visa.visa_type,
+        declined_letter: visa.declined_letter,
+        declined_country: visa.declined_country,
       })),
       additionalDocs: {
-          id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.id,
-          passport_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.passport_doc,
-          updated_cv: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.updated_cv,
-          profile_assessment_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.profile_assessment_doc,
-          pte_cred: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.pte_cred,
-          lor: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.lor,
-          sop: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.sop,
-          gte_form: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.gte_form
+        id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.id,
+        passport_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.passport_doc,
+        updated_cv: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.updated_cv,
+        profile_assessment_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.profile_assessment_doc,
+        pte_cred: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.pte_cred,
+        lor: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.lor,
+        sop: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.sop,
+        gte_form: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.gte_form
       },
       fundPlan: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.fundPlan.map((fund) => ({
-          id: fund.id,
-          type: fund.type,
-          supporting_document: fund.supporting_document,
+        id: fund.id,
+        type: fund.type,
+        supporting_document: fund.supporting_document,
       })),
       educationDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map((doc) => ({
-          id: doc.id,
-          qualification: doc.qualification,
-          percentage: `${doc.percentage}%`,
-          board_name: doc.board_name,
-          school_name: doc.school_name,
-          mark_sheet: doc.mark_sheet,
-          admit_card: doc.admit_card,
-          certificate: doc.certificate,
+        id: doc.id,
+        qualification: doc.qualification,
+        percentage: `${doc.percentage}%`,
+        board_name: doc.board_name,
+        school_name: doc.school_name,
+        mark_sheet: doc.mark_sheet,
+        admit_card: doc.admit_card,
+        certificate: doc.certificate,
       })),
       workInfoDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userWorkInfos.map((work) => ({
-          id: work.id,
-          designation: work.designation,
-          company: work.company,
-          bank_statement: work.bank_statement,
-          job_offer_document: work.job_offer_document,
-          experience_certificate: work.experience_certificate,
-          appointment_document: work.appointment_document,
-          payslip_document: work.payslip_document,
+        id: work.id,
+        designation: work.designation,
+        company: work.company,
+        bank_statement: work.bank_statement,
+        job_offer_document: work.job_offer_document,
+        experience_certificate: work.experience_certificate,
+        appointment_document: work.appointment_document,
+        payslip_document: work.payslip_document,
       })),
       empHistories: {
-          id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.id,
-          visa_page: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.visa_page,
-          permit_card: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.permit_card,
-          salary_account_statement: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.salary_account_statement,
-          supporting_documents: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
-        },
-  };
-    
+        id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.id,
+        visa_page: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.visa_page,
+        permit_card: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.permit_card,
+        salary_account_statement: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.salary_account_statement,
+        supporting_documents: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
+      },
+      remarks: existApplication.eligibilityChecks?.eligibility_remarks?.dataValues,
+    };
+
     return res.status(200).json({
       status: true,
       data: formattedResponse,
