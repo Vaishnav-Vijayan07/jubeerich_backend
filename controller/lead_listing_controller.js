@@ -1,6 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
-const { getEnumValue } = require("../utils/helper");
+const { getEnumValue, getDeleteCondition } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const AdminUsers = db.adminUsers;
 
@@ -814,6 +814,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
       });
     }
 
+
     const { count, rows } = userPrimaryInfos;
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -841,6 +842,8 @@ exports.getAllLeadsOptimized = async (req, res) => {
           branch_name: info.branch_name ? info.branch_name.branch_name : null,
           updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
           assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+          isDeleteEnabled : getDeleteCondition(roleId,info,cre_id)
+
         };
       })
     );
@@ -1087,13 +1090,14 @@ exports.geLeadsForCreTl = async (req, res) => {
       attributes: ["id", "name"],
     });
 
-    const userId = req.userDecodeId;
+    const {userDecodeId,role_id} = req
+    
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
           {
-            [db.Sequelize.Op.or]: [{ assigned_cre_tl: userId }, { created_by: userId }],
+            [db.Sequelize.Op.or]: [{ assigned_cre_tl: userDecodeId }, { created_by: userDecodeId }],
           },
           {
             assigned_cre: {
@@ -1275,6 +1279,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           exam_details: examDetails,
           exam_documents: examDocuments,
           flag_details: flagDetails,
+          isDeleteEnabled : getDeleteCondition(role_id,info,userDecodeId)
         };
       })
     );
