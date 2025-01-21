@@ -62,19 +62,36 @@ exports.getEnumValue = async (tableName, field) => {
 };
 
 exports.getDeleteCondition = (role_id, info, cre_id) => {
-  console.log("Role ID:", role_id);
+  switch (role_id) {
+    case IdsFromEnv.IT_TEAM_ID.toString():
+      return info.created_by === cre_id && info.assigned_cre === null;
 
-  const conditions = {
-    [IdsFromEnv.IT_TEAM_ID.toString()]: info.created_by === cre_id && info.assigned_cre === null,
-    [IdsFromEnv.CRE_TL_ID]: info.created_by === cre_id && info.assigned_cre === null,
-    [IdsFromEnv.CRE_ID.toString()]: info.created_by === cre_id && info.counselors.length === 0,
-    [IdsFromEnv.COUNSELLOR_ROLE_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-    [IdsFromEnv.COUNTRY_MANAGER_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-    [IdsFromEnv.REGIONAL_MANAGER_ID.toString()]: info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null,
-    [IdsFromEnv.COUNSELLOR_TL_ID.toString()]: info.created_by === cre_id && info.counsiler_id === null,
-    [IdsFromEnv.BRANCH_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-    [IdsFromEnv.FRANCHISE_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-  };
+    case IdsFromEnv.CRE_TL_ID:
+      return info.created_by === cre_id && info.assigned_cre === null;
 
-  return conditions[role_id] !== undefined ? conditions[role_id] : info.id === role_id;
+    case IdsFromEnv.CRE_ID.toString():
+      return info.created_by === cre_id && info.counselors.length === 0;
+
+    case IdsFromEnv.COUNSELLOR_ROLE_ID.toString():
+      return info.created_by === cre_id && info.stage !== stageDatas.kyc;
+
+    case IdsFromEnv.COUNTRY_MANAGER_ID.toString():
+      return info.created_by === cre_id && info.stage !== stageDatas.kyc;
+
+    case IdsFromEnv.REGIONAL_MANAGER_ID.toString():
+      return info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null;
+
+    case IdsFromEnv.COUNSELLOR_TL_ID.toString():
+      return info.created_by === cre_id && info.counsiler_id === null;
+
+    case IdsFromEnv.BRANCH_COUNSELLOR_ID.toString():
+      return info.created_by === cre_id && info.stage !== stageDatas.kyc;
+
+    case IdsFromEnv.FRANCHISE_COUNSELLOR_ID.toString():
+      return info.created_by === cre_id && info.stage !== stageDatas.kyc;
+
+    default:
+      console.log("Role ID:", role_id, role_id);
+      return info.id === role_id;
+  }
 };
