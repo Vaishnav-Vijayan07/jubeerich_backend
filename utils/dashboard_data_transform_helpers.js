@@ -113,35 +113,41 @@ const generatePieData = (applicationData) => {
 
 const generateCardForApplication = (applicationData) => {
   const colors = {
+    checks_completed: {
+      bgColor: "#B0BEC5", // Bright Gray
+      icon: "fe-check-circle",
+    },
     availability_check: {
-      bgColor: "#FFEBEE", // Light Red
+      bgColor: "#FFCDD2", // Bright Red
       icon: "fe-check-circle", // Represents general checks
     },
     campus_check: {
-      bgColor: "#E3F2FD", // Light Blue
+      bgColor: "#90CAF9", // Bright Blue
       icon: "fe-home", // Represents campus/home
     },
     entry_requirement_check: {
-      bgColor: "#FFF3E0", // Light Orange
+      bgColor: "#FFD180", // Bright Orange
       icon: "fe-clipboard", // Represents requirements/documentation
     },
     quantity_check: {
-      bgColor: "#ECEFF1", // Light Gray
+      bgColor: "#CFD8DC", // Bright Grayish Blue
       icon: "fe-layers", // Represents quantity
     },
     quality_check: {
-      bgColor: "#E0F2F1", // Light Teal
+      bgColor: "#80CBC4", // Bright Teal
       icon: "fe-camera", // Represents scanning
     },
     immigration_check: {
-      bgColor: "#E8F5E9", // Light Green
+      bgColor: "#A5D6A7", // Bright Green
       icon: "fe-globe", // Represents global/immigration
     },
     application_fee_check: {
-      bgColor: "#FFFDE7", // Light Yellow
+      bgColor: "#FFF59D", // Bright Yellow
       icon: "fe-dollar-sign", // Represents fee/payment
     },
   };
+
+  const colorsForGraph = Object.keys(colors).map((key) => colors[key].bgColor);
 
   // Calculate total applications from the input data
   const totalApplications = applicationData.reduce((acc, data) => acc + parseInt(data.stats, 10), 0);
@@ -170,7 +176,7 @@ const generateCardForApplication = (applicationData) => {
     bgColor: "#5bc0de",
   });
 
-  return { cardData };
+  return { cardData, colorsForGraph };
 };
 
 const generateStackDataForApplication = (applicationData) => {

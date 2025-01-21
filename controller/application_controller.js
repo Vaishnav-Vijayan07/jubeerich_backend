@@ -60,9 +60,12 @@ exports.getStepperData = async (req, res, next) => {
       isCompleted: checksModified[key],
     }));
 
+    const isClickEnabled = application.is_application_checks_passed;
+
     return res.status(200).json({
       status: true,
       data: stepperData,
+      isClickEnabled,
     });
   } catch (error) {
     console.error(`Error: ${error.message}`);
@@ -310,7 +313,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
         ],
       });
 
-      console.log("EDUCATION", educationalDetails )
+      console.log("EDUCATION", educationalDetails);
 
       response.data = educationalDetails;
     } else if (type == types.visa) {
