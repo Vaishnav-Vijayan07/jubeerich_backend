@@ -692,6 +692,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
 
     if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
+        attributes: ["id", "full_name", "email", "city", "source_id", "lead_received_date", "stage", "status_id", "office_type"],
         where: mainWhereCondition,
         distint: true,
         include: [
@@ -742,6 +743,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
+        attributes: ["id", "full_name", "email", "city", "source_id", "lead_received_date", "stage", "status_id", "office_type"],
         where: mainWhereCondition,
         distinct: true,
         include: [
@@ -798,7 +800,6 @@ exports.getAllLeadsOptimized = async (req, res) => {
       });
     }
 
-
     const { count, rows } = userPrimaryInfos;
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -826,8 +827,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
           branch_name: info.branch_name ? info.branch_name.branch_name : null,
           updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
           assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
-          isDeleteEnabled : getDeleteCondition(roleId,info,cre_id)
-
+          isDeleteEnabled: getDeleteCondition(roleId, info, cre_id),
         };
       })
     );
@@ -1074,8 +1074,8 @@ exports.geLeadsForCreTl = async (req, res) => {
       attributes: ["id", "name"],
     });
 
-    const {userDecodeId,role_id} = req
-    
+    const { userDecodeId, role_id } = req;
+
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       distinct: true,
       where: {
@@ -1263,7 +1263,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           exam_details: examDetails,
           exam_documents: examDocuments,
           flag_details: flagDetails,
-          isDeleteEnabled : getDeleteCondition(role_id,info,userDecodeId)
+          isDeleteEnabled: getDeleteCondition(role_id, info, userDecodeId),
         };
       })
     );
