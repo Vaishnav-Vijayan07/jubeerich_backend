@@ -576,7 +576,6 @@ exports.getAllCounsellors = async (req, res, next) => {
       ],
     });
 
-    console.log("users", users);
 
     if (!users || users.length === 0) {
       return res.status(204).json({
@@ -784,7 +783,6 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
       });
     }
 
-    console.log("userJson ==>", users);
 
     const usersWithRoleAndCountry = users.map((user) => {
       const userJson = user.toJSON();
