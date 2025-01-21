@@ -739,7 +739,7 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.educationDetails,
                       as: "educationDetails",
-                      attributes: ["id", "qualification", "school_name", "start_date","end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
+                      attributes: ["id", "qualification", "school_name", "board_name", "start_date","end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
                     },
                     {
                       model: db.graduationDetails,
@@ -795,6 +795,11 @@ exports.viewSummary = async (req, res, next) => {
                       model: db.EmploymentHistory,
                       as: "userEmploymentHistories",
                       attributes: ["id", "visa_page", "permit_card","salary_account_statement", "supporting_documents"],
+                    },
+                    {
+                      model: db.userExams,
+                      as: 'exams',
+                      attributes: ["exam_type", "score_card","overall_score"]
                     }
                   ]
                 }
@@ -864,15 +869,15 @@ exports.viewSummary = async (req, res, next) => {
           school_name: education.school_name,
           start_date: new Date(education.start_date).toLocaleDateString(),
           end_date: new Date(education.end_date).toLocaleDateString(),
-          percentage: `${education.percentage}%`,
-          board_name: "N/A",
+          percentage: `${education.percentage} %`,
+          board_name: education.board_name,
       })),
       graduationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.graduationDetails.map((graduation) => ({
           qualification: graduation.qualification,
           school_name: graduation.college_name,
           start_date: new Date(graduation.start_date).toLocaleDateString(),
           end_date: new Date(graduation.end_date).toLocaleDateString(),
-          percentage: `${graduation.percentage}%`,
+          percentage: `${graduation.percentage} %`,
           board_name: graduation.university_name,
       })),
       gapCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.gapReasons.map((gap) => ({
@@ -915,7 +920,7 @@ exports.viewSummary = async (req, res, next) => {
           id: doc.id,
           qualification: doc.qualification,
           percentage: `${doc.percentage}%`,
-          board_name: "N/A",
+          board_name: doc.board_name,
           school_name: doc.school_name,
           mark_sheet: doc.mark_sheet,
           admit_card: doc.admit_card,
@@ -932,8 +937,12 @@ exports.viewSummary = async (req, res, next) => {
           payslip_document: work.payslip_document,
       })),
       empHistories: {
-          ...existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories,
-      },
+          id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.id,
+          visa_page: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.visa_page,
+          permit_card: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.permit_card,
+          salary_account_statement: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.salary_account_statement,
+          supporting_documents: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
+        },
   };
     
     return res.status(200).json({
