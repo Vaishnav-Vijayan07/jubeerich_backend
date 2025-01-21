@@ -227,6 +227,18 @@ module.exports = (sequelize, Sequelize) => {
     {
       underscored: true,
       tableName: "user_primary_info",
+      indexes: [
+        {
+          unique: true,
+          fields: ["email"],
+          name: "idx_email",
+        },
+        {
+          unique: true,
+          fields: ["phone"],
+          name: "idx_phone",
+        },
+      ],
     }
   );
 
