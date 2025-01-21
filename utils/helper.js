@@ -68,12 +68,12 @@ exports.getDeleteCondition = (role_id, info, cre_id) => {
     [IdsFromEnv.IT_TEAM_ID.toString()]: info.created_by === cre_id && info.assigned_cre === null,
     [IdsFromEnv.CRE_TL_ID]: info.created_by === cre_id && info.assigned_cre === null,
     [IdsFromEnv.CRE_ID.toString()]: info.created_by === cre_id && info.counselors.length === 0,
-    [IdsFromEnv.COUNSELLOR_ROLE_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-    [IdsFromEnv.COUNTRY_MANAGER_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
+    [IdsFromEnv.COUNSELLOR_ROLE_ID.toString()]: info.created_by === cre_id && info.stage !== stageDatas.kyc,
+    [IdsFromEnv.COUNTRY_MANAGER_ID.toString()]: info.created_by === cre_id && info.stage !== stageDatas.kyc,
     [IdsFromEnv.REGIONAL_MANAGER_ID.toString()]: info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null,
     [IdsFromEnv.COUNSELLOR_TL_ID.toString()]: info.created_by === cre_id && info.counsiler_id === null,
-    [IdsFromEnv.BRANCH_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
-    [IdsFromEnv.FRANCHISE_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== "KYC Verification",
+    [IdsFromEnv.BRANCH_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== stageDatas.kyc,
+    [IdsFromEnv.FRANCHISE_COUNSELLOR_ID.toString()]: info.created_by === cre_id && info.stage !== stageDatas.kyc,
   };
 
   return conditions[role_id] !== undefined ? conditions[role_id] : info.id === role_id;
