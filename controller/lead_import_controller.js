@@ -816,7 +816,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 //   }
 // };
 
-
 exports.bulkUploadMultiCore = async (req, res) => {
   let piscina = null;
   if (!piscina) {
@@ -835,34 +834,34 @@ exports.bulkUploadMultiCore = async (req, res) => {
     // Helper function to clean cell data
     const cleanCellValue = (cell) => {
       if (!cell) return null;
-      
+
       // Handle different cell types and formats
       let value = null;
-      
+
       if (cell.text || cell.value) {
         // Get the raw value, ignoring formatting
         value = cell.text || cell.value;
-        
+
         // Handle date values
         if (cell.type === Excel.ValueType.Date) {
           return cell.value; // Return the date object directly
         }
-        
+
         // Convert to string if it's not already
-        value = value?.toString() || '';
-        
+        value = value?.toString() || "";
+
         // Clean the string value
         value = value
           .trim() // Remove leading/trailing spaces
-          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-          .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width spaces
-        
+          .replace(/\s+/g, " ") // Replace multiple spaces with single space
+          .replace(/[\u200B-\u200D\uFEFF]/g, ""); // Remove zero-width spaces
+
         // Handle empty or whitespace-only strings
         if (!value) return null;
-        
+
         return value;
       }
-      
+
       return null;
     };
 
@@ -871,24 +870,8 @@ exports.bulkUploadMultiCore = async (req, res) => {
     const batchSize = 500;
     let batchPromises = [];
 
-    console.log("rows =======>", rows);
-    console.log("errors ===>", errors);
-    console.log("batchPromises ===>", batchPromises);
-    
-    
-    
-
     // Load all necessary data mappings
-    const [
-      sources,
-      channels,
-      officeTypes,
-      countries,
-      regions,
-      franchises,
-      creTl,
-      existingRecords
-    ] = await Promise.all([
+    const [sources, channels, officeTypes, countries, regions, franchises, creTl, existingRecords] = await Promise.all([
       Source.findAll({ attributes: ["id", "slug"] }),
       Channel.findAll({ attributes: ["id", "slug"] }),
       OfficeType.findAll({ attributes: ["id", "slug"] }),
@@ -897,19 +880,21 @@ exports.bulkUploadMultiCore = async (req, res) => {
       Franchise.findAll({ attributes: ["id", "slug"] }),
       AdminUsers.findOne({
         where: { role_id: process.env.CRE_TL_ID },
-        include: [{
-          model: db.accessRoles,
-          attributes: ["role_name"],
-        }],
+        include: [
+          {
+            model: db.accessRoles,
+            attributes: ["role_name"],
+          },
+        ],
       }),
       UserPrimaryInfo.findAll({
-        attributes: ["email", "phone"]
-      })
+        attributes: ["email", "phone"],
+      }),
     ]);
 
     // Create Sets for existing emails and phones
-    const existingEmails = new Set(existingRecords.map(record => record.email?.toLowerCase()));
-    const existingPhones = new Set(existingRecords.map(record => record.phone?.replace(/\D/g, '')));
+    const existingEmails = new Set(existingRecords.map((record) => record.email?.toLowerCase()));
+    const existingPhones = new Set(existingRecords.map((record) => record.phone?.replace(/\D/g, "")));
 
     // Create mapping objects
     const mappings = {
@@ -919,13 +904,14 @@ exports.bulkUploadMultiCore = async (req, res) => {
       countryCodeToId: countries.reduce((acc, country) => ({ ...acc, [country.country_code]: country.id }), {}),
       regionSlugToId: regions.reduce((acc, region) => ({ ...acc, [region.slug]: region.id }), {}),
       regionSlugToManagerId: regions.reduce((acc, region) => ({ ...acc, [region.slug]: region.regional_manager_id }), {}),
-      franchiseSlugToId: franchises.reduce((acc, franchise) => ({ ...acc, [franchise.slug]: franchise.id }), {})
+      franchiseSlugToId: franchises.reduce((acc, franchise) => ({ ...acc, [franchise.slug]: franchise.id }), {}),
     };
 
     // Process Excel sheets
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) { // Skip header row
+        if (rowNumber > 1) {
+          // Skip header row
           try {
             // Get cleaned values for each cell
             const leadReceivedDate = row.getCell(2);
@@ -933,7 +919,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
             const channelSlug = cleanCellValue(row.getCell(4));
             const fullName = cleanCellValue(row.getCell(5));
             const email = cleanCellValue(row.getCell(6))?.toLowerCase();
-            const phone = cleanCellValue(row.getCell(7))?.replace(/\D/g, '');
+            const phone = cleanCellValue(row.getCell(7))?.replace(/\D/g, "");
             const city = cleanCellValue(row.getCell(8));
             const officeTypeSlug = cleanCellValue(row.getCell(9));
             const regionOrFranchiseSlug = cleanCellValue(row.getCell(10));
@@ -943,28 +929,28 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
             // Validate required fields
             const validationErrors = [];
-            if (!email) validationErrors.push('Email is required');
-            if (!phone) validationErrors.push('Phone is required');
-            if (!fullName) validationErrors.push('Full name is required');
-            
+            if (!email) validationErrors.push("Email is required");
+            if (!phone) validationErrors.push("Phone is required");
+            if (!fullName) validationErrors.push("Full name is required");
+
             // Validate date
             let parsedDate = leadReceivedDate.value;
-            if (typeof parsedDate === 'string') {
+            if (typeof parsedDate === "string") {
               parsedDate = new Date(parsedDate);
               if (isNaN(parsedDate.getTime())) {
-                validationErrors.push('Invalid date format');
+                validationErrors.push("Invalid date format");
               }
             }
 
             // Check for existing email/phone
-            if (existingEmails.has(email)) validationErrors.push('Email already exists');
-            if (existingPhones.has(phone)) validationErrors.push('Phone number already exists');
+            if (existingEmails.has(email)) validationErrors.push("Email already exists");
+            if (existingPhones.has(phone)) validationErrors.push("Phone number already exists");
 
             if (validationErrors.length > 0) {
               errors.push({
                 rowNumber,
                 errors: validationErrors,
-                rowData: { email, phone, fullName }
+                rowData: { email, phone, fullName },
               });
               return; // Skip this row
             }
@@ -974,10 +960,13 @@ exports.bulkUploadMultiCore = async (req, res) => {
             const isRegion = officeTypeSlug === "REGION";
             const isFranchise = officeTypeSlug === "FRANCHISE";
 
-            const stage = isCorporateOffice ? stageDatas.cre :
-                         isRegion ? stageDatas.regional_manager :
-                         isFranchise ? stageDatas.counsellor :
-                         stageDatas.unknown;
+            const stage = isCorporateOffice
+              ? stageDatas.cre
+              : isRegion
+              ? stageDatas.regional_manager
+              : isFranchise
+              ? stageDatas.counsellor
+              : stageDatas.unknown;
 
             // Create the processed row object
             rows.push({
@@ -997,14 +986,13 @@ exports.bulkUploadMultiCore = async (req, res) => {
               region_id: isRegion ? mappings.regionSlugToId[regionOrFranchiseSlug] : null,
               franchise_id: isFranchise ? mappings.franchiseSlugToId[regionOrFranchiseSlug] : null,
               assigned_regional_manager: isRegion ? mappings.regionSlugToManagerId[regionOrFranchiseSlug] : null,
-              stage
+              stage,
             });
-
           } catch (error) {
             errors.push({
               rowNumber,
               errors: [`Error parsing row: ${error.message}`],
-              rowData: row.values
+              rowData: row.values,
             });
           }
         }
@@ -1018,7 +1006,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
         meta: { startRow: i + 2 },
         userDecodeId: userId,
         role: role,
-        creTLrole: creTl?.access_role?.role_name
+        creTLrole: creTl?.access_role?.role_name,
       };
 
       batchPromises.push(piscina.run(batch));
@@ -1028,7 +1016,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
     const results = await Promise.all(batchPromises);
 
     // Collect errors from all batches
-    results.forEach(result => {
+    results.forEach((result) => {
       if (result.errors) {
         errors.push(...result.errors);
       }
@@ -1064,7 +1052,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
           existRow.getCell(11).value,
           existRow.getCell(12).value,
           existRow.getCell(13).value,
-          errorDetails
+          errorDetails,
         ];
 
         errorSheet.addRow(rowWithErrors);
@@ -1075,23 +1063,28 @@ exports.bulkUploadMultiCore = async (req, res) => {
       const errorFilePath = path.join("uploads/rejected_files", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
 
+      console.log("rows =======>", rows);
+      console.log("errors ===>", errors);
+      console.log("batchPromises ===>", batchPromises);
+
       return res.status(201).json({
         status: false,
-        message: `${rows.length - errors.length} out of ${rows.length} rows processed successfully. Please check the downloaded sheet for errors.`,
-        invalidFileLink: errorFilePath
+        message: `${rows.length - errors.length} out of ${
+          rows.length
+        } rows processed successfully. Please check the downloaded sheet for errors.`,
+        invalidFileLink: errorFilePath,
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "File uploaded successfully"
+      message: "File uploaded successfully",
     });
-
   } catch (error) {
     console.error("Error processing bulk upload:", error);
     return res.status(500).json({
       status: false,
-      message: "An error occurred while processing your request. Please try again later."
+      message: "An error occurred while processing your request. Please try again later.",
     });
   } finally {
     if (piscina) {
