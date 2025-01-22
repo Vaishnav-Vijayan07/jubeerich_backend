@@ -975,8 +975,13 @@ exports.bulkUploadMultiCore = async (req, res) => {
                 : stageDatas.unknown,
             };
 
-            if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
-              errors.push({ rowNumber, rowData: processedRow, errors: ["Email or phone already exists in Database"] });
+            if (existingEmails.has(processedRow.email)) {
+              errors.push({ rowNumber, rowData: processedRow, errors: ["Email already exists in Database"] });
+              return null;
+            }
+
+            if (existingPhones.has(processedRow.phone)) {
+              errors.push({ rowNumber, rowData: processedRow, errors: ["Phone number already exists in Database"] });
               return null;
             }
 
@@ -992,7 +997,21 @@ exports.bulkUploadMultiCore = async (req, res) => {
         creTLrole: creTl?.access_role?.role_name,
       };
 
-      batchPromises.push(piscina.run(batch));
+      batchPromises.push(
+        piscina.run(batch).catch((error) => {
+          if (error.name === "SequelizeUniqueConstraintError") {
+            return {
+              errors: [
+                {
+                  rowNumber: batch.meta.startRow,
+                  errors: [`Duplicate ${Object.keys(error.fields).join(", ")}`],
+                },
+              ],
+            };
+          }
+          throw error;
+        })
+      );
     }
 
     const results = await Promise.all(batchPromises);
