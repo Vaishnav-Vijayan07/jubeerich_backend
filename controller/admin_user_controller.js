@@ -424,11 +424,11 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       // },
       where: {
         role_id: {
-          status: true,
           // [Op.in]: [process.env.BRANCH_COUNSELLOR_ID, process.env.COUNSELLOR_TL_ID],
           [Op.in]: [process.env.BRANCH_COUNSELLOR_ID],
         },
         branch_id: id,
+        status: true,
       },
       include: [
         {
