@@ -561,9 +561,262 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
   }
 };
 
-exports.bulkUploadMultiCore = async (req, res) => {
-  // const transaction = await db.sequelize.transaction();
+// exports.bulkUploadMultiCore = async (req, res) => {
+//   // const transaction = await db.sequelize.transaction();
 
+//   let piscina = null;
+//   if (!piscina) {
+//     piscina = new Piscina({
+//       filename: path.resolve(__dirname, "../workers/worker.js"),
+//       maxThreads: require("os").cpus().length,
+//     });
+//   }
+
+//   try {
+//     const userId = req.userDecodeId;
+//     const role = req.role_name;
+//     const workbook = new Excel.Workbook();
+//     await workbook.xlsx.load(req.file.buffer);
+
+//     const rows = [];
+//     const errors = [];
+//     const batchSize = 500;
+//     let batchPromises = [];
+
+//     // Load mappings
+//     const sources = await Source.findAll({ attributes: ["id", "slug"] });
+//     const channels = await Channel.findAll({ attributes: ["id", "slug"] });
+//     const officeTypes = await OfficeType.findAll({ attributes: ["id", "slug"] });
+//     const countries = await Country.findAll({ attributes: ["id", "country_code"] });
+//     const regions = await Region.findAll({ attributes: ["id", "slug", "regional_manager_id"] });
+//     const franchises = await Franchise.findAll({ attributes: ["id", "slug"] });
+
+//     const creTl = await AdminUsers.findOne({
+//       where: { role_id: process.env.CRE_TL_ID },
+//       include: [
+//         {
+//           model: db.accessRoles,
+//           attributes: ["role_name"],
+//         },
+//       ],
+//     });
+
+//     const existingRecords = await UserPrimaryInfo.findAll({
+//       attributes: ["email", "phone"],
+//     });
+
+//     const existingEmails = new Set(existingRecords.map((record) => record.email));
+//     const existingPhones = new Set(existingRecords.map((record) => record.phone));
+
+//     const sourceSlugToId = sources.reduce((acc, source) => {
+//       acc[source.slug] = source.id;
+//       return acc;
+//     }, {});
+
+//     const channelSlugToId = channels.reduce((acc, channel) => {
+//       acc[channel.slug] = channel.id;
+//       return acc;
+//     }, {});
+
+//     const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
+//       acc[officeType.slug] = officeType.id;
+//       return acc;
+//     }, {});
+
+//     const countryCodeToId = countries.reduce((acc, country) => {
+//       acc[country.country_code] = country.id;
+//       return acc;
+//     }, {});
+
+//     const regionSlugToId = regions.reduce((acc, region) => {
+//       acc[region.slug] = region.id;
+//       return acc;
+//     }, {});
+
+//     const regionSlugToManagerId = regions.reduce((acc, region) => {
+//       acc[region.slug] = region.regional_manager_id;
+//       return acc;
+//     }, {});
+
+//     const franchiseSlugToId = franchises.reduce((acc, franchise) => {
+//       acc[franchise.slug] = franchise.id;
+//       return acc;
+//     }, {});
+
+//     // Load rows into memory
+//     workbook.eachSheet((worksheet) => {
+//       worksheet.eachRow((row, rowNumber) => {
+//         if (rowNumber > 1) {
+//           let emailCell = row.getCell(6);
+//           let email = emailCell.text || emailCell.value;
+//           // Skip header row
+//           rows.push({
+//             lead_received_date: row.getCell(2).value,
+//             source_slug: row.getCell(3).value,
+//             channel_slug: row.getCell(4).value,
+//             full_name: row.getCell(5).value,
+//             email: email,
+//             phone: row.getCell(7).value,
+//             city: row.getCell(8).value,
+//             office_type_slug: row.getCell(9).value,
+//             region_or_franchise_slug: row.getCell(10).value,
+//             preferred_country_code: row.getCell(11).value,
+//             ielts: row.getCell(12).value,
+//             remarks: row.getCell(13).value,
+//           });
+//         }
+//       });
+//     });
+
+//     // Process rows in batches
+//     for (let i = 0; i < rows.length; i += batchSize) {
+//       const batch = {
+//         rows: rows
+//           .slice(i, i + batchSize)
+//           .map((row, index) => {
+//             const rowNumber = i + index + 2; // Account for header row
+//             const officeTypeSlug = row.office_type_slug;
+
+//             const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
+//             const isRegion = officeTypeSlug == "REGION";
+//             const isFranchise = officeTypeSlug == "FRANCHISE";
+
+//             const processedRow = {
+//               lead_received_date: row.lead_received_date,
+//               source_id: sourceSlugToId[row.source_slug] || null,
+//               channel_id: channelSlugToId[row.channel_slug] || null,
+//               full_name: row.full_name,
+//               email: row.email,
+//               phone: row.phone,
+//               city: row.city,
+//               office_type: officeTypeSlugToId[officeTypeSlug] || null,
+//               preferred_country: countryCodeToId[row.preferred_country_code] || null,
+//               ielts: row.ielts,
+//               remarks: row.remarks,
+//               assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
+//               created_by: userId,
+//               region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
+//               franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+//               assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+//               // stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
+//               stage: isCorporateOffice
+//                 ? stageDatas.cre
+//                 : isRegion
+//                 ? stageDatas.regional_manager
+//                 : isFranchise
+//                 ? stageDatas.counsellor
+//                 : stageDatas.unknown,
+//             };
+
+//             // Check if the email or phone already exists in the existing records
+//             if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
+//               errors.push({ rowNumber, rowData: processedRow, errors: ["Email or phone already exists in Database"] });
+//               return null; // Skip this row if email or phone already exists
+//             }
+
+//             return {
+//               rowNumber,
+//               rowData: processedRow,
+//             };
+//           })
+//           ?.filter((row) => row != null),
+//         meta: { startRow: i + 2 },
+//         userDecodeId: userId,
+//         role: role,
+//         creTLrole: creTl?.access_role?.role_name,
+//       };
+
+//       batchPromises.push(piscina.run(batch));
+//     }
+
+//     const results = await Promise.all(batchPromises);
+
+//     // Collect errors from all batches
+//     results.forEach((result) => {
+//       if (result.errors) {
+//         errors.push(...result.errors);
+//       }
+//     });
+
+//     // Save errors to an error file if any exist
+//     if (errors.length > 0) {
+//       // Assuming `invalidRows` is an array with rows that have validation errors
+//       const invalidRows = errors; // Or the array where your rows with errors are stored
+
+//       // Create a new Excel Workbook
+//       const errorWorkbook = new Excel.Workbook();
+//       const errorSheet = errorWorkbook.addWorksheet("Errors");
+
+//       // Assuming the first sheet is the original sheet you're working with
+//       const originalSheet = workbook.getWorksheet(1);
+
+//       // Add "Errors" to the header of the new error sheet
+//       const headerRow = originalSheet.getRow(1).values;
+//       headerRow.push("Errors"); // Add 'Errors' to the end of the header row for the new sheet
+//       errorSheet.addRow(headerRow); // Write the header row to the error sheet
+
+//       // Iterate over invalid rows and add them to the error sheet
+//       invalidRows.forEach(({ rowNumber, rowData, errors }, index) => {
+//         const errorDetails = Array.isArray(errors) ? errors?.join("; ") : [errors]?.join("; "); // Join all errors with a semicolon
+
+//         const worksheet = workbook.getWorksheet(1);
+//         const existRow = worksheet.getRow(rowNumber);
+
+//         const rowWithErrors = [
+//           rowNumber, // Serial Number (1-based index for user-friendly display)
+//           existRow.getCell(2).value, // Lead Received Date
+//           existRow.getCell(3).value, // Source Slug
+//           existRow.getCell(4).value, // Channel Slug
+//           existRow.getCell(5).value, // Full Name
+//           existRow.getCell(6).value, // Email
+//           existRow.getCell(7).value, // Phone
+//           existRow.getCell(8).value, // City
+//           existRow.getCell(9).value, // Office Type Slug
+//           existRow.getCell(10).value, // Region or Franchise Slug
+//           existRow.getCell(11).value, // Preferred Country Code
+//           existRow.getCell(12).value, // IELTS
+//           existRow.getCell(13).value, // Remarks
+//           errorDetails, // The error message(s)
+//         ];
+
+//         // Add the row with errors to the error sheet
+//         errorSheet.addRow(rowWithErrors);
+//       });
+
+//       // Generate a unique file name and save the errors to the file
+//       const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
+//       const errorFilePath = path.join("uploads/rejected_files", errorFileName);
+//       await errorWorkbook.xlsx.writeFile(errorFilePath);
+
+//       return res.status(201).json({
+//         status: false,
+//         message: `${rows.length - errors.length} out of ${
+//           rows.length
+//         } rows processed successfully. Please check the downloaded sheet for errors.`,
+//         // message: "Some rows contain invalid data",
+//         // errors: rowWithErrors,
+//         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
+//       });
+//     } else {
+//       return res.status(200).json({
+//         status: true,
+//         message: "File uploaded successfully",
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error processing bulk upload:", error);
+//     // await transaction.rollback();
+//     return res.status(500).json({
+//       status: false,
+//       message: "An error occurred while processing your request. Please try again later.",
+//     });
+//   } finally {
+//     piscina.close();
+//     console.log("piscina closed ==========>");
+//   }
+// };
+
+exports.bulkUploadMultiCore = async (req, res) => {
   let piscina = null;
   if (!piscina) {
     piscina = new Piscina({
@@ -601,69 +854,72 @@ exports.bulkUploadMultiCore = async (req, res) => {
       ],
     });
 
+    // Create lookup maps
+    const createLookupMap = (array, keyField, valueField) =>
+      array.reduce((acc, item) => {
+        acc[item[keyField]] = item[valueField];
+        return acc;
+      }, {});
+
+    const sourceSlugToId = createLookupMap(sources, "slug", "id");
+    const channelSlugToId = createLookupMap(channels, "slug", "id");
+    const officeTypeSlugToId = createLookupMap(officeTypes, "slug", "id");
+    const countryCodeToId = createLookupMap(countries, "country_code", "id");
+    const regionSlugToId = createLookupMap(regions, "slug", "id");
+    const regionSlugToManagerId = createLookupMap(regions, "slug", "regional_manager_id");
+    const franchiseSlugToId = createLookupMap(franchises, "slug", "id");
+
+    // Helper function to safely get cell value
+    const getCellValue = (cell) => {
+      if (!cell) return null;
+
+      // Handle different cell types
+      if (cell.text) {
+        return cell.text.trim();
+      }
+      if (cell.value) {
+        return typeof cell.value === "string" ? cell.value.trim() : cell.value;
+      }
+      if (cell.result) {
+        return typeof cell.result === "string" ? cell.result.trim() : cell.result;
+      }
+
+      return null;
+    };
+
+    // Check for existing records
     const existingRecords = await UserPrimaryInfo.findAll({
       attributes: ["email", "phone"],
     });
 
-    const existingEmails = new Set(existingRecords.map((record) => record.email));
-    const existingPhones = new Set(existingRecords.map((record) => record.phone));
+    const existingEmails = new Set(existingRecords.map((record) => record.email?.toLowerCase().trim()).filter(Boolean));
 
-    const sourceSlugToId = sources.reduce((acc, source) => {
-      acc[source.slug] = source.id;
-      return acc;
-    }, {});
+    const existingPhones = new Set(existingRecords.map((record) => record.phone?.trim()).filter(Boolean));
 
-    const channelSlugToId = channels.reduce((acc, channel) => {
-      acc[channel.slug] = channel.id;
-      return acc;
-    }, {});
-
-    const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
-      acc[officeType.slug] = officeType.id;
-      return acc;
-    }, {});
-
-    const countryCodeToId = countries.reduce((acc, country) => {
-      acc[country.country_code] = country.id;
-      return acc;
-    }, {});
-
-    const regionSlugToId = regions.reduce((acc, region) => {
-      acc[region.slug] = region.id;
-      return acc;
-    }, {});
-
-    const regionSlugToManagerId = regions.reduce((acc, region) => {
-      acc[region.slug] = region.regional_manager_id;
-      return acc;
-    }, {});
-
-    const franchiseSlugToId = franchises.reduce((acc, franchise) => {
-      acc[franchise.slug] = franchise.id;
-      return acc;
-    }, {});
-
-    // Load rows into memory
+    // Load rows into memory with improved cell reading
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
-          let emailCell = row.getCell(6);
-          let email = emailCell.text || emailCell.value;
           // Skip header row
-          rows.push({
-            lead_received_date: row.getCell(2).value,
-            source_slug: row.getCell(3).value,
-            channel_slug: row.getCell(4).value,
-            full_name: row.getCell(5).value,
-            email: email,
-            phone: row.getCell(7).value,
-            city: row.getCell(8).value,
-            office_type_slug: row.getCell(9).value,
-            region_or_franchise_slug: row.getCell(10).value,
-            preferred_country_code: row.getCell(11).value,
-            ielts: row.getCell(12).value,
-            remarks: row.getCell(13).value,
-          });
+          const rowData = {
+            lead_received_date: getCellValue(row.getCell(2)),
+            source_slug: getCellValue(row.getCell(3)),
+            channel_slug: getCellValue(row.getCell(4)),
+            full_name: getCellValue(row.getCell(5)),
+            email: getCellValue(row.getCell(6)),
+            phone: getCellValue(row.getCell(7)),
+            city: getCellValue(row.getCell(8)),
+            office_type_slug: getCellValue(row.getCell(9)),
+            region_or_franchise_slug: getCellValue(row.getCell(10)),
+            preferred_country_code: getCellValue(row.getCell(11)),
+            ielts: getCellValue(row.getCell(12)),
+            remarks: getCellValue(row.getCell(13)),
+          };
+
+          // Only push rows that have at least email or phone
+          if (rowData.email || rowData.phone) {
+            rows.push(rowData);
+          }
         }
       });
     });
@@ -677,49 +933,57 @@ exports.bulkUploadMultiCore = async (req, res) => {
             const rowNumber = i + index + 2; // Account for header row
             const officeTypeSlug = row.office_type_slug;
 
-            const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
-            const isRegion = officeTypeSlug == "REGION";
-            const isFranchise = officeTypeSlug == "FRANCHISE";
+            const isCorporateOffice = officeTypeSlug === "CORPORATE_OFFICE";
+            const isRegion = officeTypeSlug === "REGION";
+            const isFranchise = officeTypeSlug === "FRANCHISE";
 
-            const processedRow = {
-              lead_received_date: row.lead_received_date,
-              source_id: sourceSlugToId[row.source_slug] || null,
-              channel_id: channelSlugToId[row.channel_slug] || null,
-              full_name: row.full_name,
-              email: row.email,
-              phone: row.phone,
-              city: row.city,
-              office_type: officeTypeSlugToId[officeTypeSlug] || null,
-              preferred_country: countryCodeToId[row.preferred_country_code] || null,
-              ielts: row.ielts,
-              remarks: row.remarks,
-              assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
-              created_by: userId,
-              region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
-              franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
-              assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
-              // stage: officeTypeSlug == "CORPORATE_OFFICE" ? stageDatas.cre : "Unknown",
-              stage: isCorporateOffice
-                ? stageDatas.cre
-                : isRegion
-                ? stageDatas.regional_manager
-                : isFranchise
-                ? stageDatas.counsellor
-                : stageDatas.unknown,
-            };
+            // Normalize email and phone
+            const normalizedEmail = row.email?.toLowerCase().trim();
+            const normalizedPhone = row.phone?.trim();
 
-            // Check if the email or phone already exists in the existing records
-            if (existingEmails.has(processedRow.email) || existingPhones.has(processedRow.phone)) {
-              errors.push({ rowNumber, rowData: processedRow, errors: ["Email or phone already exists in Database"] });
-              return null; // Skip this row if email or phone already exists
+            // Check for duplicates
+            if (
+              (normalizedEmail && existingEmails.has(normalizedEmail)) ||
+              (normalizedPhone && existingPhones.has(normalizedPhone))
+            ) {
+              errors.push({
+                rowNumber,
+                rowData: row,
+                errors: ["Email or phone already exists in Database"],
+              });
+              return null;
             }
 
             return {
               rowNumber,
-              rowData: processedRow,
+              rowData: {
+                lead_received_date: row.lead_received_date,
+                source_id: sourceSlugToId[row.source_slug],
+                channel_id: channelSlugToId[row.channel_slug],
+                full_name: row.full_name,
+                email: normalizedEmail,
+                phone: normalizedPhone,
+                city: row.city,
+                office_type: officeTypeSlugToId[officeTypeSlug],
+                preferred_country: countryCodeToId[row.preferred_country_code],
+                ielts: row.ielts,
+                remarks: row.remarks,
+                assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+                created_by: userId,
+                region_id: isRegion ? regionSlugToId[row.region_or_franchise_slug] : null,
+                franchise_id: isFranchise ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+                assigned_regional_manager: isRegion ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+                stage: isCorporateOffice
+                  ? stageDatas.cre
+                  : isRegion
+                  ? stageDatas.regional_manager
+                  : isFranchise
+                  ? stageDatas.counsellor
+                  : stageDatas.unknown,
+              },
             };
           })
-          ?.filter((row) => row != null),
+          .filter(Boolean),
         meta: { startRow: i + 2 },
         userDecodeId: userId,
         role: role,
@@ -730,60 +994,37 @@ exports.bulkUploadMultiCore = async (req, res) => {
     }
 
     const results = await Promise.all(batchPromises);
-
-    // Collect errors from all batches
     results.forEach((result) => {
       if (result.errors) {
         errors.push(...result.errors);
       }
     });
 
-    // Save errors to an error file if any exist
     if (errors.length > 0) {
-      // Assuming `invalidRows` is an array with rows that have validation errors
-      const invalidRows = errors; // Or the array where your rows with errors are stored
-
-      // Create a new Excel Workbook
       const errorWorkbook = new Excel.Workbook();
       const errorSheet = errorWorkbook.addWorksheet("Errors");
 
-      // Assuming the first sheet is the original sheet you're working with
       const originalSheet = workbook.getWorksheet(1);
-
-      // Add "Errors" to the header of the new error sheet
       const headerRow = originalSheet.getRow(1).values;
-      headerRow.push("Errors"); // Add 'Errors' to the end of the header row for the new sheet
-      errorSheet.addRow(headerRow); // Write the header row to the error sheet
+      headerRow.push("Errors");
+      errorSheet.addRow(headerRow);
 
-      // Iterate over invalid rows and add them to the error sheet
-      invalidRows.forEach(({ rowNumber, rowData, errors }, index) => {
-        const errorDetails = Array.isArray(errors) ? errors?.join("; ") : [errors]?.join("; "); // Join all errors with a semicolon
-
+      errors.forEach(({ rowNumber, rowData, errors }) => {
+        const errorDetails = Array.isArray(errors) ? errors.join("; ") : errors;
         const worksheet = workbook.getWorksheet(1);
         const existRow = worksheet.getRow(rowNumber);
 
         const rowWithErrors = [
-          rowNumber, // Serial Number (1-based index for user-friendly display)
-          existRow.getCell(2).value, // Lead Received Date
-          existRow.getCell(3).value, // Source Slug
-          existRow.getCell(4).value, // Channel Slug
-          existRow.getCell(5).value, // Full Name
-          existRow.getCell(6).value, // Email
-          existRow.getCell(7).value, // Phone
-          existRow.getCell(8).value, // City
-          existRow.getCell(9).value, // Office Type Slug
-          existRow.getCell(10).value, // Region or Franchise Slug
-          existRow.getCell(11).value, // Preferred Country Code
-          existRow.getCell(12).value, // IELTS
-          existRow.getCell(13).value, // Remarks
-          errorDetails, // The error message(s)
+          rowNumber,
+          ...Array(12)
+            .fill(0)
+            .map((_, i) => getCellValue(existRow.getCell(i + 2))),
+          errorDetails,
         ];
 
-        // Add the row with errors to the error sheet
         errorSheet.addRow(rowWithErrors);
       });
 
-      // Generate a unique file name and save the errors to the file
       const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
       const errorFilePath = path.join("uploads/rejected_files", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
@@ -793,25 +1034,24 @@ exports.bulkUploadMultiCore = async (req, res) => {
         message: `${rows.length - errors.length} out of ${
           rows.length
         } rows processed successfully. Please check the downloaded sheet for errors.`,
-        // message: "Some rows contain invalid data",
-        // errors: rowWithErrors,
-        invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
-      });
-    } else {
-      return res.status(200).json({
-        status: true,
-        message: "File uploaded successfully",
+        invalidFileLink: errorFilePath,
       });
     }
+
+    return res.status(200).json({
+      status: true,
+      message: "File uploaded successfully",
+    });
   } catch (error) {
     console.error("Error processing bulk upload:", error);
-    // await transaction.rollback();
     return res.status(500).json({
       status: false,
       message: "An error occurred while processing your request. Please try again later.",
     });
   } finally {
-    piscina.close();
-    console.log("piscina closed ==========>");
+    if (piscina) {
+      await piscina.close();
+      console.log("piscina closed ==========>");
+    }
   }
 };
