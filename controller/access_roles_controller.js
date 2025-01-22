@@ -14,6 +14,7 @@ exports.getAllAccessRoles = async (req, res) => {
           attributes: ["name"],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     // Extract and flatten all power_ids from roles

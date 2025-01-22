@@ -16,6 +16,7 @@ const { addLeadHistory } = require("../utils/academic_query_helper");
 const { createTaskDesc } = require("../utils/task_description");
 const stageDatas = require("../constants/stage_data");
 const Piscina = require("piscina");
+const { error } = require("console");
 
 exports.bulkUpload = async (req, res) => {
   const transaction = await db.sequelize.transaction();
@@ -676,7 +677,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
             const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
             const isRegion = officeTypeSlug == "REGION";
             const isFranchise = officeTypeSlug == "FRANCHISE";
-            
+
             const processedRow = {
               lead_received_date: row.lead_received_date,
               source_id: sourceSlugToId[row.source_slug] || null,
@@ -786,7 +787,8 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
       return res.status(201).json({
         status: false,
-        message: "Some rows contain invalid data",
+        message: `${rows.length - errors.length} out of ${rows.length} rows processed successfully. Please check the downloaded sheet for errors.`,
+        // message: "Some rows contain invalid data",
         // errors: rowWithErrors,
         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
       });

@@ -536,6 +536,7 @@ router.put("/visa_ckecklist_master", [authMiddleware.checkUserAuth], visaCheckli
 router.delete("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], visaChecklistController.deleteVisaChecklist);
 router.get("/get_visa_configurations", [authMiddleware.checkUserAuth], visaChecklistController.getVisaConfiguration);
 router.put("/configure_visa", [authMiddleware.checkUserAuth], visaChecklistController.configureVisa);
+router.get("/view_summary/:id", [authMiddleware.checkUserAuth], applicationController.viewSummary);
 
 router.post("/import_admin_users", upload.single("file"), importAdminUsers);
 

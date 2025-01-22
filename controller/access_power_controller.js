@@ -3,7 +3,7 @@ const AccessPowers = db.accessPowers;
 
 // Get all access powers
 exports.getAllAccessPowers = (req, res) => {
-  AccessPowers.findAll()
+  AccessPowers.findAll({ order: [["createdAt", "DESC"]] })
     .then((powers) => {
       res.status(200).json({
         status: true,
@@ -68,11 +68,12 @@ exports.updateAccessPower = (req, res) => {
         return res.status(404).json({ message: "Access power not found" });
       }
 
-      power.update({
-        power_name,
-        updated_by,
-        status,
-      })
+      power
+        .update({
+          power_name,
+          updated_by,
+          status,
+        })
         .then((updatedPower) => {
           res.status(200).json({
             message: "Access power updated successfully",
@@ -100,7 +101,8 @@ exports.deleteAccessPower = (req, res) => {
         return res.status(404).json({ message: "Access power not found" });
       }
 
-      power.destroy()
+      power
+        .destroy()
         .then(() => {
           res.status(200).json({ message: "Access power deleted successfully" });
         })
