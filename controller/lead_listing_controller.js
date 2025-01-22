@@ -1,6 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
-const { getEnumValue } = require("../utils/helper");
+const { getEnumValue, getAttributesByRole, getDeleteCondition } = require("../utils/helper");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const AdminUsers = db.adminUsers;
 
@@ -685,10 +685,12 @@ exports.getAllLeadsOptimized = async (req, res) => {
     }
 
     let adminUserCountryIds = adminUser?.countries?.map((country) => country?.id);
+    const attributesByRole = getAttributesByRole(roleId)
 
     if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: mainWhereCondition,
+        // attributes: attributesByRole,
         distint: true,
         include: [
           {
@@ -738,8 +740,19 @@ exports.getAllLeadsOptimized = async (req, res) => {
         order: [["created_at", "DESC"]],
       });
     } else {
+
+      console.log("sampleInfo", attributesByRole)
+
+      const sampleInfo = await UserPrimaryInfo.findAll({
+        attributes : attributesByRole,
+        order : [["created_at", "DESC"]],
+      })
+
+      console.log("sampleInfo", sampleInfo)
+
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: mainWhereCondition,
+        attributes : attributesByRole,
         distinct: true,
         include: [
           {
@@ -823,6 +836,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
           branch_name: info.branch_name ? info.branch_name.branch_name : null,
           updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
           assigned_branch_counselor_name: info.assigned_branch_counselor_name ? info.assigned_branch_counselor_name.name : null,
+          isDeleteEnabled: getDeleteCondition(roleId, info, cre_id),
         };
       })
     );
@@ -1071,7 +1085,11 @@ exports.geLeadsForCreTl = async (req, res) => {
     });
 
     const userId = req.userDecodeId;
+    const roleId = req.role_id;
+    const attributesByRole = getAttributesByRole(userId)
+
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
+      attributes:attributesByRole,
       distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
@@ -1259,6 +1277,7 @@ exports.geLeadsForCreTl = async (req, res) => {
           exam_details: examDetails,
           exam_documents: examDocuments,
           flag_details: flagDetails,
+          isDeleteEnabled: getDeleteCondition(roleId, info, userId),
         };
       })
     );
