@@ -13,7 +13,7 @@ const maritalStatusValidationRules = [
 exports.getAllMaritalStatuses = async (req, res) => {
   try {
     const maritalStatuses = await MaritalStatus.findAll({
-      order: [["created_at", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json({
       status: true,
