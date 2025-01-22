@@ -367,6 +367,7 @@ exports.getAllCounsellors = async (req, res, next) => {
       ],
       where: {
         role_id: process.env.COUNSELLOR_ROLE_ID,
+        status: true,
       },
       order: [["createdAt", "DESC"]],
     });
@@ -423,6 +424,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
       // },
       where: {
         role_id: {
+          status: true,
           // [Op.in]: [process.env.BRANCH_COUNSELLOR_ID, process.env.COUNSELLOR_TL_ID],
           [Op.in]: [process.env.BRANCH_COUNSELLOR_ID],
         },
@@ -492,6 +494,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
       where: {
         role_id: process.env.COUNSELLOR_TL_ID,
         branch_id: id,
+        status: true,
       },
       include: [
         {
@@ -554,6 +557,7 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
     const users = await db.adminUsers.findAll({
       where: {
         role_id: process.env.FRANCHISE_COUNSELLOR_ID,
+        status: true,
       },
       include: [
         {
