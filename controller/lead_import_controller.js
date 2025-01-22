@@ -816,9 +816,8 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 //   }
 // };
 
-exports.bulkUploadMultiCore = async (req, res) => {
-  // const transaction = await db.sequelize.transaction();
 
+exports.bulkUploadMultiCore = async (req, res) => {
   let piscina = null;
   if (!piscina) {
     piscina = new Piscina({
@@ -833,209 +832,214 @@ exports.bulkUploadMultiCore = async (req, res) => {
     const workbook = new Excel.Workbook();
     await workbook.xlsx.load(req.file.buffer);
 
+    // Helper function to clean cell data
+    const cleanCellValue = (cell) => {
+      if (!cell) return null;
+      
+      // Handle different cell types and formats
+      let value = null;
+      
+      if (cell.text || cell.value) {
+        // Get the raw value, ignoring formatting
+        value = cell.text || cell.value;
+        
+        // Handle date values
+        if (cell.type === Excel.ValueType.Date) {
+          return cell.value; // Return the date object directly
+        }
+        
+        // Convert to string if it's not already
+        value = value?.toString() || '';
+        
+        // Clean the string value
+        value = value
+          .trim() // Remove leading/trailing spaces
+          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+          .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width spaces
+        
+        // Handle empty or whitespace-only strings
+        if (!value) return null;
+        
+        return value;
+      }
+      
+      return null;
+    };
+
     const rows = [];
     const errors = [];
     const batchSize = 500;
     let batchPromises = [];
 
-    // Load mappings (unchanged)
-    const sources = await Source.findAll({ attributes: ["id", "slug"] });
-    const channels = await Channel.findAll({ attributes: ["id", "slug"] });
-    const officeTypes = await OfficeType.findAll({ attributes: ["id", "slug"] });
-    const countries = await Country.findAll({ attributes: ["id", "country_code"] });
-    const regions = await Region.findAll({ attributes: ["id", "slug", "regional_manager_id"] });
-    const franchises = await Franchise.findAll({ attributes: ["id", "slug"] });
-
-    const creTl = await AdminUsers.findOne({
-      where: { role_id: process.env.CRE_TL_ID },
-      include: [
-        {
+    // Load all necessary data mappings
+    const [
+      sources,
+      channels,
+      officeTypes,
+      countries,
+      regions,
+      franchises,
+      creTl,
+      existingRecords
+    ] = await Promise.all([
+      Source.findAll({ attributes: ["id", "slug"] }),
+      Channel.findAll({ attributes: ["id", "slug"] }),
+      OfficeType.findAll({ attributes: ["id", "slug"] }),
+      Country.findAll({ attributes: ["id", "country_code"] }),
+      Region.findAll({ attributes: ["id", "slug", "regional_manager_id"] }),
+      Franchise.findAll({ attributes: ["id", "slug"] }),
+      AdminUsers.findOne({
+        where: { role_id: process.env.CRE_TL_ID },
+        include: [{
           model: db.accessRoles,
           attributes: ["role_name"],
-        },
-      ],
-    });
+        }],
+      }),
+      UserPrimaryInfo.findAll({
+        attributes: ["email", "phone"]
+      })
+    ]);
 
-    const existingRecords = await UserPrimaryInfo.findAll({
-      attributes: ["email", "phone"],
-    });
+    // Create Sets for existing emails and phones
+    const existingEmails = new Set(existingRecords.map(record => record.email?.toLowerCase()));
+    const existingPhones = new Set(existingRecords.map(record => record.phone?.replace(/\D/g, '')));
 
-    const existingEmails = new Set(existingRecords.map((record) => record.email));
-    const existingPhones = new Set(existingRecords.map((record) => record.phone));
-
-    // Mappings (unchanged)
-    const sourceSlugToId = sources.reduce((acc, source) => {
-      acc[source.slug] = source.id;
-      return acc;
-    }, {});
-
-    const channelSlugToId = channels.reduce((acc, channel) => {
-      acc[channel.slug] = channel.id;
-      return acc;
-    }, {});
-
-    const officeTypeSlugToId = officeTypes.reduce((acc, officeType) => {
-      acc[officeType.slug] = officeType.id;
-      return acc;
-    }, {});
-
-    const countryCodeToId = countries.reduce((acc, country) => {
-      acc[country.country_code] = country.id;
-      return acc;
-    }, {});
-
-    const regionSlugToId = regions.reduce((acc, region) => {
-      acc[region.slug] = region.id;
-      return acc;
-    }, {});
-
-    const regionSlugToManagerId = regions.reduce((acc, region) => {
-      acc[region.slug] = region.regional_manager_id;
-      return acc;
-    }, {});
-
-    const franchiseSlugToId = franchises.reduce((acc, franchise) => {
-      acc[franchise.slug] = franchise.id;
-      return acc;
-    }, {});
-
-    // Helper function to safely get cell value
-    const getCellValue = (cell) => {
-      if (!cell) return null;
-
-      // Handle different cell types
-      if (cell.type === Excel.ValueType.Date) {
-        return cell.value;
-      }
-      if (cell.type === Excel.ValueType.Number) {
-        return cell.value;
-      }
-      // Handle text and other types
-      return (cell.text || cell.value || "").toString().trim() || null;
+    // Create mapping objects
+    const mappings = {
+      sourceSlugToId: sources.reduce((acc, source) => ({ ...acc, [source.slug]: source.id }), {}),
+      channelSlugToId: channels.reduce((acc, channel) => ({ ...acc, [channel.slug]: channel.id }), {}),
+      officeTypeSlugToId: officeTypes.reduce((acc, type) => ({ ...acc, [type.slug]: type.id }), {}),
+      countryCodeToId: countries.reduce((acc, country) => ({ ...acc, [country.country_code]: country.id }), {}),
+      regionSlugToId: regions.reduce((acc, region) => ({ ...acc, [region.slug]: region.id }), {}),
+      regionSlugToManagerId: regions.reduce((acc, region) => ({ ...acc, [region.slug]: region.regional_manager_id }), {}),
+      franchiseSlugToId: franchises.reduce((acc, franchise) => ({ ...acc, [franchise.slug]: franchise.id }), {})
     };
 
-    // Load rows into memory with improved cell value handling
+    // Process Excel sheets
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) {
-          rows.push({
-            lead_received_date: getCellValue(row.getCell(2)),
-            source_slug: getCellValue(row.getCell(3)),
-            channel_slug: getCellValue(row.getCell(4)),
-            full_name: getCellValue(row.getCell(5)),
-            email: getCellValue(row.getCell(6)),
-            phone: getCellValue(row.getCell(7)),
-            city: getCellValue(row.getCell(8)),
-            office_type_slug: getCellValue(row.getCell(9)),
-            region_or_franchise_slug: getCellValue(row.getCell(10)),
-            preferred_country_code: getCellValue(row.getCell(11)),
-            ielts: getCellValue(row.getCell(12)),
-            remarks: getCellValue(row.getCell(13)),
-          });
+        if (rowNumber > 1) { // Skip header row
+          try {
+            // Get cleaned values for each cell
+            const leadReceivedDate = row.getCell(2);
+            const sourceSlug = cleanCellValue(row.getCell(3));
+            const channelSlug = cleanCellValue(row.getCell(4));
+            const fullName = cleanCellValue(row.getCell(5));
+            const email = cleanCellValue(row.getCell(6))?.toLowerCase();
+            const phone = cleanCellValue(row.getCell(7))?.replace(/\D/g, '');
+            const city = cleanCellValue(row.getCell(8));
+            const officeTypeSlug = cleanCellValue(row.getCell(9));
+            const regionOrFranchiseSlug = cleanCellValue(row.getCell(10));
+            const preferredCountryCode = cleanCellValue(row.getCell(11));
+            const ielts = cleanCellValue(row.getCell(12));
+            const remarks = cleanCellValue(row.getCell(13));
+
+            // Validate required fields
+            const validationErrors = [];
+            if (!email) validationErrors.push('Email is required');
+            if (!phone) validationErrors.push('Phone is required');
+            if (!fullName) validationErrors.push('Full name is required');
+            
+            // Validate date
+            let parsedDate = leadReceivedDate.value;
+            if (typeof parsedDate === 'string') {
+              parsedDate = new Date(parsedDate);
+              if (isNaN(parsedDate.getTime())) {
+                validationErrors.push('Invalid date format');
+              }
+            }
+
+            // Check for existing email/phone
+            if (existingEmails.has(email)) validationErrors.push('Email already exists');
+            if (existingPhones.has(phone)) validationErrors.push('Phone number already exists');
+
+            if (validationErrors.length > 0) {
+              errors.push({
+                rowNumber,
+                errors: validationErrors,
+                rowData: { email, phone, fullName }
+              });
+              return; // Skip this row
+            }
+
+            // Determine office type and stage
+            const isCorporateOffice = officeTypeSlug === "CORPORATE_OFFICE";
+            const isRegion = officeTypeSlug === "REGION";
+            const isFranchise = officeTypeSlug === "FRANCHISE";
+
+            const stage = isCorporateOffice ? stageDatas.cre :
+                         isRegion ? stageDatas.regional_manager :
+                         isFranchise ? stageDatas.counsellor :
+                         stageDatas.unknown;
+
+            // Create the processed row object
+            rows.push({
+              lead_received_date: parsedDate,
+              source_id: mappings.sourceSlugToId[sourceSlug],
+              channel_id: mappings.channelSlugToId[channelSlug],
+              full_name: fullName,
+              email,
+              phone,
+              city,
+              office_type: mappings.officeTypeSlugToId[officeTypeSlug],
+              preferred_country: mappings.countryCodeToId[preferredCountryCode],
+              ielts,
+              remarks,
+              assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+              created_by: userId,
+              region_id: isRegion ? mappings.regionSlugToId[regionOrFranchiseSlug] : null,
+              franchise_id: isFranchise ? mappings.franchiseSlugToId[regionOrFranchiseSlug] : null,
+              assigned_regional_manager: isRegion ? mappings.regionSlugToManagerId[regionOrFranchiseSlug] : null,
+              stage
+            });
+
+          } catch (error) {
+            errors.push({
+              rowNumber,
+              errors: [`Error parsing row: ${error.message}`],
+              rowData: row.values
+            });
+          }
         }
       });
     });
 
-    // Process rows in batches (rest of the code unchanged)
+    // Process rows in batches
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = {
-        rows: rows
-          .slice(i, i + batchSize)
-          .map((row, index) => {
-            const rowNumber = i + index + 2;
-            const officeTypeSlug = row.office_type_slug;
-
-            const isCorporateOffice = officeTypeSlug == "CORPORATE_OFFICE";
-            const isRegion = officeTypeSlug == "REGION";
-            const isFranchise = officeTypeSlug == "FRANCHISE";
-
-            const processedRow = {
-              lead_received_date: row.lead_received_date,
-              source_id: sourceSlugToId[row.source_slug] || null,
-              channel_id: channelSlugToId[row.channel_slug] || null,
-              full_name: row.full_name,
-              email: row.email,
-              phone: row.phone,
-              city: row.city,
-              office_type: officeTypeSlugToId[officeTypeSlug] || null,
-              preferred_country: countryCodeToId[row.preferred_country_code] || null,
-              ielts: row.ielts,
-              remarks: row.remarks,
-              assigned_cre_tl: officeTypeSlug == "CORPORATE_OFFICE" && creTl ? creTl.id : null,
-              created_by: userId,
-              region_id: officeTypeSlug === "REGION" ? regionSlugToId[row.region_or_franchise_slug] : null,
-              franchise_id: officeTypeSlug === "FRANCHISE" ? franchiseSlugToId[row.region_or_franchise_slug] : null,
-              assigned_regional_manager: officeTypeSlug === "REGION" ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
-              stage: isCorporateOffice
-                ? stageDatas.cre
-                : isRegion
-                ? stageDatas.regional_manager
-                : isFranchise
-                ? stageDatas.counsellor
-                : stageDatas.unknown,
-            };
-
-            if (existingEmails.has(processedRow.email)) {
-              errors.push({ rowNumber, rowData: processedRow, errors: ["Email already exists in Database"] });
-              return null;
-            }
-
-            if (existingPhones.has(processedRow.phone)) {
-              errors.push({ rowNumber, rowData: processedRow, errors: ["Phone number already exists in Database"] });
-              return null;
-            }
-
-            return {
-              rowNumber,
-              rowData: processedRow,
-            };
-          })
-          .filter((row) => row != null),
+        rows: rows.slice(i, i + batchSize),
         meta: { startRow: i + 2 },
         userDecodeId: userId,
         role: role,
-        creTLrole: creTl?.access_role?.role_name,
+        creTLrole: creTl?.access_role?.role_name
       };
 
-      batchPromises.push(
-        piscina.run(batch).catch((error) => {
-          if (error.name === "SequelizeUniqueConstraintError") {
-            return {
-              errors: [
-                {
-                  rowNumber: batch.meta.startRow,
-                  errors: [`Duplicate ${Object.keys(error.fields).join(", ")}`],
-                },
-              ],
-            };
-          }
-          throw error;
-        })
-      );
+      batchPromises.push(piscina.run(batch));
     }
 
+    // Wait for all batches to complete
     const results = await Promise.all(batchPromises);
 
     // Collect errors from all batches
-    results.forEach((result) => {
+    results.forEach(result => {
       if (result.errors) {
         errors.push(...result.errors);
       }
     });
 
-    // Save errors to an error file if any exist
+    // Handle errors if any exist
     if (errors.length > 0) {
       const errorWorkbook = new Excel.Workbook();
       const errorSheet = errorWorkbook.addWorksheet("Errors");
 
+      // Add headers
       const originalSheet = workbook.getWorksheet(1);
-      const headerRow = originalSheet.getRow(1).values;
-      headerRow.push("Errors");
+      const headerRow = [...originalSheet.getRow(1).values, "Errors"];
       errorSheet.addRow(headerRow);
 
+      // Add error rows
       errors.forEach(({ rowNumber, rowData, errors }) => {
-        const errorDetails = Array.isArray(errors) ? errors?.join("; ") : [errors]?.join("; ");
-
+        const errorDetails = Array.isArray(errors) ? errors.join("; ") : errors;
         const worksheet = workbook.getWorksheet(1);
         const existRow = worksheet.getRow(rowNumber);
 
@@ -1053,37 +1057,39 @@ exports.bulkUploadMultiCore = async (req, res) => {
           existRow.getCell(11).value,
           existRow.getCell(12).value,
           existRow.getCell(13).value,
-          errorDetails,
+          errorDetails
         ];
 
         errorSheet.addRow(rowWithErrors);
       });
 
+      // Save error file
       const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
       const errorFilePath = path.join("uploads/rejected_files", errorFileName);
       await errorWorkbook.xlsx.writeFile(errorFilePath);
 
       return res.status(201).json({
         status: false,
-        message: `${rows.length - errors.length} out of ${
-          rows.length
-        } rows processed successfully. Please check the downloaded sheet for errors.`,
-        invalidFileLink: `${errorFilePath}`,
-      });
-    } else {
-      return res.status(200).json({
-        status: true,
-        message: "File uploaded successfully",
+        message: `${rows.length - errors.length} out of ${rows.length} rows processed successfully. Please check the downloaded sheet for errors.`,
+        invalidFileLink: errorFilePath
       });
     }
+
+    return res.status(200).json({
+      status: true,
+      message: "File uploaded successfully"
+    });
+
   } catch (error) {
     console.error("Error processing bulk upload:", error);
     return res.status(500).json({
       status: false,
-      message: "An error occurred while processing your request. Please try again later.",
+      message: "An error occurred while processing your request. Please try again later."
     });
   } finally {
-    piscina.close();
-    console.log("piscina closed ==========>");
+    if (piscina) {
+      await piscina.close();
+      console.log("piscina closed ==========>");
+    }
   }
 };
