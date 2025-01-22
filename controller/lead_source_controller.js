@@ -32,6 +32,7 @@ exports.getAllSources = async (req, res) => {
           attributes: ['name'], // Include only the lead type name
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     // Transform the sources to include leadType name directly

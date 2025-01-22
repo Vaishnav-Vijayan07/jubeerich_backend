@@ -86,6 +86,7 @@ exports.getAllBranches = async (req, res) => {
           attributes: ["region_name"],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     const formattedResponse = branches.map((branch) => ({

@@ -28,6 +28,7 @@ exports.getAllChannels = (req, res) => {
         attributes: ["source_name"],
       },
     ],
+    order: [["createdAt", "DESC"]],
   })
     .then((channels) => {
       const transformedChannels = channels.map((channel) => {

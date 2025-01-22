@@ -22,6 +22,7 @@ exports.getAllStatuses = async (req, res) => {
           as: "statusType",
         },
       ],
+      order: [["created_at", "DESC"]],
     });
     const transformedStatuses = statuses.map((status) => ({
       ...status.toJSON(),

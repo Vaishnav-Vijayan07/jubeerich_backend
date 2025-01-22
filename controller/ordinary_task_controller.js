@@ -39,6 +39,7 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch upcoming tasks (due after today)
@@ -52,6 +53,7 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch completed tasks
@@ -60,6 +62,7 @@ exports.getAllTasks = async (req, res) => {
         user_id: userId,
         status: "completed", // Completed tasks regardless of the due date
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch expired tasks (due before current time)
@@ -73,12 +76,14 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     const allTasks = await Task.findAll({
       where: {
         user_id: userId,
       },
+      order: [["createdAt", "DESC"]],
     });
 
     res.status(200).json({

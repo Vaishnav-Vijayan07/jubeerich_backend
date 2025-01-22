@@ -120,7 +120,9 @@ exports.addAdminUsers = async (req, res) => {
     }
 
     console.error("Error creating admin user:", error);
-    return res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+    return res
+      .status(500)
+      .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -225,7 +227,9 @@ exports.updateAdminUsers = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error("Error updating admin user:", error);
-    return res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+    return res
+      .status(500)
+      .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -348,9 +352,6 @@ exports.getAllAdminUsers = async (req, res, next) => {
 exports.getAllCounsellors = async (req, res, next) => {
   try {
     const users = await db.adminUsers.findAll({
-      where: {
-        role_id: process.env.COUNSELLOR_ROLE_ID,
-      },
       include: [
         {
           model: db.accessRoles,
@@ -364,6 +365,10 @@ exports.getAllCounsellors = async (req, res, next) => {
           required: false,
         },
       ],
+      where: {
+        role_id: process.env.COUNSELLOR_ROLE_ID,
+      },
+      order: [["createdAt", "DESC"]],
     });
 
     if (!users || users.length === 0) {
@@ -436,6 +441,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
           required: false,
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     if (!users || users.length === 0) {

@@ -26,14 +26,8 @@ exports.getAllCourses = async (req, res) => {
           attributes: ["id", "stream_name"],
         },
       ],
-      attributes: [
-        "id",
-        "course_name",
-        "course_description",
-        "stream_id",
-        "course_type_id",
-        "updated_by",
-      ],
+      attributes: ["id", "course_name", "course_description", "stream_id", "course_type_id", "updated_by"],
+      order: [["created_at", "DESC"]],
     });
 
     res.status(200).json({ status: true, data: courses });
@@ -74,8 +68,11 @@ exports.getAllCourseByTypeAndStream = async (req, res) => {
   const type_id = req.query.type_id;
   const stream_id = req.query.stream_id;
   try {
-    const course = await Course.findAll({ where: { course_type_id: type_id, stream_id: stream_id  }, attributes: ["id", "course_name"] });
-    
+    const course = await Course.findAll({
+      where: { course_type_id: type_id, stream_id: stream_id },
+      attributes: ["id", "course_name"],
+    });
+
     if (!course) {
       return res.status(404).json({ status: false, message: "Course not found" });
     }
@@ -126,7 +123,9 @@ exports.addCourse = [
       });
     } catch (error) {
       console.error(`Error creating course: ${error}`);
-      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+      res
+        .status(500)
+        .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -170,7 +169,9 @@ exports.updateCourse = [
       });
     } catch (error) {
       console.error(`Error updating course: ${error}`);
-      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+      res
+        .status(500)
+        .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];

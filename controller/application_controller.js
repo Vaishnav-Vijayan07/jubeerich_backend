@@ -311,6 +311,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
             attributes: ["id", "reason", "start_date", "end_date", "type"],
           },
         ],
+        order: [["created_at", "DESC"]],
       });
 
       console.log("EDUCATION", educationalDetails);
@@ -712,17 +713,26 @@ exports.getAllRemarks = async (req, res, next) => {
 };
 
 exports.viewSummary = async (req, res, next) => {
-  let gapReasonFilter = 'education';
+  let gapReasonFilter = "education";
   try {
     const { id } = req.params;
 
     const existApplication = await db.application.findByPk(id, {
-      attributes: ['id', 'studyPrefernceId'],
+      attributes: ["id", "studyPrefernceId"],
       include: [
         {
           model: db.studyPreferenceDetails,
           as: "studyPreferenceDetails",
-          attributes: ["id", "courseId", "universityId", "campusId", "studyPreferenceId", 'streamId', 'intakeYear', 'intakeMonth'],
+          attributes: [
+            "id",
+            "courseId",
+            "universityId",
+            "campusId",
+            "studyPreferenceId",
+            "streamId",
+            "intakeYear",
+            "intakeMonth",
+          ],
           include: [
             {
               model: db.studyPreference,
@@ -742,17 +752,52 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.educationDetails,
                       as: "educationDetails",
-                      attributes: ["id", "qualification", "school_name", "board_name", "start_date", "end_date", "percentage", "mark_sheet", "admit_card", "certificate"],
+                      attributes: [
+                        "id",
+                        "qualification",
+                        "school_name",
+                        "board_name",
+                        "start_date",
+                        "end_date",
+                        "percentage",
+                        "mark_sheet",
+                        "admit_card",
+                        "certificate",
+                      ],
                     },
                     {
                       model: db.graduationDetails,
                       as: "graduationDetails",
-                      attributes: ["id", "qualification", "college_name", "start_date", "end_date", "percentage", "university_name", "admit_card", "certificate", "registration_certificate", "backlog_certificate", "grading_scale_info", "transcript", "individual_marksheet"],
+                      attributes: [
+                        "id",
+                        "qualification",
+                        "college_name",
+                        "start_date",
+                        "end_date",
+                        "percentage",
+                        "university_name",
+                        "admit_card",
+                        "certificate",
+                        "registration_certificate",
+                        "backlog_certificate",
+                        "grading_scale_info",
+                        "transcript",
+                        "individual_marksheet",
+                      ],
                     },
                     {
                       model: db.studentAdditionalDocs,
                       as: "additional_docs",
-                      attributes: ["id", "passport_doc", "updated_cv", "profile_assessment_doc", "pte_cred", "lor", "sop", "gte_form"]
+                      attributes: [
+                        "id",
+                        "passport_doc",
+                        "updated_cv",
+                        "profile_assessment_doc",
+                        "pte_cred",
+                        "lor",
+                        "sop",
+                        "gte_form",
+                      ],
                     },
                     {
                       model: db.previousVisaApprove,
@@ -762,9 +807,9 @@ exports.viewSummary = async (req, res, next) => {
                         {
                           model: db.country,
                           as: "approved_country",
-                          attributes: ["country_name"]
-                        }
-                      ]
+                          attributes: ["country_name"],
+                        },
+                      ],
                     },
                     {
                       model: db.previousVisaDecline,
@@ -774,9 +819,9 @@ exports.viewSummary = async (req, res, next) => {
                         {
                           model: db.country,
                           as: "declined_country",
-                          attributes: ["country_name"]
-                        }
-                      ]
+                          attributes: ["country_name"],
+                        },
+                      ],
                     },
                     {
                       model: db.gapReason,
@@ -792,7 +837,18 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.workInfos,
                       as: "userWorkInfos",
-                      attributes: ["id", "company", "from", "to", "designation", "bank_statement", "job_offer_document", "appointment_document", "payslip_document", "experience_certificate"],
+                      attributes: [
+                        "id",
+                        "company",
+                        "from",
+                        "to",
+                        "designation",
+                        "bank_statement",
+                        "job_offer_document",
+                        "appointment_document",
+                        "payslip_document",
+                        "experience_certificate",
+                      ],
                     },
                     {
                       model: db.EmploymentHistory,
@@ -801,11 +857,11 @@ exports.viewSummary = async (req, res, next) => {
                     },
                     {
                       model: db.userExams,
-                      as: 'exams',
-                      attributes: ["exam_type", "score_card", "overall_score"]
-                    }
-                  ]
-                }
+                      as: "exams",
+                      attributes: ["exam_type", "score_card", "overall_score"],
+                    },
+                  ],
+                },
               ],
             },
             {
@@ -839,7 +895,7 @@ exports.viewSummary = async (req, res, next) => {
               as: "preferred_stream",
               attributes: ["id", "stream_name"],
             },
-          ]
+          ],
         },
         {
           model: db.eligibilityChecks,
@@ -849,18 +905,26 @@ exports.viewSummary = async (req, res, next) => {
             {
               model: db.eligibilityRemarks,
               as: "eligibility_remarks",
-              attributes: ["availability_check", "campus_check", "entry_requirement_check", "quantity_check", "quality_check", "immigration_check", "application_fee_check"],
+              attributes: [
+                "availability_check",
+                "campus_check",
+                "entry_requirement_check",
+                "quantity_check",
+                "quality_check",
+                "immigration_check",
+                "application_fee_check",
+              ],
             },
-          ]
-        }
-      ]
+          ],
+        },
+      ],
     });
 
     if (!existApplication) {
       throw new Error("Application not found");
     }
 
-    console.log('existApplication', JSON.stringify(existApplication, 0, 2));
+    console.log("existApplication", JSON.stringify(existApplication, 0, 2));
 
     const formattedResponse = {
       AvailabilityCheck: {
@@ -874,22 +938,26 @@ exports.viewSummary = async (req, res, next) => {
       campusCheck: {
         university: existApplication.studyPreferenceDetails.preferred_university.university_name,
       },
-      educationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map((education) => ({
-        qualification: education.qualification,
-        school_name: education.school_name,
-        start_date: new Date(education.start_date).toLocaleDateString(),
-        end_date: new Date(education.end_date).toLocaleDateString(),
-        percentage: `${education.percentage} %`,
-        board_name: education.board_name,
-      })),
-      graduationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.graduationDetails.map((graduation) => ({
-        qualification: graduation.qualification,
-        school_name: graduation.college_name,
-        start_date: new Date(graduation.start_date).toLocaleDateString(),
-        end_date: new Date(graduation.end_date).toLocaleDateString(),
-        percentage: `${graduation.percentage} %`,
-        board_name: graduation.university_name,
-      })),
+      educationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.educationDetails.map(
+        (education) => ({
+          qualification: education.qualification,
+          school_name: education.school_name,
+          start_date: new Date(education.start_date).toLocaleDateString(),
+          end_date: new Date(education.end_date).toLocaleDateString(),
+          percentage: `${education.percentage} %`,
+          board_name: education.board_name,
+        })
+      ),
+      graduationCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.graduationDetails.map(
+        (graduation) => ({
+          qualification: graduation.qualification,
+          school_name: graduation.college_name,
+          start_date: new Date(graduation.start_date).toLocaleDateString(),
+          end_date: new Date(graduation.end_date).toLocaleDateString(),
+          percentage: `${graduation.percentage} %`,
+          board_name: graduation.university_name,
+        })
+      ),
       gapCheck: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.gapReasons.map((gap) => ({
         from: new Date(gap.start_date).toLocaleDateString(),
         reason: gap.reason,
@@ -915,11 +983,12 @@ exports.viewSummary = async (req, res, next) => {
         id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.id,
         passport_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.passport_doc,
         updated_cv: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.updated_cv,
-        profile_assessment_doc: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.profile_assessment_doc,
+        profile_assessment_doc:
+          existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.profile_assessment_doc,
         pte_cred: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.pte_cred,
         lor: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.lor,
         sop: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.sop,
-        gte_form: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.gte_form
+        gte_form: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.additional_docs.gte_form,
       },
       fundPlan: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.fundPlan.map((fund) => ({
         id: fund.id,
@@ -950,8 +1019,11 @@ exports.viewSummary = async (req, res, next) => {
         id: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.id,
         visa_page: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.visa_page,
         permit_card: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.permit_card,
-        salary_account_statement: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.salary_account_statement,
-        supporting_documents: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
+        salary_account_statement:
+          existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories
+            .salary_account_statement,
+        supporting_documents:
+          existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
       },
       remarks: existApplication.eligibilityChecks?.eligibility_remarks?.dataValues,
     };
@@ -961,7 +1033,6 @@ exports.viewSummary = async (req, res, next) => {
       data: formattedResponse,
       message: "Application fetched successfully",
     });
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
@@ -970,4 +1041,3 @@ exports.viewSummary = async (req, res, next) => {
     });
   }
 };
-

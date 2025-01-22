@@ -18,7 +18,9 @@ const streamValidationRules = [
 // Get all streams
 exports.getAllStreams = async (req, res) => {
   try {
-    const streams = await Stream.findAll();
+    const streams = await Stream.findAll({
+      order: [["created_at", "DESC"]],
+    });
     const formattedStreams = streams.map((stream) => ({
       value: stream.id, // Set value to stream's id
       label: stream.stream_name, // Set label to stream's name

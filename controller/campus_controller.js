@@ -34,6 +34,7 @@ exports.getAllCampuses = async (req, res) => {
           },
         },
       ],
+      order: [["created_at", "DESC"]],
     });
 
     const modifiedCampuses = campuses.map((campus) => {

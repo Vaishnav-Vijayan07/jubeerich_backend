@@ -3,9 +3,10 @@ const LeadType = db.leadType;
 
 // Function to generate a unique slug
 async function generateUniqueSlug(name) {
-  const baseSlug = name.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/(^_+|_+$)/g, '')
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/(^_+|_+$)/g, "")
     .toUpperCase();
 
   let uniqueSlug = baseSlug;
@@ -21,7 +22,9 @@ async function generateUniqueSlug(name) {
 
 // Get all lead types
 exports.getAllLeadTypes = (req, res) => {
-  LeadType.findAll()
+  LeadType.findAll({
+    order: [["createdAt", "DESC"]],
+  })
     .then((leadTypes) => {
       res.status(200).json(leadTypes);
     })
@@ -52,7 +55,6 @@ exports.getLeadTypeById = (req, res) => {
 exports.addLeadType = async (req, res) => {
   const { name, description } = req.body;
   const userId = req.userDecodeId;
-
 
   try {
     // Generate the slug

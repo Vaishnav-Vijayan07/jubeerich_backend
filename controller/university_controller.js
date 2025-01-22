@@ -33,11 +33,12 @@ exports.getAllUniversities = async (req, res) => {
           attributes: ["country_name"],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     const formattedResponse = universities.map((university) => ({
       ...university.toJSON(),
-      country_name: university.country_name.country_name
+      country_name: university.country_name.country_name,
     }));
     res.status(200).json({
       status: true,
@@ -80,7 +81,7 @@ exports.getUniversityById = async (req, res) => {
 exports.getAllUniversityByCountryId = async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const university = await University.findAll({ where: { country_id: id }, attributes: ['id', 'university_name'] });
+    const university = await University.findAll({ where: { country_id: id }, attributes: ["id", "university_name"] });
     if (!university) {
       return res.status(404).json({
         status: false,
@@ -114,7 +115,18 @@ exports.addUniversity = [
       });
     }
 
-    const { university_name, location, country_id, website_url, image_url, portal_link, username, password, updated_by, description } = req.body;
+    const {
+      university_name,
+      location,
+      country_id,
+      website_url,
+      image_url,
+      portal_link,
+      username,
+      password,
+      updated_by,
+      description,
+    } = req.body;
 
     try {
       if (!(await checkCountryExists(country_id))) {
@@ -134,7 +146,7 @@ exports.addUniversity = [
         username,
         password,
         updated_by,
-        description
+        description,
       });
       res.status(201).json({
         status: true,
@@ -194,7 +206,7 @@ exports.updateUniversity = [
         password: req.body.password ?? university.password,
         updated_by: req.body.updated_by ?? university.updated_by,
         description: req.body.description ?? university.description,
-        is_active: req.body.is_active ?? university.is_active
+        is_active: req.body.is_active ?? university.is_active,
       });
 
       res.status(200).json({
