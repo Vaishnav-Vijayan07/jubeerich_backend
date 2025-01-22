@@ -87,6 +87,6 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };

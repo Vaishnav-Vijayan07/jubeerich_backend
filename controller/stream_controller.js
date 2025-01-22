@@ -27,7 +27,7 @@ exports.getAllStreams = async (req, res) => {
     res.status(200).json({ status: true, data: streams, formattedStreams });
   } catch (error) {
     console.error(`Error retrieving streams: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -44,7 +44,7 @@ exports.getStreamById = async (req, res) => {
     res.status(200).json({ status: true, data: stream });
   } catch (error) {
     console.error(`Error retrieving stream: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -77,7 +77,7 @@ exports.addStream = [
       });
     } catch (error) {
       console.error(`Error creating stream: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -120,7 +120,7 @@ exports.updateStream = [
       });
     } catch (error) {
       console.error(`Error updating stream: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -143,6 +143,6 @@ exports.deleteStream = async (req, res) => {
       .json({ status: true, message: "Stream deleted successfully" });
   } catch (error) {
     console.error(`Error deleting stream: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };

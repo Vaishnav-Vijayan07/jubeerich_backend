@@ -12,7 +12,7 @@ exports.getAllAccessPowers = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving access powers: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -31,7 +31,7 @@ exports.getAccessPowerById = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -53,7 +53,7 @@ exports.addAccessPower = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error creating access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -82,12 +82,12 @@ exports.updateAccessPower = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error updating access power: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -108,12 +108,12 @@ exports.deleteAccessPower = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error deleting access power: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -128,6 +128,6 @@ exports.deleteAccessPower = (req, res) => {
 //     })
 //     .catch((error) => {
 //       console.error(`Error deleting access powers: ${error}`);
-//       res.status(500).json({ message: "Internal server error" });
+//       res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
 //     });
 // };

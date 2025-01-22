@@ -42,7 +42,7 @@ exports.getAllChannels = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving channels: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -72,7 +72,7 @@ exports.getChannelById = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving channel: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -100,7 +100,7 @@ exports.addChannel = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error creating channel: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -140,12 +140,12 @@ exports.updateChannel = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error updating channel: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving channel: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -166,11 +166,11 @@ exports.deleteChannel = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error deleting channel: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving channel: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };

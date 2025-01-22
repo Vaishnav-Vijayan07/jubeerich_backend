@@ -21,7 +21,7 @@ exports.getAllMaritalStatuses = async (req, res) => {
     console.error(`Error retrieving marital statuses: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -45,7 +45,7 @@ exports.getMaritalStatusById = async (req, res) => {
     console.error(`Error retrieving marital status: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -81,7 +81,7 @@ exports.addMaritalStatus = [
       console.error(`Error creating marital status: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -127,7 +127,7 @@ exports.updateMaritalStatus = [
       console.error(`Error updating marital status: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -155,7 +155,7 @@ exports.deleteMaritalStatus = async (req, res) => {
     console.error(`Error deleting marital status: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

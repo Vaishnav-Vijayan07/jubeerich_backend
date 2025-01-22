@@ -95,7 +95,7 @@ exports.getAllTasks = async (req, res) => {
     console.error(`Error retrieving tasks: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -118,7 +118,7 @@ exports.getTaskById = async (req, res) => {
     console.error(`Error retrieving task: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -158,7 +158,7 @@ exports.getTaskById = async (req, res) => {
 //             console.error(`Error creating task: ${error}`);
 //             res.status(500).json({
 //                 status: false,
-//                 message: "Internal server error",
+//                 message: "An error occurred while processing your request. Please try again later.",
 //             });
 //         }
 //     },
@@ -183,7 +183,7 @@ exports.getTaskById = async (req, res) => {
     console.error(`Error creating task: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }),
@@ -230,7 +230,7 @@ exports.getTaskById = async (req, res) => {
   //             console.error(`Error updating task: ${error}`);
   //             res.status(500).json({
   //                 status: false,
-  //                 message: "Internal server error",
+  //                 message: "An error occurred while processing your request. Please try again later.",
   //             });
   //         }
   //     },
@@ -267,7 +267,7 @@ exports.getTaskById = async (req, res) => {
       console.error(`Error updating task: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   }),
@@ -293,7 +293,7 @@ exports.getTaskById = async (req, res) => {
       console.error(`Error deleting task: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   });

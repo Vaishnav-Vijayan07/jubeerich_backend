@@ -136,7 +136,7 @@ exports.getTasks = async (req, res) => {
     console.error(`Error fetching tasks: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -248,7 +248,7 @@ exports.getTaskById = async (req, res) => {
     console.error(`Error fetching task by ID: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -391,7 +391,7 @@ exports.finishTask = async (req, res) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -432,7 +432,7 @@ exports.completeTask = async (req, res) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -610,7 +610,7 @@ exports.assignNewCountry = async (req, res) => {
     console.error(`Error assigning new country: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -837,7 +837,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
     console.error(`Error fetching student info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -890,7 +890,7 @@ exports.getBasicInfoById = async (req, res) => {
     console.error(`Error fetching student info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1009,7 +1009,7 @@ exports.saveBasicInfo = async (req, res) => {
     console.error(`Error saving basic info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1047,7 +1047,7 @@ exports.deletePoliceClearenceDocuments = async (req, res) => {
     console.error(`Error fetching student info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1085,7 +1085,7 @@ exports.getStudentAcademicInfoById = async (req, res) => {
     console.error(`Error fetching student academic info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1126,7 +1126,7 @@ exports.getStudentExamInfoById = async (req, res) => {
     console.error(`Error fetching student exam info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1175,7 +1175,7 @@ exports.getStudentWorkInfoById = async (req, res) => {
     console.error(`Error fetching student Work info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1202,7 +1202,7 @@ exports.getStudentStudyPreferenceInfoById = async (req, res) => {
     console.error(`Error fetching student info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

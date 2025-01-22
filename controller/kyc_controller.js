@@ -220,7 +220,7 @@ exports.getKycDetails = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -376,7 +376,7 @@ exports.proceedToKyc = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -651,7 +651,7 @@ exports.kycPendingDetails = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -785,7 +785,7 @@ exports.kycRejectedDetails = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -919,7 +919,7 @@ exports.kycApprovedDetails = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1106,7 +1106,7 @@ exports.rejectKYC = async (req, res, next) => {
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error(`Error: ${error.message}`);
-    return res.status(500).json({ status: false, message: error.message || "Internal server error" });
+    return res.status(500).json({ status: false, message: error.message || "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -1204,7 +1204,7 @@ exports.approveKYC = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1343,7 +1343,7 @@ exports.getAllKycByUser = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };

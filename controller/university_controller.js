@@ -47,7 +47,7 @@ exports.getAllUniversities = async (req, res) => {
     console.error(`Error retrieving universities: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -71,7 +71,7 @@ exports.getUniversityById = async (req, res) => {
     console.error(`Error retrieving university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -95,7 +95,7 @@ exports.getAllUniversityByCountryId = async (req, res) => {
     console.error(`Error retrieving university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -145,7 +145,7 @@ exports.addUniversity = [
       console.error(`Error creating university: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -206,7 +206,7 @@ exports.updateUniversity = [
       console.error(`Error updating university: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -234,7 +234,7 @@ exports.deleteUniversity = async (req, res) => {
     console.error(`Error deleting university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

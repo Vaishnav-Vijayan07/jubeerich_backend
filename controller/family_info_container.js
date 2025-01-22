@@ -104,7 +104,7 @@ exports.addOrUpdateFamilyInformation = async (req, res) => {
     }
   } catch (error) {
     console.error(`Error adding or updating family information: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -123,7 +123,7 @@ exports.getFamilyInformationByUserId = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error fetching family information: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -146,6 +146,6 @@ exports.deleteFamilyInformation = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error deleting family information: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };

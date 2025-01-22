@@ -32,7 +32,7 @@ exports.createOrUpdateTaskConfig = async (req, res) => {
         console.error(`Error in upserting task config: ${error}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 };
@@ -60,7 +60,7 @@ exports.deleteTaskConfig = async (req, res) => {
         console.error(`Error deletion: ${error}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 };
@@ -90,7 +90,7 @@ exports.getTaskConfig = async (req, res) => {
         console.error(`Error deletion: ${error}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 };
@@ -110,7 +110,7 @@ exports.getAllTaskConfig = async (req, res) => {
         console.error(`Error deletion: ${error}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 };

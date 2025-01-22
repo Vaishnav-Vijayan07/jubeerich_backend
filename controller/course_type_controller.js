@@ -27,7 +27,7 @@ exports.getAllCourseTypes = async (req, res) => {
       .json({ status: true, data: courseTypes, formattedCourseTypes });
   } catch (error) {
     console.error(`Error retrieving course types: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -44,7 +44,7 @@ exports.getCourseTypeById = async (req, res) => {
     res.status(200).json({ status: true, data: courseType });
   } catch (error) {
     console.error(`Error retrieving course type: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -78,7 +78,7 @@ exports.addCourseType = [
       });
     } catch (error) {
       console.error(`Error creating course type: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -121,7 +121,7 @@ exports.updateCourseType = [
       });
     } catch (error) {
       console.error(`Error updating course type: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -144,6 +144,6 @@ exports.deleteCourseType = async (req, res) => {
       .json({ status: true, message: "Course type deleted successfully" });
   } catch (error) {
     console.error(`Error deleting course type: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };

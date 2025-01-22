@@ -27,7 +27,7 @@ exports.getAllLeadTypes = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving lead types: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -44,7 +44,7 @@ exports.getLeadTypeById = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving lead type: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -73,7 +73,7 @@ exports.addLeadType = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error creating lead type: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -113,12 +113,12 @@ exports.updateLeadType = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error updating lead type: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving lead type: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -139,11 +139,11 @@ exports.deleteLeadType = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error deleting lead type: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving lead type: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };

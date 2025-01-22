@@ -137,7 +137,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
     // Respond with an error
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -245,7 +245,7 @@ exports.saveStudentBasicInfo = async (req, res) => {
 
 //     return res.status(500).json({
 //       status: false,
-//       message: "Internal server error",
+//       message: "An error occurred while processing your request. Please try again later.",
 //     });
 //   }
 // };
@@ -292,7 +292,7 @@ exports.saveStudentAcademicInfo = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -360,7 +360,7 @@ exports.saveStudentExamInfo = async (req, res) => {
       await transaction.rollback();
     }
     console.error(`Error updating exam records: ${error}`);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -440,7 +440,7 @@ exports.saveStudentWorkInfo = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -498,7 +498,7 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -564,7 +564,7 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
 
 //     return res.status(500).json({
 //       status: false,
-//       message: "Internal server error",
+//       message: "An error occurred while processing your request. Please try again later.",
 //     });
 //   }
 // };
@@ -799,7 +799,7 @@ exports.studentPrimaryEducationDetails = async (req, res) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -881,7 +881,7 @@ exports.saveStudentGraduationDetails = async (req, res) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

@@ -52,7 +52,7 @@ exports.getAllAccessRoles = async (req, res) => {
     console.error("Error fetching access roles:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -98,7 +98,7 @@ exports.getAccessRoleById = async (req, res) => {
     console.error("Error fetching access role:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -122,7 +122,7 @@ exports.getAccessRoleById = async (req, res) => {
 //     console.error("Error creating access role:", error);
 //     res.status(500).json({
 //       status: false,
-//       message: "Internal server error",
+//       message: "An error occurred while processing your request. Please try again later.",
 //     });
 //   }
 // };
@@ -149,7 +149,7 @@ exports.createAccessRole = async (req, res) => {
     console.error("Error creating access role:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -184,7 +184,7 @@ exports.updateAccessRole = async (req, res) => {
     console.error("Error updating access role:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -213,7 +213,7 @@ exports.deleteAccessRole = async (req, res) => {
     console.error("Error deleting access role:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -234,7 +234,7 @@ exports.deleteAllAccessRoles = async (req, res) => {
     console.error("Error deleting access roles:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

@@ -35,7 +35,7 @@ exports.getAllStatuses = async (req, res) => {
     console.error(`Error retrieving statuses: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -59,7 +59,7 @@ exports.getStatusById = async (req, res) => {
     console.error(`Error retrieving status: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -97,7 +97,7 @@ exports.addStatus = [
       console.error(`Error creating status: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -145,7 +145,7 @@ exports.updateStatus = [
       console.error(`Error updating status: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -173,7 +173,7 @@ exports.deleteStatus = async (req, res) => {
     console.error(`Error deleting status: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

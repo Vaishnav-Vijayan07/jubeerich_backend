@@ -59,7 +59,7 @@ exports.saveEmploymentHistory = async (req, res, next) => {
 
     } catch (error) {
         console.error("Error saving employment history:", error);
-        return res.status(500).json({ status: false, message: 'Internal server error' });
+        return res.status(500).json({ status: false, message: 'An error occurred while processing your request. Please try again later.' });
     }
 };
 
@@ -81,7 +81,7 @@ exports.getEmploymentHistory = async (req, res, next) => {
 
     } catch (error) {
         console.error("Error fetching employment history:", error);
-        return res.status(500).json({ status: false, message: 'Internal server error' });
+        return res.status(500).json({ status: false, message: 'An error occurred while processing your request. Please try again later.' });
     }
 };
 

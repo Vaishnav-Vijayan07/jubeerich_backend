@@ -61,7 +61,7 @@ exports.getStudyPreferencesByUserPrimaryInfo = async (req, res) => {
     console.error(`Error retrieving study preferences: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -92,7 +92,7 @@ exports.createStudyPreferencesByUserPrimaryInfo = async (req, res) => {
     console.error(`Error creating study preferences: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

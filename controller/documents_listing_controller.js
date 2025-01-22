@@ -29,7 +29,7 @@ exports.getAllDocuments = async (req, res) => {
         console.error(`Error retrieving documents: ${error}`);
         res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 };

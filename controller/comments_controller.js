@@ -15,7 +15,7 @@ exports.getAllComments = async (req, res) => {
     console.error("Error fetching comments:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -91,7 +91,7 @@ exports.getCommentsByLeadId = async (req, res) => {
     console.error("Error fetching comments:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -146,7 +146,7 @@ exports.createComment = async (req, res) => {
     console.error("Error creating comment:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -180,7 +180,7 @@ exports.updateComment = async (req, res) => {
     console.error("Error updating comment:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -209,7 +209,7 @@ exports.deleteComment = async (req, res) => {
     console.error("Error deleting comment:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

@@ -71,7 +71,7 @@ exports.getStepperData = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -178,7 +178,7 @@ exports.getApplicationById = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -236,7 +236,7 @@ exports.assignApplication = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -280,7 +280,7 @@ exports.autoAssignApplication = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -358,7 +358,7 @@ exports.getApplicationDetailsByType = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -461,7 +461,7 @@ exports.updateApplicationChecks = async (req, res, next) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -481,7 +481,7 @@ exports.getApplicationChecks = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -520,7 +520,7 @@ exports.getPortalDetails = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -569,7 +569,7 @@ exports.completeApplication = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -602,7 +602,7 @@ exports.provdeOfferLetter = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -656,7 +656,7 @@ exports.updateApplicationReceipt = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -706,7 +706,7 @@ exports.getAllRemarks = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -966,7 +966,7 @@ exports.viewSummary = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };

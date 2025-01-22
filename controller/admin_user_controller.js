@@ -120,7 +120,7 @@ exports.addAdminUsers = async (req, res) => {
     }
 
     console.error("Error creating admin user:", error);
-    return res.status(500).json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -225,7 +225,7 @@ exports.updateAdminUsers = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     console.error("Error updating admin user:", error);
-    return res.status(500).json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -256,7 +256,7 @@ exports.deleteAdminUsers = async (req, res) => {
     console.error("Error deleting admin user:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -340,7 +340,7 @@ exports.getAllAdminUsers = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -403,7 +403,7 @@ exports.getAllCounsellors = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -474,7 +474,7 @@ exports.getAllCounsellorsByBranch = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -538,7 +538,7 @@ exports.getAllCounsellorsTLByBranch = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -598,7 +598,7 @@ exports.getFranchiseCounsellors = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

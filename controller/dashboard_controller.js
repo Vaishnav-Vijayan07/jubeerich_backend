@@ -116,6 +116,6 @@ exports.getDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };

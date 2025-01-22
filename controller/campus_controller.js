@@ -58,7 +58,7 @@ exports.getAllCampuses = async (req, res) => {
     res.status(200).json({ status: true, data: modifiedCampuses });
   } catch (error) {
     console.error(`Error retrieving campuses: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -80,7 +80,7 @@ exports.getAllCampusesByUniversity = async (req, res) => {
     return res.status(200).json({ status: true, data: formatttedCampus });
   } catch (error) {
     console.error(`Error retrieving campuses: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -120,7 +120,7 @@ exports.getCoursesWithDetails = async (req, res) => {
     console.error(`Error retrieving courses: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -165,7 +165,7 @@ exports.getCampusById = async (req, res) => {
     res.status(200).json({ status: true, data: modifiedCampus });
   } catch (error) {
     console.error(`Error retrieving campus: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -202,7 +202,7 @@ exports.addCampus = [
       console.error(`Error creating campus: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -255,7 +255,7 @@ exports.updateCampus = [
       res.status(200).json({ status: true, message: "Campus updated successfully", data: updatedCampus });
     } catch (error) {
       console.error(`Error updating campus: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -274,7 +274,7 @@ exports.deleteCampus = async (req, res) => {
     res.status(200).json({ status: true, message: "Campus deleted successfully" });
   } catch (error) {
     console.error(`Error deleting campus: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -326,7 +326,7 @@ exports.deleteCampus = async (req, res) => {
 //     console.error(`Error associating course: ${error}`);
 //     res.status(500).json({
 //       status: false,
-//       message: "Internal server error.",
+//       message: "An error occurred while processing your request. Please try again later..",
 //     });
 //   }
 // };
@@ -398,7 +398,7 @@ exports.deleteCampus = async (req, res) => {
 //     console.error(`Error configuring course association: ${error}`);
 //     res.status(500).json({
 //       status: false,
-//       message: "Internal server error.",
+//       message: "An error occurred while processing your request. Please try again later..",
 //     });
 //   }
 // };
@@ -505,7 +505,7 @@ exports.configureCourses = async (req, res) => {
     console.error(`Error configuring course association: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error.",
+      message: "An error occurred while processing your request. Please try again later..",
     });
   }
 };
@@ -545,7 +545,7 @@ exports.deleteCourseAssociation = async (req, res) => {
     console.error(`Error deleting course association: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error.",
+      message: "An error occurred while processing your request. Please try again later..",
     });
   }
 };

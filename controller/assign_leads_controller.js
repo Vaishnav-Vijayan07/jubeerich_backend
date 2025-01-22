@@ -149,7 +149,7 @@ exports.assignCres = async (req, res) => {
     console.error(`Error assigning CRE: ${error}`);
     return res.status(500).json({
       status: false,
-      message: error?.message || "Internal server error",
+      message: error?.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -251,7 +251,7 @@ exports.assignCounselorTL = async (req, res) => {
     console.error(`Error assigning counselor tl: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -400,7 +400,7 @@ exports.assignBranchCounselors = async (req, res) => {
     console.error(`Error assigning counselor: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -500,7 +500,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
     console.error("Error in autoAssign:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -561,7 +561,7 @@ exports.listBranches = async (req, res) => {
     console.error("Error in finding branches:", err);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -654,7 +654,7 @@ exports.autoAssign = async (req, res) => {
     console.error("Error in autoAssign:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

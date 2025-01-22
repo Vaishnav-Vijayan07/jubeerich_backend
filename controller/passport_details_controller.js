@@ -17,7 +17,7 @@ exports.getPassportDetailsByUserId = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error retrieving passport details: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -72,7 +72,7 @@ exports.addPassportDetails = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error creating passport details: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -124,7 +124,7 @@ exports.updatePassportDetails = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error updating passport details: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -146,6 +146,6 @@ exports.deletePassportDetails = async (req, res) => {
       .json({ status: true, message: "Passport details deleted successfully" });
   } catch (error) {
     console.error(`Error deleting passport details: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };

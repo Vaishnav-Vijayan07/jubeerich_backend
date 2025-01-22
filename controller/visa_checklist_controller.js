@@ -27,7 +27,7 @@ exports.getAllVisaChecklists = async (req, res) => {
     res.status(200).json({ status: true, data: visaChecklists });
   } catch (error) {
     console.error(`Error retrieving visa checklists: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -49,7 +49,7 @@ exports.getVisaChecklistById = async (req, res) => {
     res.status(200).json({ status: true, data: visaChecklist });
   } catch (error) {
     console.error(`Error retrieving visa checklist: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -94,7 +94,7 @@ exports.addVisaChecklist = [
       });
     } catch (error) {
       console.error(`Error creating visa checklist: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -154,7 +154,7 @@ exports.updateVisaChecklist = [
       });
     } catch (error) {
       console.error(`Error updating visa checklist: ${error}`);
-      res.status(500).json({ status: false, message: "Internal server error" });
+      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -173,7 +173,7 @@ exports.deleteVisaChecklist = async (req, res) => {
     res.status(200).json({ status: true, message: "Visa checklist deleted successfully" });
   } catch (error) {
     console.error(`Error deleting visa checklist: ${error}`);
-    res.status(500).json({ status: false, message: "Internal server error" });
+    res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 };
 

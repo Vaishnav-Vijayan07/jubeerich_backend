@@ -91,7 +91,7 @@ exports.getChecksById = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -111,7 +111,7 @@ exports.updateCheckRemarks = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: error.message || "Internal server error",
+      message: error.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };

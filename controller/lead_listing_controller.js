@@ -160,7 +160,7 @@ exports.getLeads = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -519,7 +519,7 @@ exports.getAllLeads = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -840,7 +840,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1049,7 +1049,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1277,7 +1277,7 @@ exports.geLeadsForCreTl = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1498,7 +1498,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1650,7 +1650,7 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1865,7 +1865,7 @@ exports.getAssignedLeadsForCounsellorTL = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -2019,7 +2019,7 @@ exports.getAssignedLeadsForCounsellorTLOptiimised = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -2211,7 +2211,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
     console.error(`Error fetching user primary info: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -2348,7 +2348,7 @@ exports.getAllUserDocuments = async (req, res) => {
     console.error(`Error fetching user documents: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

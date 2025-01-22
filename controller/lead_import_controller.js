@@ -430,7 +430,7 @@ exports.bulkUpload = async (req, res) => {
     await transaction.rollback();
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -807,7 +807,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
     // await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   } finally {
     piscina.close();

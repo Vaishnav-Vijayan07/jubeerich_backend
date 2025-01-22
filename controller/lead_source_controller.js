@@ -49,7 +49,7 @@ exports.getAllSources = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error retrieving sources: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -88,7 +88,7 @@ exports.getSourceById = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error retrieving source: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -118,7 +118,7 @@ exports.addSource = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error creating source: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -158,7 +158,7 @@ exports.updateSource = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error updating source: ${error}`);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -178,11 +178,11 @@ exports.deleteSource = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error deleting source: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving source: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };

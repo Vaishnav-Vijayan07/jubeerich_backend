@@ -102,7 +102,7 @@ exports.getAllBranches = async (req, res) => {
     console.error(`Error retrieving branches: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -126,7 +126,7 @@ exports.getBranchById = async (req, res) => {
     console.error(`Error retrieving branch: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -204,7 +204,7 @@ exports.addBranch = [
       console.error(`Error creating branch: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -252,7 +252,7 @@ exports.updateBranch = [
       console.error(`Error updating branch: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -280,7 +280,7 @@ exports.deleteBranch = async (req, res) => {
     console.error(`Error deleting branch: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
