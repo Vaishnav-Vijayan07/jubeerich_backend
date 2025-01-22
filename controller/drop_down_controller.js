@@ -88,7 +88,7 @@ const getDropdownData = async (req, res) => {
     }
 
     if (!types || requestedTypes.includes("adminUsers")) {
-      promises.push(db.adminUsers.findAll({ attributes: ["id", "name"] }));
+      promises.push(db.adminUsers.findAll({ attributes: ["id", "name"], where: { status: true } }));
     } else {
       promises.push(Promise.resolve(null));
     }
@@ -99,6 +99,7 @@ const getDropdownData = async (req, res) => {
           attributes: ["id", "name"],
           where: {
             role_id: process.env.CRE_ID,
+            status: true
           },
         })
       );
@@ -124,6 +125,7 @@ const getDropdownData = async (req, res) => {
           attributes: ["id", "name", "branch_id"],
           where: {
             role_id: process.env.BRANCH_COUNSELLOR_ID,
+            status: true
           },
         })
       );
@@ -221,7 +223,7 @@ const getDropdownData = async (req, res) => {
     console.error(`Error retrieving dropdown data: ${error}`);
     res.status(500).json({
       status: false,
-      message: "An error occurred while processing your request. Please try again later.",
+      message: "Internal server error",
     });
   }
 };
