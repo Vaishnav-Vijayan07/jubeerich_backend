@@ -646,13 +646,15 @@ exports.bulkUploadMultiCore = async (req, res) => {
     workbook.eachSheet((worksheet) => {
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
+          let emailCell = row.getCell(6);
+          let email = emailCell.text || emailCell.value;
           // Skip header row
           rows.push({
             lead_received_date: row.getCell(2).value,
             source_slug: row.getCell(3).value,
             channel_slug: row.getCell(4).value,
             full_name: row.getCell(5).value,
-            email: row.getCell(6).value,
+            email: email,
             phone: row.getCell(7).value,
             city: row.getCell(8).value,
             office_type_slug: row.getCell(9).value,
@@ -787,7 +789,9 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
       return res.status(201).json({
         status: false,
-        message: `${rows.length - errors.length} out of ${rows.length} rows processed successfully. Please check the downloaded sheet for errors.`,
+        message: `${rows.length - errors.length} out of ${
+          rows.length
+        } rows processed successfully. Please check the downloaded sheet for errors.`,
         // message: "Some rows contain invalid data",
         // errors: rowWithErrors,
         invalidFileLink: `${errorFilePath}`, // Adjust this if necessary to serve static files
