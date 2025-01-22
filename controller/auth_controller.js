@@ -13,9 +13,10 @@ exports.login = async (req, res) => {
     const secret = process.env.SECRET;
 
     const user = await AdminUsers.findOne({
-      where: {
-        [Op.or]: [{ username: username }, { email: username }],
-      },
+      where: [
+        { status: true },
+        { [Op.or]: [{ username: username }, { email: username }] },
+      ],
       include: [
         {
           model: AccessRoles,
@@ -43,7 +44,7 @@ exports.login = async (req, res) => {
     if (!user || !bcrypt.compareSync(password + secret, user.password)) {
       return res.status(401).json({
         status: false,
-        message: "Invalid username or password",
+        message: "Login failed. Either the credentials you entered are incorrect, or your account has been disabled. Please check your details or contact support for assistance.",
       });
     }
 
