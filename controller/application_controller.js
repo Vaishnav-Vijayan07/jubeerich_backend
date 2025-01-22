@@ -799,7 +799,12 @@ exports.viewSummary = async (req, res, next) => {
                     {
                       model: db.userExams,
                       as: 'exams',
-                      attributes: ["exam_type", "score_card", "overall_score"]
+                      attributes: ["id","exam_type", "score_card", "overall_score"]
+                    },
+                    {
+                      model: db.userBasicInfo,
+                      as: 'basic_info_details',
+                      attributes: ["police_clearance_docs"]
                     }
                   ]
                 }
@@ -951,6 +956,17 @@ exports.viewSummary = async (req, res, next) => {
         supporting_documents: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.userEmploymentHistories.supporting_documents,
       },
       remarks: existApplication.eligibilityChecks?.eligibility_remarks?.dataValues,
+      examDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.exams.map((exam) => ({
+        id: exam.id,
+        exam_type: exam.exam_type,
+        score_card: exam.score_card,
+        overall_score: exam.overall_score,
+      })),
+      policeDocs: existApplication.studyPreferenceDetails.studyPreference.userPrimaryInfo.basic_info_details.police_clearance_docs.map((police) => ({
+        id: police.id,
+        country_name: police.country_name,
+        certificate: police.certificate,
+      })),
     };
 
     return res.status(200).json({
