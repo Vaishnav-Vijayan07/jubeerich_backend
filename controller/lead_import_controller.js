@@ -1033,7 +1033,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
         status: false,
         message: `${rows.length - errors.length} out of ${
           rows.length
-        } rows processed successfully. Please check the downloaded sheet for errors.`,
+        } rows processed. Please check the downloaded sheet for errors.`,
         invalidFileLink: errorFilePath,
       });
     }
