@@ -193,6 +193,7 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
             ON "admin_users"."id" = "user_counselors"."counselor_id"
           WHERE "admin_users"."role_id" = :roleId
             AND "admin_users"."franchise_id" = :franchiseId
+            AND "admin_users"."status" = true
           GROUP BY "admin_users"."id"
         )
         SELECT "user_id"

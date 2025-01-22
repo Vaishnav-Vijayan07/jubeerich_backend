@@ -98,7 +98,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo.preferredCountries?.[0]?.id
+              assigned_country: userInfo.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -116,7 +116,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo.preferredCountries?.[0]?.id
+              assigned_country: userInfo.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -340,7 +340,7 @@ exports.assignBranchCounselors = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo?.preferredCountries?.[0]?.id
+              assigned_country: userInfo?.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -354,7 +354,7 @@ exports.assignBranchCounselors = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo?.preferredCountries?.[0]?.id
+              assigned_country: userInfo?.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -469,7 +469,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
-          assigned_country: userInfo?.preferredCountries?.[0]?.id
+          assigned_country: userInfo?.preferredCountries?.[0]?.id,
         },
         { transaction }
       );
@@ -478,7 +478,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           assigned_branch_counselor: currentCounselor,
           updated_by: userId,
           assign_type: "auto_assign",
-          assigned_country: userInfo?.preferredCountries?.[0]?.id
+          assigned_country: userInfo?.preferredCountries?.[0]?.id,
         },
         { where: { id }, transaction }
       );
@@ -631,11 +631,19 @@ exports.autoAssign = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
-          assigned_country: userInfo.preferredCountries?.[0]?.id
+          assigned_country: userInfo.preferredCountries?.[0]?.id,
         },
         { transaction }
       );
-      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId, assigned_country: userInfo.preferredCountries?.[0]?.i }, { where: { id }, transaction });
+      return UserPrimaryInfo.update(
+        {
+          assigned_cre: currentCre,
+          assign_type: "auto_assign",
+          updated_by: userId,
+          assigned_country: userInfo.preferredCountries?.[0]?.i,
+        },
+        { where: { id }, transaction }
+      );
     });
 
     // Perform bulk update
@@ -677,6 +685,7 @@ const getLeastAssignedCre = async () => {
       ],
       where: {
         [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+        status: true,
       },
       order: [
         [
@@ -754,6 +763,7 @@ const getLeastAssignedCounselors = async () => {
       ],
       where: {
         [Sequelize.Op.or]: [{ role_id: process.env.BRANCH_COUNSELLOR_ID }],
+        status: true,
       },
       order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
     });

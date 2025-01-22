@@ -1284,6 +1284,7 @@ const getLeastAssignedUsers = async (countryId) => {
           ON "admin_users"."id" = "user_counselors"."counselor_id"
         WHERE "admin_users"."role_id" = :roleId OR "admin_users"."role_id" = :country_manager_id
           AND "admin_user_countries"."country_id" = :countryId
+          AND "admin_users"."status" = true
         GROUP BY "admin_users"."id"
       )
       SELECT "user_id" AS "least_assigned_user_id"
