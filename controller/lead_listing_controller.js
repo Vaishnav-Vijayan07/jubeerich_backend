@@ -685,7 +685,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
     }
 
     let adminUserCountryIds = adminUser?.countries?.map((country) => country?.id);
-    const attributesByRole = getAttributesByRole(roleId)
+    const attributesByRole = getAttributesByRole(roleId);
 
     if (roleId == process.env.COUNTRY_MANAGER_ID || roleId == process.env.COUNSELLOR_ROLE_ID) {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -740,19 +740,9 @@ exports.getAllLeadsOptimized = async (req, res) => {
         order: [["created_at", "DESC"]],
       });
     } else {
-
-      console.log("sampleInfo", attributesByRole)
-
-      const sampleInfo = await UserPrimaryInfo.findAll({
-        attributes : attributesByRole,
-        order : [["created_at", "DESC"]],
-      })
-
-      console.log("sampleInfo", sampleInfo)
-
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
         where: mainWhereCondition,
-        attributes : attributesByRole,
+        attributes: attributesByRole,
         distinct: true,
         include: [
           {
@@ -1086,10 +1076,10 @@ exports.geLeadsForCreTl = async (req, res) => {
 
     const userId = req.userDecodeId;
     const roleId = req.role_id;
-    const attributesByRole = getAttributesByRole(userId)
+    const attributesByRole = getAttributesByRole(userId);
 
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
-      attributes:attributesByRole,
+      attributes: attributesByRole,
       distinct: true,
       where: {
         [db.Sequelize.Op.and]: [
