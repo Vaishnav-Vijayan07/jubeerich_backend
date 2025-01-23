@@ -33,11 +33,12 @@ exports.getAllUniversities = async (req, res) => {
           attributes: ["country_name"],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     const formattedResponse = universities.map((university) => ({
       ...university.toJSON(),
-      country_name: university.country_name.country_name
+      country_name: university.country_name.country_name,
     }));
     res.status(200).json({
       status: true,
@@ -47,7 +48,7 @@ exports.getAllUniversities = async (req, res) => {
     console.error(`Error retrieving universities: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -71,7 +72,7 @@ exports.getUniversityById = async (req, res) => {
     console.error(`Error retrieving university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -80,7 +81,7 @@ exports.getUniversityById = async (req, res) => {
 exports.getAllUniversityByCountryId = async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const university = await University.findAll({ where: { country_id: id }, attributes: ['id', 'university_name'] });
+    const university = await University.findAll({ where: { country_id: id }, attributes: ["id", "university_name"] });
     if (!university) {
       return res.status(404).json({
         status: false,
@@ -95,7 +96,7 @@ exports.getAllUniversityByCountryId = async (req, res) => {
     console.error(`Error retrieving university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -114,7 +115,18 @@ exports.addUniversity = [
       });
     }
 
-    const { university_name, location, country_id, website_url, image_url, portal_link, username, password, updated_by, description } = req.body;
+    const {
+      university_name,
+      location,
+      country_id,
+      website_url,
+      image_url,
+      portal_link,
+      username,
+      password,
+      updated_by,
+      description,
+    } = req.body;
 
     try {
       if (!(await checkCountryExists(country_id))) {
@@ -134,7 +146,7 @@ exports.addUniversity = [
         username,
         password,
         updated_by,
-        description
+        description,
       });
       res.status(201).json({
         status: true,
@@ -145,7 +157,7 @@ exports.addUniversity = [
       console.error(`Error creating university: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -194,7 +206,7 @@ exports.updateUniversity = [
         password: req.body.password ?? university.password,
         updated_by: req.body.updated_by ?? university.updated_by,
         description: req.body.description ?? university.description,
-        is_active: req.body.is_active ?? university.is_active
+        is_active: req.body.is_active ?? university.is_active,
       });
 
       res.status(200).json({
@@ -206,7 +218,7 @@ exports.updateUniversity = [
       console.error(`Error updating university: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -234,7 +246,7 @@ exports.deleteUniversity = async (req, res) => {
     console.error(`Error deleting university: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

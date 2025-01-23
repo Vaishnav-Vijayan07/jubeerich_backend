@@ -36,7 +36,7 @@ exports.getAllGapReasons = async (req, res) => {
     });
   } catch (error) {
     console.error(`Error retrieving gap reasons: ${error}`);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -99,6 +99,6 @@ exports.saveGapReason = async (req, res) => {
       await transaction.rollback();
     }
     console.error(`Error updating gap reasons: ${error}`);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };

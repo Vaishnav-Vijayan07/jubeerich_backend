@@ -45,7 +45,6 @@ exports.getDashboard = async (req, res) => {
   }
 
   let result;
-  let countries = [];
 
   try {
     switch (role_id) {
@@ -91,6 +90,11 @@ exports.getDashboard = async (req, res) => {
         ? generateCardForApplication(leadCount).cardData
         : processCardData(leadCount).statCards;
 
+    const colorsForGraph =
+      role_id === IdsFromEnv.APPLICATION_MANAGER_ID || role_id === IdsFromEnv.APPLICATION_TEAM_ID
+        ? generateCardForApplication(leadCount).colorsForGraph
+        : null;
+
     let categories, series;
     if (role_id === IdsFromEnv.CRE_ID) {
       ({ barCategories: categories, barSeries: series } = transformOfficeToBarData(roleWiseData, statustyps));
@@ -108,9 +112,10 @@ exports.getDashboard = async (req, res) => {
       statCards: cards,
       latestLeadsCount: latestLeadsCount,
       applicationData: applicationData || null,
+      colorsForGraph: colorsForGraph || null,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };

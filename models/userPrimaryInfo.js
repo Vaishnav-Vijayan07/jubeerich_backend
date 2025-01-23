@@ -15,7 +15,6 @@ module.exports = (sequelize, Sequelize) => {
       email: {
         type: Sequelize.STRING(100),
         allowNull: false,
-        unique: true,
         validate: {
           isEmail: true,
         },
@@ -23,7 +22,6 @@ module.exports = (sequelize, Sequelize) => {
       phone: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        unique: true,
       },
       lead_type_id: {
         type: Sequelize.INTEGER,
@@ -227,6 +225,18 @@ module.exports = (sequelize, Sequelize) => {
     {
       underscored: true,
       tableName: "user_primary_info",
+      indexes: [
+        {
+          unique: true,
+          fields: ["email"],
+          name: "idx_email",
+        },
+        {
+          unique: true,
+          fields: ["phone"],
+          name: "idx_phone",
+        },
+      ],
     }
   );
 

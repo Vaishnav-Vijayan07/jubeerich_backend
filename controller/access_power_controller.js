@@ -3,7 +3,7 @@ const AccessPowers = db.accessPowers;
 
 // Get all access powers
 exports.getAllAccessPowers = (req, res) => {
-  AccessPowers.findAll()
+  AccessPowers.findAll({ order: [["createdAt", "DESC"]] })
     .then((powers) => {
       res.status(200).json({
         status: true,
@@ -12,7 +12,7 @@ exports.getAllAccessPowers = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving access powers: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -31,7 +31,7 @@ exports.getAccessPowerById = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -53,7 +53,7 @@ exports.addAccessPower = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error creating access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -68,11 +68,12 @@ exports.updateAccessPower = (req, res) => {
         return res.status(404).json({ message: "Access power not found" });
       }
 
-      power.update({
-        power_name,
-        updated_by,
-        status,
-      })
+      power
+        .update({
+          power_name,
+          updated_by,
+          status,
+        })
         .then((updatedPower) => {
           res.status(200).json({
             message: "Access power updated successfully",
@@ -81,12 +82,12 @@ exports.updateAccessPower = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error updating access power: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -100,18 +101,19 @@ exports.deleteAccessPower = (req, res) => {
         return res.status(404).json({ message: "Access power not found" });
       }
 
-      power.destroy()
+      power
+        .destroy()
         .then(() => {
           res.status(200).json({ message: "Access power deleted successfully" });
         })
         .catch((error) => {
           console.error(`Error deleting access power: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving access power: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -126,6 +128,6 @@ exports.deleteAccessPower = (req, res) => {
 //     })
 //     .catch((error) => {
 //       console.error(`Error deleting access powers: ${error}`);
-//       res.status(500).json({ message: "Internal server error" });
+//       res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
 //     });
 // };

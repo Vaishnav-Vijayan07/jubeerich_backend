@@ -38,7 +38,7 @@ exports.getStudentFundPlanDetails = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };
 
@@ -101,6 +101,6 @@ exports.saveStudentPlanDetails = async (req, res) => {
       await transaction.rollback();
     }
     console.error(error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "An error occurred while processing your request. Please try again later." });
   }
 };

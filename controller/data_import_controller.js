@@ -97,6 +97,6 @@ async function processAdminUsers(users, res) {
   } catch (error) {
     await transaction.rollback();
     console.error("Error importing admin users:", error);
-    return res.status(500).json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
   }
 }

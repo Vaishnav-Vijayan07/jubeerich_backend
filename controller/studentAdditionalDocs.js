@@ -83,7 +83,7 @@ exports.saveAdditionalDocs = async (req, res, next) => {
         console.error(`Error: ${error.message}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 }
@@ -105,7 +105,7 @@ exports.getAdditionalDocs = async (req, res, next) => {
         console.error(`Error: ${error.message}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 }
@@ -149,7 +149,7 @@ exports.deleteAdditionalDocs = async (req, res, next) => {
         console.error(`Error: ${error.message}`);
         return res.status(500).json({
             status: false,
-            message: "Internal server error",
+            message: "An error occurred while processing your request. Please try again later.",
         });
     }
 }

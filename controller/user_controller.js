@@ -489,7 +489,7 @@ exports.createLead = async (req, res) => {
     // Respond with an error
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -673,7 +673,7 @@ exports.updateLead = async (req, res) => {
     console.error(`Error updating lead: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -707,7 +707,7 @@ exports.deleteLead = async (req, res) => {
     console.error(`Error deleting lead: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -809,7 +809,7 @@ exports.updateUserStatus = async (req, res) => {
     console.error(`Error updating user status: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -842,7 +842,7 @@ exports.getStatusWithAccessPowers = async (req, res) => {
     console.error(`Error updating user status: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -862,6 +862,7 @@ const getLeastAssignedUsers = async (countryId) => {
           ON "admin_users"."id" = "user_counselors"."counselor_id"
         WHERE "admin_users"."role_id" = :roleId 
           AND "admin_users"."country_id" = :countryId
+          AND "admin_users"."status" = true
         GROUP BY "admin_users"."id"
       )
       SELECT "user_id"
@@ -919,6 +920,7 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
           ON "admin_users"."id" = "user_counselors"."counselor_id"
         WHERE "admin_users"."role_id" = :roleId
           AND "admin_users"."franchise_id" = :franchiseId
+          AND "admin_users"."status" = true
         GROUP BY "admin_users"."id"
       )
       SELECT "user_id"
@@ -987,7 +989,7 @@ exports.deleteExams = async (req, res) => {
     console.error(`Error deleting Exam: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1015,7 +1017,7 @@ exports.getRemarkDetails = async (req, res) => {
     console.error(`Error Fetching Remark : ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1075,7 +1077,7 @@ exports.createRemarkDetails = async (req, res) => {
     console.error(`Error Saving Remark : ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1143,7 +1145,7 @@ exports.updateRemarkDetails = async (req, res) => {
     console.error(`Error Saving Remark : ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1201,7 +1203,7 @@ exports.updateFlagStatus = async (req, res) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -1258,7 +1260,7 @@ exports.removeFlagStatus = async (req, res) => {
     await transaction.rollback();
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

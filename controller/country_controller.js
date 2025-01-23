@@ -10,7 +10,9 @@ const countryValidationRules = [check("country_name").not().isEmpty().withMessag
 // Get all countries
 exports.getAllCountries = async (req, res) => {
   try {
-    const countries = await Country.findAll();
+    const countries = await Country.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     res.status(200).json({
       status: true,
       data: countries,
@@ -19,7 +21,7 @@ exports.getAllCountries = async (req, res) => {
     console.error(`Error retrieving countries: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -39,7 +41,7 @@ exports.getAllCountriesByAdmin = async (req, res) => {
     console.error(`Error retrieving countries: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -63,7 +65,7 @@ exports.getCountryById = async (req, res) => {
     console.error(`Error retrieving country: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -99,7 +101,7 @@ exports.addCountry = [
       console.error(`Error creating country: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -155,7 +157,7 @@ exports.updateCountry = [
       console.error(`Error updating country: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -183,7 +185,7 @@ exports.deleteCountry = async (req, res) => {
     console.error(`Error deleting country: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

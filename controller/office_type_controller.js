@@ -11,7 +11,11 @@ const officeTypeValidationRules = [
 
 // Utility function to generate a unique slug
 async function generateUniqueSlug(name, model) {
-  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '').toUpperCase();
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/(^_|_$)/g, "")
+    .toUpperCase();
   let uniqueSlug = baseSlug;
   let counter = 1;
 
@@ -26,7 +30,9 @@ async function generateUniqueSlug(name, model) {
 // Get all office types
 exports.getAllOfficeTypes = async (req, res) => {
   try {
-    const officeTypes = await OfficeType.findAll();
+    const officeTypes = await OfficeType.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     res.status(200).json({
       status: true,
       data: officeTypes,
@@ -35,7 +41,7 @@ exports.getAllOfficeTypes = async (req, res) => {
     console.error(`Error retrieving office types: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -59,7 +65,7 @@ exports.getOfficeTypeById = async (req, res) => {
     console.error(`Error retrieving office type: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -97,7 +103,7 @@ exports.addOfficeType = [
       console.error(`Error creating office type: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -129,7 +135,8 @@ exports.updateOfficeType = [
 
       const updatedData = {
         office_type_name: req.body.office_type_name !== undefined ? req.body.office_type_name : officeType.office_type_name,
-        office_type_description: req.body.office_type_description !== undefined ? req.body.office_type_description : officeType.office_type_description,
+        office_type_description:
+          req.body.office_type_description !== undefined ? req.body.office_type_description : officeType.office_type_description,
         updated_by: req.body.updated_by !== undefined ? req.body.updated_by : officeType.updated_by,
       };
 
@@ -149,7 +156,7 @@ exports.updateOfficeType = [
       console.error(`Error updating office type: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -177,7 +184,7 @@ exports.deleteOfficeType = async (req, res) => {
     console.error(`Error deleting office type: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

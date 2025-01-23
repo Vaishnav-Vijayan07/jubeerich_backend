@@ -317,6 +317,16 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
 
     const latestLeadsCount = await db.userPrimaryInfo.findAll({
       attributes: ["id", "office_type", "stage", "full_name"],
+      where: {
+        [db.Op.or]: [
+          { created_by: userDecodeId },
+          db.Sequelize.literal(`EXISTS (
+                         SELECT 1 FROM "user_counselors" 
+                         WHERE "user_counselors"."user_id" = "user_primary_info"."id"
+                         AND "user_counselors"."counselor_id" = ${userDecodeId}
+                       )`),
+        ],
+      },
       include: [
         {
           model: db.status,
@@ -335,23 +345,13 @@ const getDataForCountryManager = async (filterArgs, role_id, userDecodeId) => {
           as: "office_type_name",
           attributes: ["office_type_name"],
         },
-        {
-          model: db.adminUsers,
-          as: "counselors",
-          through: {
-            model: db.userCounselors,
-            attributes: [],
-          },
-          attributes: ["name", "id"],
-          where: { id: userDecodeId },
-        },
       ],
       limit: 6,
     });
 
     const applicationCounts = await db.sequelize.query(
       `SELECT 
-          COALESCE(SUM(CASE WHEN kyc_status = 'pending' THEN 1 ELSE 0 END), 0) as pending,
+          COALESCE(SUM(CASE WHEN kyc_status = 'pending' OR kyc_status = 'rejected' THEN 1 ELSE 0 END), 0) as pending,
           COALESCE(SUM(CASE WHEN kyc_status = 'approved' THEN 1 ELSE 0 END), 0) as approved
        FROM application_details ad
        INNER JOIN study_preference_details spd 
@@ -470,5 +470,5 @@ module.exports = {
   getDataForCountryManager,
   getDataForApplicationManger,
   getDataForApplicationTeam,
-  getCountryData
+  getCountryData,
 };

@@ -39,6 +39,7 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch upcoming tasks (due after today)
@@ -52,6 +53,7 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch completed tasks
@@ -60,6 +62,7 @@ exports.getAllTasks = async (req, res) => {
         user_id: userId,
         status: "completed", // Completed tasks regardless of the due date
       },
+      order: [["createdAt", "DESC"]],
     });
 
     // Fetch expired tasks (due before current time)
@@ -73,12 +76,14 @@ exports.getAllTasks = async (req, res) => {
           [Op.not]: "completed", // Exclude completed tasks
         },
       },
+      order: [["createdAt", "DESC"]],
     });
 
     const allTasks = await Task.findAll({
       where: {
         user_id: userId,
       },
+      order: [["createdAt", "DESC"]],
     });
 
     res.status(200).json({
@@ -95,7 +100,7 @@ exports.getAllTasks = async (req, res) => {
     console.error(`Error retrieving tasks: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -118,7 +123,7 @@ exports.getTaskById = async (req, res) => {
     console.error(`Error retrieving task: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -158,7 +163,7 @@ exports.getTaskById = async (req, res) => {
 //             console.error(`Error creating task: ${error}`);
 //             res.status(500).json({
 //                 status: false,
-//                 message: "Internal server error",
+//                 message: "An error occurred while processing your request. Please try again later.",
 //             });
 //         }
 //     },
@@ -183,7 +188,7 @@ exports.getTaskById = async (req, res) => {
     console.error(`Error creating task: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }),
@@ -230,7 +235,7 @@ exports.getTaskById = async (req, res) => {
   //             console.error(`Error updating task: ${error}`);
   //             res.status(500).json({
   //                 status: false,
-  //                 message: "Internal server error",
+  //                 message: "An error occurred while processing your request. Please try again later.",
   //             });
   //         }
   //     },
@@ -267,7 +272,7 @@ exports.getTaskById = async (req, res) => {
       console.error(`Error updating task: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   }),
@@ -293,7 +298,7 @@ exports.getTaskById = async (req, res) => {
       console.error(`Error deleting task: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   });

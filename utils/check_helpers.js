@@ -245,7 +245,7 @@ const getCheckDataTypeWise = async (application_id, type) => {
   }
 };
 
-const updateEligibiltyRemark = async (application_id, eligibility_id, remarks, type) => {
+const   updateEligibiltyRemark = async (application_id, eligibility_id, remarks, type) => {
   const existApplication = await db.application.findByPk(application_id);
 
   if (!existApplication) {
@@ -259,38 +259,65 @@ const updateEligibiltyRemark = async (application_id, eligibility_id, remarks, t
       throw new Error("Eligibility remark not found");
     }
 
+    let shouldUpdate = false;
+
     switch (type) {
       case "availability":
-        eligibility_remark.availability_check = remarks;
+        if (eligibility_remark.availability_check !== remarks) {
+          eligibility_remark.availability_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "campus":
-        eligibility_remark.campus_check = remarks;
+        if (eligibility_remark.campus_check !== remarks) {
+          eligibility_remark.campus_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "entry_requirement":
-        eligibility_remark.entry_requirement_check = remarks;
+        if (eligibility_remark.entry_requirement_check !== remarks) {
+          eligibility_remark.entry_requirement_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "quantity":
-        eligibility_remark.quantity_check = remarks;
+        if (eligibility_remark.quantity_check !== remarks) {
+          eligibility_remark.quantity_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "quality":
-        eligibility_remark.quality_check = remarks;
+        if (eligibility_remark.quality_check !== remarks) {
+          eligibility_remark.quality_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "immigration":
-        eligibility_remark.immigration_check = remarks;
+        if (eligibility_remark.immigration_check !== remarks) {
+          eligibility_remark.immigration_check = remarks;
+          shouldUpdate = true;
+        }
         break;
       case "application_fee":
-        eligibility_remark.application_fee_check = remarks;
+        if (eligibility_remark.application_fee_check !== remarks) {
+          eligibility_remark.application_fee_check = remarks;
+          shouldUpdate = true;
+        }
         break;
     }
 
-    await eligibility_remark.save();
+    if (shouldUpdate) {
+      await eligibility_remark.save();
+    }
 
     return {
       success: true,
+      updated: shouldUpdate,
+      message: shouldUpdate ? "Remark updated successfully." : "No changes detected; remark not updated.",
     };
   } catch (error) {
-    console.error("Error while updating availability remark", error);
-    throw new Error("Error while updating availability remark");
+    console.error("Error while updating eligibility remark", error);
+    throw new Error("Error while updating eligibility remark");
   }
 };
 

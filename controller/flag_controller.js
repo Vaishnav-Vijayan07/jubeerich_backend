@@ -21,7 +21,7 @@ exports.getAllFlags = async (req, res) => {
     console.error(`Error retrieving flags: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -45,7 +45,7 @@ exports.getFlagById = async (req, res) => {
     console.error(`Error retrieving flag: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -82,7 +82,7 @@ exports.addFlag = [
       console.error(`Error creating flag: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -129,7 +129,7 @@ exports.updateFlag = [
       console.error(`Error updating flag: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -157,7 +157,7 @@ exports.deleteFlag = async (req, res) => {
     console.error(`Error deleting flag: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

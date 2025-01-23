@@ -41,7 +41,7 @@ exports.createStudyPreferenceDetails = async (req, res) => {
     console.error(`Error creating study preference details: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -115,7 +115,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
     console.error(`Error getting study preference details: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -153,7 +153,7 @@ exports.getStudyPreferenceDetails = async (req, res) => {
 //         console.error(`Error updating study preference details: ${error}`);
 //         res.status(500).json({
 //             status: false,
-//             message: "Internal server error",
+//             message: "An error occurred while processing your request. Please try again later.",
 //         });
 //     }
 // };
@@ -195,7 +195,7 @@ exports.updateStudyPreferenceDetails = async (req, res) => {
     console.error(`Error updating study preference details: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -223,7 +223,7 @@ exports.deleteStudyPreferenceDetails = async (req, res) => {
     console.error(`Error deleting study preference details: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

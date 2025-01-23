@@ -37,7 +37,7 @@ exports.saveVisaDeclineProcess = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }
@@ -74,7 +74,7 @@ exports.saveVisaApproveProcess = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }
@@ -105,7 +105,7 @@ exports.saveTravelHistory = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }
@@ -187,7 +187,7 @@ exports.getAllVisaProcess = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 }
@@ -253,7 +253,7 @@ exports.deleteVisaProcessItem = async (req, res, next) => {
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 } 

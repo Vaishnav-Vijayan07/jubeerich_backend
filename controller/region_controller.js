@@ -54,7 +54,7 @@ exports.getAllRegions = async (req, res) => {
     console.error(`Error retrieving regions: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -78,7 +78,7 @@ exports.getRegionById = async (req, res) => {
     console.error(`Error retrieving region: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -117,7 +117,7 @@ exports.addRegion = [
       console.error(`Error creating region: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -170,7 +170,7 @@ exports.updateRegion = [
       console.error(`Error updating region: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -198,7 +198,7 @@ exports.deleteRegion = async (req, res) => {
     console.error(`Error deleting region: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -229,7 +229,7 @@ exports.getAllRegionalManagers = async (req, res) => {
     console.error(`Error retrieving regional managers: ${err.message}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

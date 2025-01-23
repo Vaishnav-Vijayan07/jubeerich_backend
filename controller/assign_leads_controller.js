@@ -98,7 +98,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo.preferredCountries?.[0]?.id
+              assigned_country: userInfo.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -116,7 +116,7 @@ exports.assignCres = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo.preferredCountries?.[0]?.id
+              assigned_country: userInfo.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -149,7 +149,7 @@ exports.assignCres = async (req, res) => {
     console.error(`Error assigning CRE: ${error}`);
     return res.status(500).json({
       status: false,
-      message: error?.message || "Internal server error",
+      message: error?.message || "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -251,7 +251,7 @@ exports.assignCounselorTL = async (req, res) => {
     console.error(`Error assigning counselor tl: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -340,7 +340,7 @@ exports.assignBranchCounselors = async (req, res) => {
               title: `${userInfo.full_name} - ${countries}`,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo?.preferredCountries?.[0]?.id
+              assigned_country: userInfo?.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -354,7 +354,7 @@ exports.assignBranchCounselors = async (req, res) => {
               description: formattedDesc,
               dueDate: new Date(),
               updatedBy: userId,
-              assigned_country: userInfo?.preferredCountries?.[0]?.id
+              assigned_country: userInfo?.preferredCountries?.[0]?.id,
             },
             { transaction }
           );
@@ -400,7 +400,7 @@ exports.assignBranchCounselors = async (req, res) => {
     console.error(`Error assigning counselor: ${error}`);
     return res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -469,7 +469,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
-          assigned_country: userInfo?.preferredCountries?.[0]?.id
+          assigned_country: userInfo?.preferredCountries?.[0]?.id,
         },
         { transaction }
       );
@@ -478,7 +478,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
           assigned_branch_counselor: currentCounselor,
           updated_by: userId,
           assign_type: "auto_assign",
-          assigned_country: userInfo?.preferredCountries?.[0]?.id
+          assigned_country: userInfo?.preferredCountries?.[0]?.id,
         },
         { where: { id }, transaction }
       );
@@ -500,7 +500,7 @@ exports.autoAssignBranchCounselors = async (req, res) => {
     console.error("Error in autoAssign:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -561,7 +561,7 @@ exports.listBranches = async (req, res) => {
     console.error("Error in finding branches:", err);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -631,11 +631,19 @@ exports.autoAssign = async (req, res) => {
           description: formattedDesc,
           dueDate: dueDate,
           updatedBy: userId,
-          assigned_country: userInfo.preferredCountries?.[0]?.id
+          assigned_country: userInfo.preferredCountries?.[0]?.id,
         },
         { transaction }
       );
-      return UserPrimaryInfo.update({ assigned_cre: currentCre, assign_type: "auto_assign", updated_by: userId, assigned_country: userInfo.preferredCountries?.[0]?.i }, { where: { id }, transaction });
+      return UserPrimaryInfo.update(
+        {
+          assigned_cre: currentCre,
+          assign_type: "auto_assign",
+          updated_by: userId,
+          assigned_country: userInfo.preferredCountries?.[0]?.i,
+        },
+        { where: { id }, transaction }
+      );
     });
 
     // Perform bulk update
@@ -654,7 +662,7 @@ exports.autoAssign = async (req, res) => {
     console.error("Error in autoAssign:", error);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -677,6 +685,7 @@ const getLeastAssignedCre = async () => {
       ],
       where: {
         [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+        status: true,
       },
       order: [
         [
@@ -754,6 +763,7 @@ const getLeastAssignedCounselors = async () => {
       ],
       where: {
         [Sequelize.Op.or]: [{ role_id: process.env.BRANCH_COUNSELLOR_ID }],
+        status: true,
       },
       order: [[Sequelize.literal("assignment_count"), "ASC"]], // Order by assignment count in ascending order
     });

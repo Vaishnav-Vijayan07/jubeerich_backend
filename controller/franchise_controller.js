@@ -54,7 +54,7 @@ exports.getAllFranchises = async (req, res) => {
     console.error(`Error retrieving franchises: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -78,7 +78,7 @@ exports.getFranchiseById = async (req, res) => {
     console.error(`Error retrieving franchise: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -135,7 +135,7 @@ exports.getAllCounsellorsByFranchise = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -189,7 +189,7 @@ exports.getAllCounsellorsTLByFranchise = async (req, res, next) => {
     console.error(`Error in getting admin users: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };
@@ -229,7 +229,7 @@ exports.addFranchise = [
       console.error(`Error creating franchise: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -301,7 +301,7 @@ exports.updateFranchise = [
       console.error(`Error updating franchise: ${error}`);
       res.status(500).json({
         status: false,
-        message: "Internal server error",
+        message: "An error occurred while processing your request. Please try again later.",
       });
     }
   },
@@ -331,7 +331,7 @@ exports.deleteFranchise = async (req, res) => {
     console.error(`Error soft deleting franchise: ${error}`);
     res.status(500).json({
       status: false,
-      message: "Internal server error",
+      message: "An error occurred while processing your request. Please try again later.",
     });
   }
 };

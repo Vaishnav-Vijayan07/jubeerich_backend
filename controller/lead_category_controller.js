@@ -13,7 +13,7 @@ exports.getAllCategories = async (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving categories: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -32,7 +32,7 @@ exports.getCategoryById = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error retrieving category: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -55,7 +55,7 @@ exports.addCategory = (req, res) => {
     })
     .catch((error) => {
       console.error(`Error creating category: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -85,12 +85,12 @@ exports.updateCategory = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error updating category: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving category: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
 
@@ -111,11 +111,11 @@ exports.deleteCategory = (req, res) => {
         })
         .catch((error) => {
           console.error(`Error deleting category: ${error}`);
-          res.status(500).json({ message: "Internal server error" });
+          res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
         });
     })
     .catch((error) => {
       console.error(`Error retrieving category: ${error}`);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "An error occurred while processing your request. Please try again later." });
     });
 };
