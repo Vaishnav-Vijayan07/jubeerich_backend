@@ -3,6 +3,7 @@ const IdsFromEnv = {
   CORPORATE_OFFICE_ID: parseInt(process.env.CORPORATE_OFFICE_ID, 10),
   FRANCHISE_OFFICE_ID: parseInt(process.env.FRANCHISE_OFFICE_ID, 10),
   BRANCH_OFFICE_ID: parseInt(process.env.BRANCH_OFFICE_ID, 10),
+  REGION_OFFICE_ID : parseInt(process.env.REGION_OFFICE_ID, 10),
 
   // Role IDs
   COUNSELLOR_ROLE_ID: parseInt(process.env.COUNSELLOR_ROLE_ID, 10),

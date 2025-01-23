@@ -93,7 +93,7 @@ exports.getDashboard = async (req, res) => {
     const colorsForGraph =
       role_id === IdsFromEnv.APPLICATION_MANAGER_ID || role_id === IdsFromEnv.APPLICATION_TEAM_ID
         ? generateCardForApplication(leadCount).colorsForGraph
-        : null;
+        : processCardData(leadCount).colorsForGraph;;
 
     let categories, series;
     if (role_id === IdsFromEnv.CRE_ID) {

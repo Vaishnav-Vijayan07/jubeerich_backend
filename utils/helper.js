@@ -64,8 +64,20 @@ exports.getEnumValue = async (tableName, field) => {
 exports.getDeleteCondition = (role_id, info, cre_id) => {
   switch (role_id) {
     case IdsFromEnv.IT_TEAM_ID.toString():
-      console.log("IT_TEAM======>", info.created_by === cre_id && info.assigned_cre === null);
-      return info.created_by === cre_id && info.assigned_cre === null;
+      console.log(info.office_type)
+      switch (info.office_type) {
+        case Number(IdsFromEnv.CORPORATE_OFFICE_ID):
+          console.log("IT_TEAM======>", info.created_by === cre_id && info.assigned_cre === null);
+          return info.created_by === cre_id && info.assigned_cre === null;
+        case Number(IdsFromEnv.REGION_OFFICE_ID):
+          console.log("IT_TEAM - REGION======>", info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null);
+          return info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null;
+          case Number(IdsFromEnv.FRANCHISE_OFFICE_ID):
+          console.log("IT_TEAM - FRANCHISE======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
+          return info.created_by === cre_id && info.stage !== stageDatas.kyc;
+        default:
+          return false;
+      }
 
     case IdsFromEnv.CRE_TL_ID:
       console.log("CRE_TL_ID======>", info.created_by === cre_id && info.assigned_cre === null);
@@ -115,6 +127,8 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
+        "branch_id",
+        "assigned_counsellor_tl",
         "city",
         "stage",
         "office_type",
