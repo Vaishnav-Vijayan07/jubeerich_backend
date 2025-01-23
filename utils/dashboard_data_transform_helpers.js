@@ -9,6 +9,8 @@ const processCardData = (counts) => {
     { id: 5, title: "failed Leads", stats: "0", icon: "fe-x-circle", bgColor: "#d9534f" }, // Red for errors
   ];
 
+  const colorsForGraph = defaultCards.map((card) => card.bgColor);
+
   const metaData = {
     spam_leads: {
       id: 2,
@@ -41,7 +43,7 @@ const processCardData = (counts) => {
     }
   });
 
-  return { statCards };
+  return { statCards, colorsForGraph };
 };
 
 const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => {
