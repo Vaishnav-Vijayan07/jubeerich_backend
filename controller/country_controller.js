@@ -140,7 +140,6 @@ exports.updateCountry = [
       // Check if the country_name has changed and update the slug accordingly
       if (req.body.country_name && req.body.country_name !== country.country_name) {
         updatedData.country_name = req.body.country_name;
-        updatedData.slug = await generateUniqueSlug(req.body.country_name);
       } else {
         updatedData.country_name = req.body.country_name ?? country.country_name;
       }
