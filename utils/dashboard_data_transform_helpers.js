@@ -9,8 +9,6 @@ const processCardData = (counts) => {
     { id: 5, title: "failed Leads", stats: "0", icon: "fe-x-circle", bgColor: "#d9534f" }, // Red for errors
   ];
 
-  const colorsForGraph = defaultCards.map((card) => card.bgColor);
-
   const metaData = {
     spam_leads: {
       id: 2,
@@ -25,7 +23,7 @@ const processCardData = (counts) => {
     prospective_leads: {
       id: 4,
       icon: "fe-check-circle",
-      bgColor: "#5cb85c",
+      bgColor: "#5bc0de",
     },
     failed_leads: {
       id: 5,
@@ -33,6 +31,9 @@ const processCardData = (counts) => {
       bgColor: "#d9534f",
     },
   };
+  const colorsForGraph = Object.values(metaData).map((item)=>{
+    return item.bgColor
+  });
 
   let statCards = [...defaultCards];
 
@@ -42,6 +43,9 @@ const processCardData = (counts) => {
       statCards[card.id - 1].stats = count.count;
     }
   });
+
+  console.log(statCards);
+  console.log(colorsForGraph);
 
   return { statCards, colorsForGraph };
 };
@@ -53,8 +57,20 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
     return nameKey ? office[nameKey] : null;
   });
 
-  // Create a map to track series data for each status type
-  const seriesMap = new Map(statustyps.map((type) => [type.type_name, Array(categories.length).fill(0)]));
+  const seriesOrder = {
+    spam_leads: 1,
+    closed_leads: 2,
+    prospective_leads: 3,
+    failed_leads: 4,
+  };
+
+  // Sort the `statustyps` array based on `seriesOrder`
+  const sortedStatusTypes = statustyps.sort((a, b) => {
+    return seriesOrder[a.type_name] - seriesOrder[b.type_name];
+  });
+
+  // Create the `seriesMap` using the sorted array
+  const seriesMap = new Map(sortedStatusTypes.map((type) => [type.type_name, Array(categories.length).fill(0)]));
 
   // Populate the series data based on roleWiseData
   roleWiseData.forEach((item) => {
@@ -74,6 +90,8 @@ const transformOfficeToStackData = (roleWiseData, graphCategory, statustyps) => 
     name: name.replace(/_/g, " ").replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
     data,
   }));
+
+  console.log(series);
 
   return { stackCategories: categories, stackSeries: roleWiseData.length > 0 ? series : [] };
 };
