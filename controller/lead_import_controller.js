@@ -1055,3 +1055,243 @@ exports.bulkUploadMultiCore = async (req, res) => {
     }
   }
 };
+
+exports.bulkUploadMultiValidation = async (req, res) => {
+  let piscina = null;
+  if (!piscina) {
+    piscina = new Piscina({
+      filename: path.resolve(__dirname, "../workers/worker.js"),
+      maxThreads: require("os").cpus().length,
+    });
+  }
+
+  try {
+    const userId = req.userDecodeId;
+    const role = req.role_name;
+    const workbook = new Excel.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+
+    const rows = [];
+    const errors = [];
+    const batchSize = 500;
+    let batchPromises = [];
+
+    // Load mappings
+    const sources = await Source.findAll({ attributes: ["id", "slug"] });
+    const channels = await Channel.findAll({ attributes: ["id", "slug"] });
+    const officeTypes = await OfficeType.findAll({ attributes: ["id", "slug"] });
+    const countries = await Country.findAll({ attributes: ["id", "country_code"] });
+    const regions = await Region.findAll({ attributes: ["id", "slug", "regional_manager_id"] });
+    const franchises = await Franchise.findAll({ attributes: ["id", "slug"] });
+
+    const creTl = await AdminUsers.findOne({
+      where: { role_id: process.env.CRE_TL_ID },
+      include: [
+        {
+          model: db.accessRoles,
+          attributes: ["role_name"],
+        },
+      ],
+    });
+
+    // Create lookup maps
+    const createLookupMap = (array, keyField, valueField) =>
+      array.reduce((acc, item) => {
+        acc[item[keyField]] = item[valueField];
+        return acc;
+      }, {});
+
+    const sourceSlugToId = createLookupMap(sources, "slug", "id");
+    const channelSlugToId = createLookupMap(channels, "slug", "id");
+    const officeTypeSlugToId = createLookupMap(officeTypes, "slug", "id");
+    const countryCodeToId = createLookupMap(countries, "country_code", "id");
+    const regionSlugToId = createLookupMap(regions, "slug", "id");
+    const regionSlugToManagerId = createLookupMap(regions, "slug", "regional_manager_id");
+    const franchiseSlugToId = createLookupMap(franchises, "slug", "id");
+
+    // Helper function to safely get cell value
+    const getCellValue = (cell) => {
+      if (!cell) return null;
+
+      // Handle different cell types
+      if (cell.text) {
+        return cell.text.trim();
+      }
+      if (cell.value) {
+        return typeof cell.value === "string" ? cell.value.trim() : cell.value;
+      }
+      if (cell.result) {
+        return typeof cell.result === "string" ? cell.result.trim() : cell.result;
+      }
+
+      return null;
+    };
+
+    // Check for existing records
+    const existingRecords = await UserPrimaryInfo.findAll({
+      attributes: ["email", "phone"],
+    });
+
+    const existingEmails = new Set(existingRecords.map((record) => record.email?.toLowerCase().trim()).filter(Boolean));
+
+    const existingPhones = new Set(existingRecords.map((record) => record.phone?.trim()).filter(Boolean));
+
+    // Load rows into memory with improved cell reading
+    workbook.eachSheet((worksheet) => {
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) {
+          // Skip header row
+          const rowData = {
+            lead_received_date: getCellValue(row.getCell(2)),
+            source_slug: getCellValue(row.getCell(3)),
+            channel_slug: getCellValue(row.getCell(4)),
+            full_name: getCellValue(row.getCell(5)),
+            email: getCellValue(row.getCell(6)),
+            phone: getCellValue(row.getCell(7)),
+            city: getCellValue(row.getCell(8)),
+            office_type_slug: getCellValue(row.getCell(9)),
+            region_or_franchise_slug: getCellValue(row.getCell(10)),
+            preferred_country_code: getCellValue(row.getCell(11)),
+            ielts: getCellValue(row.getCell(12)),
+            remarks: getCellValue(row.getCell(13)),
+          };
+
+          // Only push rows that have at least email or phone
+          if (rowData.email || rowData.phone) {
+            rows.push(rowData);
+          }
+        }
+      });
+    });
+
+    // Process rows in batches
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = {
+        rows: rows
+          .slice(i, i + batchSize)
+          .map((row, index) => {
+            const rowNumber = i + index + 2; // Account for header row
+            const officeTypeSlug = row.office_type_slug;
+
+            const isCorporateOffice = officeTypeSlug === "CORPORATE_OFFICE";
+            const isRegion = officeTypeSlug === "REGION";
+            const isFranchise = officeTypeSlug === "FRANCHISE";
+
+            // Normalize email and phone
+            const normalizedEmail = row.email?.toLowerCase().trim();
+            const normalizedPhone = row.phone?.trim();
+
+            // Check for duplicates
+            if (
+              (normalizedEmail && existingEmails.has(normalizedEmail)) ||
+              (normalizedPhone && existingPhones.has(normalizedPhone))
+            ) {
+              errors.push({
+                rowNumber,
+                rowData: row,
+                errors: ["Email or phone already exists in Database"],
+              });
+              return null;
+            }
+
+            return {
+              rowNumber,
+              rowData: {
+                lead_received_date: row.lead_received_date,
+                source_id: sourceSlugToId[row.source_slug],
+                channel_id: channelSlugToId[row.channel_slug],
+                full_name: row.full_name,
+                email: normalizedEmail,
+                phone: normalizedPhone,
+                city: row.city,
+                office_type: officeTypeSlugToId[officeTypeSlug],
+                preferred_country: countryCodeToId[row.preferred_country_code],
+                ielts: row.ielts,
+                remarks: row.remarks,
+                assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+                created_by: userId,
+                region_id: isRegion ? regionSlugToId[row.region_or_franchise_slug] : null,
+                franchise_id: isFranchise ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+                assigned_regional_manager: isRegion ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+                stage: isCorporateOffice
+                  ? stageDatas.cre
+                  : isRegion
+                  ? stageDatas.regional_manager
+                  : isFranchise
+                  ? stageDatas.counsellor
+                  : stageDatas.unknown,
+              },
+            };
+          })
+          .filter(Boolean),
+        meta: { startRow: i + 2 },
+        userDecodeId: userId,
+        role: role,
+        creTLrole: creTl?.access_role?.role_name,
+      };
+
+      batchPromises.push(piscina.run(batch));
+    }
+
+    const results = await Promise.all(batchPromises);
+    results.forEach((result) => {
+      if (result.errors) {
+        errors.push(...result.errors);
+      }
+    });
+
+    if (errors.length > 0) {
+      const errorWorkbook = new Excel.Workbook();
+      const errorSheet = errorWorkbook.addWorksheet("Errors");
+
+      const originalSheet = workbook.getWorksheet(1);
+      const headerRow = originalSheet.getRow(1).values;
+      headerRow.push("Errors");
+      errorSheet.addRow(headerRow);
+
+      errors.forEach(({ rowNumber, rowData, errors }) => {
+        const errorDetails = Array.isArray(errors) ? errors.join("; ") : errors;
+        const worksheet = workbook.getWorksheet(1);
+        const existRow = worksheet.getRow(rowNumber);
+
+        const rowWithErrors = [
+          rowNumber,
+          ...Array(12)
+            .fill(0)
+            .map((_, i) => getCellValue(existRow.getCell(i + 2))),
+          errorDetails,
+        ];
+
+        errorSheet.addRow(rowWithErrors);
+      });
+
+      const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
+      const errorFilePath = path.join("uploads/rejected_files", errorFileName);
+      await errorWorkbook.xlsx.writeFile(errorFilePath);
+
+      return res.status(201).json({
+        status: false,
+        message: `${rows.length - errors.length} out of ${
+          rows.length
+        } rows processed. Please check the downloaded sheet for errors.`,
+        invalidFileLink: errorFilePath,
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "File uploaded successfully",
+    });
+  } catch (error) {
+    console.error("Error processing bulk upload:", error);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  } finally {
+    if (piscina) {
+      await piscina.close();
+      console.log("piscina closed ==========>");
+    }
+  }
+};
