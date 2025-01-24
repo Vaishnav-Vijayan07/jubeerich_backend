@@ -70,9 +70,99 @@ exports.getCountryById = async (req, res) => {
   }
 };
 
-// Add a new country
+// // Add a new country
+// exports.addCountry = [
+//   // Validation middleware
+//   ...countryValidationRules,
+//   async (req, res) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "Validation failed",
+//         errors: errors.array(),
+//       });
+//     }
+
+//     const { country_name, isd, country_code } = req.body;
+
+//     try {
+//       const newCountry = await Country.create({
+//         country_name,
+//         isd,
+//         country_code,
+//       });
+//       res.status(201).json({
+//         status: true,
+//         message: "Country created successfully",
+//         data: newCountry,
+//       });
+//     } catch (error) {
+//       console.error(`Error creating country: ${error}`);
+//       res.status(500).json({
+//         status: false,
+//         message: "An error occurred while processing your request. Please try again later.",
+//       });
+//     }
+//   },
+// ];
+
+// // Update a country
+// exports.updateCountry = [
+//   // Validation middleware
+//   ...countryValidationRules,
+//   async (req, res) => {
+//     const id = parseInt(req.params.id);
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "Validation failed",
+//         errors: errors.array(),
+//       });
+//     }
+
+//     try {
+//       const country = await Country.findByPk(id);
+//       if (!country) {
+//         return res.status(404).json({
+//           status: false,
+//           message: "Country not found",
+//         });
+//       }
+
+//       // Prepare updated data
+//       const updatedData = {
+//         isd: req.body.isd ?? country.isd,
+//         country_code: req.body.country_code ?? country.country_code,
+//       };
+
+//       // Check if the country_name has changed and update the slug accordingly
+//       if (req.body.country_name && req.body.country_name !== country.country_name) {
+//         updatedData.country_name = req.body.country_name;
+//       } else {
+//         updatedData.country_name = req.body.country_name ?? country.country_name;
+//       }
+
+//       // Update the country with the prepared data
+//       const updatedCountry = await country.update(updatedData);
+
+//       res.status(200).json({
+//         status: true,
+//         message: "Country updated successfully",
+//         data: updatedCountry,
+//       });
+//     } catch (error) {
+//       console.error(`Error updating country: ${error}`);
+//       res.status(500).json({
+//         status: false,
+//         message: "An error occurred while processing your request. Please try again later.",
+//       });
+//     }
+//   },
+// ];
+
 exports.addCountry = [
-  // Validation middleware
   ...countryValidationRules,
   async (req, res) => {
     const errors = validationResult(req);
@@ -87,11 +177,52 @@ exports.addCountry = [
     const { country_name, isd, country_code } = req.body;
 
     try {
-      const newCountry = await Country.create({
-        country_name,
-        isd,
-        country_code,
+      // Check for existing country name
+      const existingCountryName = await Country.findOne({
+        where: { country_name: country_name.trim() },
       });
+
+      if (existingCountryName) {
+        return res.status(409).json({
+          status: false,
+          message: "A country with this name already exists",
+        });
+      }
+
+      // Check for existing country code
+      if (country_code) {
+        const existingCountryCode = await Country.findOne({
+          where: { country_code: country_code.trim() },
+        });
+
+        if (existingCountryCode) {
+          return res.status(409).json({
+            status: false,
+            message: "A country with this country code already exists",
+          });
+        }
+      }
+
+      // Check for existing ISD
+      if (isd) {
+        const existingISD = await Country.findOne({
+          where: { isd: isd.trim() },
+        });
+
+        if (existingISD) {
+          return res.status(409).json({
+            status: false,
+            message: "A country with this ISD already exists",
+          });
+        }
+      }
+
+      const newCountry = await Country.create({
+        country_name: country_name.trim(),
+        isd: isd ? isd.trim() : null,
+        country_code: country_code ? country_code.trim() : null,
+      });
+
       res.status(201).json({
         status: true,
         message: "Country created successfully",
@@ -107,9 +238,7 @@ exports.addCountry = [
   },
 ];
 
-// Update a country
 exports.updateCountry = [
-  // Validation middleware
   ...countryValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
@@ -131,20 +260,56 @@ exports.updateCountry = [
         });
       }
 
-      // Prepare updated data
-      const updatedData = {
-        isd: req.body.isd ?? country.isd,
-        country_code: req.body.country_code ?? country.country_code,
-      };
+      // Check for existing country name, excluding current record
+      if (req.body.country_name && req.body.country_name.trim() !== country.country_name) {
+        const existingCountryName = await Country.findOne({
+          where: { country_name: req.body.country_name.trim() },
+        });
 
-      // Check if the country_name has changed and update the slug accordingly
-      if (req.body.country_name && req.body.country_name !== country.country_name) {
-        updatedData.country_name = req.body.country_name;
-      } else {
-        updatedData.country_name = req.body.country_name ?? country.country_name;
+        if (existingCountryName) {
+          return res.status(409).json({
+            status: false,
+            message: "A country with this name already exists",
+          });
+        }
       }
 
-      // Update the country with the prepared data
+      // Check for existing country code, excluding current record
+      if (req.body.country_code && req.body.country_code.trim() !== country.country_code) {
+        const existingCountryCode = await Country.findOne({
+          where: { country_code: req.body.country_code.trim() },
+        });
+
+        if (existingCountryCode) {
+          return res.status(409).json({
+            status: false,
+            message: "A country with this country code already exists",
+          });
+        }
+      }
+
+      // Check for existing ISD, excluding current record
+      if (req.body.isd && req.body.isd.trim() !== country.isd) {
+        const existingISD = await Country.findOne({
+          where: { isd: req.body.isd.trim() },
+        });
+
+        if (existingISD) {
+          return res.status(409).json({
+            status: false,
+            message: "A country with this ISD already exists",
+          });
+        }
+      }
+
+      // Prepare updated data
+      const updatedData = {
+        isd: req.body.isd ? req.body.isd.trim() : country.isd,
+        country_code: req.body.country_code ? req.body.country_code.trim() : country.country_code,
+        country_name: req.body.country_name ? req.body.country_name.trim() : country.country_name,
+      };
+
+      // Update the country
       const updatedCountry = await country.update(updatedData);
 
       res.status(200).json({
