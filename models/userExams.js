@@ -30,23 +30,28 @@ module.exports = (sequelize, Sequelize) => {
           allowNull: false,
         },
         listening_score: {
-          type: Sequelize.DECIMAL(5, 2),
+          // type: Sequelize.DECIMAL(5, 2),
+          type: Sequelize.STRING,
           allowNull: false,
         },
         speaking_score: {
-          type: Sequelize.DECIMAL(5, 2),
+          // type: Sequelize.DECIMAL(5, 2),
+          type: Sequelize.STRING,
           allowNull: false
         },
         reading_score: {
-          type: Sequelize.DECIMAL(5, 2),
+          // type: Sequelize.DECIMAL(5, 2),
+          type: Sequelize.STRING,
           allowNull: false,
         },
         writing_score: {
-          type: Sequelize.DECIMAL(5, 2),
+          // type: Sequelize.DECIMAL(5, 2),
+          type: Sequelize.STRING,
           allowNull: false
         },
         overall_score: {
-          type: Sequelize.DECIMAL(5, 2),
+          // type: Sequelize.DECIMAL(5, 2),
+          type: Sequelize.STRING,
           allowNull: false,
         },
         updated_by: {
