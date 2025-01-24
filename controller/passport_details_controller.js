@@ -32,15 +32,8 @@ exports.addPassportDetails = async (req, res) => {
     });
   }
 
-  const {
-    user_id,
-    original_passports_in_hand,
-    missing_passport_reason,
-    visa_immigration_history,
-    name_change,
-    number_of_passports,
-    passports,
-  } = req.body;
+  const { user_id, original_passports_in_hand, missing_passport_reason, visa_immigration_history, name_change, number_of_passports, passports } =
+    req.body;
 
   try {
     // Check if passport details already exist for the given user_id
@@ -55,6 +48,14 @@ exports.addPassportDetails = async (req, res) => {
       });
     }
 
+    const passportsModified = passports.map((passport, index) => {
+      const { errors, ...rest } = passport; // Destructure to exclude `errors`
+      return {
+        ...rest,
+        passport_id: index + 1, // Add passport_id
+      };
+    });
+
     const newPassportDetails = await PassportDetails.create({
       user_id,
       original_passports_in_hand,
@@ -62,7 +63,7 @@ exports.addPassportDetails = async (req, res) => {
       visa_immigration_history,
       name_change,
       number_of_passports,
-      passports,
+      passports : passportsModified,
     });
 
     res.status(201).json({
@@ -94,27 +95,18 @@ exports.updatePassportDetails = async (req, res) => {
       where: { user_id: id },
     });
     if (!passportDetails) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Passport details not found" });
+      return res.status(404).json({ status: false, message: "Passport details not found" });
     }
 
     // Update only the fields that are provided in the request body
     const updatedPassportDetails = await passportDetails.update({
       user_id: req.body.user_id ?? passportDetails.user_id,
-      original_passports_in_hand:
-        req.body.original_passports_in_hand ??
-        passportDetails.original_passports_in_hand,
-      missing_passport_reason:
-        req.body.missing_passport_reason ??
-        passportDetails.missing_passport_reason,
-      visa_immigration_history:
-        req.body.visa_immigration_history ??
-        passportDetails.visa_immigration_history,
+      original_passports_in_hand: req.body.original_passports_in_hand ?? passportDetails.original_passports_in_hand,
+      missing_passport_reason: req.body.missing_passport_reason ?? passportDetails.missing_passport_reason,
+      visa_immigration_history: req.body.visa_immigration_history ?? passportDetails.visa_immigration_history,
       name_change: req.body.name_change ?? passportDetails.name_change,
       passports: req.body.passports ?? passportDetails.passports,
-      number_of_passports:
-        req.body.number_of_passports ?? passportDetails.number_of_passports,
+      number_of_passports: req.body.number_of_passports ?? passportDetails.number_of_passports,
     });
 
     res.status(200).json({
@@ -135,15 +127,11 @@ exports.deletePassportDetails = async (req, res) => {
   try {
     const passportDetails = await PassportDetails.findByPk(id);
     if (!passportDetails) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Passport details not found" });
+      return res.status(404).json({ status: false, message: "Passport details not found" });
     }
 
     await passportDetails.destroy();
-    res
-      .status(200)
-      .json({ status: true, message: "Passport details deleted successfully" });
+    res.status(200).json({ status: true, message: "Passport details deleted successfully" });
   } catch (error) {
     console.error(`Error deleting passport details: ${error}`);
     res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
