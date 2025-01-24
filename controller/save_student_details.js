@@ -513,7 +513,10 @@ exports.removePassportItem = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const filteredPassports = passports.filter((item, index) => index !== Number(itemId));
+    console.log(passports);
+    console.log(itemId);
+    const filteredPassports = passports.filter((item, index) => index !== Number(itemId - 1));
+    console.log(filteredPassports);
 
     passport.passports = filteredPassports;
     passport.number_of_passports = filteredPassports.length;
