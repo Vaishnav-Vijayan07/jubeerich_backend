@@ -316,12 +316,13 @@ exports.saveStudentExamInfo = async (req, res) => {
     const itemData = {
       id: record.id,
       exam_type: record.exam_type,
-      listening_score: Number(record.listening_score),
-      speaking_score: Number(record.speaking_score),
-      reading_score: Number(record.reading_score),
-      writing_score: Number(record.writing_score),
-      overall_score: Number(record.overall_score),
+      listening_score: record.listening_score,
+      speaking_score: record.speaking_score,
+      reading_score: record.reading_score,
+      writing_score: record.writing_score,
+      overall_score: record.overall_score,
       exam_date: record.exam_date,
+      exam_remarks: record.exam_remarks,
       student_id: Number(user_id),
     };
 
@@ -512,7 +513,10 @@ exports.removePassportItem = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const filteredPassports = passports.filter((item, index) => index !== Number(itemId));
+    console.log(passports);
+    console.log(itemId);
+    const filteredPassports = passports.filter((item, index) => index !== Number(itemId - 1));
+    console.log(filteredPassports);
 
     passport.passports = filteredPassports;
     passport.number_of_passports = filteredPassports.length;

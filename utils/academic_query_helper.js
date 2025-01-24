@@ -261,7 +261,7 @@ const addOrUpdateExamData = async (examRecords, transaction) => {
   } catch (error) {
     console.log(error);
 
-    throw new Error(`Gap Reason Update Failed: ${error.message}`);
+    throw new Error(`Exam Details Update Failed: ${error.message}`);
   }
 };
 
