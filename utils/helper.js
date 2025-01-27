@@ -64,7 +64,7 @@ exports.getEnumValue = async (tableName, field) => {
 exports.getDeleteCondition = (role_id, info, cre_id) => {
   switch (role_id) {
     case IdsFromEnv.IT_TEAM_ID.toString():
-      console.log(info.office_type)
+      console.log(info.office_type);
       switch (info.office_type) {
         case Number(IdsFromEnv.CORPORATE_OFFICE_ID):
           console.log("IT_TEAM======>", info.created_by === cre_id && info.assigned_cre === null);
@@ -72,7 +72,7 @@ exports.getDeleteCondition = (role_id, info, cre_id) => {
         case Number(IdsFromEnv.REGION_OFFICE_ID):
           console.log("IT_TEAM - REGION======>", info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null);
           return info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null;
-          case Number(IdsFromEnv.FRANCHISE_OFFICE_ID):
+        case Number(IdsFromEnv.FRANCHISE_OFFICE_ID):
           console.log("IT_TEAM - FRANCHISE======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
           return info.created_by === cre_id && info.stage !== stageDatas.kyc;
         default:
@@ -129,7 +129,7 @@ exports.getAttributesByRole = (role_id) => {
         "source_id",
         "branch_id",
         "assigned_counsellor_tl",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -147,7 +147,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -165,7 +165,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -182,7 +182,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -199,7 +199,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -217,7 +217,7 @@ exports.getAttributesByRole = (role_id) => {
         "source_id",
         "branch_id",
         "assigned_counsellor_tl",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -234,7 +234,7 @@ exports.getAttributesByRole = (role_id) => {
         "phone",
         "source_id",
         "counsiler_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -251,7 +251,7 @@ exports.getAttributesByRole = (role_id) => {
         "phone",
         "source_id",
         "counsiler_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -269,7 +269,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
@@ -286,7 +286,7 @@ exports.getAttributesByRole = (role_id) => {
         "email",
         "phone",
         "source_id",
-        "city",
+        [db.Sequelize.literal("COALESCE(NULLIF(city, ''), 'N/A')"), "city"],
         "stage",
         "office_type",
         "lead_received_date",
