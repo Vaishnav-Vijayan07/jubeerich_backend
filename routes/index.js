@@ -282,7 +282,10 @@ router.put("/remove_flag_status/:id", [authMiddleware.checkUserAuth], UserContro
 
 // Excel Import route
 // router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
-router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
+// router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
+router.post("/validate_excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiValidation);
+router.post("/approve_leads", [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
+router.get("/get_slug_options", [authMiddleware.checkUserAuth], LeadImportController.getApprovalOptions);
 
 // Additional routes
 router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
