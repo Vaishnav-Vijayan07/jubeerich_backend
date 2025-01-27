@@ -1056,6 +1056,8 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
 //   }
 // };
 
+
+// Latest Bulp Upload Code Section
 exports.bulkUploadMultiValidation = async (req, res) => {
   let piscina = null;
   if (!piscina) {
@@ -1340,6 +1342,159 @@ exports.bulkUploadMultiValidation = async (req, res) => {
   }
 };
 
+// Constants
+const BATCH_SIZE = 500;
+const STAGE_MAPPING = {
+  CORPORATE_OFFICE: 'cre',
+  REGION: 'regional_manager',
+  FRANCHISE: 'counsellor',
+  DEFAULT: 'unknown'
+};
+
+// exports.bulkUploadMultiValidation = async (req, res) => {
+//   let piscina = null;
+
+//   try {
+//     // Initialize worker pool
+//     piscina = new Piscina({
+//       filename: path.resolve(__dirname, '../workers/validateWorker.js'),
+//       maxThreads: require('os').cpus().length
+//     });
+
+//     // Load Excel file
+//     const workbook = new Excel.Workbook();
+//     await workbook.xlsx.load(req.file.buffer);
+
+//     // Fetch all necessary data in parallel
+//     const [
+//       sources, channels, officeTypes, countries,
+//       regions, franchises, creTl, existingRecords
+//     ] = await Promise.all([
+//       db.leadSource.findAll({ attributes: ['id', 'slug'] }),
+//       db.leadChannel.findAll({ attributes: ['id', 'slug'] }),
+//       db.officeType.findAll({ attributes: ['id', 'slug'] }),
+//       db.country.findAll({ attributes: ['id', 'country_code'] }),
+//       db.region.findAll({ attributes: ['id', 'slug', 'regional_manager_id'] }),
+//       db.franchise.findAll({ attributes: ['id', 'slug'] }),
+//       db.adminUsers.findOne({
+//         where: { role_id: process.env.CRE_TL_ID },
+//         include: [{ model: db.accessRoles, attributes: ['role_name'] }]
+//       }),
+//       db.userPrimaryInfo.findAll({ attributes: ['email', 'phone'] })
+//     ]);
+
+//     // Create lookup maps
+//     const lookupMaps = {
+//       sourceSlugToId: createLookupMap(sources, 'slug', 'id'),
+//       channelSlugToId: createLookupMap(channels, 'slug', 'id'),
+//       officeTypeSlugToId: createLookupMap(officeTypes, 'slug', 'id'),
+//       countryCodeToId: createLookupMap(countries, 'country_code', 'id'),
+//       regionSlugToId: createLookupMap(regions, 'slug', 'id'),
+//       regionSlugToManagerId: createLookupMap(regions, 'slug', 'regional_manager_id'),
+//       franchiseSlugToId: createLookupMap(franchises, 'slug', 'id')
+//     };
+
+//     // Create sets for duplicate checking
+//     const existingEmails = new Set(
+//       existingRecords
+//         .map(record => record.email?.toLowerCase().trim())
+//         .filter(Boolean)
+//     );
+//     const existingPhones = new Set(
+//       existingRecords
+//         .map(record => record.phone?.trim())
+//         .filter(Boolean)
+//     );
+
+//     // Process rows
+//     const worksheet = workbook.getWorksheet(1);
+//     const rows = [];
+//     worksheet.eachRow((row, rowNumber) => {
+//       if (rowNumber === 1) return; // Skip header
+
+//       const rowData = getRowData(row);
+//       if (rowData.email || rowData.phone) {
+//         rows.push(rowData);
+//       }
+//     });
+
+//     // Process in batches
+//     const batchPromises = [];
+//     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+//       const batchRows = rows.slice(i, i + BATCH_SIZE)
+//         .map((row, index) => {
+//           const rowNumber = i + index + 2;
+//           const normalizedEmail = row.email?.toLowerCase().trim();
+//           const normalizedPhone = row.phone?.trim();
+
+//           // Check for duplicates
+//           if ((normalizedEmail && existingEmails.has(normalizedEmail)) ||
+//               (normalizedPhone && existingPhones.has(normalizedPhone))) {
+//             return null;
+//           }
+
+//           return formatRowForValidation(
+//             { ...row, email: normalizedEmail, phone: normalizedPhone },
+//             rowNumber,
+//             lookupMaps,
+//             req.userDecodeId,
+//             creTl
+//           );
+//         })
+//         .filter(Boolean);
+
+//       batchPromises.push(piscina.run({ 
+//         rows: batchRows, 
+//         meta: { startRow: i + 2 } 
+//       }));
+//     }
+
+//     const results = await Promise.all(batchPromises);
+//     const { validData, errorData } = results.reduce((acc, result) => {
+//       if (result.errors) acc.errorData.push(...result.errors);
+//       if (result.validData) acc.validData.push(...result.validData);
+//       return acc;
+//     }, { validData: [], errorData: [] });
+
+//     // Generate error file if needed
+//     let errorFilePath;
+//     if (errorData.length > 0) {
+//       errorFilePath = await generateErrorFile(errorData, workbook);
+//     }
+
+//     // Format response data
+//     const formattedData = [
+//       ...formatValidData(validData, workbook),
+//       ...formatErrorData(errorData, workbook)
+//     ];
+
+//     return res.status(200).json({
+//       status: true,
+//       message: 'Please check and approve the results',
+//       data: formattedData,
+//       sources,
+//       channels,
+//       officeTypes,
+//       regions,
+//       franchises,
+//       countries
+//     });
+
+//   } catch (error) {
+//     console.error('Error processing bulk upload:', error);
+//     return res.status(500).json({
+//       status: false,
+//       message: 'An error occurred while processing your request. Please try again later.'
+//     });
+
+//   } finally {
+//     if (piscina) {
+//       await piscina.close();
+//       console.log('Piscina Instance Destroyed');
+//     }
+//   }
+// };
+
 
 exports.bulkUploadMultiCore = async (req, res) => {
   let piscina = null;
@@ -1396,19 +1551,11 @@ exports.bulkUploadMultiCore = async (req, res) => {
     const regionSlugToManagerId = createLookupMap(regions, "slug", "regional_manager_id");
     const franchiseSlugToId = createLookupMap(franchises, "slug", "id");
 
-    // Helper function to safely get cell value
-    const getCellValue = (cell) => {
-      if (!cell) return null;
+    const formatValue = (value) => {
+      if (!value) return null;
 
-      // Handle different cell types
-      if (cell.text) {
-        return cell.text.trim();
-      }
-      if (cell.value) {
-        return typeof cell.value === "string" ? cell.value.trim() : cell.value;
-      }
-      if (cell.result) {
-        return typeof cell.result === "string" ? cell.result.trim() : cell.result;
+      if (value) {
+        return typeof value == "string" ? value.trim() : value;
       }
 
       return null;
@@ -1425,31 +1572,15 @@ exports.bulkUploadMultiCore = async (req, res) => {
 
     // Load rows into memory with improved cell reading
       lead_data.forEach((row, rowNumber) => {
-        // if (rowNumber > 1) {
-          // Skip header row
           const rowData = {
-          //   lead_received_date: getCellValue(row.getCell(2)),
-          //   source_slug: getCellValue(row.getCell(3)),
-          //   channel_slug: getCellValue(row.getCell(4)),
-          //   full_name: getCellValue(row.getCell(5)),
-          //   email: getCellValue(row.getCell(6)),
-          //   phone: getCellValue(row.getCell(7)),
-          //   city: getCellValue(row.getCell(8)),
-          //   office_type_slug: getCellValue(row.getCell(9)),
-          //   region_or_franchise_slug: getCellValue(row.getCell(10)),
-          //   preferred_country_code: getCellValue(row.getCell(11)),
-          //   ielts: getCellValue(row.getCell(12)),
-          //   remarks: getCellValue(row.getCell(13)),
-          // };
-
           lead_received_date: row?.lead_received_date,
-          source_slug: row?.source,
-          channel_slug: row?.channel,
+          source_slug: formatValue(row?.source),
+          channel_slug: formatValue(row?.channel),
           full_name: row?.full_name,
-          email: row?.email,
-          phone: row?.phone,
+          email: formatValue(row?.email),
+          phone: formatValue(row?.phone),
           city: row?.city,
-          office_type_slug: row?.office_type,
+          office_type_slug: formatValue(row?.office_type),
           region_or_franchise_slug: row?.region_or_franchise,
           preferred_country_code: row?.preferred_country_code,
           ielts: row?.ielts,
@@ -1460,7 +1591,6 @@ exports.bulkUploadMultiCore = async (req, res) => {
           if (rowData.email || rowData.phone) {
             rows.push(rowData);
           }
-        // }
     });
 
     // Process rows in batches
@@ -1539,7 +1669,7 @@ exports.bulkUploadMultiCore = async (req, res) => {
       message: "Leads approved successfully",
     });
   } catch (error) {
-    console.error("Error processing lead approve:", error);
+    console.error("Error processing lead approval:", error);
     return res.status(500).json({
       status: false,
       message: "An error occurred while processing your request. Please try again later.",
@@ -1551,6 +1681,147 @@ exports.bulkUploadMultiCore = async (req, res) => {
     }
   }
 };
+
+
+
+// exports.bulkUploadMultiCore = async (req, res) => {
+//   let piscina = null;
+
+//   try {
+//     // Initialize worker pool
+//     piscina = new Piscina({
+//       filename: path.resolve(__dirname, '../workers/worker.js'),
+//       maxThreads: require('os').cpus().length
+//     });
+
+//     const { userDecodeId: userId, role_name: role } = req;
+//     const { lead_data } = req.body;
+
+//     // Fetch all necessary data in parallel
+//     const [
+//       sources, channels, officeTypes, countries,
+//       regions, franchises, creTl, existingRecords
+//     ] = await Promise.all([
+//       db.leadSource.findAll({ attributes: ['id', 'slug'] }),
+//       db.leadChannel.findAll({ attributes: ['id', 'slug'] }),
+//       db.officeType.findAll({ attributes: ['id', 'slug'] }),
+//       db.country.findAll({ attributes: ['id', 'country_code'] }),
+//       db.region.findAll({ attributes: ['id', 'slug', 'regional_manager_id'] }),
+//       db.franchise.findAll({ attributes: ['id', 'slug'] }),
+//       db.adminUsers.findOne({
+//         where: { role_id: process.env.CRE_TL_ID },
+//         include: [{ 
+//           model: db.accessRoles,
+//           attributes: ['role_name']
+//         }]
+//       }),
+//       db.userPrimaryInfo.findAll({ attributes: ['email', 'phone'] })
+//     ]);
+
+//     // Create lookup maps
+//     const lookupMaps = {
+//       sourceSlugToId: createLookupMap(sources, 'slug', 'id'),
+//       channelSlugToId: createLookupMap(channels, 'slug', 'id'),
+//       officeTypeSlugToId: createLookupMap(officeTypes, 'slug', 'id'),
+//       countryCodeToId: createLookupMap(countries, 'country_code', 'id'),
+//       regionSlugToId: createLookupMap(regions, 'slug', 'id'),
+//       regionSlugToManagerId: createLookupMap(regions, 'slug', 'regional_manager_id'),
+//       franchiseSlugToId: createLookupMap(franchises, 'slug', 'id')
+//     };
+
+//     // Create sets for duplicate checking
+//     const existingEmails = new Set(
+//       existingRecords
+//         .map(record => record.email?.toLowerCase().trim())
+//         .filter(Boolean)
+//     );
+//     const existingPhones = new Set(
+//       existingRecords
+//         .map(record => record.phone?.trim())
+//         .filter(Boolean)
+//     );
+
+//     // Process and validate lead data
+//     const validRows = lead_data
+//       .map(normalizeRowData)
+//       .filter(row => row.email || row.phone);
+
+//     // Process in batches
+//     const batchPromises = [];
+//     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+//       const batchRows = validRows
+//         .slice(i, i + BATCH_SIZE)
+//         .map((row, index) => {
+//           const rowNumber = i + index + 2;
+//           const officeTypeSlug = row.office_type_slug;
+//           const normalizedEmail = row.email?.toLowerCase().trim();
+//           const normalizedPhone = row.phone?.trim();
+
+//           // Check for duplicates
+//           if ((normalizedEmail && existingEmails.has(normalizedEmail)) ||
+//               (normalizedPhone && existingPhones.has(normalizedPhone))) {
+//             return null;
+//           }
+
+//           const isCorporateOffice = officeTypeSlug === 'CORPORATE_OFFICE';
+//           const isRegion = officeTypeSlug === 'REGION';
+//           const isFranchise = officeTypeSlug === 'FRANCHISE';
+
+//           return {
+//             rowNumber,
+//             rowData: {
+//               lead_received_date: row.lead_received_date,
+//               source_id: lookupMaps.sourceSlugToId[row.source_slug],
+//               channel_id: lookupMaps.channelSlugToId[row.channel_slug],
+//               full_name: row.full_name,
+//               email: normalizedEmail,
+//               phone: normalizedPhone,
+//               city: row.city,
+//               office_type: lookupMaps.officeTypeSlugToId[officeTypeSlug],
+//               preferred_country: lookupMaps.countryCodeToId[row.preferred_country_code],
+//               ielts: row.ielts,
+//               remarks: row.remarks,
+//               assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+//               created_by: userId,
+//               region_id: isRegion ? lookupMaps.regionSlugToId[row.region_or_franchise_slug] : null,
+//               franchise_id: isFranchise ? lookupMaps.franchiseSlugToId[row.region_or_franchise_slug] : null,
+//               assigned_regional_manager: isRegion ? lookupMaps.regionSlugToManagerId[row.region_or_franchise_slug] : null,
+//               stage: STAGE_MAPPING[officeTypeSlug] || STAGE_MAPPING.DEFAULT
+//             }
+//           };
+//         })
+//         .filter(Boolean);
+
+//       batchPromises.push(piscina.run({
+//         rows: batchRows,
+//         meta: { startRow: i + 2 },
+//         userDecodeId: userId,
+//         role,
+//         creTLrole: creTl?.access_role?.role_name
+//       }));
+//     }
+
+//     await Promise.all(batchPromises);
+
+//     return res.status(200).json({
+//       status: true,
+//       message: 'Leads approved successfully'
+//     });
+
+//   } catch (error) {
+//     console.error('Error processing lead approval:', error);
+//     return res.status(500).json({
+//       status: false,
+//       message: 'An error occurred while processing your request. Please try again later.'
+//     });
+
+//   } finally {
+//     if (piscina) {
+//       await piscina.close();
+//       console.log('Piscina Destroyed');
+//     }
+//   }
+// };
 
 exports.getApprovalOptions = async (req, res) => {
   try {
@@ -1579,3 +1850,146 @@ exports.getApprovalOptions = async (req, res) => {
     });
   }
 };
+
+// Utility functions
+const createLookupMap = (array, keyField, valueField) =>
+  Object.fromEntries(array.map(item => [item[keyField], item[valueField]]));
+
+const getCellValue = (cell) => {
+  if (!cell) return null;
+  if (cell.text) return cell.text.trim();
+  if (cell.value) return typeof cell.value === 'string' ? cell.value.trim() : cell.value;
+  if (cell.result) return typeof cell.result === 'string' ? cell.result.trim() : cell.result;
+  return null;
+};
+
+const getRowData = (row) => ({
+  lead_received_date: getCellValue(row.getCell(2)),
+  source_slug: getCellValue(row.getCell(3)),
+  channel_slug: getCellValue(row.getCell(4)),
+  full_name: getCellValue(row.getCell(5)),
+  email: getCellValue(row.getCell(6)),
+  phone: getCellValue(row.getCell(7)),
+  city: getCellValue(row.getCell(8)),
+  office_type_slug: getCellValue(row.getCell(9)),
+  region_or_franchise_slug: getCellValue(row.getCell(10)),
+  preferred_country_code: getCellValue(row.getCell(11)),
+  ielts: getCellValue(row.getCell(12)),
+  remarks: getCellValue(row.getCell(13))
+});
+
+const formatRowForValidation = (row, rowNumber, lookupMaps, userId, creTl) => {
+  const { 
+    sourceSlugToId, channelSlugToId, officeTypeSlugToId,
+    countryCodeToId, regionSlugToId, franchiseSlugToId,
+    regionSlugToManagerId 
+  } = lookupMaps;
+
+  const officeTypeSlug = row.office_type_slug;
+  const isCorporateOffice = officeTypeSlug === 'CORPORATE_OFFICE';
+  const isRegion = officeTypeSlug === 'REGION';
+  const isFranchise = officeTypeSlug === 'FRANCHISE';
+
+  return {
+    rowNumber,
+    rowData: {
+      ...row,
+      source_id: sourceSlugToId[row.source_slug],
+      channel_id: channelSlugToId[row.channel_slug],
+      office_type: officeTypeSlugToId[officeTypeSlug],
+      preferred_country: countryCodeToId[row.preferred_country_code],
+      assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+      created_by: userId,
+      region_id: isRegion ? regionSlugToId[row.region_or_franchise_slug] : null,
+      franchise_id: isFranchise ? franchiseSlugToId[row.region_or_franchise_slug] : null,
+      assigned_regional_manager: isRegion ? regionSlugToManagerId[row.region_or_franchise_slug] : null,
+      stage: STAGE_MAPPING[officeTypeSlug] || STAGE_MAPPING.DEFAULT
+    }
+  };
+};
+
+const formatValue = (value) => value ? (typeof value === 'string' ? value.trim() : value) : null;
+
+const normalizeRowData = (row) => ({
+  lead_received_date: row?.lead_received_date,
+  source_slug: formatValue(row?.source),
+  channel_slug: formatValue(row?.channel),
+  full_name: row?.full_name,
+  email: formatValue(row?.email),
+  phone: formatValue(row?.phone),
+  city: row?.city,
+  office_type_slug: formatValue(row?.office_type),
+  region_or_franchise_slug: row?.region_or_franchise,
+  preferred_country_code: row?.preferred_country_code,
+  ielts: row?.ielts,
+  remarks: row?.remarks
+});
+
+
+// Helper functions for file generation and data formatting
+const generateErrorFile = async(errors, workbook) => {
+  const errorWorkbook = new Excel.Workbook();
+  const errorSheet = errorWorkbook.addWorksheet('Errors');
+  
+  const headerRow = [...workbook.getWorksheet(1).getRow(1).values, 'Errors'];
+  errorSheet.addRow(headerRow);
+
+  errors.forEach(({ rowNumber, errors }) => {
+    const errorDetails = Array.isArray(errors) ? errors.join('; ') : errors;
+    const originalRow = workbook.getWorksheet(1).getRow(rowNumber);
+    
+    const rowData = [
+      rowNumber,
+      ...Array(12).fill(0).map((_, i) => getCellValue(originalRow.getCell(i + 2))),
+      errorDetails
+    ];
+    
+    errorSheet.addRow(rowData);
+  });
+
+  const errorFileName = `invalid-rows-${uuidv4()}.xlsx`;
+  const errorFilePath = path.join('uploads/rejected_files', errorFileName);
+  await errorWorkbook.xlsx.writeFile(errorFilePath);
+  return errorFilePath;
+}
+
+const formatValidData = (validData, workbook) => {
+  return validData.map(({ rowNumber }) => {
+    const row = workbook.getWorksheet(1).getRow(rowNumber);
+    return {
+      lead_received_date: getCellValue(row.getCell(2)),
+      source: getCellValue(row.getCell(3)),
+      channel: getCellValue(row.getCell(4)),
+      full_name: getCellValue(row.getCell(5)),
+      email: getCellValue(row.getCell(6)),
+      phone: getCellValue(row.getCell(7)),
+      city: getCellValue(row.getCell(8)),
+      office_type: getCellValue(row.getCell(9)),
+      region_or_franchise: getCellValue(row.getCell(10)),
+      preferred_country_code: getCellValue(row.getCell(11)),
+      ielts: getCellValue(row.getCell(12)),
+      remarks: getCellValue(row.getCell(13))
+    };
+  });
+}
+
+const formatErrorData = (errorData, workbook) => {
+  return errorData.map(({ rowNumber, errors }) => {
+    const row = workbook.getWorksheet(1).getRow(rowNumber);
+    return {
+      lead_received_date: getCellValue(row.getCell(2)),
+      source_slug: getCellValue(row.getCell(3)),
+      channel_slug: getCellValue(row.getCell(4)),
+      full_name: getCellValue(row.getCell(5)),
+      email: getCellValue(row.getCell(6)),
+      phone: getCellValue(row.getCell(7)),
+      city: getCellValue(row.getCell(8)),
+      office_type_slug: getCellValue(row.getCell(9)),
+      region_or_franchise_slug: getCellValue(row.getCell(10)),
+      preferred_country_code: getCellValue(row.getCell(11)),
+      ielts: getCellValue(row.getCell(12)),
+      remarks: getCellValue(row.getCell(13)),
+      error: Array.isArray(errors) ? errors.join('; ') : errors
+    };
+  });
+}
