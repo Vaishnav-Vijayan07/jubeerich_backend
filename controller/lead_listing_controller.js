@@ -1617,6 +1617,34 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
+    // const formattedUserPrimaryInfos = await Promise.all(
+    //   rows.map(async (info) => {
+    //     const preferredCountries = info.preferredCountries.map((country) => ({
+    //       country_name: country.country_name,
+    //       id: country.id,
+    //       status_name: country?.country_status?.[0]?.status_name,
+    //       status_color: country?.country_status?.[0]?.color,
+    //       status_id: country?.country_status?.[0]?.id,
+    //       followup_date: country.user_countries?.followup_date,
+    //     }));
+
+    //     return {
+    //       ...info.toJSON(),
+    //       source_name: info.source_name ? info.source_name.source_name : null,
+    //       channel_name: info.channel_name ? info.channel_name.channel_name : null,
+    //       preferredCountries: preferredCountries,
+    //       franchise_id: info.franchise_id ? info.franchise_id : null,
+    //       office_type_name: info.office_type_name ? info.office_type_name.office_type_name : null,
+    //       region_name: info.region_name ? info.region_name.region_name : null,
+    //       counsiler_name: info.counsiler_name ? info.counsiler_name.name : null,
+    //       branch_name: info.branch_name ? info.branch_name.branch_name : null,
+    //       cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
+    //       updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
+    //       status: info.status ? info.status.status_name : null,
+    //     };
+    //   })
+    // );
+
     const formattedUserPrimaryInfos = await Promise.all(
       rows.map(async (info) => {
         const preferredCountries = info.preferredCountries.map((country) => ({
@@ -1628,8 +1656,33 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
           followup_date: country.user_countries?.followup_date,
         }));
 
+        // const examDetails = info.exams.map((exam)=> ({
+        //   exam_name: exam.exam_name,
+        //   marks: exam.marks,
+        // }))
+
+        const examDetails = info.exams.map((exam) => ({
+          exam_type: exam.exam_type,
+          exam_date: exam.exam_date,
+          marks: exam.overall_score,
+          listening_score: exam.listening_score,
+          speaking_score: exam.speaking_score,
+          reading_score: exam.reading_score,
+          writing_score: exam.writing_score,
+          updated_by: exam.updated_by,
+        }));
+
+        const examDocuments = info.exams.map((exam) => ({
+          exam_documents: exam.score_card,
+        }));
+
+        const flagDetails = await info.flag_details;
+
         return {
           ...info.toJSON(),
+          // category_name: info.category_name
+          //   ? info.category_name.category_name
+          //   : null,
           source_name: info.source_name ? info.source_name.source_name : null,
           channel_name: info.channel_name ? info.channel_name.channel_name : null,
           preferredCountries: preferredCountries,
@@ -1641,6 +1694,9 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
           cre_name: info.cre_name ? info.cre_name.name : "Not assigned", // Added cre_name extraction
           updated_by_user: info.updated_by_user ? info.updated_by_user.name : null,
           status: info.status ? info.status.status_name : null,
+          exam_details: examDetails,
+          exam_documents: examDocuments,
+          flag_details: flagDetails,
         };
       })
     );
