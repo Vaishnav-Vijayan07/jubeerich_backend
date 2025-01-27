@@ -805,6 +805,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
       // country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
       country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_code) || [],
+      all_country_ids: unfilteredCountries?.preferredCountries?.map((country) => country.id) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
