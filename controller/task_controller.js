@@ -168,9 +168,7 @@ exports.getTaskById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(
-                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-              ),
+              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
             },
           },
         },
@@ -575,13 +573,7 @@ exports.assignNewCountry = async (req, res) => {
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           const region = await getRegionDataForHistory(branch_id);
           region_name = region.region_name;
-          await addLeadHistory(
-            studentId,
-            `Country ${countryName} added by ${current_user_role} - ${region_name}`,
-            userId,
-            null,
-            transaction
-          );
+          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
@@ -673,9 +665,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(
-                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
-              ),
+              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
             },
           },
         },
@@ -815,6 +805,7 @@ exports.getStudentBasicInfoById = async (req, res) => {
       country_ids: primaryInfo?.preferredCountries?.map((country) => country.id) || [],
       // country_names: primaryInfo?.preferredCountries?.map((country) => country.country_name) || [],
       country_names: unfilteredCountries?.preferredCountries?.map((country) => country.country_code) || [],
+      all_country_ids: unfilteredCountries?.preferredCountries?.map((country) => country.id) || [],
       source_name: primaryInfo?.source_name?.source_name,
       channel_name: primaryInfo?.channel_name?.channel_name,
       flag_name: primaryInfo?.user_primary_flags?.flag_name,
@@ -853,18 +844,7 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: [
-        "id",
-        "full_name",
-        "email",
-        "phone",
-        "city",
-        "office_type",
-        "remarks",
-        "branch_id",
-        "franchise_id",
-        "region_id",
-      ],
+      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
       include: [
         {
           model: db.country,
@@ -877,6 +857,15 @@ exports.getBasicInfoById = async (req, res) => {
       ],
     });
 
+    const policeCountries = basicInfo?.police_clearance_docs.map((item) => {
+      return {
+        value: item?.country_name,
+        label: item?.country_name,
+      };
+    });
+
+    console.log(policeCountries);
+
     // Send the response with combined information
     res.status(200).json({
       status: true,
@@ -884,6 +873,7 @@ exports.getBasicInfoById = async (req, res) => {
       data: {
         basicInfo: basicInfo,
         primaryInfo: primaryInfo,
+        policeCountries: policeCountries ? policeCountries : [],
       },
     });
   } catch (error) {
@@ -930,9 +920,7 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs
-            ? existingBasicData.police_clearance_docs[index]?.certificate
-            : null;
+          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
 
         if (previousCertificatePath) {
           await deleteFile("policeClearenceDocuments", previousCertificatePath);

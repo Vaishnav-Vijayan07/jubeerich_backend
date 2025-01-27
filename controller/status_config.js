@@ -71,7 +71,8 @@ exports.listAllAccessRolesWithStatuses = async (req, res) => {
                     },
                     attributes: ['id', 'status_name', 'color'] // Adjust attributes as needed
                 }
-            ]
+            ],
+            order: [["createdAt", "DESC"]]
         });
 
         res.send({

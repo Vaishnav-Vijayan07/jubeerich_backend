@@ -408,6 +408,7 @@ router.get("/gapReason/:id/:type", [authMiddleware.checkUserAuth], getAllGapReas
 router.post("/gapReason", uploadMultiple.uploadGapDocs, [authMiddleware.checkUserAuth], saveGapReason);
 
 router.delete("/basic_info/:type/:id", [authMiddleware.checkUserAuth], SaveStudentDetailsController.deleteStudentAcademicInfo);
+router.patch("/passport_item/:id/:itemId", [authMiddleware.checkUserAuth], SaveStudentDetailsController.removePassportItem);
 router.post(
   "/studentPrimaryEducation/:type",
   [authMiddleware.checkUserAuth],

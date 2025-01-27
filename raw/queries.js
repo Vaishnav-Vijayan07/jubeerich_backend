@@ -95,44 +95,69 @@ const getLeadStatusWiseCountCreTlQuery = (where) => {
 const getLeadStatusCreTlWiseQuery = (where) => {
   return `
   WITH RankedStatuses AS (
-      SELECT 
-          uc.user_primary_info_id,
-          uc.country_id,
-          s.status_name,
-          st.type_name,
-          st.priority,
-          upi.created_at,
-          upi.assigned_cre,
-          upi.assigned_cre_tl,
-          upi.created_by,
-          CASE 
-            WHEN upi.assigned_cre_tl IS NOT NULL THEN au1.name
-            WHEN upi.assigned_cre IS NOT NULL THEN au3.name
-            ELSE au2.name
-        END as admin_name,
+    SELECT 
+        uc.user_primary_info_id,
+        uc.country_id,
+        s.status_name,
+        st.type_name,
+        st.priority,
+        upi.created_at,
+        upi.assigned_cre,
+        upi.assigned_cre_tl,
+        upi.created_by,
         ROW_NUMBER() OVER (PARTITION BY uc.user_primary_info_id ORDER BY st.priority DESC) as rn
-      FROM 
-          user_countries uc
-      LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
-      LEFT JOIN admin_users au1 ON upi.assigned_cre_tl = au1.id
-    LEFT JOIN admin_users au2 ON upi.created_by = au2.id
-    LEFT JOIN admin_users au3 ON upi.assigned_cre = au3.id
-      LEFT JOIN status s ON uc.status_id = s.id
-      LEFT JOIN status_type st ON s.type_id = st.id
-  )
-  SELECT 
-    admin_name as name,
+    FROM 
+        user_countries uc
+    LEFT JOIN user_primary_info upi ON uc.user_primary_info_id = upi.id
+    LEFT JOIN status s ON uc.status_id = s.id
+    LEFT JOIN status_type st ON s.type_id = st.id
+),
+UnionedAssignments AS (
+    -- Get assignments for CREs
+    SELECT 
+        rs.*,
+        au.name,
+        'CRE' as assignment_type
+    FROM RankedStatuses rs
+    LEFT JOIN admin_users au ON rs.assigned_cre = au.id
+    WHERE rs.assigned_cre IS NOT NULL
+    
+    UNION ALL
+    
+    -- Get assignments for CRE TLs
+    SELECT 
+        rs.*,
+        au.name,
+        'CRE TL' as assignment_type
+    FROM RankedStatuses rs
+    LEFT JOIN admin_users au ON rs.assigned_cre_tl = au.id
+    WHERE rs.assigned_cre_tl IS NOT NULL
+
+    UNION ALL
+    
+    -- Get assignments for Creators
+    SELECT 
+        rs.*,
+        au.name,
+        'Creator' as assignment_type
+    FROM RankedStatuses rs
+    LEFT JOIN admin_users au ON rs.created_by = au.id
+    WHERE rs.created_by IS NOT NULL
+)
+SELECT 
+    name,
     type_name,
     COUNT(*) as count
-  FROM 
-      RankedStatuses
-  ${where}
- GROUP BY 
-    admin_name,
+FROM 
+    UnionedAssignments
+${where}
+GROUP BY 
+    name,
     type_name
 ORDER BY 
-    admin_name,
-    type_name;`;
+    name,
+    type_name;
+    `;
 };
 const getLeadStatusWiseCountCreQuery = (where) => {
   return ` WITH RankedStatuses AS (

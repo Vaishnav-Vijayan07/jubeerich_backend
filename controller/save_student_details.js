@@ -6,12 +6,7 @@ const sequelize = db.sequelize;
 const { Op, Sequelize, where } = require("sequelize");
 const fs = require("fs");
 const path = require("path");
-const {
-  addOrUpdateAcademic,
-  addOrUpdateWork,
-  addOrUpdateGraduationData,
-  addOrUpdateExamData,
-} = require("../utils/academic_query_helper");
+const { addOrUpdateAcademic, addOrUpdateWork, addOrUpdateGraduationData, addOrUpdateExamData } = require("../utils/academic_query_helper");
 const { deleteFile, handleFileDeletions } = require("../utils/upsert_helpers");
 
 exports.saveStudentBasicInfo = async (req, res) => {
@@ -384,13 +379,7 @@ exports.saveStudentWorkInfo = async (req, res) => {
 
   // Iterate over graduation details
   workExperience.forEach((item, index) => {
-    const fields = [
-      "appointment_document",
-      "bank_statement",
-      "job_offer_document",
-      "payslip_document",
-      "experience_certificate",
-    ];
+    const fields = ["appointment_document", "bank_statement", "job_offer_document", "payslip_document", "experience_certificate"];
 
     const isUpdate = item?.id !== "0";
 
@@ -468,6 +457,7 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
 
   try {
     // Validate if the type exists in the mapping
+
     const recordType = recordTypeMapping[type];
     if (!recordType) {
       return res.status(400).json({ status: false, message: "Invalid type specified" });
@@ -495,6 +485,50 @@ exports.deleteStudentAcademicInfo = async (req, res) => {
     });
   } catch (error) {
     // Rollback the transaction if any error occurs
+    await transaction.rollback();
+    console.error(`Error: ${error.message}`);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
+exports.removePassportItem = async (req, res) => {
+  const { id, itemId } = req.params;
+
+  const passport = await db.passportDetails.findByPk(id);
+
+  if (!passport) {
+    return res.status(404).json({ status: false, message: "Passport not found" });
+  }
+
+  const passports = passport.passports;
+  if (itemId < 0 || itemId > passports.length) {
+    return res.status(400).json({
+      status: false,
+      message: "Item id is out of bounds",
+    });
+  }
+  const transaction = await sequelize.transaction();
+
+  try {
+    console.log(passports);
+    console.log(itemId);
+    const filteredPassports = passports.filter((item, index) => index !== Number(itemId - 1));
+    console.log(filteredPassports);
+
+    passport.passports = filteredPassports;
+    passport.number_of_passports = filteredPassports.length;
+    await passport.save({ transaction });
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Passport item removed successfully",
+    });
+  } catch (error) {
     await transaction.rollback();
     console.error(`Error: ${error.message}`);
     return res.status(500).json({
