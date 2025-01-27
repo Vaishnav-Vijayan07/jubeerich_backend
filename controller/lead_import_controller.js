@@ -1314,7 +1314,7 @@ exports.bulkUploadMultiValidation = async (req, res) => {
       });
     }
 
-    mergedResults = [...formattedValidData, ...formattedErrorData];
+    mergedResults = [...formattedErrorData, ...formattedValidData];
 
     return res.status(200).json({
       status: true,
