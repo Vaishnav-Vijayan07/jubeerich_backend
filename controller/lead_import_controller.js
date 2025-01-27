@@ -1528,144 +1528,144 @@ exports.bulkUploadMultiCore = async (req, res) => {
   }
 };
 
-exports.bulkUploadMultiCore = async (req, res) => {
-  let piscina = null;
+// exports.bulkUploadMultiCore = async (req, res) => {
+//   let piscina = null;
 
-  try {
-    // Initialize worker pool
-    piscina = new Piscina({
-      filename: path.resolve(__dirname, '../workers/worker.js'),
-      maxThreads: require('os').cpus().length
-    });
+//   try {
+//     // Initialize worker pool
+//     piscina = new Piscina({
+//       filename: path.resolve(__dirname, '../workers/worker.js'),
+//       maxThreads: require('os').cpus().length
+//     });
 
-    const { userDecodeId: userId, role_name: role } = req;
-    const { lead_data } = req.body;
+//     const { userDecodeId: userId, role_name: role } = req;
+//     const { lead_data } = req.body;
 
-    // Fetch all necessary data in parallel
-    const [
-      sources, channels, officeTypes, countries,
-      regions, franchises, creTl, existingRecords
-    ] = await Promise.all([
-      db.leadSource.findAll({ attributes: ['id', 'slug'] }),
-      db.leadChannel.findAll({ attributes: ['id', 'slug'] }),
-      db.officeType.findAll({ attributes: ['id', 'slug'] }),
-      db.country.findAll({ attributes: ['id', 'country_code'] }),
-      db.region.findAll({ attributes: ['id', 'slug', 'regional_manager_id'] }),
-      db.franchise.findAll({ attributes: ['id', 'slug'] }),
-      db.adminUsers.findOne({
-        where: { role_id: process.env.CRE_TL_ID },
-        include: [{ 
-          model: db.accessRoles,
-          attributes: ['role_name']
-        }]
-      }),
-      db.userPrimaryInfo.findAll({ attributes: ['email', 'phone'] })
-    ]);
+//     // Fetch all necessary data in parallel
+//     const [
+//       sources, channels, officeTypes, countries,
+//       regions, franchises, creTl, existingRecords
+//     ] = await Promise.all([
+//       db.leadSource.findAll({ attributes: ['id', 'slug'] }),
+//       db.leadChannel.findAll({ attributes: ['id', 'slug'] }),
+//       db.officeType.findAll({ attributes: ['id', 'slug'] }),
+//       db.country.findAll({ attributes: ['id', 'country_code'] }),
+//       db.region.findAll({ attributes: ['id', 'slug', 'regional_manager_id'] }),
+//       db.franchise.findAll({ attributes: ['id', 'slug'] }),
+//       db.adminUsers.findOne({
+//         where: { role_id: process.env.CRE_TL_ID },
+//         include: [{ 
+//           model: db.accessRoles,
+//           attributes: ['role_name']
+//         }]
+//       }),
+//       db.userPrimaryInfo.findAll({ attributes: ['email', 'phone'] })
+//     ]);
 
-    // Create lookup maps
-    const lookupMaps = {
-      sourceSlugToId: createLookupMap(sources, 'slug', 'id'),
-      channelSlugToId: createLookupMap(channels, 'slug', 'id'),
-      officeTypeSlugToId: createLookupMap(officeTypes, 'slug', 'id'),
-      countryCodeToId: createLookupMap(countries, 'country_code', 'id'),
-      regionSlugToId: createLookupMap(regions, 'slug', 'id'),
-      regionSlugToManagerId: createLookupMap(regions, 'slug', 'regional_manager_id'),
-      franchiseSlugToId: createLookupMap(franchises, 'slug', 'id')
-    };
+//     // Create lookup maps
+//     const lookupMaps = {
+//       sourceSlugToId: createLookupMap(sources, 'slug', 'id'),
+//       channelSlugToId: createLookupMap(channels, 'slug', 'id'),
+//       officeTypeSlugToId: createLookupMap(officeTypes, 'slug', 'id'),
+//       countryCodeToId: createLookupMap(countries, 'country_code', 'id'),
+//       regionSlugToId: createLookupMap(regions, 'slug', 'id'),
+//       regionSlugToManagerId: createLookupMap(regions, 'slug', 'regional_manager_id'),
+//       franchiseSlugToId: createLookupMap(franchises, 'slug', 'id')
+//     };
 
-    // Create sets for duplicate checking
-    const existingEmails = new Set(
-      existingRecords
-        .map(record => record.email?.toLowerCase().trim())
-        .filter(Boolean)
-    );
-    const existingPhones = new Set(
-      existingRecords
-        .map(record => record.phone?.trim())
-        .filter(Boolean)
-    );
+//     // Create sets for duplicate checking
+//     const existingEmails = new Set(
+//       existingRecords
+//         .map(record => record.email?.toLowerCase().trim())
+//         .filter(Boolean)
+//     );
+//     const existingPhones = new Set(
+//       existingRecords
+//         .map(record => record.phone?.trim())
+//         .filter(Boolean)
+//     );
 
-    // Process and validate lead data
-    const validRows = lead_data
-      .map(normalizeRowData)
-      .filter(row => row.email || row.phone);
+//     // Process and validate lead data
+//     const validRows = lead_data
+//       .map(normalizeRowData)
+//       .filter(row => row.email || row.phone);
 
-    // Process in batches
-    const batchPromises = [];
-    for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-      const batchRows = validRows
-        .slice(i, i + BATCH_SIZE)
-        .map((row, index) => {
-          const rowNumber = i + index + 2;
-          const officeTypeSlug = row.office_type_slug;
-          const normalizedEmail = row.email?.toLowerCase().trim();
-          const normalizedPhone = row.phone?.trim();
+//     // Process in batches
+//     const batchPromises = [];
+//     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+//       const batchRows = validRows
+//         .slice(i, i + BATCH_SIZE)
+//         .map((row, index) => {
+//           const rowNumber = i + index + 2;
+//           const officeTypeSlug = row.office_type_slug;
+//           const normalizedEmail = row.email?.toLowerCase().trim();
+//           const normalizedPhone = row.phone?.trim();
 
-          // Check for duplicates
-          if ((normalizedEmail && existingEmails.has(normalizedEmail)) ||
-              (normalizedPhone && existingPhones.has(normalizedPhone))) {
-            return null;
-          }
+//           // Check for duplicates
+//           if ((normalizedEmail && existingEmails.has(normalizedEmail)) ||
+//               (normalizedPhone && existingPhones.has(normalizedPhone))) {
+//             return null;
+//           }
 
-          const isCorporateOffice = officeTypeSlug === 'CORPORATE_OFFICE';
-          const isRegion = officeTypeSlug === 'REGION';
-          const isFranchise = officeTypeSlug === 'FRANCHISE';
+//           const isCorporateOffice = officeTypeSlug === 'CORPORATE_OFFICE';
+//           const isRegion = officeTypeSlug === 'REGION';
+//           const isFranchise = officeTypeSlug === 'FRANCHISE';
 
-          return {
-            rowNumber,
-            rowData: {
-              lead_received_date: row.lead_received_date,
-              source_id: lookupMaps.sourceSlugToId[row.source_slug],
-              channel_id: lookupMaps.channelSlugToId[row.channel_slug],
-              full_name: row.full_name,
-              email: normalizedEmail,
-              phone: normalizedPhone,
-              city: row.city,
-              office_type: lookupMaps.officeTypeSlugToId[officeTypeSlug],
-              preferred_country: lookupMaps.countryCodeToId[row.preferred_country_code],
-              ielts: row.ielts,
-              remarks: row.remarks,
-              assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
-              created_by: userId,
-              region_id: isRegion ? lookupMaps.regionSlugToId[row.region_or_franchise_slug] : null,
-              franchise_id: isFranchise ? lookupMaps.franchiseSlugToId[row.region_or_franchise_slug] : null,
-              assigned_regional_manager: isRegion ? lookupMaps.regionSlugToManagerId[row.region_or_franchise_slug] : null,
-              stage: STAGE_MAPPING[officeTypeSlug] || STAGE_MAPPING.DEFAULT
-            }
-          };
-        })
-        .filter(Boolean);
+//           return {
+//             rowNumber,
+//             rowData: {
+//               lead_received_date: row.lead_received_date,
+//               source_id: lookupMaps.sourceSlugToId[row.source_slug],
+//               channel_id: lookupMaps.channelSlugToId[row.channel_slug],
+//               full_name: row.full_name,
+//               email: normalizedEmail,
+//               phone: normalizedPhone,
+//               city: row.city,
+//               office_type: lookupMaps.officeTypeSlugToId[officeTypeSlug],
+//               preferred_country: lookupMaps.countryCodeToId[row.preferred_country_code],
+//               ielts: row.ielts,
+//               remarks: row.remarks,
+//               assigned_cre_tl: isCorporateOffice && creTl ? creTl.id : null,
+//               created_by: userId,
+//               region_id: isRegion ? lookupMaps.regionSlugToId[row.region_or_franchise_slug] : null,
+//               franchise_id: isFranchise ? lookupMaps.franchiseSlugToId[row.region_or_franchise_slug] : null,
+//               assigned_regional_manager: isRegion ? lookupMaps.regionSlugToManagerId[row.region_or_franchise_slug] : null,
+//               stage: STAGE_MAPPING[officeTypeSlug] || STAGE_MAPPING.DEFAULT
+//             }
+//           };
+//         })
+//         .filter(Boolean);
 
-      batchPromises.push(piscina.run({
-        rows: batchRows,
-        meta: { startRow: i + 2 },
-        userDecodeId: userId,
-        role,
-        creTLrole: creTl?.access_role?.role_name
-      }));
-    }
+//       batchPromises.push(piscina.run({
+//         rows: batchRows,
+//         meta: { startRow: i + 2 },
+//         userDecodeId: userId,
+//         role,
+//         creTLrole: creTl?.access_role?.role_name
+//       }));
+//     }
 
-    await Promise.all(batchPromises);
+//     await Promise.all(batchPromises);
 
-    return res.status(200).json({
-      status: true,
-      message: 'Leads approved successfully'
-    });
+//     return res.status(200).json({
+//       status: true,
+//       message: 'Leads approved successfully'
+//     });
 
-  } catch (error) {
-    console.error('Error processing lead approval:', error);
-    return res.status(500).json({
-      status: false,
-      message: 'An error occurred while processing your request. Please try again later.'
-    });
+//   } catch (error) {
+//     console.error('Error processing lead approval:', error);
+//     return res.status(500).json({
+//       status: false,
+//       message: 'An error occurred while processing your request. Please try again later.'
+//     });
 
-  } finally {
-    if (piscina) {
-      await piscina.close();
-      console.log('Piscina Destroyed');
-    }
-  }
-};
+//   } finally {
+//     if (piscina) {
+//       await piscina.close();
+//       console.log('Piscina Destroyed');
+//     }
+//   }
+// };
 
 exports.getApprovalOptions = async (req, res) => {
   try {
