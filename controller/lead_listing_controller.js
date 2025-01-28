@@ -1514,6 +1514,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
 exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
   const { page = 1, limit = 20, keyword } = req.query;
+  const roleId = req.role_id.toString();
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
@@ -1527,9 +1528,12 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
       attributes: ["id", "name"],
     });
 
+    const attributesByRole = getAttributesByRole(roleId);
+
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       distinct: true,
+      attributes: attributesByRole,
       where: {
         [db.Sequelize.Op.and]: [
           {
