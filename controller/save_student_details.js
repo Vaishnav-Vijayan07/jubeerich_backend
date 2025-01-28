@@ -293,7 +293,7 @@ exports.saveStudentAcademicInfo = async (req, res) => {
 };
 
 exports.saveStudentExamInfo = async (req, res) => {
-  let { examRecords, user_id } = req.body;
+  let { examRecords, user_id, ielts } = req.body;
 
   const updated_by = req.userDecodeId;
 
@@ -310,6 +310,17 @@ exports.saveStudentExamInfo = async (req, res) => {
   const records = [];
   const files = req.files;
   const field = "score_card";
+
+  const existLead = await db.userPrimaryInfo.findByPk(user_id);
+  if(!existLead) {
+    return res.status(404).json({
+      status: false,
+      message: "User Primary Info not found",
+    });
+  }
+
+  existLead.ielts = ielts;
+  await existLead.save();
 
   examRecords.forEach((record, index) => {
     const isUpdate = record?.id !== "0";
@@ -361,7 +372,7 @@ exports.saveStudentExamInfo = async (req, res) => {
 };
 
 exports.saveStudentWorkInfo = async (req, res) => {
-  let { workExperience, user_id } = req.body;
+  let { workExperience, user_id, has_work_exp } = req.body;
 
   // Start a transaction
 
@@ -376,6 +387,17 @@ exports.saveStudentWorkInfo = async (req, res) => {
   }
 
   const modifiedData = [];
+
+  const existLead = await db.userPrimaryInfo.findByPk(user_id);
+  if(!existLead) {
+    return res.status(404).json({
+      status: false,
+      message: "User Primary Info not found",
+    });
+  }
+
+  existLead.has_work_exp = has_work_exp;
+  await existLead.save();
 
   // Iterate over graduation details
   workExperience.forEach((item, index) => {
@@ -843,7 +865,7 @@ exports.saveStudentGraduationDetails = async (req, res) => {
   const transaction = await sequelize.transaction(); // Start a transaction
 
   try {
-    const { student_id, graduation } = req.body;
+    const { student_id, graduation, is_graduated } = req.body;
     const files = req.files;
 
     console.log(student_id);
@@ -855,6 +877,17 @@ exports.saveStudentGraduationDetails = async (req, res) => {
     if (!student_id || !Array.isArray(graduation) || !files) {
       throw new Error("Invalid input data");
     }
+
+    const existLead = await db.userPrimaryInfo.findByPk(student_id);
+    if(!existLead) {
+      return res.status(404).json({
+        status: false,
+        message: "User Primary Info not found",
+      });
+    }
+  
+    existLead.is_graduated = is_graduated;
+    await existLead.save();
 
     const modifiedData = [];
 

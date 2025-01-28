@@ -41,9 +41,14 @@ exports.getAllGapReasons = async (req, res) => {
 };
 
 exports.saveGapReason = async (req, res) => {
-  const { gap, student_id } = req.body;
+  const { gap, student_id, type, has_gap } = req.body;
   const files = req.files;
+  console.log('Entered');
+  
 
+  console.log('has_gap', has_gap);
+  console.log('type', type);
+  
   const transaction = await db.sequelize.transaction();
 
   const student = await db.userPrimaryInfo.findByPk(student_id, {
@@ -52,6 +57,14 @@ exports.saveGapReason = async (req, res) => {
   if (!student) {
     await transaction.rollback();
     return res.status(404).json({ error: "Student not found" });
+  }
+
+  if(type == "work"){
+    student.has_work_gap = has_gap;
+    await student.save();
+  } else {
+    student.has_education_gap = has_gap;
+    await student.save();
   }
 
   const modifiedData = [];

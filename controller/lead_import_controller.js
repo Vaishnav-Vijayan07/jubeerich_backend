@@ -1518,14 +1518,14 @@ exports.bulkUploadMultiValidation = async (req, res) => {
 
         const data = {
           lead_received_date: getCellValue(existRow.getCell(2)),
-          source_slug: getCellValue(existRow.getCell(3)),
-          channel_slug: getCellValue(existRow.getCell(4)),
+          source: getCellValue(existRow.getCell(3)),
+          channel: getCellValue(existRow.getCell(4)),
           full_name: getCellValue(existRow.getCell(5)),
           email: getCellValue(existRow.getCell(6)),
           phone: getCellValue(existRow.getCell(7)),
           city: getCellValue(existRow.getCell(8)),
-          office_type_slug: getCellValue(existRow.getCell(9)),
-          region_or_franchise_slug: getCellValue(existRow.getCell(10)),
+          office_type: getCellValue(existRow.getCell(9)),
+          region_or_franchise: getCellValue(existRow.getCell(10)),
           preferred_country_code: getCellValue(existRow.getCell(11)),
           ielts: getCellValue(existRow.getCell(12)),
           remarks: getCellValue(existRow.getCell(13)),
