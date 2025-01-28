@@ -98,7 +98,7 @@ const getDropdownData = async (req, res) => {
         db.adminUsers.findAll({
           attributes: ["id", "name"],
           where: {
-            role_id: process.env.CRE_ID,
+            role_id: process.env.CRE_ID || process.env.CRE_TL_ID,
             status: true
           },
         })
