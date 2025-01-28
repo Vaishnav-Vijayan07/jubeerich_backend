@@ -111,7 +111,7 @@ exports.getLeads = async (req, res) => {
           foreignKey: "updated_by",
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -737,7 +737,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["created_at", "DESC"]],
+        order: [["id", "DESC"]],
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -795,7 +795,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["created_at", "DESC"]],
+        order: [["id", "DESC"]],
       });
     }
 
@@ -987,7 +987,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           required: false,
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1212,7 +1212,7 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
       offset,
       limit: parsedLimit,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1987,7 +1987,7 @@ exports.getAssignedLeadsForCounsellorTLOptiimised = async (req, res) => {
       ],
       offset: offset,
       limit: parsedLimit,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -2160,7 +2160,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           required: false,
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
