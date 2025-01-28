@@ -1618,7 +1618,7 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
       ],
       limit: parsedLimit,
       offset: offset,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
