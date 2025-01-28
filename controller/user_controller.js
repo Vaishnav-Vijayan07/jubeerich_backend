@@ -125,7 +125,7 @@ exports.createLead = async (req, res) => {
       // Fetch the regional manager for the region
       const region = await db.region.findOne({
         where: { id: region_id },
-        attributes: ["regional_manager_id","region_name"], // Fetch regional_manager_id from the region table
+        attributes: ["regional_manager_id", "region_name"], // Fetch regional_manager_id from the region table
         include: [
           {
             model: db.adminUsers, // Include associated adminUsers
@@ -146,7 +146,6 @@ exports.createLead = async (req, res) => {
       // Set the regionalManagerId only if the region exists
       regionalManagerId = region ? region.regional_manager_id : null;
       regionMangerRoleName = region?.adminUsers?.accessRoles?.role_name || "Region Manager";
-
     }
 
     if (counsiler_id !== "null") {
@@ -271,7 +270,6 @@ exports.createLead = async (req, res) => {
 
     // Associate the preferred countries with the user
     if (Array.isArray(preferred_country) && preferred_country.length > 0) {
-
       const countryAssociations = preferred_country.map((countryId) => ({
         user_primary_info_id: userPrimaryInfo.id, // Assuming this is defined earlier
         country_id: countryId,
@@ -361,7 +359,7 @@ exports.createLead = async (req, res) => {
           // const country = await db.country.findByPk(countryIds[0]);
           const countries = await db.country.findAll({
             where: { id: preferred_country },
-            attributes: ["country_name","country_code"],
+            attributes: ["country_name", "country_code"],
           });
 
           if (countries) {
@@ -399,7 +397,6 @@ exports.createLead = async (req, res) => {
         await addLeadHistory(userPrimaryInfo.id, `Task assigned to Counsellors`, userId, null, transaction);
       }
     } else if (userRole?.role_id == process.env.IT_TEAM_ID) {
-
       if (franchise_id) {
         let leastAssignedUsers = [];
         for (const countryId of preferred_country) {
@@ -432,7 +429,7 @@ exports.createLead = async (req, res) => {
             // const country = await db.country.findByPk(countryIds[0]);
             const countries = await db.country.findAll({
               where: { id: preferred_country },
-              attributes: ["country_name","country_code"],
+              attributes: ["country_name", "country_code"],
             });
 
             if (countries) {
@@ -528,12 +525,8 @@ exports.updateLead = async (req, res) => {
     franchise_id,
   } = req.body;
 
-
-
   preferred_country = preferred_country ? JSON.parse(preferred_country) : null;
   flag_id = flag_id ? JSON.parse(flag_id) : null;
-
-
 
   const examDocuments = req.files && req.files["exam_documents"];
 
@@ -776,7 +769,10 @@ exports.updateUserStatus = async (req, res) => {
     // Update user status
     // await leadExists.update({ status_id, followup_date }, { transaction });
 
-    const exisTask = await db.tasks.findOne({ where: { studentId: lead_id, userId: userId } });
+    const exisTask = await db.tasks.findOne({ where: { studentId: lead_id, userId: userId, assigned_country: country_id } });
+
+    console.log("exisTask =======>", JSON.stringify(exisTask, null, 2));
+
 
     await exisTask.update({ dueDate: followup_date }, { transaction });
 
@@ -876,7 +872,6 @@ const getLeastAssignedUsers = async (countryId) => {
       }
     );
 
-
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
       return {
@@ -933,7 +928,6 @@ const getLeastAssignedCounsellor = async (countryId, franchiseId) => {
         type: db.Sequelize.QueryTypes.SELECT,
       }
     );
-
 
     // Check if results is defined and not null
     if (!results || Object.keys(results).length === 0) {
@@ -996,7 +990,6 @@ exports.deleteExams = async (req, res) => {
 
 exports.getRemarkDetails = async (req, res) => {
   const { id } = req.params;
-
 
   try {
     const existLead = await UserPrimaryInfo.findByPk(id);
@@ -1117,10 +1110,7 @@ exports.updateRemarkDetails = async (req, res) => {
     const remarkIndex = existLead?.remark_details.findIndex((data) => data.id == remark_id);
     const remarkArray = existLead.remark_details;
 
-
     remarkArray.splice(remarkIndex, 1, formattedOneRemark);
-
-  
 
     const updateRemark = await UserPrimaryInfo.update(
       {

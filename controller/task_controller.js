@@ -44,7 +44,8 @@ exports.getTasks = async (req, res) => {
         through: {
           model: db.userContries,
           attributes: ["country_id", "followup_date", "status_id"],
-          where: { country_id: { [Op.in]: countryIds }, status_id: { [Op.ne]: process.env.SPAM_LEAD_STATUS_ID } },
+          // where: { country_id: { [Op.in]: countryIds }, status_id: { [Op.ne]: process.env.SPAM_LEAD_STATUS_ID } },
+          // where: { country_id: { [Op.in]: countryIds } },
         },
         required: true,
         include: [
@@ -57,7 +58,7 @@ exports.getTasks = async (req, res) => {
               model: db.userContries,
               attributes: [],
             },
-            where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
+            // where: { id: { [Op.eq]: db.sequelize.col("student_name.preferredCountries.user_countries.status_id") } },
           },
         ],
       };
@@ -109,7 +110,10 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
+        [Op.and]: [
+          Sequelize.where(fn("DATE", col("dueDate")), "=", date),
+          db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+        ],
       },
       order: [["createdAt", "DESC"]],
     });
