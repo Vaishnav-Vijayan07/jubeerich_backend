@@ -179,7 +179,7 @@ exports.addCountry = [
     try {
       // Check for existing country name
       const existingCountryName = await Country.findOne({
-        where: { country_name: country_name.trim() },
+        where: where(fn("LOWER", col("country_name")), country_name.trim().toLowerCase()),
       });
 
       if (existingCountryName) {
@@ -192,7 +192,7 @@ exports.addCountry = [
       // Check for existing country code
       if (country_code) {
         const existingCountryCode = await Country.findOne({
-          where: { country_code: country_code.trim() },
+          where: where(fn("LOWER", col("country_code")), country_code.trim().toLowerCase()),
         });
 
         if (existingCountryCode) {
@@ -263,7 +263,7 @@ exports.updateCountry = [
       // Check for existing country name, excluding current record
       if (req.body.country_name && req.body.country_name.trim() !== country.country_name) {
         const existingCountryName = await Country.findOne({
-          where: { country_name: req.body.country_name.trim() },
+          where: where(fn("LOWER", col("country_name")), req.body.country_name.trim().toLowerCase()),
         });
 
         if (existingCountryName) {
@@ -277,7 +277,7 @@ exports.updateCountry = [
       // Check for existing country code, excluding current record
       if (req.body.country_code && req.body.country_code.trim() !== country.country_code) {
         const existingCountryCode = await Country.findOne({
-          where: { country_code: req.body.country_code.trim() },
+          where: where(fn("LOWER", col("country_code")), req.body.country_code.trim().toLowerCase()),
         });
 
         if (existingCountryCode) {
