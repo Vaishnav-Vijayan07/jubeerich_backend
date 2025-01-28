@@ -773,6 +773,7 @@ exports.updateUserStatus = async (req, res) => {
 
     console.log("exisTask =======>", JSON.stringify(exisTask, null, 2));
 
+
     await exisTask.update({ dueDate: followup_date }, { transaction });
 
     let [existUserCountry] = await db.userContries.update(

@@ -42,14 +42,9 @@ exports.getLeadHistory = async (req, res) => {
 
     if (isfilterAvailable) {
       finalisedHistory = leadHistory
-        .filter(
-          (history) =>
-            (history.country?.id === Number(countryId)) || 
-            (!history.country_id && !history.country)
-        )
+        .filter((history) => history.country?.id === Number(countryId) || (!history.country_id && !history.country))
         .sort((a, b) => new Date(b.updated_on) - new Date(a.updated_on));
     }
-    
 
     // Send the response
     res.status(200).json({
@@ -104,6 +99,60 @@ exports.addLeadHistory = async (req, res) => {
 
     // here i need to perform some complex tasks
     // For example, you can do something like this:
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong!",
+    });
+  }
+};
+
+exports.testData = async (req, res) => {
+  const userId = req.userDecodeId;
+  const leadId = 1;
+
+  try {
+    const tasks = await db.tasks.findAll({
+      attributes: ["id", "assigned_country"],
+      where: db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+      include: [
+        {
+          model: db.userPrimaryInfo,
+          as: "student_name",
+          attributes: ["id", "full_name"],
+          include: [
+            {
+              model: db.country,
+              as: "preferredCountries",
+              attributes: ["id", "country_name"],
+              through: {
+                model: db.userContries,
+                attributes: ["country_id", "followup_date", "status_id"],
+              },
+              required: true,
+              include: [
+                {
+                  model: db.status,
+                  as: "country_status",
+                  attributes: ["id", "status_name", "color"],
+                  required: false,
+                  through: {
+                    model: db.userContries,
+                    attributes: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      data: tasks,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({
