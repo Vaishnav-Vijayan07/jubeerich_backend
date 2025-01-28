@@ -709,6 +709,8 @@ exports.updateUserStatus = async (req, res) => {
   const { status_id, lead_id, followup_date, country_id } = req.body;
   const { userDecodeId: userId, role_name, role_id } = req;
 
+  console.log(country_id)
+
   // Start a transaction
   const transaction = await sequelize.transaction();
   try {
