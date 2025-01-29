@@ -46,7 +46,6 @@ exports.getStageData = (office_type, role_id) => {
 };
 
 exports.getEnumValue = async (tableName, field) => {
-  console.log(tableName, field);
 
   const query = `
     SELECT enumlabel AS value
@@ -64,55 +63,42 @@ exports.getEnumValue = async (tableName, field) => {
 exports.getDeleteCondition = (role_id, info, cre_id) => {
   switch (role_id) {
     case IdsFromEnv.IT_TEAM_ID.toString():
-      console.log(info.office_type);
       switch (info.office_type) {
         case Number(IdsFromEnv.CORPORATE_OFFICE_ID):
-          console.log("IT_TEAM======>", info.created_by === cre_id && info.assigned_cre === null);
           return info.created_by === cre_id && info.assigned_cre === null;
         case Number(IdsFromEnv.REGION_OFFICE_ID):
-          console.log("IT_TEAM - REGION======>", info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null);
           return info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null;
         case Number(IdsFromEnv.FRANCHISE_OFFICE_ID):
-          console.log("IT_TEAM - FRANCHISE======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
           return info.created_by === cre_id && info.stage !== stageDatas.kyc;
         default:
           return false;
       }
 
     case IdsFromEnv.CRE_TL_ID:
-      console.log("CRE_TL_ID======>", info.created_by === cre_id && info.assigned_cre === null);
       return info.created_by === cre_id && info.assigned_cre === null;
 
     case IdsFromEnv.CRE_ID.toString():
-      console.log("CRE_ID======>", info.created_by === cre_id && info.counselors.length === 0);
       return info.created_by === cre_id && info.counselors.length === 0;
 
     case IdsFromEnv.COUNSELLOR_ROLE_ID.toString():
-      console.log("COUNSELLOR_ROLE_ID======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
       return info.created_by === cre_id && info.stage !== stageDatas.kyc;
 
     case IdsFromEnv.COUNTRY_MANAGER_ID.toString():
-      console.log("COUNTRY_MANAGER_ID======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
       return info.created_by === cre_id && info.stage !== stageDatas.kyc;
 
     case IdsFromEnv.REGIONAL_MANAGER_ID.toString():
-      console.log("REGIONAL_MANAGER_ID======>", info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null);
       return info.created_by === cre_id && info.assigned_counsellor_tl === null && info.branch_id === null;
 
     case IdsFromEnv.COUNSELLOR_TL_ID.toString():
-      console.log("COUNSELLOR_TL_ID======>", info.created_by === cre_id && info.counsiler_id === null);
       return info.created_by === cre_id && info.counsiler_id === null;
 
     case IdsFromEnv.BRANCH_COUNSELLOR_ID.toString():
-      console.log("BRANCH_COUNSELLOR_ID======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
       return info.created_by === cre_id && info.stage !== stageDatas.kyc;
 
     case IdsFromEnv.FRANCHISE_COUNSELLOR_ID.toString():
-      console.log("FRANCHISE_COUNSELLOR_ID======>", info.created_by === cre_id && info.stage !== stageDatas.kyc);
       return info.created_by === cre_id && info.stage !== stageDatas.kyc;
 
     default:
-      console.log("Role ID:", role_id, role_id);
       return info.id === role_id;
   }
 };

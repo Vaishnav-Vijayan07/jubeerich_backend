@@ -109,49 +109,96 @@ exports.addLeadHistory = async (req, res) => {
 };
 
 exports.testData = async (req, res) => {
-  const userId = req.userDecodeId;
-  const leadId = 1;
-
   try {
-    const tasks = await db.tasks.findAll({
-      attributes: ["id", "assigned_country"],
-      where: db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+    const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, sort_level = "DESC", sort_by = "id" } = req.query;
+
+    console.log(req.query);
+
+    let officeWhere = {};
+    let countryWhere = {};
+    let sourceWhere = {};
+
+    if (office !== 0) {
+      officeWhere = {
+        id: office,
+      };
+    }
+
+    if (country !== 0) {
+      countryWhere = {
+        id: country,
+      };
+    }
+
+    if (source !== 0) {
+      sourceWhere = {
+        id: source,
+      };
+    }
+
+    const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+    const offset = (page - 1) * limit;
+    const parsedLimit = parseInt(limit, 10);
+    const sortOrder = [[sort_by, sort_level.toUpperCase()]];
+
+    const queryOptions = {
+      attributes: ["id", "full_name"],
       include: [
         {
-          model: db.userPrimaryInfo,
-          as: "student_name",
-          attributes: ["id", "full_name"],
-          include: [
-            {
-              model: db.country,
-              as: "preferredCountries",
-              attributes: ["id", "country_name"],
-              through: {
-                model: db.userContries,
-                attributes: ["country_id", "followup_date", "status_id"],
-              },
-              required: true,
-              include: [
-                {
-                  model: db.status,
-                  as: "country_status",
-                  attributes: ["id", "status_name", "color"],
-                  required: false,
-                  through: {
-                    model: db.userContries,
-                    attributes: [],
-                  },
-                },
-              ],
-            },
-          ],
+          model: db.officeType,
+          as: "office_type_name",
+          attributes: ["office_type_name"],
+          where : officeWhere,
+          required: true,
+        },
+        {
+          model: db.leadSource,
+          as: "source_name",
+          attributes: ["source_name"],
+          where:sourceWhere,
+          required: true,
+        },
+        {
+          model: db.country,
+          as: "preferredCountries",
+          attributes: [["id", "country_id"], "country_name"],
+          where : countryWhere,
+          through: {
+            model: db.userContries,
+            attributes: [],
+          },
+          required: true,
         },
       ],
-    });
+      order:sortOrder,
+      offset,
+      limit: parsedLimit,
+      order: sortOrder,
+      subQuery: false,
+    };
+
+    // Add search conditions only if keyword exists
+    if (keyword) {
+      queryOptions.where = {
+        [db.Op.or]: [
+          { full_name: { [db.Op.iLike]: dynamicIlike } },
+          { "$office_type_name.office_type_name$": { [db.Op.iLike]: dynamicIlike } },
+          { "$preferredCountries.country_name$": { [db.Op.iLike]: dynamicIlike } },
+        ],
+      };
+    }
+
+    const leads = await db.userPrimaryInfo.findAndCountAll(queryOptions);
+
+    console.log(leads.rows.length);
 
     res.status(200).json({
       success: true,
-      data: tasks,
+      data: "Success",
+      leads: leads.rows,
+      total: leads.count,
+      page,
+      limit: parsedLimit,
     });
   } catch (err) {
     console.log(err);
