@@ -249,6 +249,8 @@ router.get(
 );
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
+router.post("/validate_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignValidation);
+router.post("/approve_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignValidData);
 router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
 router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignBranchCounselors);
 router.post("/assign_counselor_tl", [authMiddleware.checkUserAuth], AssignLeadsController.assignCounselorTL);

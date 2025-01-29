@@ -667,6 +667,173 @@ exports.autoAssign = async (req, res) => {
   }
 };
 
+exports.autoAssignValidation = async (req, res) => {
+  const { leads_ids } = req.body;
+  const userId = req.userDecodeId;
+
+  if (!Array.isArray(leads_ids) || leads_ids.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "leads_ids must be a non-empty array",
+    });
+  }
+
+  if (!leads_ids.every((id) => typeof id === "number")) {
+    return res.status(400).json({
+      status: false,
+      message: "Each user_id must be a number",
+    });
+  }
+
+  try {
+    let validatedData = [];
+
+    const creList = await db.adminUsers.findAll({
+      attributes:
+        ["id", "name"],
+      where: {
+        [Sequelize.Op.or]: [{ role_id: process.env.CRE_ID }, { role_id: process.env.CRE_TL_ID }],
+        status: true,
+      },
+    });
+
+    let leastCre = await getLeastAssignedCre();
+
+    if (leastCre.length == 0) {
+      throw new Error("No available CREs to assign leads");
+    }
+
+    console.log("Initial leastCre:", leastCre);
+
+    for (const id of leads_ids) {
+      const userInfo = await UserPrimaryInfo.findOne({
+        where: { id },
+        include: {
+          model: db.country,
+          as: "preferredCountries",
+        },
+      });
+
+      const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
+
+      let currentCre = leastCre[0].user_id;
+
+      const dueDate = new Date();
+
+      const taskData = {
+        studentId: id,
+        full_name: userInfo.full_name,
+        email: userInfo.email,
+        phone: userInfo.phone,
+        city: userInfo.city,
+        country: countries,
+        assigned_cre: currentCre,
+        assign_type: "auto_assign",
+        lead_recieved_date: dueDate,
+        updatedBy: userId,
+      };
+
+      validatedData.push(taskData);
+
+      leastCre[0].assignment_count += 1;
+
+      leastCre.sort((a, b) => a.assignment_count - b.assignment_count);
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Leads assigned successfully",
+      assignedData: validatedData,
+      creList: creList
+    });
+
+  } catch (error) {
+    console.error("Error in autoAssign:", error);
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
+exports.autoAssignValidData = async (req, res) => {
+  const { lead_data } = req.body;
+  const userId = req.userDecodeId;
+
+  if (!Array.isArray(lead_data) || lead_data.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "No Leads Found",
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const updatePromises = lead_data.map(async (data, index) => {
+      const { studentId, assigned_cre } = data;
+
+      const userInfo = await UserPrimaryInfo.findOne({
+        where: studentId,
+        include: {
+          model: db.country,
+          as: "preferredCountries",
+        },
+      });
+
+      let formattedDesc = await createTaskDesc(userInfo, studentId);
+
+      if (!formattedDesc) {
+        return res.status(500).json({
+          status: false,
+          message: "Description error",
+        });
+      }
+
+      const countries = userInfo.preferredCountries.map((c) => c.country_code).join(", ") || "Unknown Country";
+
+      const dueDate = new Date();
+
+      const task = await db.tasks.upsert(
+        {
+          studentId: studentId,
+          userId: assigned_cre,
+          title: `${userInfo.full_name} - ${countries}`,
+          description: formattedDesc,
+          dueDate: dueDate,
+          updatedBy: userId,
+          assigned_country: userInfo.preferredCountries?.[0]?.id,
+        },
+        { transaction }
+      );
+      return UserPrimaryInfo.update(
+        {
+          assigned_cre: assigned_cre,
+          assign_type: "auto_assign",
+          updated_by: userId,
+        },
+        { where: { id: studentId }, transaction }
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    await transaction.commit();
+
+    res.status(200).json({
+      status: true,
+      message: "Leads assigned successfully",
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Error in autoAssign:", error);
+    res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
 const getLeastAssignedCre = async () => {
   try {
     // Fetch all CREs with their current assignment counts
