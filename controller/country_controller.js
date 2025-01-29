@@ -3,6 +3,7 @@ const Country = db.country;
 const { validationResult, check } = require("express-validator");
 const { getCountriesByType } = require("../raw/queries");
 const { getCountryData } = require("../utils/dashboard_controller_helpers");
+const { where, fn, col } = require("sequelize");
 
 // Validation rules for Country
 const countryValidationRules = [check("country_name").not().isEmpty().withMessage("Country name is required")];
@@ -175,6 +176,7 @@ exports.addCountry = [
     }
 
     const { country_name, isd, country_code } = req.body;
+    const userId = req.userDecodeId;
 
     try {
       // Check for existing country name
@@ -217,11 +219,14 @@ exports.addCountry = [
         }
       }
 
-      const newCountry = await Country.create({
-        country_name: country_name.trim(),
-        isd: isd ? isd.trim() : null,
-        country_code: country_code ? country_code.trim() : null,
-      });
+      const newCountry = await Country.create(
+        {
+          country_name: country_name.trim(),
+          isd: isd ? isd.trim() : null,
+          country_code: country_code ? country_code.trim() : null,
+        },
+        { userId }
+      );
 
       res.status(201).json({
         status: true,
@@ -250,6 +255,8 @@ exports.updateCountry = [
         errors: errors.array(),
       });
     }
+
+    const userId = req.userDecodeId;
 
     try {
       const country = await Country.findByPk(id);
@@ -310,7 +317,7 @@ exports.updateCountry = [
       };
 
       // Update the country
-      const updatedCountry = await country.update(updatedData);
+      const updatedCountry = await country.update(updatedData, { userId });
 
       res.status(200).json({
         status: true,
@@ -330,6 +337,7 @@ exports.updateCountry = [
 // Delete a country
 exports.deleteCountry = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const country = await Country.findByPk(id);
@@ -340,7 +348,7 @@ exports.deleteCountry = async (req, res) => {
       });
     }
 
-    await country.destroy();
+    await country.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "Country deleted successfully",
@@ -351,5 +359,55 @@ exports.deleteCountry = async (req, res) => {
       status: false,
       message: "An error occurred while processing your request. Please try again later.",
     });
+  }
+};
+
+// Controller to get all country changes from the history table
+exports.getCountryHistory = async (req, res) => {
+  try {
+    // Fetch all changes for the 'country' table
+    const tableChanges = await db.tableHistory.findAll({
+      where: { table_name: "country" },
+      attributes: [
+        "id",
+        "record_id",
+        "changed_by",
+        "change_type",
+        "changed_at",
+        "old_values",
+        "new_values",
+        "createdAt",
+        "updatedAt",
+      ],
+      order: [["changed_at", "DESC"]], // Sort by change date in descending order
+      include: [
+        {
+          model: db.adminUsers, // Assuming there's a 'User' model for the 'changed_by' field
+          as: "changedBy", // Alias for the association
+          attributes: ["id", "name", "email"], // Specify which fields to include from the 'User' model
+        },
+      ],
+    });
+
+    // If no history is found, return a 404 error
+    if (!tableChanges || tableChanges.length === 0) {
+      return res.status(404).json({ message: "No changes found for the country table" });
+    }
+
+    const formattedHistory = tableChanges.map((history) => {
+      return {
+        ...history.toJSON(),
+        changedBy: history.changedBy.name || null,
+      };
+    });
+
+    // Return the history of the country table
+    return res.status(200).json({
+      status: true,
+      data: formattedHistory,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error fetching country history", error: error.message });
   }
 };

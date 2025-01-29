@@ -73,6 +73,8 @@ db.eligibilityRemarks = require("./eligibilityRemarks")(sequelize, Sequelize);
 db.visaChecklistsMaster = require("./visa_checklists_master")(sequelize, Sequelize);
 db.visaChecklistFields = require("./visa_checklist_fields")(sequelize, Sequelize);
 db.visaConfiguration = require("./visa_configuration")(sequelize, Sequelize);
+db.tableHistory = require("./tableHistory")(sequelize, Sequelize);
+
 
 //Associations
 
@@ -793,6 +795,11 @@ db.visaChecklistsMaster.belongsToMany(db.country, {
 db.country.belongsToMany(db.visaChecklistsMaster, {
   through: "visa_configuration",
   foreignKey: "country_id",
+});
+
+db.tableHistory.belongsTo(db.adminUsers, {
+  foreignKey: 'changed_by',
+  as: 'changedBy',  // Alias for the association
 });
 
 module.exports = db;

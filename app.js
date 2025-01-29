@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 
 const routes = require("./routes");
+const tableHistoryRoutes = require("./routes/tableHistoryRoutes");
 
 const db = require("./models");
 
@@ -27,6 +28,8 @@ app.use("/uploads", express.static(path.join("uploads")));
 
 // Routes
 app.use("/api", routes);
+app.use("/api/history", tableHistoryRoutes); // Use the history routes
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
