@@ -221,7 +221,11 @@ exports.getTaskById = async (req, res) => {
 
     // Fetch the task by ID and ensure it belongs to the authenticated user
     const task = await db.tasks.findOne({
-      where: { id: id, userId: userId },
+      where: {
+        id,
+        userId,
+        [Op.and]: [db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country"))],
+      },
       include: [
         {
           model: db.userPrimaryInfo,

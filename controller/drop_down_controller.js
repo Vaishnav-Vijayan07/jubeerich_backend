@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const db = require("../models");
 
 const getDropdownData = async (req, res) => {
@@ -98,7 +99,7 @@ const getDropdownData = async (req, res) => {
         db.adminUsers.findAll({
           attributes: ["id", "name"],
           where: {
-            role_id: process.env.CRE_ID || process.env.CRE_TL_ID,
+            role_id:  {[Op.in]: [process.env.CRE_TL_ID, process.env.CRE_ID]},
             status: true
           },
         })

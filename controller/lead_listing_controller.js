@@ -111,7 +111,7 @@ exports.getLeads = async (req, res) => {
           foreignKey: "updated_by",
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -737,7 +737,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["created_at", "DESC"]],
+        order: [["id", "DESC"]],
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -795,7 +795,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["created_at", "DESC"]],
+        order: [["id", "DESC"]],
       });
     }
 
@@ -987,7 +987,7 @@ exports.getAllAssignedLeadsRegionalMangers = async (req, res) => {
           required: false,
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1212,7 +1212,7 @@ exports.geLeadsForCreTl = async (req, res) => {
       ],
       offset,
       limit: parsedLimit,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1514,6 +1514,7 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 
 exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
   const { page = 1, limit = 20, keyword } = req.query;
+  const roleId = req.role_id.toString();
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
@@ -1527,9 +1528,12 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
       attributes: ["id", "name"],
     });
 
+    const attributesByRole = getAttributesByRole(roleId);
+
     const userId = req.userDecodeId;
     const { count, rows } = await UserPrimaryInfo.findAndCountAll({
       distinct: true,
+      attributes: attributesByRole,
       where: {
         [db.Sequelize.Op.and]: [
           {
@@ -1614,7 +1618,7 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
       ],
       limit: parsedLimit,
       offset: offset,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1983,7 +1987,7 @@ exports.getAssignedLeadsForCounsellorTLOptiimised = async (req, res) => {
       ],
       offset: offset,
       limit: parsedLimit,
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -2156,7 +2160,7 @@ exports.geLeadsForCounsellorTL = async (req, res) => {
           required: false,
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["id", "DESC"]],
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
