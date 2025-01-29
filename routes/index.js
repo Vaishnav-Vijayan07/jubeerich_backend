@@ -54,7 +54,7 @@ const { getStudentFundPlanDetails, saveStudentPlanDetails } = require("../contro
 const { saveGapReason, getAllGapReasons } = require("../controller/gap_reason_controller");
 const { saveEmploymentHistory, getEmploymentHistory } = require("../controller/employment_history_controller");
 const { handleMulterError, uploadPoliceClearenceDocs } = require("../middleware/multer_error_handler");
-const { getLeadHistory, addLeadHistory } = require("../controller/lead_history_controller");
+const { getLeadHistory, addLeadHistory, testData } = require("../controller/lead_history_controller");
 const kycController = require("../controller/kyc_controller");
 const applicationController = require("../controller/application_controller");
 const { getAllTaskConfig, getTaskConfig, createOrUpdateTaskConfig } = require("../controller/master_data_controller");
@@ -70,6 +70,8 @@ const router = express.Router();
 //Lead histoy routes
 
 router.get("/lead_history/:id/:country", [authMiddleware.checkUserAuth], getLeadHistory);
+
+router.get("/test",[authMiddleware.checkUserAuth],testData )
 
 //post route for creating user history
 router.post("/lead_history", [authMiddleware.checkUserAuth], addLeadHistory);

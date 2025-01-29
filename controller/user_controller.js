@@ -709,6 +709,8 @@ exports.updateUserStatus = async (req, res) => {
   const { status_id, lead_id, followup_date, country_id } = req.body;
   const { userDecodeId: userId, role_name, role_id } = req;
 
+  console.log(country_id)
+
   // Start a transaction
   const transaction = await sequelize.transaction();
   try {
@@ -772,6 +774,7 @@ exports.updateUserStatus = async (req, res) => {
     const exisTask = await db.tasks.findOne({ where: { studentId: lead_id, userId: userId, assigned_country: country_id } });
 
     console.log("exisTask =======>", JSON.stringify(exisTask, null, 2));
+
 
     await exisTask.update({ dueDate: followup_date }, { transaction });
 

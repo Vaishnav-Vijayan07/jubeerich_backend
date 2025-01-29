@@ -109,7 +109,10 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "=", date),
+        [Op.and]: [
+          Sequelize.where(fn("DATE", col("dueDate")), "=", date),
+          db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+        ],
       },
       order: [["createdAt", "DESC"]],
     });
@@ -118,7 +121,10 @@ exports.getTasks = async (req, res) => {
       include: [mainInclude],
       where: {
         userId: userId,
-        [Op.and]: Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+        [Op.and]: [
+          Sequelize.where(fn("DATE", col("dueDate")), "<", date),
+          db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+        ],
         isCompleted: false,
       },
       order: [["createdAt", "DESC"]],
@@ -215,7 +221,11 @@ exports.getTaskById = async (req, res) => {
 
     // Fetch the task by ID and ensure it belongs to the authenticated user
     const task = await db.tasks.findOne({
-      where: { id: id, userId: userId },
+      where: {
+        id,
+        userId,
+        [Op.and]: [db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country"))],
+      },
       include: [
         {
           model: db.userPrimaryInfo,
