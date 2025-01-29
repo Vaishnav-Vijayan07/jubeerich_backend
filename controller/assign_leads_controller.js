@@ -729,7 +729,7 @@ exports.autoAssignValidation = async (req, res) => {
         country: countries,
         assigned_cre: currentCre,
         assign_type: "auto_assign",
-        lead_recieved_date: dueDate,
+        lead_received_date: userInfo.lead_received_date,
         updatedBy: userId,
       };
 
