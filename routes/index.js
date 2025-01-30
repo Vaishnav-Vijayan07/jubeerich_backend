@@ -553,4 +553,8 @@ router.post("/approve_auto_assign", [authMiddleware.checkUserAuth], autoAssignVa
 router.post("/validate_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplicationValidation);
 router.post("/approve_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApprovedData);
 
+// Check user has leads
+router.get("/check_user_leads/:id", [authMiddleware.checkUserAuth], AdminUserController.checkUserHasLeads);
+router.post("/reassign_leads", [authMiddleware.checkUserAuth], AdminUserController.reAssignLeadsToCRETL);
+
 module.exports = router;

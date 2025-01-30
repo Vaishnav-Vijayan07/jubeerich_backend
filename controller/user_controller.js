@@ -185,16 +185,18 @@ exports.createLead = async (req, res) => {
     }
 
     // Check if email already exists
-    const existingEmailUser = await UserPrimaryInfo.findOne({
-      where: { email },
-    });
-    if (existingEmailUser) {
-      await transaction.rollback(); // Rollback transaction if email is not unique
-      return res.status(400).json({
-        status: false,
-        message: "User with the same email already exists",
-        errors: [{ msg: "Email must be unique" }],
+    if(email){
+      const existingEmailUser = await UserPrimaryInfo.findOne({
+        where: { email },
       });
+      if (existingEmailUser) {
+        await transaction.rollback(); // Rollback transaction if email is not unique
+        return res.status(400).json({
+          status: false,
+          message: "User with the same email already exists",
+          errors: [{ msg: "Email must be unique" }],
+        });
+      }
     }
 
     const existingPhone = await UserPrimaryInfo.findOne({ where: { phone } });

@@ -626,3 +626,69 @@ exports.getAdminUsersById = (req, res, next) => {
       res.status(200).send({ message: error.toString() });
     });
 };
+
+
+exports.checkUserHasLeads = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const existLeads = await db.userPrimaryInfo.findAll({
+      where: {
+        assigned_cre: id,
+      },
+      attributes: ["id"],
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: `This user currently has ${existLeads?.length} assigned leads. 
+      Would you like to reassign them to the CRE Team Lead for better management?`,
+      user_id: id,
+      leadCount: existLeads?.length
+    });
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
+exports.reAssignLeadsToCRETL = async (req, res, next) => {
+  try {
+    const { id } = req.body;
+
+    const existLeads = await db.userPrimaryInfo.findAll({
+      where: {
+        assigned_cre: id,
+      },
+      attributes: ["id"],
+    });
+
+    if (!existLeads || existLeads.length == 0) {
+      return res.status(204).json({
+        status: true,
+        message: "Leads not found",
+        data: [],
+      });
+    }
+
+    await db.userPrimaryInfo.update(
+      { assigned_cre: null },
+      { where: { assigned_cre: id } }
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: 'Leads re-assigned successfully',
+    });
+
+  } catch (error) {
+    console.error(`Error in getting admin users: ${error}`);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
