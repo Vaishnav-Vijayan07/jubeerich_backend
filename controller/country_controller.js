@@ -71,98 +71,6 @@ exports.getCountryById = async (req, res) => {
   }
 };
 
-// // Add a new country
-// exports.addCountry = [
-//   // Validation middleware
-//   ...countryValidationRules,
-//   async (req, res) => {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "Validation failed",
-//         errors: errors.array(),
-//       });
-//     }
-
-//     const { country_name, isd, country_code } = req.body;
-
-//     try {
-//       const newCountry = await Country.create({
-//         country_name,
-//         isd,
-//         country_code,
-//       });
-//       res.status(201).json({
-//         status: true,
-//         message: "Country created successfully",
-//         data: newCountry,
-//       });
-//     } catch (error) {
-//       console.error(`Error creating country: ${error}`);
-//       res.status(500).json({
-//         status: false,
-//         message: "An error occurred while processing your request. Please try again later.",
-//       });
-//     }
-//   },
-// ];
-
-// // Update a country
-// exports.updateCountry = [
-//   // Validation middleware
-//   ...countryValidationRules,
-//   async (req, res) => {
-//     const id = parseInt(req.params.id);
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "Validation failed",
-//         errors: errors.array(),
-//       });
-//     }
-
-//     try {
-//       const country = await Country.findByPk(id);
-//       if (!country) {
-//         return res.status(404).json({
-//           status: false,
-//           message: "Country not found",
-//         });
-//       }
-
-//       // Prepare updated data
-//       const updatedData = {
-//         isd: req.body.isd ?? country.isd,
-//         country_code: req.body.country_code ?? country.country_code,
-//       };
-
-//       // Check if the country_name has changed and update the slug accordingly
-//       if (req.body.country_name && req.body.country_name !== country.country_name) {
-//         updatedData.country_name = req.body.country_name;
-//       } else {
-//         updatedData.country_name = req.body.country_name ?? country.country_name;
-//       }
-
-//       // Update the country with the prepared data
-//       const updatedCountry = await country.update(updatedData);
-
-//       res.status(200).json({
-//         status: true,
-//         message: "Country updated successfully",
-//         data: updatedCountry,
-//       });
-//     } catch (error) {
-//       console.error(`Error updating country: ${error}`);
-//       res.status(500).json({
-//         status: false,
-//         message: "An error occurred while processing your request. Please try again later.",
-//       });
-//     }
-//   },
-// ];
-
 exports.addCountry = [
   ...countryValidationRules,
   async (req, res) => {
@@ -365,6 +273,13 @@ exports.deleteCountry = async (req, res) => {
 // Controller to get all country changes from the history table
 exports.getCountryHistory = async (req, res) => {
   try {
+    const { tableName } = req.query;
+
+    // Validate table name
+    if (!tableName) {
+      return res.status(400).json({ status: false, message: "Table name is required" });
+    }
+
     // Fetch all changes for the 'country' table
     const tableChanges = await db.tableHistory.findAll({
       where: { table_name: "country" },
@@ -376,8 +291,8 @@ exports.getCountryHistory = async (req, res) => {
         "changed_at",
         "old_values",
         "new_values",
-        "createdAt",
-        "updatedAt",
+        // "createdAt",
+        // "updatedAt",
       ],
       order: [["changed_at", "DESC"]], // Sort by change date in descending order
       include: [
@@ -395,8 +310,15 @@ exports.getCountryHistory = async (req, res) => {
     }
 
     const formattedHistory = tableChanges.map((history) => {
+      const historyJson = history.toJSON();
+
+      const { createdAt, updatedAt, id, ...filteredOldValues } = historyJson.old_values || {};
+      const { createdAt: newCreatedAt, id: newId, updatedAt: newUpdatedAt, ...filteredNewValues } = historyJson.new_values || {};
+
       return {
-        ...history.toJSON(),
+        ...historyJson,
+        old_values: filteredOldValues,
+        new_values: filteredNewValues,
         changedBy: history.changedBy.name || null,
       };
     });

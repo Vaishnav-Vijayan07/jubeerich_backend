@@ -64,6 +64,7 @@ const { importAdminUsers } = require("../controller/data_import_controller");
 const { getChecksById, updateCheckRemarks } = require("../controller/checks_controller");
 
 const visaChecklistController = require("../controller/visa_checklist_controller");
+const { getTableHistoryByTableName } = require("../controller/table_history_controller");
 
 const router = express.Router();
 
@@ -543,6 +544,8 @@ router.delete("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], visa
 router.get("/get_visa_configurations", [authMiddleware.checkUserAuth], visaChecklistController.getVisaConfiguration);
 router.put("/configure_visa", [authMiddleware.checkUserAuth], visaChecklistController.configureVisa);
 router.get("/view_summary/:id", [authMiddleware.checkUserAuth], applicationController.viewSummary);
+
+router.get("/get_table_history", [authMiddleware.checkUserAuth], getTableHistoryByTableName);
 
 router.post("/import_admin_users", upload.single("file"), importAdminUsers);
 
