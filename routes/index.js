@@ -64,6 +64,7 @@ const { importAdminUsers } = require("../controller/data_import_controller");
 const { getChecksById, updateCheckRemarks } = require("../controller/checks_controller");
 
 const visaChecklistController = require("../controller/visa_checklist_controller");
+const { bulkUploadMultiValidation, bulkUploadMultiCore, autoAssignValidation, autoAssignValidData, autoAssignApplicationValidation, autoAssignApprovedData, getApprovalOptions } = require("../controller/validate_and_approve_controller");
 
 const router = express.Router();
 
@@ -249,8 +250,6 @@ router.get(
 );
 router.post("/assign_cres", [authMiddleware.checkUserAuth], AssignLeadsController.assignCres);
 router.post("/auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssign);
-router.post("/validate_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignValidation);
-router.post("/approve_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignValidData);
 router.post("/branch_auto_assign", [authMiddleware.checkUserAuth], AssignLeadsController.autoAssignBranchCounselors);
 router.post("/assign_branch_counselor", [authMiddleware.checkUserAuth], AssignLeadsController.assignBranchCounselors);
 router.post("/assign_counselor_tl", [authMiddleware.checkUserAuth], AssignLeadsController.assignCounselorTL);
@@ -287,9 +286,6 @@ router.put("/remove_flag_status/:id", [authMiddleware.checkUserAuth], UserContro
 // Excel Import route
 // router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
 // router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
-router.post("/validate_excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiValidation);
-router.post("/approve_leads", [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
-router.get("/get_slug_options", [authMiddleware.checkUserAuth], LeadImportController.getApprovalOptions);
 
 // Additional routes
 router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
@@ -521,8 +517,6 @@ router.post("/checks_remarks/:type/:application_id", [authMiddleware.checkUserAu
 router.get("/details_application/:type/:id", [authMiddleware.checkUserAuth], applicationController.getApplicationDetailsByType);
 router.patch("/assign_application", [authMiddleware.checkUserAuth], applicationController.assignApplication);
 router.patch("/auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApplication);
-router.patch("/validate_auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApplicationValidation);
-router.post("/approve_auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApprovedData);
 router.put("/check_application", [authMiddleware.checkUserAuth], applicationController.updateApplicationChecks);
 router.get("/details_checks", [authMiddleware.checkUserAuth], applicationController.getApplicationChecks);
 router.get("/portal_details/:id", [authMiddleware.checkUserAuth], applicationController.getPortalDetails);
@@ -549,5 +543,14 @@ router.put("/configure_visa", [authMiddleware.checkUserAuth], visaChecklistContr
 router.get("/view_summary/:id", [authMiddleware.checkUserAuth], applicationController.viewSummary);
 
 router.post("/import_admin_users", upload.single("file"), importAdminUsers);
+
+// Validate and Approve Leads
+router.get("/get_slug_options", [authMiddleware.checkUserAuth], getApprovalOptions);
+router.post("/validate_excel_import", upload.single("file"), [authMiddleware.checkUserAuth], bulkUploadMultiValidation);
+router.post("/approve_leads", [authMiddleware.checkUserAuth], bulkUploadMultiCore);
+router.post("/validate_auto_assign", [authMiddleware.checkUserAuth], autoAssignValidation);
+router.post("/approve_auto_assign", [authMiddleware.checkUserAuth], autoAssignValidData);
+router.post("/validate_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplicationValidation);
+router.post("/approve_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApprovedData);
 
 module.exports = router;
