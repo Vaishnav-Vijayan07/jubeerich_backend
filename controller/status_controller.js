@@ -194,6 +194,7 @@ exports.getStatusTypes = async (req, res) => {
   try {
     const statusTypes = await StatusType.findAll({
       attributes: ["id", "type_name", "priority"],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json({ success: true, data: statusTypes });
   } catch (error) {
@@ -213,7 +214,7 @@ exports.addStatusType = async (req, res) => {
     }
 
     const newStatusType = await StatusType.create({ type_name, priority }, { userId });
-    res.status(201).json({ success: true, data: newStatusType });
+    res.status(201).json({ success: true, message: "Status type added successfully", data: newStatusType });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error adding status type", error: error.message });
   }
@@ -234,7 +235,7 @@ exports.updateStatusType = async (req, res) => {
     }
 
     await statusType.update({ type_name, priority }, { userId });
-    res.status(200).json({ success: true, data: statusType });
+    res.status(200).json({ success: true, message: "Status type updated successfully", data: statusType });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error updating status type", error: error.message });
   }

@@ -4,10 +4,11 @@ const Source = db.leadSource;
 // Function to generate a unique slug
 async function generateUniqueSlug(name) {
   // Create a base slug with underscores and capitalize it
-  const baseSlug = name.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric characters with underscores
-    .replace(/(^_+|_+$)/g, '')   // Remove leading and trailing underscores
-    .toUpperCase();              // Capitalize the slug
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_") // Replace non-alphanumeric characters with underscores
+    .replace(/(^_+|_+$)/g, "") // Remove leading and trailing underscores
+    .toUpperCase(); // Capitalize the slug
 
   let uniqueSlug = baseSlug;
   let counter = 1;
@@ -28,8 +29,8 @@ exports.getAllSources = async (req, res) => {
       include: [
         {
           model: db.leadType,
-          as: 'leadType',
-          attributes: ['name'], // Include only the lead type name
+          as: "leadType",
+          attributes: ["name"], // Include only the lead type name
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -54,7 +55,6 @@ exports.getAllSources = async (req, res) => {
   }
 };
 
-
 // Get source by ID
 exports.getSourceById = async (req, res) => {
   const id = parseInt(req.params.id);
@@ -65,8 +65,8 @@ exports.getSourceById = async (req, res) => {
       include: [
         {
           model: db.leadType,
-          as: 'leadType',
-          attributes: ['name'], // Include only the lead type name
+          as: "leadType",
+          attributes: ["name"], // Include only the lead type name
         },
       ],
     });
@@ -93,7 +93,6 @@ exports.getSourceById = async (req, res) => {
   }
 };
 
-
 // Add a new source
 exports.addSource = async (req, res) => {
   const { source_name, source_description, lead_type_id } = req.body;
@@ -104,13 +103,16 @@ exports.addSource = async (req, res) => {
     const slug = await generateUniqueSlug(source_name);
 
     // Create the source
-    const newSource = await Source.create({
-      source_name,
-      source_description,
-      updated_by: userId, // Use userId as the updated_by value
-      slug, // Add slug here
-      lead_type_id, // Reference the lead type ID
-    });
+    const newSource = await Source.create(
+      {
+        source_name,
+        source_description,
+        updated_by: userId, // Use userId as the updated_by value
+        slug, // Add slug here
+        lead_type_id, // Reference the lead type ID
+      },
+      { userId }
+    );
 
     res.status(201).json({
       status: true,
@@ -151,7 +153,7 @@ exports.updateSource = async (req, res) => {
       updatedData.source_name = source_name || source.source_name;
     }
 
-    const updatedSource = await source.update(updatedData);
+    const updatedSource = await source.update(updatedData, { userId });
 
     res.status(200).json({
       message: "Source updated successfully",
@@ -166,6 +168,7 @@ exports.updateSource = async (req, res) => {
 // Delete a source
 exports.deleteSource = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   Source.findByPk(id)
     .then((source) => {
@@ -173,7 +176,8 @@ exports.deleteSource = (req, res) => {
         return res.status(404).json({ message: "Source not found" });
       }
 
-      source.destroy()
+      source
+        .destroy({ userId })
         .then(() => {
           res.status(200).json({ message: "Source deleted successfully" });
         })

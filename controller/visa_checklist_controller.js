@@ -22,6 +22,7 @@ exports.getAllVisaChecklists = async (req, res) => {
           attributes: ["field_name", "field_type"],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     res.status(200).json({ status: true, data: visaChecklists });
@@ -251,6 +252,7 @@ exports.getVisaConfiguration = async (req, res) => {
           attributes: ["id", "step_name"], // Adjust attributes as needed
         },
       ],
+      order: [["createdAt", "DESC"]]
     });
     res.send({
       message: "Countries with associated Visa Checklists retrieved successfully.",

@@ -147,6 +147,7 @@ exports.updateMaritalStatus = [
 // Delete a marital status
 exports.deleteMaritalStatus = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const maritalStatus = await MaritalStatus.findByPk(id);
@@ -157,7 +158,7 @@ exports.deleteMaritalStatus = async (req, res) => {
       });
     }
 
-    await maritalStatus.destroy();
+    await maritalStatus.destroy({userId});
     res.status(200).json({
       status: true,
       message: "Marital status deleted successfully",

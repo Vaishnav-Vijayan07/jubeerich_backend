@@ -101,7 +101,7 @@ exports.addAdminUsers = async (req, res) => {
         franchise_id,
         status,
       },
-      { transaction, userId }
+      { userId, transaction }
     );
 
     if (country_ids && Array.isArray(country_ids)) {
@@ -191,7 +191,7 @@ exports.updateAdminUsers = async (req, res) => {
     }
 
     // Find the user and update
-    const user = await db.adminUsers.findByPk(id, { transaction });
+    const user = await db.adminUsers.findByPk(id, { transaction, userId });
     if (!user) {
       await transaction.rollback(); // Rollback if user not found
       return res.status(204).json({ status: false, message: "Admin user not found" });

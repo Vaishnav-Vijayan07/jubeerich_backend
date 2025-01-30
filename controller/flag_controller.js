@@ -12,7 +12,9 @@ const flagValidationRules = [
 // Get all flags
 exports.getAllFlags = async (req, res) => {
   try {
-    const flags = await Flag.findAll();
+    const flags = await Flag.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     res.status(200).json({
       status: true,
       data: flags,

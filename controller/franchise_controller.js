@@ -45,6 +45,7 @@ exports.getAllFranchises = async (req, res) => {
           //   required: true, // This will perform a right join
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json({
       status: true,

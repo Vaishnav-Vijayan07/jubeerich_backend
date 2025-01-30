@@ -12,7 +12,7 @@ module.exports = (sequelize, Sequelize) => {
       type_name: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        unique: true,
+        unique: false,
       },
       priority: {
         type: Sequelize.INTEGER,
