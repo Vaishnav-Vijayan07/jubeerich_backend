@@ -529,10 +529,13 @@ exports.getAllLeadsOptimized = async (req, res) => {
   const roleId = req.role_id.toString();
   console.log("roleId", typeof roleId);
 
-  const { page = 1, limit = 20, keyword } = req.query;
+  const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, sort_level = "DESC", sort_by = "id" } = req.query;
 
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
+  const isSortApplied = sort_level !== "DESC" && sort_by !== "id"
+  const sortOrder = [[sort_by, sort_level.toUpperCase()]];
+
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
@@ -737,7 +740,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["id", "DESC"]],
+        order: sortOrder
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -795,7 +798,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: [["id", "DESC"]],
+        order: sortOrder
       });
     }
 
@@ -839,6 +842,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
       count,
       limit: limit,
       isSearchApplied,
+      isSortApplied
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);
