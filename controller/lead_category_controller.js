@@ -39,13 +39,17 @@ exports.getCategoryById = (req, res) => {
 // Add a new category
 exports.addCategory = (req, res) => {
   const { category_name, category_description, status, updated_by } = req.body;
+  const userId = req.userDecodeId;
 
-  Category.create({
-    category_name,
-    category_description,
-    status,
-    updated_by,
-  })
+  Category.create(
+    {
+      category_name,
+      category_description,
+      status,
+      updated_by,
+    },
+    { userId }
+  )
     .then((newCategory) => {
       res.status(201).json({
         status: true,
@@ -63,6 +67,7 @@ exports.addCategory = (req, res) => {
 exports.updateCategory = (req, res) => {
   const id = parseInt(req.params.id);
   const { category_name, category_description, status, updated_by } = req.body;
+  const userId = req.userDecodeId;
 
   Category.findByPk(id)
     .then((category) => {
@@ -71,12 +76,15 @@ exports.updateCategory = (req, res) => {
       }
 
       category
-        .update({
-          category_name,
-          category_description,
-          status,
-          updated_by,
-        })
+        .update(
+          {
+            category_name,
+            category_description,
+            status,
+            updated_by,
+          },
+          { userId }
+        )
         .then((updatedCategory) => {
           res.status(200).json({
             message: "Category updated successfully",
@@ -97,6 +105,7 @@ exports.updateCategory = (req, res) => {
 // Delete a category
 exports.deleteCategory = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   Category.findByPk(id)
     .then((category) => {
@@ -105,7 +114,7 @@ exports.deleteCategory = (req, res) => {
       }
 
       category
-        .destroy()
+        .destroy({ userId })
         .then(() => {
           res.status(200).json({ message: "Category deleted successfully" });
         })

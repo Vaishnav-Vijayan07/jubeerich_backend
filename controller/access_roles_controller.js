@@ -103,42 +103,22 @@ exports.getAccessRoleById = async (req, res) => {
   }
 };
 
-// Add a new access role
-// exports.createAccessRole = async (req, res) => {
-//   const { role_name, power_ids, updated_by } = req.body;
-
-//   try {
-//     const newRole = await AccessRoles.create({
-//       role_name,
-//       power_ids: power_ids.join(','),  // Join array to string if stored as CSV
-//       updated_by,
-//     });
-
-//     res.json({
-//       status: true,
-//       data: newRole,
-//     });
-//   } catch (error) {
-//     console.error("Error creating access role:", error);
-//     res.status(500).json({
-//       status: false,
-//       message: "An error occurred while processing your request. Please try again later.",
-//     });
-//   }
-// };
-
 exports.createAccessRole = async (req, res) => {
   const { role_name, power_ids, updated_by } = req.body;
+  const userId = req.userDecodeId;
 
   try {
     // Ensure power_ids is an array and join it into a string
     const powerIdsString = Array.isArray(power_ids) ? power_ids.join(",") : "";
 
-    const newRole = await AccessRoles.create({
-      role_name,
-      power_ids: powerIdsString,
-      updated_by,
-    });
+    const newRole = await AccessRoles.create(
+      {
+        role_name,
+        power_ids: powerIdsString,
+        updated_by,
+      },
+      { userId }
+    );
 
     res.json({
       status: true,
@@ -158,6 +138,7 @@ exports.createAccessRole = async (req, res) => {
 exports.updateAccessRole = async (req, res) => {
   const id = parseInt(req.params.id);
   const { role_name, power_ids, updated_by } = req.body;
+  const userId = req.userDecodeId;
 
   try {
     const role = await AccessRoles.findByPk(id);
@@ -169,11 +150,14 @@ exports.updateAccessRole = async (req, res) => {
       });
     }
 
-    const updatedRole = await role.update({
-      role_name,
-      power_ids: power_ids.join(","), // Join array to string if stored as CSV
-      updated_by,
-    });
+    const updatedRole = await role.update(
+      {
+        role_name,
+        power_ids: power_ids.join(","), // Join array to string if stored as CSV
+        updated_by,
+      },
+      { userId }
+    );
 
     res.json({
       status: true,
@@ -192,6 +176,7 @@ exports.updateAccessRole = async (req, res) => {
 // Delete an access role
 exports.deleteAccessRole = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const role = await AccessRoles.findByPk(id);
@@ -203,7 +188,7 @@ exports.deleteAccessRole = async (req, res) => {
       });
     }
 
-    await role.destroy();
+    await role.destroy({ userId });
 
     res.json({
       status: true,

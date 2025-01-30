@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const University = sequelize.define("university", {
     id: {
@@ -52,8 +54,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.BOOLEAN,
       allowNull: false,
       defaultValue: true,
-    }
+    },
   });
+
+  addHistoryTracking(University, "university");
 
   return University;
 };

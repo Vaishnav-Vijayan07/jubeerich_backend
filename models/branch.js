@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const Branch = sequelize.define("branch", {
     id: {
@@ -84,6 +86,9 @@ module.exports = (sequelize, Sequelize) => {
       defaultValue: true,
     },
   });
+
+  addHistoryTracking(Branch, 'branch');
+
 
   return Branch;
 };

@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const AccessRoles = sequelize.define("access_role", {
     id: {
@@ -21,6 +23,8 @@ module.exports = (sequelize, Sequelize) => {
       defaultValue: true,
     },
   });
+
+  addHistoryTracking(AccessRoles, "access_role");
 
   return AccessRoles;
 };

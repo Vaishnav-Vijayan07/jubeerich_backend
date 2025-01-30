@@ -1,3 +1,4 @@
+const addHistoryTracking = require("../mixins/historyMixin");
 module.exports = (sequelize, Sequelize) => {
   const LeadSource = sequelize.define("lead_source", {
     id: {
@@ -27,12 +28,15 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
-        model: 'lead_types',
-        key: 'id',
+        model: "lead_types",
+        key: "id",
       },
-      onDelete: 'SET NULL',
-      onUpdate: 'CASCADE', 
+      onDelete: "SET NULL",
+      onUpdate: "CASCADE",
     },
   });
+
+  addHistoryTracking(LeadSource, "lead_source");
+  
   return LeadSource;
 };

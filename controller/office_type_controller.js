@@ -85,15 +85,19 @@ exports.addOfficeType = [
     }
 
     const { office_type_name, office_type_description, updated_by } = req.body;
+    const userId = req.userDecodeId;
 
     try {
       const slug = await generateUniqueSlug(office_type_name, OfficeType);
-      const newOfficeType = await OfficeType.create({
-        office_type_name,
-        office_type_description,
-        slug, // Add the slug here
-        updated_by,
-      });
+      const newOfficeType = await OfficeType.create(
+        {
+          office_type_name,
+          office_type_description,
+          slug, // Add the slug here
+          updated_by,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Office type created successfully",
@@ -115,6 +119,7 @@ exports.updateOfficeType = [
   officeTypeValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -145,7 +150,7 @@ exports.updateOfficeType = [
         updatedData.slug = await generateUniqueSlug(req.body.office_type_name, OfficeType);
       }
 
-      const updatedOfficeType = await officeType.update(updatedData);
+      const updatedOfficeType = await officeType.update(updatedData, { userId });
 
       res.status(200).json({
         status: true,
@@ -165,6 +170,7 @@ exports.updateOfficeType = [
 // Delete an office type
 exports.deleteOfficeType = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const officeType = await OfficeType.findByPk(id);
@@ -175,7 +181,7 @@ exports.deleteOfficeType = async (req, res) => {
       });
     }
 
-    await officeType.destroy();
+    await officeType.destroy({userId});
     res.status(200).json({
       status: true,
       message: "Office type deleted successfully",

@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const AdminUser = sequelize.define("admin_user", {
     id: {
@@ -89,5 +91,7 @@ module.exports = (sequelize, Sequelize) => {
     },
   });
 
-  return AdminUser
+  addHistoryTracking(AdminUser, "admin_user");
+
+  return AdminUser;
 };

@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const Status = sequelize.define(
     "status",
@@ -38,5 +40,8 @@ module.exports = (sequelize, Sequelize) => {
       tableName: "status",
     }
   );
+
+  addHistoryTracking(Status, "status");
+  
   return Status;
 };

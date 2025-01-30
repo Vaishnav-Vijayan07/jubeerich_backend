@@ -58,11 +58,14 @@ exports.addCourseType = [
     const { type_name, description } = req.body;
 
     try {
-      const newCourseType = await CourseType.create({
-        type_name,
-        description,
-        updated_by: userId,
-      });
+      const newCourseType = await CourseType.create(
+        {
+          type_name,
+          description,
+          updated_by: userId,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Course type created successfully",
@@ -100,11 +103,14 @@ exports.updateCourseType = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedCourseType = await courseType.update({
-        type_name: req.body.type_name ?? courseType.type_name,
-        description: req.body.description ?? courseType.description,
-        updated_by: userId,
-      });
+      const updatedCourseType = await courseType.update(
+        {
+          type_name: req.body.type_name ?? courseType.type_name,
+          description: req.body.description ?? courseType.description,
+          updated_by: userId,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -123,6 +129,7 @@ exports.updateCourseType = [
 // Delete a course type
 exports.deleteCourseType = async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const userId = req.userDecodeId;
 
   try {
     const courseType = await CourseType.findByPk(id);
@@ -130,7 +137,7 @@ exports.deleteCourseType = async (req, res) => {
       return res.status(404).json({ status: false, message: "Course type not found" });
     }
 
-    await courseType.destroy();
+    await courseType.destroy({ userId });
     res.status(200).json({ status: true, message: "Course type deleted successfully" });
   } catch (error) {
     console.error(`Error deleting course type: ${error}`);

@@ -79,16 +79,20 @@ exports.addStatus = [
       });
     }
 
+    const userId = req.userDecodeId;
     const { status_name, status_description, color, type_id, updated_by } = req.body;
 
     try {
-      const newStatus = await Status.create({
-        status_name,
-        status_description,
-        color,
-        type_id,
-        updated_by,
-      });
+      const newStatus = await Status.create(
+        {
+          status_name,
+          status_description,
+          color,
+          type_id,
+          updated_by,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Status created successfully",
@@ -110,6 +114,8 @@ exports.updateStatus = [
   ...statusValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -129,13 +135,16 @@ exports.updateStatus = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedStatus = await status.update({
-        status_name: req.body.status_name ?? status.status_name,
-        status_description: req.body.status_description ?? status.status_description,
-        color: req.body.color ?? status.color,
-        type_id: req.body.type_id ?? status.type_id,
-        updated_by: req.body.updated_by ?? status.updated_by,
-      });
+      const updatedStatus = await status.update(
+        {
+          status_name: req.body.status_name ?? status.status_name,
+          status_description: req.body.status_description ?? status.status_description,
+          color: req.body.color ?? status.color,
+          type_id: req.body.type_id ?? status.type_id,
+          updated_by: req.body.updated_by ?? status.updated_by,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -155,6 +164,7 @@ exports.updateStatus = [
 // Delete a status
 exports.deleteStatus = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const status = await Status.findByPk(id);
@@ -165,7 +175,7 @@ exports.deleteStatus = async (req, res) => {
       });
     }
 
-    await status.destroy();
+    await status.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "Status deleted successfully",
@@ -195,13 +205,14 @@ exports.getStatusTypes = async (req, res) => {
 exports.addStatusType = async (req, res) => {
   try {
     const { type_name, priority } = req.body;
+    const userId = req.userDecodeId;
 
     if (!type_name || priority === undefined) {
       res.status(400).json({ success: false, message: "type_name and priority are required" });
       return;
     }
 
-    const newStatusType = await StatusType.create({ type_name, priority });
+    const newStatusType = await StatusType.create({ type_name, priority }, { userId });
     res.status(201).json({ success: true, data: newStatusType });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error adding status type", error: error.message });
@@ -213,6 +224,7 @@ exports.updateStatusType = async (req, res) => {
   try {
     const { id } = req.params;
     const { type_name, priority } = req.body;
+    const userId = req.userDecodeId;
 
     const statusType = await StatusType.findByPk(id);
 
@@ -221,7 +233,7 @@ exports.updateStatusType = async (req, res) => {
       return;
     }
 
-    await statusType.update({ type_name, priority });
+    await statusType.update({ type_name, priority }, { userId });
     res.status(200).json({ success: true, data: statusType });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error updating status type", error: error.message });
@@ -232,6 +244,7 @@ exports.updateStatusType = async (req, res) => {
 exports.deleteStatusType = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.userDecodeId;
 
     const statusType = await StatusType.findByPk(id);
 
@@ -240,7 +253,7 @@ exports.deleteStatusType = async (req, res) => {
       return;
     }
 
-    await statusType.destroy();
+    await statusType.destroy({ userId });
     res.status(200).json({ success: true, message: "Status type deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error deleting status type", error: error.message });

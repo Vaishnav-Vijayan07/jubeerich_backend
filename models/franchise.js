@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
     const Franchise = sequelize.define(
       "franchise",
@@ -50,6 +52,9 @@ module.exports = (sequelize, Sequelize) => {
         timestamps: true, // Adjust as needed for createdAt and updatedAt fields
       }
     );
+
+  addHistoryTracking(Franchise, "franchise");
+
   
     return Franchise;
   };

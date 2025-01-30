@@ -12,7 +12,11 @@ const regionValidationRules = [
 
 // Utility function to generate a unique slug
 async function generateUniqueSlug(name, model) {
-  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '').toUpperCase();
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/(^_|_$)/g, "")
+    .toUpperCase();
   let uniqueSlug = baseSlug;
   let counter = 1;
 
@@ -34,15 +38,15 @@ exports.getAllRegions = async (req, res) => {
           as: "regional_manager",
           attributes: ["name"],
         },
-      ]
+      ],
     });
 
     // Map through the regions to format the response properly
-    const modifiedResponse = regions.map(region => {
+    const modifiedResponse = regions.map((region) => {
       const regionData = region.toJSON();
       return {
         ...regionData,
-        regional_manager: regionData.regional_manager ? regionData.regional_manager.name : null
+        regional_manager: regionData.regional_manager ? regionData.regional_manager.name : null,
       };
     });
 
@@ -98,16 +102,20 @@ exports.addRegion = [
     }
 
     const { region_name, region_description, updated_by, regional_manager_id } = req.body;
+    const userId = req.userDecodeId;
 
     try {
       const slug = await generateUniqueSlug(region_name, Region);
-      const newRegion = await Region.create({
-        region_name,
-        region_description,
-        regional_manager_id,
-        updated_by,
-        slug, // Add the slug here
-      });
+      const newRegion = await Region.create(
+        {
+          region_name,
+          region_description,
+          regional_manager_id,
+          updated_by,
+          slug, // Add the slug here
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Region created successfully",
@@ -129,6 +137,7 @@ exports.updateRegion = [
   ...regionValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -159,7 +168,7 @@ exports.updateRegion = [
         updatedData.slug = await generateUniqueSlug(req.body.region_name, Region);
       }
 
-      const updatedRegion = await region.update(updatedData);
+      const updatedRegion = await region.update(updatedData, { userId });
 
       res.status(200).json({
         status: true,
@@ -179,6 +188,7 @@ exports.updateRegion = [
 // Delete a region
 exports.deleteRegion = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const region = await Region.findByPk(id);
@@ -189,7 +199,7 @@ exports.deleteRegion = async (req, res) => {
       });
     }
 
-    await region.destroy();
+    await region.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "Region deleted successfully",

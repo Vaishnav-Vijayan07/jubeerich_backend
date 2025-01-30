@@ -2,10 +2,11 @@ const db = require("../models");
 const Channel = db.leadChannel;
 
 async function generateUniqueSlug(name) {
-  const baseSlug = name.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/(^_+|_+$)/g, '') 
-    .toUpperCase();         
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/(^_+|_+$)/g, "")
+    .toUpperCase();
 
   let uniqueSlug = baseSlug;
   let counter = 1;
@@ -80,19 +81,23 @@ exports.getChannelById = (req, res) => {
 // Add a new channel
 exports.addChannel = async (req, res) => {
   const { source_id, channel_name, channel_description, updated_by } = req.body;
+  const userId = req.userDecodeId;
 
   try {
     // Generate the slug
     const slug = await generateUniqueSlug(channel_name);
 
     // Create the channel
-    const newChannel = await Channel.create({
-      source_id,
-      channel_name,
-      channel_description,
-      updated_by,
-      slug, // Add slug here
-    });
+    const newChannel = await Channel.create(
+      {
+        source_id,
+        channel_name,
+        channel_description,
+        updated_by,
+        slug, // Add slug here
+      },
+      { userId }
+    );
 
     res.status(201).json({
       status: true,
@@ -108,6 +113,7 @@ exports.addChannel = async (req, res) => {
 // Update a channel
 exports.updateChannel = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
   const { source_id, channel_name, channel_description, updated_by } = req.body;
 
   Channel.findByPk(id)
@@ -132,7 +138,7 @@ exports.updateChannel = (req, res) => {
       }
 
       channel
-        .update(updatedData)
+        .update(updatedData, { userId })
         .then((updatedChannel) => {
           res.status(200).json({
             message: "Channel updated successfully",
@@ -153,6 +159,7 @@ exports.updateChannel = (req, res) => {
 // Delete a channel
 exports.deleteChannel = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   Channel.findByPk(id)
     .then((channel) => {
@@ -161,7 +168,7 @@ exports.deleteChannel = (req, res) => {
       }
 
       channel
-        .destroy()
+        .destroy({ userId })
         .then(() => {
           res.status(200).json({ message: "Channel deleted successfully" });
         })

@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const AccessPowers = sequelize.define("access_power", {
     id: {
@@ -18,5 +20,8 @@ module.exports = (sequelize, Sequelize) => {
       defaultValue: true,
     },
   });
+
+  addHistoryTracking(AccessPowers, "access_power");
+
   return AccessPowers;
 };

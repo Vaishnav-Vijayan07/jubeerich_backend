@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const addHistoryTracking = require("../mixins/historyMixin");
 
 module.exports = (sequelize, Sequelize) => {
   const LeadChannel = sequelize.define("lead_channel", {
@@ -35,6 +35,7 @@ module.exports = (sequelize, Sequelize) => {
     },
   });
 
+  addHistoryTracking(LeadChannel, "lead_channel");
 
   return LeadChannel;
 };

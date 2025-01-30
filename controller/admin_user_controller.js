@@ -25,6 +25,8 @@ const handleConflict = (conflicts) => {
 };
 
 exports.addAdminUsers = async (req, res) => {
+  const userId = req.userDecodeId;
+
   const {
     employee_id,
     name,
@@ -99,7 +101,7 @@ exports.addAdminUsers = async (req, res) => {
         franchise_id,
         status,
       },
-      { transaction }
+      { transaction, userId }
     );
 
     if (country_ids && Array.isArray(country_ids)) {
@@ -127,6 +129,8 @@ exports.addAdminUsers = async (req, res) => {
 };
 
 exports.updateAdminUsers = async (req, res) => {
+  const userId = req.userDecodeId;
+
   const id = parseInt(req.params.id);
   const {
     employee_id,
@@ -211,7 +215,7 @@ exports.updateAdminUsers = async (req, res) => {
     };
 
     // Update the admin user
-    await user.update(updateData, { transaction });
+    await user.update(updateData, { transaction, userId });
 
     if (country_ids && Array.isArray(country_ids)) {
       // First, remove existing countries (this will clear the current relationship)
@@ -235,6 +239,8 @@ exports.updateAdminUsers = async (req, res) => {
 
 exports.deleteAdminUsers = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
+
 
   try {
     // Find the admin user by ID
@@ -250,7 +256,7 @@ exports.deleteAdminUsers = async (req, res) => {
     await db.accessRoles.update({ updated_by: null }, { where: { updated_by: id } });
 
     // Delete the admin user
-    await user.destroy();
+    await user.destroy({ userId });
 
     res.json({
       status: true,

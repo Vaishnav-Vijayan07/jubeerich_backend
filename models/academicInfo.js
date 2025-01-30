@@ -1,3 +1,4 @@
+// const addHistoryTracking = require("../mixins/historyMixin");
 module.exports = (sequelize, Sequelize) => {
   const AcademicInfo = sequelize.define("academic_infos", {
     id: {
@@ -37,6 +38,8 @@ module.exports = (sequelize, Sequelize) => {
       onDelete: "SET NULL", // Optional: Set foreign key to null on referenced table deletions
     },
   });
+
+  // addHistoryTracking(AcademicInfo, 'academic_infos');
 
   return AcademicInfo;
 };

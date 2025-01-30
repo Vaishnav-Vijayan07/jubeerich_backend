@@ -5,14 +5,8 @@ const { validationResult, check } = require("express-validator");
 // Validation rules for Stream
 const streamValidationRules = [
   check("stream_name").not().isEmpty().withMessage("Stream name is required"),
-  check("stream_description")
-    .optional()
-    .isString()
-    .withMessage("Stream description must be a string"),
-  check("updated_by")
-    .optional()
-    .isInt()
-    .withMessage("Updated by must be an integer"),
+  check("stream_description").optional().isString().withMessage("Stream description must be a string"),
+  check("updated_by").optional().isInt().withMessage("Updated by must be an integer"),
 ];
 
 // Get all streams
@@ -39,9 +33,7 @@ exports.getStreamById = async (req, res) => {
   try {
     const stream = await Stream.findByPk(id);
     if (!stream) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Stream not found" });
+      return res.status(404).json({ status: false, message: "Stream not found" });
     }
     res.status(200).json({ status: true, data: stream });
   } catch (error) {
@@ -65,13 +57,17 @@ exports.addStream = [
     }
 
     const { stream_name, stream_description, updated_by } = req.body;
+    const userId = req.userDecodeId;
 
     try {
-      const newStream = await Stream.create({
-        stream_name,
-        stream_description,
-        updated_by,
-      });
+      const newStream = await Stream.create(
+        {
+          stream_name,
+          stream_description,
+          updated_by,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Stream created successfully",
@@ -79,7 +75,9 @@ exports.addStream = [
       });
     } catch (error) {
       console.error(`Error creating stream: ${error}`);
-      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+      res
+        .status(500)
+        .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -90,6 +88,8 @@ exports.updateStream = [
   ...streamValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id, 10);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -102,18 +102,18 @@ exports.updateStream = [
     try {
       const stream = await Stream.findByPk(id);
       if (!stream) {
-        return res
-          .status(404)
-          .json({ status: false, message: "Stream not found" });
+        return res.status(404).json({ status: false, message: "Stream not found" });
       }
 
       // Update only the fields that are provided in the request body
-      const updatedStream = await stream.update({
-        stream_name: req.body.stream_name ?? stream.stream_name,
-        stream_description:
-          req.body.stream_description ?? stream.stream_description,
-        updated_by: req.body.updated_by ?? stream.updated_by,
-      });
+      const updatedStream = await stream.update(
+        {
+          stream_name: req.body.stream_name ?? stream.stream_name,
+          stream_description: req.body.stream_description ?? stream.stream_description,
+          updated_by: req.body.updated_by ?? stream.updated_by,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -122,7 +122,9 @@ exports.updateStream = [
       });
     } catch (error) {
       console.error(`Error updating stream: ${error}`);
-      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+      res
+        .status(500)
+        .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -130,19 +132,16 @@ exports.updateStream = [
 // Delete a stream
 exports.deleteStream = async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const userId = req.userDecodeId;
 
   try {
     const stream = await Stream.findByPk(id);
     if (!stream) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Stream not found" });
+      return res.status(404).json({ status: false, message: "Stream not found" });
     }
 
-    await stream.destroy();
-    res
-      .status(200)
-      .json({ status: true, message: "Stream deleted successfully" });
+    await stream.destroy({ userId });
+    res.status(200).json({ status: true, message: "Stream deleted successfully" });
   } catch (error) {
     console.error(`Error deleting stream: ${error}`);
     res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
