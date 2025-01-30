@@ -531,11 +531,32 @@ exports.getAllLeadsOptimized = async (req, res) => {
 
   const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, sort_level = "DESC", sort_by = "id" } = req.query;
 
+  let officeWhere = {};
+  let countryWhere = {};
+  let sourceWhere = {};
+
+  if (office !== 0) {
+    officeWhere = {
+      id: office,
+    };
+  }
+
+  if (country !== 0) {
+    countryWhere = {
+      id: country,
+    };
+  }
+
+  if (source !== 0) {
+    sourceWhere = {
+      id: source,
+    };
+  }
+
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
-  const isSortApplied = sort_level !== "DESC" && sort_by !== "id"
+  const isSortApplied = sort_level !== "DESC" && sort_by !== "id";
   const sortOrder = [[sort_by, sort_level.toUpperCase()]];
-
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
@@ -602,7 +623,10 @@ exports.getAllLeadsOptimized = async (req, res) => {
         is_deleted: false,
         [Op.and]: [
           {
-            [Op.or]: [{ full_name: { [Op.iLike]: `%${dynamicIlike}%` } }, { email: { [Op.iLike]: `%${dynamicIlike}%` } }],
+            [db.Op.or]: [
+              { full_name: { [db.Op.iLike]: dynamicIlike } },
+              { email : { [db.Op.iLike]: dynamicIlike }},
+            ],
           },
         ],
       };
@@ -612,7 +636,11 @@ exports.getAllLeadsOptimized = async (req, res) => {
     case process.env.COUNTRY_MANAGER_ID:
       mainWhereCondition = {
         is_deleted: false,
-        [Op.or]: [{ full_name: { [Op.iLike]: dynamicIlike } }, { email: { [Op.iLike]: dynamicIlike } }],
+        [db.Op.or]: [
+          { full_name: { [db.Op.iLike]: dynamicIlike } },
+          { "$office_type_name.office_type_name$": { [db.Op.iLike]: dynamicIlike } },
+          { "$preferredCountries.country_name$": { [db.Op.iLike]: dynamicIlike } },
+        ],
         [Op.or]: [
           dynamicDependancy,
           { created_by: cre_id },
@@ -637,7 +665,10 @@ exports.getAllLeadsOptimized = async (req, res) => {
             [Op.or]: [dynamicDependancy, { created_by: cre_id }, dynamicDependancyLiteral],
           },
           {
-            [Op.or]: [{ full_name: { [Op.iLike]: `%${dynamicIlike}%` } }, { email: { [Op.iLike]: `%${dynamicIlike}%` } }],
+            [db.Op.or]: [
+              { full_name: { [db.Op.iLike]: dynamicIlike } },
+              { email : { [db.Op.iLike]: dynamicIlike }},
+            ],
           },
         ],
       };
@@ -740,7 +771,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder
+        order: sortOrder,
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -752,16 +783,18 @@ exports.getAllLeadsOptimized = async (req, res) => {
             model: db.leadSource,
             as: "source_name",
             attributes: ["source_name"],
+            where: sourceWhere,
           },
           {
             model: db.country,
             as: "preferredCountries",
             attributes: ["id", "country_name"],
+            where: countryWhere,
             through: {
               model: db.userContries,
-              attributes: ["country_id", "followup_date", "status_id"],
+              attributes: [],
             },
-            required: false,
+            required: true,
             include: [
               {
                 model: db.status,
@@ -780,6 +813,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
             model: db.officeType,
             as: "office_type_name",
             attributes: ["office_type_name"],
+            where: officeWhere,
           },
           ...dynamicInclude,
           {
@@ -798,7 +832,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder
+        order: sortOrder,
       });
     }
 
@@ -842,7 +876,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
       count,
       limit: limit,
       isSearchApplied,
-      isSortApplied
+      isSortApplied,
     });
   } catch (error) {
     console.error(`Error fetching user primary info: ${error}`);

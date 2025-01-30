@@ -143,34 +143,35 @@ exports.testData = async (req, res) => {
 
     const queryOptions = {
       attributes: ["id", "full_name"],
+      distinct : true,
       include: [
         {
           model: db.officeType,
           as: "office_type_name",
           attributes: ["office_type_name"],
-          where : officeWhere,
+          where: officeWhere,
           required: true,
         },
         {
           model: db.leadSource,
           as: "source_name",
           attributes: ["source_name"],
-          where:sourceWhere,
+          where: sourceWhere,
           required: true,
         },
         {
           model: db.country,
           as: "preferredCountries",
           attributes: [["id", "country_id"], "country_name"],
-          where : countryWhere,
+          where: countryWhere,
           through: {
             model: db.userContries,
-            attributes: [],
+            attributes: ["country_id", "followup_date", "status_id"],
           },
           required: true,
         },
       ],
-      order:sortOrder,
+      order: sortOrder,
       offset,
       limit: parsedLimit,
       order: sortOrder,
@@ -182,8 +183,6 @@ exports.testData = async (req, res) => {
       queryOptions.where = {
         [db.Op.or]: [
           { full_name: { [db.Op.iLike]: dynamicIlike } },
-          { "$office_type_name.office_type_name$": { [db.Op.iLike]: dynamicIlike } },
-          { "$preferredCountries.country_name$": { [db.Op.iLike]: dynamicIlike } },
         ],
       };
     }
