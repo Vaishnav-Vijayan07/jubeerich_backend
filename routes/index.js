@@ -64,6 +64,7 @@ const { importAdminUsers } = require("../controller/data_import_controller");
 const { getChecksById, updateCheckRemarks } = require("../controller/checks_controller");
 
 const visaChecklistController = require("../controller/visa_checklist_controller");
+const { bulkUploadMultiValidation, bulkUploadMultiCore, autoAssignValidation, autoAssignValidData, autoAssignApplicationValidation, autoAssignApprovedData, getApprovalOptions } = require("../controller/validate_and_approve_controller");
 const { getTableHistoryByTableName } = require("../controller/table_history_controller");
 
 const router = express.Router();
@@ -286,9 +287,6 @@ router.put("/remove_flag_status/:id", [authMiddleware.checkUserAuth], UserContro
 // Excel Import route
 // router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUpload);
 // router.post("/excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
-router.post("/validate_excel_import", upload.single("file"), [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiValidation);
-router.post("/approve_leads", [authMiddleware.checkUserAuth], LeadImportController.bulkUploadMultiCore);
-router.get("/get_slug_options", [authMiddleware.checkUserAuth], LeadImportController.getApprovalOptions);
 
 // Additional routes
 router.get("/regional_managers", [authMiddleware.checkUserAuth], RegionController.getAllRegionalManagers);
@@ -548,5 +546,14 @@ router.get("/view_summary/:id", [authMiddleware.checkUserAuth], applicationContr
 router.get("/get_table_history", [authMiddleware.checkUserAuth], getTableHistoryByTableName);
 
 router.post("/import_admin_users", upload.single("file"), importAdminUsers);
+
+// Validate and Approve Leads
+router.get("/get_slug_options", [authMiddleware.checkUserAuth], getApprovalOptions);
+router.post("/validate_excel_import", upload.single("file"), [authMiddleware.checkUserAuth], bulkUploadMultiValidation);
+router.post("/approve_leads", [authMiddleware.checkUserAuth], bulkUploadMultiCore);
+router.post("/validate_auto_assign", [authMiddleware.checkUserAuth], autoAssignValidation);
+router.post("/approve_auto_assign", [authMiddleware.checkUserAuth], autoAssignValidData);
+router.post("/validate_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApplicationValidation);
+router.post("/approve_auto_assign_application", [authMiddleware.checkUserAuth], autoAssignApprovedData);
 
 module.exports = router;

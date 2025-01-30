@@ -392,7 +392,7 @@ const getLeastAssignedApplicationMember = async () => {
           "ASC",
         ],
       ],
-      limit: 1,
+      // limit: 1,
     });
 
     if (!leastAssignedMember) return null;
