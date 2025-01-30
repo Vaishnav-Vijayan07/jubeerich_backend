@@ -703,8 +703,6 @@ exports.autoAssignValidation = async (req, res) => {
       throw new Error("No available CREs to assign leads");
     }
 
-    console.log("Initial leastCre:", leastCre);
-
     for (const id of leads_ids) {
       const userInfo = await UserPrimaryInfo.findOne({
         where: { id },

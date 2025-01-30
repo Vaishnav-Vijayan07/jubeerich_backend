@@ -285,6 +285,180 @@ exports.autoAssignApplication = async (req, res, next) => {
   }
 };
 
+exports.autoAssignApplicationValidation = async (req, res) => {
+  const { application_ids } = req.body;
+
+  if (!Array.isArray(application_ids) || application_ids.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "application_ids must be a non-empty array",
+    });
+  }
+
+  if (!application_ids.every((id) => typeof id === "number")) {
+    return res.status(400).json({
+      status: false,
+      message: "Each application_id must be a number",
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+  
+  try {
+    let validatedData = [];
+
+    const teamMembers = await db.adminUsers.findAll({
+      attributes: ["id", "username"],
+      where: {
+        [Sequelize.Op.or]: [
+          { role_id: process.env.APPLICATION_TEAM_ID },
+          { role_id: process.env.APPLICATION_MANAGER_ID }
+        ],
+        status: true,
+      },
+      transaction,
+    });
+
+    let leastAssignedUsers = await getLeastAssignedApplicationMembersList();
+
+    if (leastAssignedUsers.length === 0) {
+      throw new Error("No available members to assign applications");
+    }
+
+    const applications = await db.application.findAll({
+      where: { id: { [Sequelize.Op.in]: application_ids } },
+      attributes: ["id", "studyPrefernceId", "counsellor_id"],
+      include: [
+      {
+        model: db.studyPreferenceDetails,
+        as: "studyPreferenceDetails",
+        attributes: ["id"],
+        include: [
+          {
+          model: db.studyPreference,
+          as: "studyPreference",
+          attributes: ["id"],
+          include: [
+            {
+              model: db.userPrimaryInfo,
+              as: "userPrimaryInfo",
+              attributes: ["id", "full_name", "lead_received_date"],
+           },
+           {
+              model: db.country,
+              as: "country",
+              attributes: ["country_name"],
+           }
+          ],
+        },
+        {
+          model: db.university,
+          attributes: ["id", "university_name"], 
+          as: "preferred_university",
+        },
+        {
+          model: db.campus,
+          attributes: ["id", "campus_name"],
+          as: "preferred_campus",
+        },
+        {
+          model: db.course,
+          attributes: ["id", "course_name"],
+          as: "preferred_courses",
+        }
+      ],
+      },
+      {
+        model: db.adminUsers,
+        attributes: ["id", "name"],
+        as: "counsellor",
+      }
+    ],
+    }, { transaction });
+
+    if (applications.length !== application_ids.length) {
+      throw new Error("One or more applications not found");
+    }
+
+    for (const app of applications) {
+      let currentAssignee = leastAssignedUsers[0].user_id;
+
+      const assignmentData = {
+        application_id: app.id,
+        full_name: app.studyPreferenceDetails.studyPreference.userPrimaryInfo.full_name,
+        counsellor: app.counsellor.name,
+        lead_received_date: app.studyPreferenceDetails.studyPreference.userPrimaryInfo.lead_received_date,
+        assigned_to: currentAssignee,
+        university_name: app.studyPreferenceDetails.preferred_university.university_name,
+        campus_name: app.studyPreferenceDetails.preferred_campus.campus_name,
+        course_name: app.studyPreferenceDetails.preferred_courses.course_name,
+        country: app.studyPreferenceDetails.studyPreference.country.country_name,
+        assigned_by: req.userDecodeId,
+      };
+
+      validatedData.push(assignmentData);
+
+      leastAssignedUsers[0].assignment_count += 1;
+
+      leastAssignedUsers.sort((a, b) => a.assignment_count - b.assignment_count);
+    }
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Applications assigned successfully",
+      assignedData: validatedData,
+      teamMembers,
+    });
+  } catch (error) {
+    if (transaction) await transaction.rollback();
+    console.error("Error in autoAssignApplicationValidation:", error.message || error);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
+exports.autoAssignApprovedData = async (req, res) => {
+  const { lead_data } = req.body;
+
+  if (!Array.isArray(lead_data) || lead_data.length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: "lead data must be a non-empty array",
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const updatePromises = lead_data.map(({ application_id, assigned_to }) =>
+      db.application.update(
+        { assigned_user: assigned_to },
+        { where: { id: application_id }, transaction }
+      )
+    );
+
+    await Promise.all(updatePromises);
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      status: true,
+      message: "Applications assigned successfully",
+    });
+  } catch (error) {
+    if (transaction) await transaction.rollback();
+    console.error("Error in autoAssignApplicationValidation:", error.message || error);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while processing your request. Please try again later.",
+    });
+  }
+};
+
 exports.getApplicationDetailsByType = async (req, res, next) => {
   try {
     const { id, type } = req.params;
@@ -392,7 +566,7 @@ const getLeastAssignedApplicationMember = async () => {
           "ASC",
         ],
       ],
-      limit: 1,
+      // limit: 1,
     });
 
     if (!leastAssignedMember) return null;
@@ -406,6 +580,53 @@ const getLeastAssignedApplicationMember = async () => {
     throw error;
   }
 };
+
+const getLeastAssignedApplicationMembersList = async () => {
+  try {
+    const leastAssignedMembers = await db.adminUsers.findAll({
+      attributes: [
+        ["id", "user_id"],
+        "username",
+        [
+          Sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM "application_details"
+                        WHERE "application_details"."assigned_user" = "admin_user"."id"
+                    )`),
+          "assignment_count",
+        ],
+      ],
+      where: {
+        [Sequelize.Op.or]: [
+          { role_id: process.env.APPLICATION_TEAM_ID },
+          { role_id: process.env.APPLICATION_MANAGER_ID }
+        ],
+      },
+      order: [
+        [
+          Sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM "application_details"
+                        WHERE "application_details"."assigned_user" = "admin_user"."id"
+                    )`),
+          "ASC",
+        ],
+      ],
+    });
+
+    if (!leastAssignedMembers.length) return [];
+
+    return leastAssignedMembers.map(member => ({
+      user_id: member.dataValues.user_id,
+      username: member.dataValues.username,
+      assignment_count: parseInt(member.dataValues.assignment_count, 10),
+    }));
+  } catch (error) {
+    console.error("Error fetching least assigned members:", error.message || error);
+    throw error;
+  }
+};
+
 
 exports.updateApplicationChecks = async (req, res, next) => {
   const transaction = await sequelize.transaction();

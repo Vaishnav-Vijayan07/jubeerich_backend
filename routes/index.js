@@ -521,6 +521,8 @@ router.post("/checks_remarks/:type/:application_id", [authMiddleware.checkUserAu
 router.get("/details_application/:type/:id", [authMiddleware.checkUserAuth], applicationController.getApplicationDetailsByType);
 router.patch("/assign_application", [authMiddleware.checkUserAuth], applicationController.assignApplication);
 router.patch("/auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApplication);
+router.patch("/validate_auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApplicationValidation);
+router.post("/approve_auto_assign_application", [authMiddleware.checkUserAuth], applicationController.autoAssignApprovedData);
 router.put("/check_application", [authMiddleware.checkUserAuth], applicationController.updateApplicationChecks);
 router.get("/details_checks", [authMiddleware.checkUserAuth], applicationController.getApplicationChecks);
 router.get("/portal_details/:id", [authMiddleware.checkUserAuth], applicationController.getPortalDetails);
