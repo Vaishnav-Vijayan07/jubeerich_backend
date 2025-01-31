@@ -45,6 +45,7 @@ exports.getAllFranchises = async (req, res) => {
           //   required: true, // This will perform a right join
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json({
       status: true,
@@ -86,14 +87,14 @@ exports.getFranchiseById = async (req, res) => {
 exports.getAllCounsellorsByFranchise = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     const users = await db.adminUsers.findAll({
       where: {
         role_id: {
           [Op.in]: [process.env.FRANCHISE_COUNSELLOR_ID],
         },
         franchise_id: id,
-      },      
+      },
       include: [
         {
           model: db.accessRoles,
@@ -112,7 +113,7 @@ exports.getAllCounsellorsByFranchise = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found !",
-        data: []
+        data: [],
       });
     }
 
@@ -146,7 +147,7 @@ exports.getAllCounsellorsTLByFranchise = async (req, res, next) => {
     const users = await db.adminUsers.findAll({
       where: {
         role_id: process.env.FRANCHISE_MANAGER_ID,
-        franchise_id: id
+        franchise_id: id,
       },
       include: [
         {
@@ -166,7 +167,7 @@ exports.getAllCounsellorsTLByFranchise = async (req, res, next) => {
       return res.status(204).json({
         status: false,
         message: "Admin users not found !",
-        data: []
+        data: [],
       });
     }
 
@@ -207,19 +208,22 @@ exports.addFranchise = [
         errors: errors.array(),
       });
     }
-
+    const userId = req.userDecodeId;
     const { name, email, address, phone, pocName } = req.body;
 
     try {
       const slug = await generateUniqueSlug(name, Franchise);
-      const newFranchise = await Franchise.create({
-        name,
-        email,
-        address,
-        phone,
-        pocName,
-        slug, // Add the slug here
-      });
+      const newFranchise = await Franchise.create(
+        {
+          name,
+          email,
+          address,
+          phone,
+          pocName,
+          slug, // Add the slug here
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Franchise created successfully",
@@ -241,6 +245,8 @@ exports.updateFranchise = [
   franchiseValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -278,11 +284,9 @@ exports.updateFranchise = [
       const updatedData = {
         name: req.body.name !== undefined ? req.body.name : franchise.name,
         email: req.body.email !== undefined ? req.body.email : franchise.email,
-        address:
-          req.body.address !== undefined ? req.body.address : franchise.address,
+        address: req.body.address !== undefined ? req.body.address : franchise.address,
         phone: req.body.phone !== undefined ? req.body.phone : franchise.phone,
-        pocName:
-          req.body.pocName !== undefined ? req.body.pocName : franchise.pocName,
+        pocName: req.body.pocName !== undefined ? req.body.pocName : franchise.pocName,
       };
 
       // Update slug if name is changed
@@ -290,7 +294,7 @@ exports.updateFranchise = [
         updatedData.slug = await generateUniqueSlug(req.body.name, Franchise);
       }
 
-      const updatedFranchise = await franchise.update(updatedData);
+      const updatedFranchise = await franchise.update(updatedData, { userId });
 
       res.status(200).json({
         status: true,
@@ -310,6 +314,7 @@ exports.updateFranchise = [
 // Soft delete a franchise
 exports.deleteFranchise = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const franchise = await Franchise.findByPk(id);
@@ -321,7 +326,7 @@ exports.deleteFranchise = async (req, res) => {
     }
 
     // Set the isDeleted flag to true
-    await franchise.update({ isDeleted: true });
+    await franchise.update({ isDeleted: true }, { userId });
 
     res.status(200).json({
       status: true,

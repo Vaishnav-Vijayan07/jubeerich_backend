@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
     const MaritalStatus = sequelize.define("marital_status", {
       id: {
@@ -17,6 +19,8 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
       },
     });
+  
+    addHistoryTracking(MaritalStatus, "marital_status");
   
     return MaritalStatus;
   };

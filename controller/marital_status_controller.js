@@ -67,13 +67,17 @@ exports.addMaritalStatus = [
     }
 
     const { marital_status_name, marital_status_description, updated_by } = req.body;
+    const userId = req.userDecodeId;
 
     try {
-      const newMaritalStatus = await MaritalStatus.create({
-        marital_status_name,
-        marital_status_description,
-        updated_by,
-      });
+      const newMaritalStatus = await MaritalStatus.create(
+        {
+          marital_status_name,
+          marital_status_description,
+          updated_by,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Marital status created successfully",
@@ -95,6 +99,8 @@ exports.updateMaritalStatus = [
   ...maritalStatusValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -114,11 +120,14 @@ exports.updateMaritalStatus = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedMaritalStatus = await maritalStatus.update({
-        marital_status_name: req.body.marital_status_name ?? maritalStatus.marital_status_name,
-        marital_status_description: req.body.marital_status_description ?? maritalStatus.marital_status_description,
-        updated_by: req.body.updated_by ?? maritalStatus.updated_by,
-      });
+      const updatedMaritalStatus = await maritalStatus.update(
+        {
+          marital_status_name: req.body.marital_status_name ?? maritalStatus.marital_status_name,
+          marital_status_description: req.body.marital_status_description ?? maritalStatus.marital_status_description,
+          updated_by: req.body.updated_by ?? maritalStatus.updated_by,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -138,6 +147,7 @@ exports.updateMaritalStatus = [
 // Delete a marital status
 exports.deleteMaritalStatus = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const maritalStatus = await MaritalStatus.findByPk(id);
@@ -148,7 +158,7 @@ exports.deleteMaritalStatus = async (req, res) => {
       });
     }
 
-    await maritalStatus.destroy();
+    await maritalStatus.destroy({userId});
     res.status(200).json({
       status: true,
       message: "Marital status deleted successfully",

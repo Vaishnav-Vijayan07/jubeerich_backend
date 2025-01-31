@@ -65,6 +65,7 @@ const { getChecksById, updateCheckRemarks } = require("../controller/checks_cont
 
 const visaChecklistController = require("../controller/visa_checklist_controller");
 const { bulkUploadMultiValidation, bulkUploadMultiCore, autoAssignValidation, autoAssignValidData, autoAssignApplicationValidation, autoAssignApprovedData, getApprovalOptions } = require("../controller/validate_and_approve_controller");
+const { getTableHistoryByTableName } = require("../controller/table_history_controller");
 
 const router = express.Router();
 
@@ -86,7 +87,7 @@ router.get("/dashboard", validateDateParams, [authMiddleware.checkUserAuth], get
 // Admin Users routes
 router.get("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.getAllAdminUsers);
 router.get("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.getAdminUsersById);
-router.post("/admin_users", AdminUserController.addAdminUsers);
+router.post("/admin_users", [authMiddleware.checkUserAuth], AdminUserController.addAdminUsers);
 router.put("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.updateAdminUsers);
 router.delete("/admin_users/:id", [authMiddleware.checkUserAuth], AdminUserController.deleteAdminUsers);
 
@@ -541,6 +542,8 @@ router.delete("/visa_ckecklist_master/:id", [authMiddleware.checkUserAuth], visa
 router.get("/get_visa_configurations", [authMiddleware.checkUserAuth], visaChecklistController.getVisaConfiguration);
 router.put("/configure_visa", [authMiddleware.checkUserAuth], visaChecklistController.configureVisa);
 router.get("/view_summary/:id", [authMiddleware.checkUserAuth], applicationController.viewSummary);
+
+router.get("/get_table_history", [authMiddleware.checkUserAuth], getTableHistoryByTableName);
 
 router.post("/import_admin_users", upload.single("file"), importAdminUsers);
 

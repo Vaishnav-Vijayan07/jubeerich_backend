@@ -12,7 +12,9 @@ const flagValidationRules = [
 // Get all flags
 exports.getAllFlags = async (req, res) => {
   try {
-    const flags = await Flag.findAll();
+    const flags = await Flag.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     res.status(200).json({
       status: true,
       data: flags,
@@ -64,15 +66,19 @@ exports.addFlag = [
       });
     }
 
+    const userId = req.userDecodeId;
     const { flag_name, flag_description, updated_by, color } = req.body;
 
     try {
-      const newFlag = await Flag.create({
-        flag_name,
-        flag_description,
-        updated_by,
-        color
-      });
+      const newFlag = await Flag.create(
+        {
+          flag_name,
+          flag_description,
+          updated_by,
+          color,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Flag created successfully",
@@ -94,6 +100,7 @@ exports.updateFlag = [
   ...flagValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -113,12 +120,15 @@ exports.updateFlag = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedFlag = await flag.update({
-        flag_name: req.body.flag_name ?? flag.flag_name,
-        flag_description: req.body.flag_description ?? flag.flag_description,
-        color: req.body.color ?? flag.color,
-        updated_by: req.body.updated_by ?? flag.updated_by,
-      });
+      const updatedFlag = await flag.update(
+        {
+          flag_name: req.body.flag_name ?? flag.flag_name,
+          flag_description: req.body.flag_description ?? flag.flag_description,
+          color: req.body.color ?? flag.color,
+          updated_by: req.body.updated_by ?? flag.updated_by,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -138,6 +148,7 @@ exports.updateFlag = [
 // Delete a flag
 exports.deleteFlag = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const flag = await Flag.findByPk(id);
@@ -148,7 +159,7 @@ exports.deleteFlag = async (req, res) => {
       });
     }
 
-    await flag.destroy();
+    await flag.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "Flag deleted successfully",

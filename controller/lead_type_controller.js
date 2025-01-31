@@ -66,7 +66,7 @@ exports.addLeadType = async (req, res) => {
       description,
       updated_by: userId,
       slug, // Add slug here
-    });
+    }, {userId});
 
     res.status(201).json({
       status: true,
@@ -106,7 +106,7 @@ exports.updateLeadType = (req, res) => {
       }
 
       leadType
-        .update(updatedData)
+        .update(updatedData, {userId})
         .then((updatedLeadType) => {
           res.status(200).json({
             message: "Lead type updated successfully",
@@ -127,6 +127,8 @@ exports.updateLeadType = (req, res) => {
 // Delete a lead type
 exports.deleteLeadType = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
+
 
   LeadType.findByPk(id)
     .then((leadType) => {
@@ -135,7 +137,7 @@ exports.deleteLeadType = (req, res) => {
       }
 
       leadType
-        .destroy()
+        .destroy({ userId })
         .then(() => {
           res.status(200).json({ message: "Lead type deleted successfully" });
         })

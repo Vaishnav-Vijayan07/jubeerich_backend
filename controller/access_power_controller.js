@@ -38,12 +38,16 @@ exports.getAccessPowerById = (req, res) => {
 // Add a new access power
 exports.addAccessPower = (req, res) => {
   const { power_name, updated_by, status } = req.body;
+  const userId = req.userDecodeId;
 
-  AccessPowers.create({
-    power_name,
-    updated_by,
-    status: status !== undefined ? status : true,
-  })
+  AccessPowers.create(
+    {
+      power_name,
+      updated_by,
+      status: status !== undefined ? status : true,
+    },
+    { userId }
+  )
     .then((newPower) => {
       res.status(201).json({
         status: true,
@@ -61,6 +65,7 @@ exports.addAccessPower = (req, res) => {
 exports.updateAccessPower = (req, res) => {
   const id = parseInt(req.params.id);
   const { power_name, updated_by, status } = req.body;
+  const userId = req.userDecodeId;
 
   AccessPowers.findByPk(id)
     .then((power) => {
@@ -69,11 +74,14 @@ exports.updateAccessPower = (req, res) => {
       }
 
       power
-        .update({
-          power_name,
-          updated_by,
-          status,
-        })
+        .update(
+          {
+            power_name,
+            updated_by,
+            status,
+          },
+          { userId }
+        )
         .then((updatedPower) => {
           res.status(200).json({
             message: "Access power updated successfully",
@@ -94,6 +102,7 @@ exports.updateAccessPower = (req, res) => {
 // Delete an access power
 exports.deleteAccessPower = (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   AccessPowers.findByPk(id)
     .then((power) => {
@@ -102,7 +111,7 @@ exports.deleteAccessPower = (req, res) => {
       }
 
       power
-        .destroy()
+        .destroy({ userId })
         .then(() => {
           res.status(200).json({ message: "Access power deleted successfully" });
         })

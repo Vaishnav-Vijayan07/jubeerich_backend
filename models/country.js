@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const Country = sequelize.define("country", {
     id: {
@@ -18,6 +20,8 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
     }
   });
+
+  addHistoryTracking(Country, 'country');
 
   return Country;
 };

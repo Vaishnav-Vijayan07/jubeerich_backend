@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const LeadCategory = sequelize.define("lead_category", {
     id: {
@@ -24,5 +26,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
     },
   });
-  return LeadCategory
+
+  addHistoryTracking(LeadCategory, "lead_category");
+  return LeadCategory;
 };

@@ -28,6 +28,7 @@ app.use("/uploads", express.static(path.join("uploads")));
 // Routes
 app.use("/api", routes);
 
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

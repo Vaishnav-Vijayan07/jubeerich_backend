@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const StatusType = sequelize.define(
     "status_type",
@@ -10,7 +12,7 @@ module.exports = (sequelize, Sequelize) => {
       type_name: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        unique: true,
+        unique: false,
       },
       priority: {
         type: Sequelize.INTEGER,
@@ -22,6 +24,8 @@ module.exports = (sequelize, Sequelize) => {
       tableName: "status_type",
     }
   );
+
+  addHistoryTracking(StatusType, "status_type");
 
   return StatusType;
 };

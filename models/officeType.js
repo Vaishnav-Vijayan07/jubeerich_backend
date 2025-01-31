@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const OfficeType = sequelize.define("office_type", {
     id: {
@@ -22,6 +24,8 @@ module.exports = (sequelize, Sequelize) => {
       unique: true, // Ensure uniqueness of slugs
     },
   });
+
+  addHistoryTracking(OfficeType, "office_type");
 
   return OfficeType;
 };

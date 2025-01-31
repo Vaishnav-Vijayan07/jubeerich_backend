@@ -21,7 +21,7 @@ exports.getAllCampuses = async (req, res) => {
           include: [
             {
               model: db.country, // Include the country model
-              as: 'country_name',
+              as: "country_name",
               attributes: ["country_name"], // Fetch the country name
             },
           ],
@@ -69,14 +69,14 @@ exports.getAllCampusesByUniversity = async (req, res) => {
   try {
     const campuses = await Campus.findAll({ where: { university_id: id }, attributes: ["id", "campus_name"] });
 
-    console.log('campuses', campuses);
+    console.log("campuses", campuses);
 
     const formatttedCampus = campuses.map((course) => {
       return {
         value: course.id,
         label: course.campus_name,
       };
-    })
+    });
 
     return res.status(200).json({ status: true, data: formatttedCampus });
   } catch (error) {
@@ -187,12 +187,15 @@ exports.addCampus = [
 
     try {
       // Create the new campus
-      const newCampus = await Campus.create({
-        campus_name,
-        location,
-        university_id,
-        updated_by: userId,
-      });
+      const newCampus = await Campus.create(
+        {
+          campus_name,
+          location,
+          university_id,
+          updated_by: userId,
+        },
+        { userId }
+      );
 
       res.status(201).json({
         status: true,
@@ -230,12 +233,15 @@ exports.updateCampus = [
       }
 
       // Update campus details
-      const updatedCampus = await campus.update({
-        campus_name: campus_name ?? campus.campus_name,
-        location: location ?? campus.location,
-        university_id: university_id ?? campus.university_id,
-        updated_by: userId,
-      });
+      const updatedCampus = await campus.update(
+        {
+          campus_name: campus_name ?? campus.campus_name,
+          location: location ?? campus.location,
+          university_id: university_id ?? campus.university_id,
+          updated_by: userId,
+        },
+        { userId }
+      );
 
       // Manage course associations with duplicate validation
       if (courses && Array.isArray(courses)) {
@@ -256,7 +262,9 @@ exports.updateCampus = [
       res.status(200).json({ status: true, message: "Campus updated successfully", data: updatedCampus });
     } catch (error) {
       console.error(`Error updating campus: ${error}`);
-      res.status(500).json({ status: false, message: "An error occurred while processing your request. Please try again later." });
+      res
+        .status(500)
+        .json({ status: false, message: "An error occurred while processing your request. Please try again later." });
     }
   },
 ];
@@ -264,6 +272,7 @@ exports.updateCampus = [
 // Delete a campus
 exports.deleteCampus = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const campus = await Campus.findByPk(id);
@@ -271,7 +280,7 @@ exports.deleteCampus = async (req, res) => {
       return res.status(404).json({ status: false, message: "Campus not found" });
     }
 
-    await campus.destroy();
+    await campus.destroy({ userId });
     res.status(200).json({ status: true, message: "Campus deleted successfully" });
   } catch (error) {
     console.error(`Error deleting campus: ${error}`);

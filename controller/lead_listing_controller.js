@@ -765,7 +765,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder,
+        order: sortOrder
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -826,7 +826,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder,
+        order: sortOrder
       });
     }
 

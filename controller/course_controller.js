@@ -109,13 +109,16 @@ exports.addCourse = [
     const userId = req.userDecodeId;
 
     try {
-      const newCourse = await Course.create({
-        course_name,
-        course_description,
-        course_type_id,
-        stream_id,
-        updated_by: userId,
-      });
+      const newCourse = await Course.create(
+        {
+          course_name,
+          course_description,
+          course_type_id,
+          stream_id,
+          updated_by: userId,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Course created successfully",
@@ -154,13 +157,16 @@ exports.updateCourse = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedCourse = await course.update({
-        course_name: req.body.course_name ?? course.course_name,
-        course_description: req.body.course_description ?? course.course_description,
-        course_type_id: req.body.course_type_id ?? course.course_type_id,
-        stream_id: req.body.stream_id ?? course.stream_id,
-        updated_by: userId,
-      });
+      const updatedCourse = await course.update(
+        {
+          course_name: req.body.course_name ?? course.course_name,
+          course_description: req.body.course_description ?? course.course_description,
+          course_type_id: req.body.course_type_id ?? course.course_type_id,
+          stream_id: req.body.stream_id ?? course.stream_id,
+          updated_by: userId,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -179,6 +185,7 @@ exports.updateCourse = [
 // Delete a course
 exports.deleteCourse = async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const userId = req.userDecodeId;
 
   try {
     const course = await Course.findByPk(id);
@@ -186,7 +193,7 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ status: false, message: "Course not found" });
     }
 
-    await course.destroy();
+    await course.destroy({ userId });
     res.status(200).json({ status: true, message: "Course deleted successfully" });
   } catch (error) {
     console.error(`Error deleting course: ${error}`);

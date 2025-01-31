@@ -45,19 +45,9 @@ const { validationResult, check } = require("express-validator");
 
 const branchValidationRules = [
   check("branch_name").not().isEmpty().withMessage("Branch name is required"),
-  check("email")
-    .not()
-    .isEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email format"),
+  check("email").not().isEmpty().withMessage("Email is required").isEmail().withMessage("Invalid email format"),
   check("phone").not().isEmpty().withMessage("Phone is required"),
-  check("status")
-    .not()
-    .isEmpty()
-    .withMessage("Status is required")
-    .isBoolean()
-    .withMessage("Status must be a boolean value"),
+  check("status").not().isEmpty().withMessage("Status is required").isBoolean().withMessage("Status must be a boolean value"),
 ];
 
 const checkRegionExists = async (region_id) => {
@@ -146,6 +136,8 @@ exports.addBranch = [
       });
     }
 
+    const userId = req.userDecodeId;
+
     const {
       branch_name,
       email,
@@ -175,27 +167,30 @@ exports.addBranch = [
           message: "Invalid region_id",
         });
       }
-      const newBranch = await Branch.create({
-        branch_name,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        country,
-        pincode,
-        contact_person_email,
-        contact_person_name,
-        contact_person_mobile,
-        contact_person_designation,
-        website,
-        social_media,
-        account_mail,
-        support_mail,
-        region_id,
-        updated_by,
-        status,
-      });
+      const newBranch = await Branch.create(
+        {
+          branch_name,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          country,
+          pincode,
+          contact_person_email,
+          contact_person_name,
+          contact_person_mobile,
+          contact_person_designation,
+          website,
+          social_media,
+          account_mail,
+          support_mail,
+          region_id,
+          updated_by,
+          status,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "Branch created successfully",
@@ -217,6 +212,8 @@ exports.updateBranch = [
   ...branchValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -242,7 +239,7 @@ exports.updateBranch = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedBranch = await branch.update(req.body);
+      const updatedBranch = await branch.update(req.body, { userId });
 
       res.status(200).json({
         status: true,
@@ -262,6 +259,7 @@ exports.updateBranch = [
 // Delete a branch
 exports.deleteBranch = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const branch = await Branch.findByPk(id);
@@ -272,7 +270,7 @@ exports.deleteBranch = async (req, res) => {
       });
     }
 
-    await branch.destroy();
+    await branch.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "Branch deleted successfully",

@@ -1,3 +1,5 @@
+const addHistoryTracking = require("../mixins/historyMixin");
+
 module.exports = (sequelize, Sequelize) => {
   const Region = sequelize.define("region", {
     id: {
@@ -30,6 +32,8 @@ module.exports = (sequelize, Sequelize) => {
       unique: true, // Ensure uniqueness of slugs
     },
   });
+
+  addHistoryTracking(Region, "region");
 
   return Region;
 };

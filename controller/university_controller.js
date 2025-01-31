@@ -128,6 +128,8 @@ exports.addUniversity = [
       description,
     } = req.body;
 
+    const userId = req.userDecodeId;
+
     try {
       if (!(await checkCountryExists(country_id))) {
         return res.status(400).json({
@@ -136,18 +138,21 @@ exports.addUniversity = [
         });
       }
 
-      const newUniversity = await University.create({
-        university_name,
-        location,
-        country_id,
-        website_url,
-        image_url,
-        portal_link,
-        username,
-        password,
-        updated_by,
-        description,
-      });
+      const newUniversity = await University.create(
+        {
+          university_name,
+          location,
+          country_id,
+          website_url,
+          image_url,
+          portal_link,
+          username,
+          password,
+          updated_by,
+          description,
+        },
+        { userId }
+      );
       res.status(201).json({
         status: true,
         message: "University created successfully",
@@ -169,6 +174,8 @@ exports.updateUniversity = [
   ...universityValidationRules,
   async (req, res) => {
     const id = parseInt(req.params.id);
+    const userId = req.userDecodeId;
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -195,19 +202,22 @@ exports.updateUniversity = [
       }
 
       // Update only the fields that are provided in the request body
-      const updatedUniversity = await university.update({
-        university_name: req.body.university_name ?? university.university_name,
-        location: req.body.location ?? university.location,
-        country_id: req.body.country_id ?? university.country_id,
-        website_url: req.body.website_url ?? university.website_url,
-        image_url: req.body.image_url ?? university.image_url,
-        portal_link: req.body.portal_link ?? university.portal_link,
-        username: req.body.username ?? university.username,
-        password: req.body.password ?? university.password,
-        updated_by: req.body.updated_by ?? university.updated_by,
-        description: req.body.description ?? university.description,
-        is_active: req.body.is_active ?? university.is_active,
-      });
+      const updatedUniversity = await university.update(
+        {
+          university_name: req.body.university_name ?? university.university_name,
+          location: req.body.location ?? university.location,
+          country_id: req.body.country_id ?? university.country_id,
+          website_url: req.body.website_url ?? university.website_url,
+          image_url: req.body.image_url ?? university.image_url,
+          portal_link: req.body.portal_link ?? university.portal_link,
+          username: req.body.username ?? university.username,
+          password: req.body.password ?? university.password,
+          updated_by: req.body.updated_by ?? university.updated_by,
+          description: req.body.description ?? university.description,
+          is_active: req.body.is_active ?? university.is_active,
+        },
+        { userId }
+      );
 
       res.status(200).json({
         status: true,
@@ -227,6 +237,7 @@ exports.updateUniversity = [
 // Delete a university
 exports.deleteUniversity = async (req, res) => {
   const id = parseInt(req.params.id);
+  const userId = req.userDecodeId;
 
   try {
     const university = await University.findByPk(id);
@@ -237,7 +248,7 @@ exports.deleteUniversity = async (req, res) => {
       });
     }
 
-    await university.destroy();
+    await university.destroy({ userId });
     res.status(200).json({
       status: true,
       message: "University deleted successfully",
