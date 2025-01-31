@@ -35,7 +35,7 @@ exports.getTableHistoryByTableName = async (req, res) => {
 
     // If no history is found, return a 404 error
     if (!tableChanges || tableChanges.length === 0) {
-      return res.status(404).json({ message: "No changes found for the country table" });
+      return res.status(200).json({ message: "No changes found for the country table", data: [] });
     }
 
     const formattedHistory = tableChanges.map((history) => {
