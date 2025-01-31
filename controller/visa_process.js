@@ -84,8 +84,24 @@ exports.saveTravelHistory = async (req, res, next) => {
   try {
     const { travelHistory, userId } = req.body;
 
+    let formattedTravelHistory = [];
+    travelHistory.forEach((item) => {
+      let data = {
+        id: item?.id || '0',
+        student_id: item?.student_id,
+        country_id: item?.country_id,
+        start_date: item?.start_date || null,
+        end_date: item?.end_date || null,
+        purpose_of_travel: item?.purpose_of_travel,
+        errors: {}
+      }
+
+      formattedTravelHistory.push(data)
+    })
+
     const saveTravelHistory = await addOrUpdateTravelHistory(
-      travelHistory,
+      // travelHistory,
+      formattedTravelHistory,
       userId,
       transaction
     )
