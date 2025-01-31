@@ -99,8 +99,8 @@ const getDropdownData = async (req, res) => {
         db.adminUsers.findAll({
           attributes: ["id", "name"],
           where: {
-            role_id:  {[Op.in]: [process.env.CRE_TL_ID, process.env.CRE_ID]},
-            status: true
+            role_id: { [Op.in]: [process.env.CRE_TL_ID, process.env.CRE_ID] },
+            status: true,
           },
         })
       );
@@ -126,7 +126,7 @@ const getDropdownData = async (req, res) => {
           attributes: ["id", "name", "branch_id"],
           where: {
             role_id: process.env.BRANCH_COUNSELLOR_ID,
-            status: true
+            status: true,
           },
         })
       );
@@ -158,6 +158,20 @@ const getDropdownData = async (req, res) => {
       promises.push(Promise.resolve(null));
     }
 
+    if (!types || requestedTypes.includes("counsellors")) {
+      promises.push(
+        db.adminUsers.findAll({
+          attributes: ["id", "name"],
+          where: {
+            role_id: process.env.COUNSELLOR_ROLE_ID,
+            status: true,
+          },
+        })
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
     const [
       universityDetails,
       maritalStatusDetails,
@@ -180,6 +194,7 @@ const getDropdownData = async (req, res) => {
       branchDetails,
       accessRoleDetails,
       flagDetails,
+      counsellorDetails,
     ] = await Promise.all(promises);
 
     const formatData = (data, name) => {
@@ -218,6 +233,7 @@ const getDropdownData = async (req, res) => {
         branches: formatData(branchDetails, "branch_name"),
         accessRoles: formatData(accessRoleDetails, "role_name"),
         flags: formatData(flagDetails, "flag_name"),
+        counsellors: formatData(counsellorDetails, "name"),
       },
     });
   } catch (error) {

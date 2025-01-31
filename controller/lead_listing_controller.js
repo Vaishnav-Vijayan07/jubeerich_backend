@@ -1,6 +1,7 @@
 const db = require("../models");
 const { Op } = require("sequelize");
 const { getEnumValue, getAttributesByRole, getDeleteCondition } = require("../utils/helper");
+const IdsFromEnv = require("../constants/ids");
 const UserPrimaryInfo = db.userPrimaryInfo;
 const AdminUsers = db.adminUsers;
 
@@ -529,11 +530,12 @@ exports.getAllLeadsOptimized = async (req, res) => {
   const roleId = req.role_id.toString();
   console.log("roleId", typeof roleId);
 
-  const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, sort_level = "DESC", sort_by = "id" } = req.query;
+  const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, counselor = 0, sort_level = "DESC", sort_by = "id" } = req.query;
 
   let officeWhere = {};
   let countryWhere = {};
   let sourceWhere = {};
+  let assignedCounsellorWhere = {};
 
   if (office !== 0) {
     officeWhere = {
@@ -552,6 +554,14 @@ exports.getAllLeadsOptimized = async (req, res) => {
       id: source,
     };
   }
+
+  if (counselor !== 0) {
+    assignedCounsellorWhere = {
+      id: counselor,
+    };
+  }
+
+  console.log("assignedCounsellorWhere", assignedCounsellorWhere);
 
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
   const isSearchApplied = keyword ? true : false;
@@ -691,6 +701,36 @@ exports.getAllLeadsOptimized = async (req, res) => {
         required: false,
       },
     ];
+  } else if (roleId == IdsFromEnv.CRE_ID) {
+    if (counselor !== 0) {
+      dynamicInclude = [
+        {
+          model: db.adminUsers,
+          as: "counselors",
+          attributes: ["name", "id"],
+          through: { attributes: [] },
+          where: { id: counselor },
+        },
+      ];
+    } else {
+      dynamicInclude = [
+        {
+          model: db.adminUsers,
+          as: "counselors",
+          attributes: ["name", "id"],
+          through: { attributes: [] },
+        },
+      ];
+    }
+  } else {
+    dynamicInclude = [
+      {
+        model: db.adminUsers,
+        as: "counselors",
+        attributes: ["name", "id"],
+        through: { attributes: [] },
+      },
+    ];
   }
 
   try {
@@ -765,7 +805,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder
+        order: sortOrder,
       });
     } else {
       userPrimaryInfos = await UserPrimaryInfo.findAndCountAll({
@@ -810,12 +850,7 @@ exports.getAllLeadsOptimized = async (req, res) => {
             where: officeWhere,
           },
           ...dynamicInclude,
-          {
-            model: db.adminUsers,
-            as: "counselors",
-            attributes: ["name", "id"],
-            through: { attributes: [] },
-          },
+
           {
             model: db.adminUsers,
             as: "updated_by_user",
@@ -826,9 +861,13 @@ exports.getAllLeadsOptimized = async (req, res) => {
         ],
         offset,
         limit: parsedLimit,
-        order: sortOrder
+        order: sortOrder,
       });
     }
+
+    console.log(officeWhere);
+    console.log(assignedCounsellorWhere);
+    console.log(sourceWhere);
 
     const { count, rows } = userPrimaryInfos;
 
