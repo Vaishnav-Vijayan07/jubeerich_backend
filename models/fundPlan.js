@@ -29,8 +29,12 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DECIMAL(15, 2),
       allowNull: true,
     },
+    // itr_status: {
+    //   type: Sequelize.BOOLEAN, // true (Filed), false (Yet to File)
+    //   allowNull: true,
+    // },
     itr_status: {
-      type: Sequelize.BOOLEAN, // true (Filed), false (Yet to File)
+      type: Sequelize.STRING,
       allowNull: true,
     },
     relation_with_sponsor: {
