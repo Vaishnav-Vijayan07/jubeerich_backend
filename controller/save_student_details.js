@@ -332,7 +332,7 @@ exports.saveStudentExamInfo = async (req, res) => {
       reading_score: record.reading_score,
       writing_score: record.writing_score,
       overall_score: record.overall_score,
-      exam_date: record.exam_date,
+      exam_date: record.exam_date ? record.exam_date : null,
       exam_remarks: record.exam_remarks,
       student_id: Number(user_id),
     };
@@ -411,8 +411,8 @@ exports.saveStudentWorkInfo = async (req, res) => {
       // years: Number(item.years),
       years: item.years,
       designation: item.designation,
-      from: item.from,
-      to: item.to,
+      from: item.from ? item.from : null,
+      to: item.to ? item.to : null,
       user_id: Number(user_id),
     };
 
@@ -678,9 +678,9 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
         await student.createEducationDetail(
           {
             qualification: formData.qualification,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            percentage: formData.percentage,
+            start_date: formData.startDate ? formData.startDate : null,
+            end_date: formData.endDate ? formData.endDate : null,
+            percentage: formData.percentage ? formData.percentage : null,
             board_name: formData.board_name,
             school_name: formData.school_name,
             mark_sheet: filePaths.mark_sheet,
@@ -718,9 +718,9 @@ exports.saveStudentPrimaryEducation = async (req, res) => {
         // Update the existing details in the database
         await existingDetails.update(
           {
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            percentage: formData.percentage,
+            start_date: formData.startDate != "null" ? formData.startDate : null,
+            end_date: formData.endDate != "null" ? formData.endDate : null,
+            percentage: formData.percentage != "null" ? formData.percentage : null,
             board_name: formData.board_name,
             school_name: formData.school_name,
             mark_sheet: filePaths.mark_sheet || existingDetails.mark_sheet,
