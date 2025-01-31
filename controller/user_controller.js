@@ -69,35 +69,35 @@ exports.createLead = async (req, res) => {
     }); // Find the user_id of cre_tl
 
     // Check if referenced IDs exist in their respective tables
-    const leadTypeExists = await checkIfEntityExists("lead_type", lead_type_id);
-    if (!leadTypeExists) {
-      await transaction.rollback(); // Rollback the transaction if category ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid Lead Type ID provided",
-        errors: [{ msg: "Please provide a valid Lead Type ID" }],
-      });
-    }
+    // const leadTypeExists = await checkIfEntityExists("lead_type", lead_type_id);
+    // if (!leadTypeExists) {
+    //   await transaction.rollback(); // Rollback the transaction if category ID is invalid
+    //   return res.status(400).json({
+    //     status: false,
+    //     message: "Invalid Lead Type ID provided",
+    //     errors: [{ msg: "Please provide a valid Lead Type ID" }],
+    //   });
+    // }
 
-    const sourceExists = await checkIfEntityExists("lead_source", source_id);
-    if (!sourceExists) {
-      await transaction.rollback(); // Rollback the transaction if source ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid source ID provided",
-        errors: [{ msg: "Please provide a valid source ID" }],
-      });
-    }
+    // const sourceExists = await checkIfEntityExists("lead_source", source_id);
+    // if (!sourceExists) {
+    //   await transaction.rollback(); // Rollback the transaction if source ID is invalid
+    //   return res.status(400).json({
+    //     status: false,
+    //     message: "Invalid source ID provided",
+    //     errors: [{ msg: "Please provide a valid source ID" }],
+    //   });
+    // }
 
-    const channelExists = await checkIfEntityExists("lead_channel", channel_id);
-    if (!channelExists) {
-      await transaction.rollback(); // Rollback the transaction if channel ID is invalid
-      return res.status(400).json({
-        status: false,
-        message: "Invalid channel ID provided",
-        errors: [{ msg: "Please provide a valid channel ID" }],
-      });
-    }
+    // const channelExists = await checkIfEntityExists("lead_channel", channel_id);
+    // if (!channelExists) {
+    //   await transaction.rollback(); // Rollback the transaction if channel ID is invalid
+    //   return res.status(400).json({
+    //     status: false,
+    //     message: "Invalid channel ID provided",
+    //     errors: [{ msg: "Please provide a valid channel ID" }],
+    //   });
+    // }
 
     const officeExists = await checkIfEntityExists("office_type", office_type);
     if (!officeExists) {
@@ -217,7 +217,7 @@ exports.createLead = async (req, res) => {
     const userPrimaryInfo = await UserPrimaryInfo.create(
       {
         full_name,
-        email,
+        email: email != "" || email != "null" ? email : null,
         phone,
         city,
         office_type,

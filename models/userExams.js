@@ -19,7 +19,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         exam_type: {
           type: Sequelize.STRING(100),
-          allowNull: false,
+          allowNull: true,
         },
         score_card: {
           type: Sequelize.STRING,
@@ -27,32 +27,32 @@ module.exports = (sequelize, Sequelize) => {
         },
         exam_date: {
           type: Sequelize.DATE,
-          allowNull: false,
+          allowNull: true,
         },
         listening_score: {
           // type: Sequelize.DECIMAL(5, 2),
           type: Sequelize.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         speaking_score: {
           // type: Sequelize.DECIMAL(5, 2),
           type: Sequelize.STRING,
-          allowNull: false
+          allowNull: true
         },
         reading_score: {
           // type: Sequelize.DECIMAL(5, 2),
           type: Sequelize.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         writing_score: {
           // type: Sequelize.DECIMAL(5, 2),
           type: Sequelize.STRING,
-          allowNull: false
+          allowNull: true
         },
         overall_score: {
           // type: Sequelize.DECIMAL(5, 2),
           type: Sequelize.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         updated_by: {
           type: Sequelize.INTEGER,

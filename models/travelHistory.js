@@ -23,15 +23,15 @@ module.exports = (sequelize, Sequelize) => {
         },
         start_date: {
             type: Sequelize.DATE,
-            allowNull: false
+            allowNull: true
         },
         end_date: {
             type: Sequelize.DATE,
-            allowNull: false
+            allowNull: true
         },
         purpose_of_travel: {
             type: Sequelize.STRING(500),
-            allowNull: false
+            allowNull: true
         },
     });
     return travelHistory;

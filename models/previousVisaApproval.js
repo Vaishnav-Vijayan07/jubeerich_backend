@@ -23,7 +23,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         visa_type: {
             type: Sequelize.STRING(100),
-            allowNull: false
+            allowNull: true
         },
         course_applied: {
             type: Sequelize.INTEGER,
