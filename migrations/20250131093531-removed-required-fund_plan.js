@@ -15,7 +15,7 @@ module.exports = {
     });
 
     queryInterface.changeColumn("fund_plans", "itr_status", {
-      type: Sequelize.BOOLEAN,
+      type: Sequelize.STRING(50),
       allowNull: true,
     });
   },
