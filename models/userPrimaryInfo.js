@@ -10,7 +10,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       full_name: {
         type: Sequelize.STRING(100),
-        allowNull: false,
+        allowNull: true,
       },
       email: {
         type: Sequelize.STRING(100),
@@ -18,7 +18,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       phone: {
         type: Sequelize.STRING(20),
-        allowNull: false,
+        allowNull: true,
       },
       lead_type_id: {
         type: Sequelize.INTEGER,
@@ -60,7 +60,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       office_type: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: "office_types",
           key: "id",
@@ -211,22 +211,22 @@ module.exports = (sequelize, Sequelize) => {
       has_work_exp: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
-        allowNull: false,
+        allowNull: true,
       },
       has_work_gap: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
-        allowNull: false,
+        allowNull: true,
       },
       has_education_gap: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
-        allowNull: false,
+        allowNull: true,
       },
       is_graduated: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
-        allowNull: false,
+        allowNull: true,
       },
       flag_details: {
         type: Sequelize.VIRTUAL,

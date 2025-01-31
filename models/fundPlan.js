@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     type: {
       type: Sequelize.STRING(50), // Loan, Savings, FD
-      allowNull: false,
+      allowNull: true,
     },
     fund_origin: {
       type: Sequelize.STRING(50), // Loan, Savings, FD
@@ -31,7 +31,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     itr_status: {
       type: Sequelize.BOOLEAN, // true (Filed), false (Yet to File)
-      allowNull: false,
+      allowNull: true,
     },
     relation_with_sponsor: {
       type: Sequelize.STRING(255),

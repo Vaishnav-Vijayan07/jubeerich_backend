@@ -58,15 +58,15 @@ module.exports = (sequelize, Sequelize) => {
       },
       intakeYear: {
         type: Sequelize.STRING(4),
-        allowNull: false,
+        allowNull: true,
       },
       intakeMonth: {
         type: Sequelize.STRING(20),
-        allowNull: false,
+        allowNull: true,
       },
       estimatedBudget: {
         type: Sequelize.DECIMAL(10, 2),
-        allowNull: false,
+        allowNull: true,
       },
     },
     {
