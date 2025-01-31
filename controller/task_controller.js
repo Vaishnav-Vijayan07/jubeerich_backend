@@ -174,7 +174,9 @@ exports.getTaskById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
             },
           },
         },
@@ -224,7 +226,9 @@ exports.getTaskById = async (req, res) => {
       where: {
         id,
         userId,
-        [Op.and]: [db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country"))],
+        [Op.and]: [
+          db.sequelize.where(db.sequelize.col("student_name.preferredCountries.id"), "=", db.sequelize.col("assigned_country")),
+        ],
       },
       include: [
         {
@@ -583,7 +587,13 @@ exports.assignNewCountry = async (req, res) => {
         } else if (role_id == IdsFromEnv.BRANCH_COUNSELLOR_ID) {
           const region = await getRegionDataForHistory(branch_id);
           region_name = region.region_name;
-          await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role} - ${region_name}`, userId, null, transaction);
+          await addLeadHistory(
+            studentId,
+            `Country ${countryName} added by ${current_user_role} - ${region_name}`,
+            userId,
+            null,
+            transaction
+          );
         } else {
           await addLeadHistory(studentId, `Country ${countryName} added by ${current_user_role}`, userId, null, transaction);
         }
@@ -675,7 +685,9 @@ exports.getStudentBasicInfoById = async (req, res) => {
           // where: { country_id: adminUser?.country_id },
           where: {
             country_id: {
-              [db.Sequelize.Op.in]: db.sequelize.literal(`(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`),
+              [db.Sequelize.Op.in]: db.sequelize.literal(
+                `(SELECT country_id FROM admin_user_countries WHERE admin_user_id = ${userId})`
+              ),
             },
           },
         },
@@ -854,7 +866,18 @@ exports.getBasicInfoById = async (req, res) => {
     // Fetch primary information for the student
     const primaryInfo = await db.userPrimaryInfo.findOne({
       where: { id: studentId },
-      attributes: ["id", "full_name", "email", "phone", "city", "office_type", "remarks", "branch_id", "franchise_id", "region_id"],
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "phone",
+        "city",
+        "office_type",
+        "remarks",
+        "branch_id",
+        "franchise_id",
+        "region_id",
+      ],
       include: [
         {
           model: db.country,
@@ -930,7 +953,9 @@ exports.saveBasicInfo = async (req, res) => {
 
         // Check if there was a previous file saved and delete it
         const previousCertificatePath =
-          existingBasicData && existingBasicData.police_clearance_docs ? existingBasicData.police_clearance_docs[index]?.certificate : null;
+          existingBasicData && existingBasicData.police_clearance_docs
+            ? existingBasicData.police_clearance_docs[index]?.certificate
+            : null;
 
         if (previousCertificatePath) {
           await deleteFile("policeClearenceDocuments", previousCertificatePath);
@@ -1267,28 +1292,48 @@ const getLeastAssignedUsers = async (countryId) => {
   const roleId = process.env.COUNSELLOR_ROLE_ID;
   const country_manager_id = process.env.COUNTRY_MANAGER_ID;
 
+  // WITH user_assignments AS (
+  //   SELECT
+  //     "admin_users"."id" AS "user_id",
+  //     COUNT("user_counselors"."counselor_id") AS "assignment_count"
+  //   FROM "admin_users"
+  //   -- Join the admin_user_countries table to filter users by country
+  //   INNER JOIN "admin_user_countries"
+  //     ON "admin_users"."id" = "admin_user_countries"."admin_user_id"
+  //   LEFT JOIN "user_counselors"
+  //     ON "admin_users"."id" = "user_counselors"."counselor_id"
+  //   WHERE "admin_users"."role_id" = :roleId OR "admin_users"."role_id" = :country_manager_id
+  //     AND "admin_user_countries"."country_id" = :countryId
+  //     AND "admin_users"."status" = true
+  //   GROUP BY "admin_users"."id"
+  // )
+  // SELECT "user_id" AS "least_assigned_user_id"
+  // FROM user_assignments
+  // ORDER BY "assignment_count" ASC, "user_id" ASC
+  // LIMIT 1;
+
   try {
     const [results] = await db.sequelize.query(
       `
-      WITH user_assignments AS (
-        SELECT 
-          "admin_users"."id" AS "user_id", 
-          COUNT("user_counselors"."counselor_id") AS "assignment_count"
-        FROM "admin_users"
-        -- Join the admin_user_countries table to filter users by country
-        INNER JOIN "admin_user_countries" 
-          ON "admin_users"."id" = "admin_user_countries"."admin_user_id"
-        LEFT JOIN "user_counselors" 
-          ON "admin_users"."id" = "user_counselors"."counselor_id"
-        WHERE "admin_users"."role_id" = :roleId OR "admin_users"."role_id" = :country_manager_id
-          AND "admin_user_countries"."country_id" = :countryId
-          AND "admin_users"."status" = true
-        GROUP BY "admin_users"."id"
-      )
-      SELECT "user_id" AS "least_assigned_user_id"
-      FROM user_assignments
-      ORDER BY "assignment_count" ASC, "user_id" ASC
-      LIMIT 1;
+              WITH user_assignments AS (
+          SELECT 
+            "admin_users"."id" AS "user_id", 
+            COUNT("user_counselors"."counselor_id") AS "assignment_count"
+          FROM "admin_users"
+          -- Join the admin_user_countries table to filter users by country
+          INNER JOIN "admin_user_countries" 
+            ON "admin_users"."id" = "admin_user_countries"."admin_user_id"
+          LEFT JOIN "user_counselors" 
+            ON "admin_users"."id" = "user_counselors"."counselor_id"
+          WHERE ("admin_users"."role_id" = :roleId OR "admin_users"."role_id" = :country_manager_id)
+            AND "admin_user_countries"."country_id" = :countryId
+            AND "admin_users"."status" = true
+          GROUP BY "admin_users"."id"
+        )
+        SELECT "user_id" AS "least_assigned_user_id"
+        FROM user_assignments
+        ORDER BY "assignment_count" ASC, "user_id" ASC
+        LIMIT 1;
       `,
       {
         replacements: { roleId, countryId, country_manager_id },
