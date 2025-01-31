@@ -907,9 +907,9 @@ exports.saveStudentGraduationDetails = async (req, res) => {
 
       const itemData = {
         id: item.id,
-        start_date: item.start_date,
-        end_date: item.end_date,
-        percentage: Number(item.percentage),
+        start_date: item.start_date != 'undefined' ? item.start_date : null,
+        end_date: item.end_date != 'undefined' ? item.end_date : null,
+        percentage: item.percentage ? Number(item.percentage) : null,
         conversion_formula: item.conversion_formula,
         qualification: item.qualification,
         university_name: item.university_name,
