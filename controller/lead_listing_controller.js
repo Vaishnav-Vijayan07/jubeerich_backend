@@ -1182,7 +1182,7 @@ exports.geLeadsForCreTl = async (req, res) => {
             model: db.userContries,
             attributes: ["country_id", "followup_date", "status_id"],
           },
-          required: false,
+          required: true,
           include: [
             {
               model: db.status,
@@ -1201,31 +1201,18 @@ exports.geLeadsForCreTl = async (req, res) => {
           model: db.officeType,
           as: "office_type_name",
           attributes: ["office_type_name"],
+          where: officeWhere,
         },
 
-        {
-          model: db.adminUsers,
-          as: "counsiler_name",
-          attributes: ["name"],
-          required: false,
-        },
         {
           model: db.adminUsers,
           as: "cre_name",
           attributes: ["id", "name"],
         },
-
-        {
-          model: db.adminUsers,
-          as: "updated_by_user",
-          attributes: ["name"],
-          required: false,
-          foreignKey: "updated_by",
-        },
       ],
       offset,
       limit: parsedLimit,
-      order: sortOrder
+      order: sortOrder,
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
@@ -1495,13 +1482,43 @@ exports.getAssignedLeadsForCreTl = async (req, res) => {
 };
 
 exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
-  const { page = 1, limit = 20, keyword } = req.query;
+  const { page = 1, limit = 20, office = 0, country = 0, keyword, source = 0, sort_level = "DESC", sort_by = "id", assigned_cre = 0 } = req.query;
   const roleId = req.role_id.toString();
+
+  let officeWhere = {};
+  let countryWhere = {};
+  let sourceWhere = {};
+  let creWhere = {};
+
+  if (office !== 0) {
+    officeWhere = {
+      id: office,
+    };
+  }
+
+  if (country !== 0) {
+    countryWhere = {
+      id: country,
+    };
+  }
+
+  if (source !== 0) {
+    sourceWhere = {
+      id: source,
+    };
+  }
+
+  if (assigned_cre !== 0) {
+    creWhere = {
+      id: assigned_cre,
+    };
+  }
 
   const offset = (page - 1) * limit;
   const parsedLimit = parseInt(limit, 10);
   const isSearchApplied = keyword ? true : false;
   const dynamicIlike = keyword ? `%${keyword}%` : `%%`;
+  const sortOrder = [[sort_by, sort_level.toUpperCase()]];
 
   try {
     // Fetch all CREs (Role ID 3)
@@ -1550,16 +1567,18 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
           model: db.leadSource,
           as: "source_name",
           attributes: ["source_name"],
+          where: sourceWhere,
         },
         {
           model: db.country,
           as: "preferredCountries",
           attributes: ["id", "country_name"],
+          where: countryWhere,
           through: {
             model: db.userContries,
             attributes: ["country_id", "followup_date", "status_id"],
           },
-          required: false,
+          required: true,
           include: [
             {
               model: db.status,
@@ -1578,29 +1597,18 @@ exports.getAssignedLeadsForCreTlOptimised = async (req, res) => {
           model: db.officeType,
           as: "office_type_name",
           attributes: ["office_type_name"],
-        },
-        {
-          model: db.adminUsers,
-          as: "counsiler_name",
-          attributes: ["name"],
-          required: false,
+          where: officeWhere,
         },
         {
           model: db.adminUsers,
           as: "cre_name",
           attributes: ["id", "name"],
-        },
-        {
-          model: db.adminUsers,
-          as: "updated_by_user",
-          attributes: ["name"],
-          required: false,
-          foreignKey: "updated_by",
+          where: creWhere,
         },
       ],
       limit: parsedLimit,
       offset: offset,
-      order: [["id", "DESC"]],
+      order: sortOrder,
     });
 
     const formattedUserPrimaryInfos = await Promise.all(
