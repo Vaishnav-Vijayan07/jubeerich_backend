@@ -17,9 +17,13 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      // gender: {
+      //   type: Sequelize.ENUM("Male", "Female", "Other"),
+      //   allowNull: false,
+      // },
       gender: {
-        type: Sequelize.ENUM("Male", "Female", "Other"),
-        allowNull: false,
+        type: Sequelize.STRING(50),
+        allowNull: true,
       },
       marital_status: {
         type: Sequelize.INTEGER,

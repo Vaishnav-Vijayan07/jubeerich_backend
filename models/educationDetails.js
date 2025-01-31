@@ -19,19 +19,19 @@ module.exports = (sequelize, Sequelize) => {
       },
       qualification: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
       board_name: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
       school_name: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
       start_date: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
       },
       end_date: {
         type: DataTypes.DATE,
@@ -39,7 +39,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       percentage: {
         type: DataTypes.DECIMAL(5, 2),
-        allowNull: false,
+        allowNull: true,
       },
       mark_sheet: {
         type: DataTypes.STRING(255),

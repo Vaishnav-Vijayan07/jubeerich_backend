@@ -8,8 +8,6 @@ const travel_history = 'travel_history'
 const batchUpsertVisaProcess = async (model, records, transaction, files, dbName = travel_history) => {
     try {
         const ids = records.filter((record) => record.id !== "0").map((record) => record.id);
-        console.log(ids);
-
         const existingRecords = await model.findAll({
             where: { id: ids },
             transaction,
@@ -26,15 +24,12 @@ const batchUpsertVisaProcess = async (model, records, transaction, files, dbName
             if (record.id === "0") {
                 let { id, ...recordWithoutId } = record;
 
-                console.log('dbName:', dbName);
-
                 if (dbName === declined_letter) {
                     recordWithoutId.declined_letter = newFile;
                 } else if (dbName === approved_letter) {
                     recordWithoutId.approved_letter = newFile;
                 }
 
-                console.log('Record without ID:', recordWithoutId);
                 addPromises.push(model.create(recordWithoutId, { transaction }));
             } else {
                 const existingRecord = existingRecords.find((r) => r.id === record.id);
@@ -59,8 +54,6 @@ const batchUpsertVisaProcess = async (model, records, transaction, files, dbName
                         }
                     }
 
-                    console.log('existingFile', existingFile);
-
                     if (existingFile) {
                         const filePath = path.join(uploadsPath, existingFile);
                         fs.unlink(filePath, (err) => {
@@ -75,8 +68,6 @@ const batchUpsertVisaProcess = async (model, records, transaction, files, dbName
                     if (Object.keys(updateFields).length > 0) {
                         updatePromises.push(existingRecord.update(updateFields, { transaction }));
                     }
-
-                    console.log('EMPTY FILE', emptyFiles);
 
                     if (emptyFiles) {
                         const emptyFilePath = path.join(uploadsPath, emptyFiles);

@@ -23,7 +23,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         visa_type: {
             type: Sequelize.STRING(100),
-            allowNull: false
+            allowNull: true
         },
         course_applied: {
             type: Sequelize.INTEGER,
@@ -43,7 +43,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         rejection_reason: {
             type: Sequelize.STRING(500),
-            allowNull: false
+            allowNull: true
         },
         declined_letter: {
             type: Sequelize.STRING,

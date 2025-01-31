@@ -8,23 +8,23 @@ module.exports = (sequelize, Sequelize) => {
     },
     years: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     company: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     designation: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     from: {
       type: Sequelize.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     to: {
       type: Sequelize.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     user_id: {
       type: Sequelize.INTEGER,

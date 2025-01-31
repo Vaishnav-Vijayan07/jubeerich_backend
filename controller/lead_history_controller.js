@@ -148,21 +148,21 @@ exports.testData = async (req, res) => {
           model: db.officeType,
           as: "office_type_name",
           attributes: ["office_type_name"],
-          where : officeWhere,
+          where: officeWhere,
           required: true,
         },
         {
           model: db.leadSource,
           as: "source_name",
           attributes: ["source_name"],
-          where:sourceWhere,
+          where: sourceWhere,
           required: true,
         },
         {
           model: db.country,
           as: "preferredCountries",
           attributes: [["id", "country_id"], "country_name"],
-          where : countryWhere,
+          where: countryWhere,
           through: {
             model: db.userContries,
             attributes: [],
@@ -170,21 +170,16 @@ exports.testData = async (req, res) => {
           required: true,
         },
       ],
-      order:sortOrder,
+      order: sortOrder,
       offset,
       limit: parsedLimit,
       order: sortOrder,
-      subQuery: false,
     };
 
     // Add search conditions only if keyword exists
     if (keyword) {
       queryOptions.where = {
-        [db.Op.or]: [
-          { full_name: { [db.Op.iLike]: dynamicIlike } },
-          { "$office_type_name.office_type_name$": { [db.Op.iLike]: dynamicIlike } },
-          { "$preferredCountries.country_name$": { [db.Op.iLike]: dynamicIlike } },
-        ],
+        [db.Op.or]: [{ full_name: { [db.Op.iLike]: dynamicIlike } }],
       };
     }
 
